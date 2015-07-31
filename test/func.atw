@@ -1,0 +1,4 @@
+func f x : int, y : int -> int {
+  x + y
+}
+print f(10, 7)  # -> 17
