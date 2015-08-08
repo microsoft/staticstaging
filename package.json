@@ -1,0 +1,9 @@
+{
+  "name": "alltheworld",
+  "version": "0.0.0",
+  "author": "Adrian Sampson <asampson@cornell.edu>",
+  "private": true,
+  "dependencies": {
+    "pegjs": "~0.8.0"
+  }
+}
