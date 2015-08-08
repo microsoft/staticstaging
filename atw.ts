@@ -2,7 +2,15 @@
 let fs = require('fs');
 let parser = require('./parser.js');
 
-function parse(filename: string, f: (tree: any) => any) {
+interface SyntaxNode {
+  tag: string;
+}
+
+interface LiteralNode extends SyntaxNode {
+  value: number;
+}
+
+function parse(filename: string, f: (tree: SyntaxNode) => void) {
   fs.readFile(filename, function (err, data) {
     if (err) {
       console.log(err);
@@ -28,12 +36,34 @@ function parse(filename: string, f: (tree: any) => any) {
   });
 }
 
-let fn = process.argv[2];
-if (!fn) {
-  console.log("no input provided");
-  process.exit(1);
+function interpret_literal(tree: LiteralNode) {
+  return tree.value;
 }
 
-parse(fn, function (tree) {
-  console.log(tree);
-});
+// Dispatch based on tag. A somewhat messy alternative to constructing the AST
+// in a type-safe way, but it'll do.
+function interpret(tree: SyntaxNode): any {
+  switch (tree.tag) {
+    case "literal":
+      return interpret_literal(<LiteralNode> tree);
+
+    default:
+      console.log("error: unknown syntax node " + tree.tag);
+      return;
+  }
+}
+
+function main() {
+  let fn = process.argv[2];
+  if (!fn) {
+    console.log("no input provided");
+    process.exit(1);
+  }
+
+  parse(fn, function (tree) {
+    // console.log(tree);
+    console.log(interpret(tree));
+  });
+}
+
+main();
