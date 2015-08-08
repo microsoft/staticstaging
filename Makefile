@@ -24,6 +24,7 @@ clean:
 test: all
 	node atw.js test/print.atw
 	node atw.js test/comment.atw
+	node atw.js test/whitespace.atw
 
 
 # Tools from npm.

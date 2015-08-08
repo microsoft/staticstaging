@@ -1,6 +1,9 @@
 start
-  = space e:expr space
+  = _ e:expr _
   { return e; }
+
+
+// Syntax.
 
 expr
   = ident / num
@@ -20,13 +23,13 @@ ident "identifier"
 // Empty space.
 
 comment "comment"
-  = "#" NONEOL* EOL?
+  = "#" (!NEWLINE .)*
 
 ws "whitespace"
-  = SPACE*
+  = SPACE
 
-space
-  = (ws comment)*
+_
+  = (ws / comment)*
 
 
 // Character classes.
@@ -35,5 +38,4 @@ SPACE = [ \t\r\n\v\f]
 ALPHA = [A-Za-z]
 DIGIT = [0-9]
 ALPHANUM = ALPHA / DIGIT
-EOL = [\r\n]
-NONEOL = [^\r\n]
+NEWLINE = [\r\n]
