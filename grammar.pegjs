@@ -1,12 +1,20 @@
-start
-  = _ e:expr _
+Program
+  = _ e:Expr _
   { return e; }
 
 
 // Syntax.
 
-expr
-  = ident / num
+Expr
+  = Reference / Literal
+
+Literal
+  = n:num
+  { return {tag: "literal", value: n}; }
+
+Reference
+  = i:ident
+  { return {tag: "reference", ident: i}; }
 
 
 // Tokens.
