@@ -2,9 +2,10 @@ PEGJS = node_modules/pegjs/bin/pegjs
 TSC = node_modules/typescript/bin/tsc
 TSD = node_modules/tsd/build/cli.js
 NODE_D = typings/node/node.d.ts
+GENERATED = parser.js atw.js
 
 .PHONY: all
-all: parser.js atw.js
+all: $(GENERATED)
 
 parser.js: grammar.pegjs $(PEGJS)
 	$(PEGJS) < $(<) > $@
@@ -14,6 +15,10 @@ parser.js: grammar.pegjs $(PEGJS)
 
 $(NODE_D): $(TSD)
 	./$< install node
+
+.PHONY: clean
+clean:
+	rm -rf $(GENERATED) node_modules typings
 
 
 # Tools from npm.
