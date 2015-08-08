@@ -20,6 +20,11 @@ $(NODE_D): $(TSD)
 clean:
 	rm -rf $(GENERATED) node_modules typings
 
+.PHONY: test
+test: all
+	node atw.js test/print.atw
+	node atw.js test/comment.atw
+
 
 # Tools from npm.
 

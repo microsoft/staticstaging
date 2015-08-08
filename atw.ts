@@ -8,5 +8,10 @@ if (!fn) {
   process.exit(1);
 }
 fs.readFile(fn, function (err, data) {
-  console.log(parser.parse(data));
+  if (err) {
+    console.log(err);
+    process.exit(1);
+  }
+  let s = data.toString();
+  console.log(parser.parse(s));
 });
