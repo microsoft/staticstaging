@@ -13,8 +13,9 @@ all: $(GENERATED)
 parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 	$(PEGJS) < $(<) > $@
 
-atw.js: $(SOURCES:%=$(SRCDIR)/%) $(TSC) $(NODE_D)
-	$(TSC) --out $@ $<
+# Use TypeScript 1.5 `tsconfig.json` to build.
+atw.js: $(SOURCES:%=$(SRCDIR)/%) $(TSC) $(NODE_D) tsconfig.json
+	$(TSC)
 
 $(NODE_D): $(TSD)
 	./$< install node
@@ -25,7 +26,7 @@ clean:
 
 .PHONY: test
 test: all
-	for fn in $(TESTS) ; do \
+	@ for fn in $(TESTS) ; do \
 		echo $$fn ; \
 		node atw.js test/$$fn.atw ; \
 	done

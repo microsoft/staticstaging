@@ -1,5 +1,3 @@
-/// <reference path="../typings/node/node.d.ts" />
-/// <reference path="interp.ts" />
 let fs = require('fs');
 let parser = require('./parser.js');
 

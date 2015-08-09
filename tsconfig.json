@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "out": "atw.js"
+  },
+  "files": [
+    "src/atw.ts",
+    "src/interp.ts",
+    "typings/node/node.d.ts"
+  ]
+}
