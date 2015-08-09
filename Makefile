@@ -5,7 +5,7 @@ NODE_D = typings/node/node.d.ts
 SRCDIR = src
 GENERATED = parser.js atw.js
 SOURCES = atw.ts interp.ts
-TESTS = print comment whitespace seq let add
+TESTS = print comment whitespace seq let add quote
 
 .PHONY: all
 all: $(GENERATED)

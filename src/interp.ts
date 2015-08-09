@@ -31,6 +31,14 @@ interface BinaryNode extends ExpressionNode {
   rhs: ExpressionNode;
 }
 
+interface QuoteNode extends ExpressionNode {
+  expr: ExpressionNode;
+}
+
+interface RunNode extends ExpressionNode {
+  expr: ExpressionNode;
+}
+
 
 // Dynamic syntax.
 
@@ -68,6 +76,16 @@ function interp_lookup(tree: LookupNode, env: Env): [Value, Env] {
   return [v, env];
 }
 
+function interp_quote(tree: RunNode, env: Env): [Value, Env] {
+  // TODO
+  return [-1, env]
+}
+
+function interp_run(tree: RunNode, env: Env): [Value, Env] {
+  // TODO
+  return [-1, env]
+}
+
 function interp_binary(tree: BinaryNode, env: Env): [Value, Env] {
   let [v1, e1] = interp(tree.lhs, env);
   let [v2, e2] = interp(tree.rhs, e1);
@@ -102,6 +120,10 @@ function interp(tree: SyntaxNode, env: Env): [Value, Env] {
       return interp_lookup(<LookupNode> tree, env);
     case "binary":
       return interp_binary(<BinaryNode> tree, env);
+    case "quote":
+      return interp_quote(<QuoteNode> tree, env);
+    case "run":
+      return interp_run(<RunNode> tree, env);
 
     default:
       console.log("error: unknown syntax node " + tree.tag);

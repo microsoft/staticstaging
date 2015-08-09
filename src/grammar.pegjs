@@ -6,13 +6,13 @@ Program
 // Syntax.
 
 Expr "expression"
-  = Let / Binary / TermExpr
+  = Let / Binary / Run / TermExpr
 
 SeqExpr "expression or sequence"
   = Seq / Expr
 
 TermExpr "atomic expression"
-  = Literal / Lookup
+  = Literal / Lookup / Quote
 
 Seq "sequence"
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -34,6 +34,14 @@ Binary "binary operation"
   = lhs:TermExpr _ op:binop _ rhs:Expr
   { return {tag: "binary", lhs: lhs, rhs: rhs, op: op}; }
 
+Quote "quote"
+  = quote_open _ e:SeqExpr _ quote_close
+  { return {tag: "quote", expr: e}; }
+
+Run "run"
+  = run _ e:TermExpr
+  { return {tag: "run", expr: e}; }
+
 
 // Tokens.
 
@@ -54,10 +62,25 @@ eq "equals"
 seq "semicolon"
   = ";"
 
-binop
+binop "binary operator"
   = [+\-*/]
   // If we could use TypeScript here, it would be nice to use a static enum
   // for the operator.
+
+quote_open "quote start"
+  = "<"
+
+quote_close "quote end"
+  = ">"
+
+escape_open "escape begin"
+  = "["
+
+escape_close "escape end"
+  = "]"
+
+run "run operator"
+  = "!"
 
 
 // Empty space.
