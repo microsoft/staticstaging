@@ -1,5 +1,6 @@
 /// <reference path="../typings/node/node.d.ts" />
 /// <reference path="interp.ts" />
+/// <reference path="pretty.ts" />
 
 let fs = require('fs');
 let parser = require('./parser.js');
@@ -30,6 +31,14 @@ function parse(filename: string, f: (tree: SyntaxNode) => void) {
   });
 }
 
+function dump(value: Value) {
+  if (typeof value == 'number') {
+    return value.toString();
+  } else if (value instanceof Code) {
+    return "< " + pretty(value.expr) + " >";
+  }
+}
+
 function main() {
   let fn = process.argv[2];
   if (!fn) {
@@ -39,7 +48,7 @@ function main() {
 
   parse(fn, function (tree) {
     console.log(tree);
-    console.log(interpret(tree));
+    console.log(dump(interpret(tree)));
   });
 }
 

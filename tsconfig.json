@@ -6,6 +6,8 @@
   "files": [
     "src/atw.ts",
     "src/interp.ts",
+    "src/ast.ts",
+    "src/pretty.ts",
     "typings/node/node.d.ts"
   ]
 }
