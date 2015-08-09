@@ -21,7 +21,7 @@ interface LetNode extends ExpressionNode {
   expr: ExpressionNode;
 }
 
-interface ReferenceNode extends ExpressionNode {
+interface LookupNode extends ExpressionNode {
   ident: string;
 }
 
@@ -54,7 +54,7 @@ function interp_let(tree: LetNode, env: Env): [Value, Env] {
   return [v, e2];
 }
 
-function interp_reference(tree: ReferenceNode, env: Env): [Value, Env] {
+function interp_lookup(tree: LookupNode, env: Env): [Value, Env] {
   return [env[tree.ident], env];
 }
 
@@ -69,8 +69,8 @@ function interp(tree: SyntaxNode, env): [Value, Env] {
       return interp_seq(<SeqNode> tree, env);
     case "let":
       return interp_let(<LetNode> tree, env);
-    case "reference":
-      return interp_reference(<ReferenceNode> tree, env);
+    case "lookup":
+      return interp_lookup(<LookupNode> tree, env);
 
     default:
       console.log("error: unknown syntax node " + tree.tag);

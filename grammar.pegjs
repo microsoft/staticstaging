@@ -9,15 +9,15 @@ Expr "expression"
   = Seq / NonSeq
 
 NonSeq "non-sequence expression"
-  = Let / Literal / Reference
+  = Let / Literal / Lookup
 
 Literal "literal"
   = n:num
   { return {tag: "literal", value: n}; }
 
-Reference "variable reference"
+Lookup "variable reference"
   = i:ident
-  { return {tag: "reference", ident: i}; }
+  { return {tag: "lookup", ident: i}; }
 
 Seq "sequence"
   = lhs:NonSeq _ SEQ _ rhs:Expr
