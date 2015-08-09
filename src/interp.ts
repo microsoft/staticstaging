@@ -45,8 +45,14 @@ function interp_quote(tree: RunNode, env: Env): [Value, Env] {
 }
 
 function interp_run(tree: RunNode, env: Env): [Value, Env] {
-  // TODO
-  return [-1, env]
+  let [v, e] = interp(tree.expr, env);
+  if (v instanceof Code) {
+    // Fresh environment for now.
+    let res = interpret(v.expr);
+    return [res, env];
+  } else {
+    console.log("error: tried to run non-code value");
+  }
 }
 
 function interp_binary(tree: BinaryNode, env: Env): [Value, Env] {
