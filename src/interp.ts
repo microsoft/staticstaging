@@ -42,10 +42,14 @@ interface RunNode extends ExpressionNode {
 
 // Dynamic syntax.
 
-type Value = number;
+type Value = number | Code;
 
 interface Env {
   [key: string]: Value;
+}
+
+class Code {
+  constructor(public expr: ExpressionNode) {}
 }
 
 
@@ -78,7 +82,7 @@ function interp_lookup(tree: LookupNode, env: Env): [Value, Env] {
 
 function interp_quote(tree: RunNode, env: Env): [Value, Env] {
   // TODO
-  return [-1, env]
+  return [new Code(tree.expr), env];
 }
 
 function interp_run(tree: RunNode, env: Env): [Value, Env] {
@@ -89,20 +93,24 @@ function interp_run(tree: RunNode, env: Env): [Value, Env] {
 function interp_binary(tree: BinaryNode, env: Env): [Value, Env] {
   let [v1, e1] = interp(tree.lhs, env);
   let [v2, e2] = interp(tree.rhs, e1);
-  let v: Value;
-  switch (tree.op) {
-    case "+":
-      v = v1 + v2; break;
-    case "-":
-      v = v1 - v2; break;
-    case "*":
-      v = v1 * v2; break;
-    case "/":
-      v = v1 / v2; break;
-    default:
-      console.log("error: unknown binary operator " + tree.op);
+  if (typeof v1 === 'number' && typeof v2 === 'number') {
+    let v: Value;
+    switch (tree.op) {
+      case "+":
+        v = v1 + v2; break;
+      case "-":
+        v = v1 - v2; break;
+      case "*":
+        v = v1 * v2; break;
+      case "/":
+        v = v1 / v2; break;
+      default:
+        console.log("error: unknown binary operator " + tree.op);
+    }
+    return [v, e2];
+  } else {
+    console.log("error: non-numeric operands to operator");
   }
-  return [v, e2];
 }
 
 
