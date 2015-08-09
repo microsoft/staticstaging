@@ -5,16 +5,23 @@ Program
 
 // Syntax.
 
-Expr
+Expr "expression"
+  = Seq / NonSeq
+
+NonSeq "non-sequence expression"
   = Reference / Literal
 
-Literal
+Literal "literal"
   = n:num
   { return {tag: "literal", value: n}; }
 
-Reference
+Reference "variable reference"
   = i:ident
   { return {tag: "reference", ident: i}; }
+
+Seq "sequence"
+  = lhs:NonSeq _ SEQ _ rhs:Expr
+  { return {tag: "seq", lhs: lhs, rhs: rhs}; }
 
 
 // Tokens.
@@ -47,3 +54,4 @@ ALPHA = [A-Za-z]
 DIGIT = [0-9]
 ALPHANUM = ALPHA / DIGIT
 NEWLINE = [\r\n]
+SEQ = ";"
