@@ -1,15 +1,19 @@
 Program
-  = _ e:Expr _
+  = _ e:ExprSeq _
   { return e; }
 
 
 // Syntax.
 
 Expr "expression"
-  = Seq / NonSeq
-
-NonSeq "non-sequence expression"
   = Let / Literal / Lookup
+
+ExprSeq "expression or sequence"
+  = Seq / Expr
+
+Seq "sequence"
+  = lhs:Expr _ SEQ _ rhs:ExprSeq
+  { return {tag: "seq", lhs: lhs, rhs: rhs}; }
 
 Literal "literal"
   = n:num
@@ -19,12 +23,8 @@ Lookup "variable reference"
   = i:ident
   { return {tag: "lookup", ident: i}; }
 
-Seq "sequence"
-  = lhs:NonSeq _ SEQ _ rhs:Expr
-  { return {tag: "seq", lhs: lhs, rhs: rhs}; }
-
 Let "assignment"
-  = let _ i:ident _ eq _ e:NonSeq
+  = let _ i:ident _ eq _ e:Expr
   { return {tag: "let", ident: i, expr: e}; }
 
 
