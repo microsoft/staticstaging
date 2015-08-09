@@ -55,7 +55,11 @@ function interp_let(tree: LetNode, env: Env): [Value, Env] {
 }
 
 function interp_lookup(tree: LookupNode, env: Env): [Value, Env] {
-  return [env[tree.ident], env];
+  let v = env[tree.ident];
+  if (v === undefined) {
+    console.log("error: undefined variable " + tree.ident);
+  }
+  return [v, env];
 }
 
 

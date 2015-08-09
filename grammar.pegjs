@@ -24,7 +24,7 @@ Seq "sequence"
   { return {tag: "seq", lhs: lhs, rhs: rhs}; }
 
 Let "assignment"
-  = let _ i:ident _ eq _ e:Expr
+  = let _ i:ident _ eq _ e:NonSeq
   { return {tag: "let", ident: i, expr: e}; }
 
 
