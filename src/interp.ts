@@ -71,7 +71,7 @@ function interp_lookup(tree: LookupNode, env: Env): [Value, Env] {
 function interp_binary(tree: BinaryNode, env: Env): [Value, Env] {
   let [v1, e1] = interp(tree.lhs, env);
   let [v2, e2] = interp(tree.rhs, e1);
-  let v;
+  let v: Value;
   switch (tree.op) {
     case "+":
       v = v1 + v2; break;
@@ -90,7 +90,7 @@ function interp_binary(tree: BinaryNode, env: Env): [Value, Env] {
 
 // Tag-based dispatch to the interpreter rules. A somewhat messy alternative
 // to constructing the AST in a type-safe way, but it'll do.
-function interp(tree: SyntaxNode, env): [Value, Env] {
+function interp(tree: SyntaxNode, env: Env): [Value, Env] {
   switch (tree.tag) {
     case "literal":
       return interp_literal(<LiteralNode> tree, env);

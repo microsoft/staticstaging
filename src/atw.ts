@@ -5,14 +5,14 @@ let fs = require('fs');
 let parser = require('./parser.js');
 
 function parse(filename: string, f: (tree: SyntaxNode) => void) {
-  fs.readFile(filename, function (err, data) {
+  fs.readFile(filename, function (err: any, data: any) {
     if (err) {
       console.log(err);
       process.exit(1);
     }
     let s = data.toString();
 
-    let tree;
+    let tree: SyntaxNode;
     try {
       tree = parser.parse(s);
     } catch (e) {

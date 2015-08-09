@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "out": "atw.js"
+    "out": "atw.js",
+    "noImplicitAny": true
   },
   "files": [
     "src/atw.ts",
