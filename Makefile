@@ -3,6 +3,7 @@ TSC = node_modules/typescript/bin/tsc
 TSD = node_modules/tsd/build/cli.js
 NODE_D = typings/node/node.d.ts
 GENERATED = parser.js atw.js
+SOURCES = atw.ts interp.ts
 
 .PHONY: all
 all: $(GENERATED)
@@ -10,8 +11,8 @@ all: $(GENERATED)
 parser.js: grammar.pegjs $(PEGJS)
 	$(PEGJS) < $(<) > $@
 
-%.js: %.ts $(TSC) $(NODE_D)
-	$(TSC) $<
+atw.js: $(SOURCES) $(TSC) $(NODE_D)
+	$(TSC) --out $@ $<
 
 $(NODE_D): $(TSD)
 	./$< install node
