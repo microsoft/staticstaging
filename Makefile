@@ -4,6 +4,7 @@ TSD = node_modules/tsd/build/cli.js
 NODE_D = typings/node/node.d.ts
 GENERATED = parser.js atw.js
 SOURCES = atw.ts interp.ts
+TESTS = print comment whitespace seq let add
 
 .PHONY: all
 all: $(GENERATED)
@@ -23,11 +24,10 @@ clean:
 
 .PHONY: test
 test: all
-	node atw.js test/print.atw
-	node atw.js test/comment.atw
-	node atw.js test/whitespace.atw
-	node atw.js test/seq.atw
-	node atw.js test/let.atw
+	for fn in $(TESTS) ; do \
+		echo $$fn ; \
+		node atw.js test/$$fn.atw ; \
+	done
 
 
 # Tools from npm.

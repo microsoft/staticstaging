@@ -25,6 +25,12 @@ interface LookupNode extends ExpressionNode {
   ident: string;
 }
 
+interface BinaryNode extends ExpressionNode {
+  op: string;
+  lhs: ExpressionNode;
+  rhs: ExpressionNode;
+}
+
 
 // Dynamic syntax.
 
@@ -62,6 +68,25 @@ function interp_lookup(tree: LookupNode, env: Env): [Value, Env] {
   return [v, env];
 }
 
+function interp_binary(tree: BinaryNode, env: Env): [Value, Env] {
+  let [v1, e1] = interp(tree.lhs, env);
+  let [v2, e2] = interp(tree.rhs, e1);
+  let v;
+  switch (tree.op) {
+    case "+":
+      v = v1 + v2; break;
+    case "-":
+      v = v1 - v2; break;
+    case "*":
+      v = v1 * v2; break;
+    case "/":
+      v = v1 / v2; break;
+    default:
+      console.log("error: unknown binary operator " + tree.op);
+  }
+  return [v, e2];
+}
+
 
 // Tag-based dispatch to the interpreter rules. A somewhat messy alternative
 // to constructing the AST in a type-safe way, but it'll do.
@@ -75,6 +100,8 @@ function interp(tree: SyntaxNode, env): [Value, Env] {
       return interp_let(<LetNode> tree, env);
     case "lookup":
       return interp_lookup(<LookupNode> tree, env);
+    case "binary":
+      return interp_binary(<BinaryNode> tree, env);
 
     default:
       console.log("error: unknown syntax node " + tree.tag);
