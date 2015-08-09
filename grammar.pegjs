@@ -9,7 +9,7 @@ Expr "expression"
   = Seq / NonSeq
 
 NonSeq "non-sequence expression"
-  = Reference / Literal
+  = Let / Literal / Reference
 
 Literal "literal"
   = n:num
@@ -23,6 +23,10 @@ Seq "sequence"
   = lhs:NonSeq _ SEQ _ rhs:Expr
   { return {tag: "seq", lhs: lhs, rhs: rhs}; }
 
+Let "assignment"
+  = let _ i:ident _ eq _ e:Expr
+  { return {tag: "let", ident: i, expr: e}; }
+
 
 // Tokens.
 
@@ -33,6 +37,12 @@ num "number"
 ident "identifier"
   = ALPHA ALPHANUM*
   { return text(); }
+
+let "let"
+  = "let"
+
+eq "equals"
+  = "="
 
 
 // Empty space.

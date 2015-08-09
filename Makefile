@@ -27,6 +27,7 @@ test: all
 	node atw.js test/comment.atw
 	node atw.js test/whitespace.atw
 	node atw.js test/seq.atw
+	node atw.js test/let.atw
 
 
 # Tools from npm.
