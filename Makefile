@@ -2,6 +2,7 @@ PEGJS = node_modules/pegjs/bin/pegjs
 TSC = node_modules/typescript/bin/tsc
 TSD = node_modules/tsd/build/cli.js
 NODE_D = typings/node/node.d.ts
+SRCDIR = src
 GENERATED = parser.js atw.js
 SOURCES = atw.ts interp.ts
 TESTS = print comment whitespace seq let add
@@ -9,10 +10,10 @@ TESTS = print comment whitespace seq let add
 .PHONY: all
 all: $(GENERATED)
 
-parser.js: grammar.pegjs $(PEGJS)
+parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 	$(PEGJS) < $(<) > $@
 
-atw.js: $(SOURCES) $(TSC) $(NODE_D)
+atw.js: $(SOURCES:%=$(SRCDIR)/%) $(TSC) $(NODE_D)
 	$(TSC) --out $@ $<
 
 $(NODE_D): $(TSD)
