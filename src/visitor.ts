@@ -23,27 +23,27 @@ class ASTVisitor<P, R> {
         return;
     }
   }
-  
+
   // Wishing for abstract methods.
-  visit_literal(LiteralNode, P): R {
+  visit_literal(tree: LiteralNode, param: P): R {
     throw "unimplemented";
   }
-  visit_seq(SeqNode, P): R {
+  visit_seq(tree: SeqNode, param: P): R {
     throw "unimplemented";
   }
-  visit_let(LetNode, P): R {
+  visit_let(tree: LetNode, param: P): R {
     throw "unimplemented";
   }
-  visit_lookup(LookupNode, P): R {
+  visit_lookup(tree: LookupNode, param: P): R {
     throw "unimplemented";
   }
-  visit_binary(BinaryNode, P): R {
+  visit_binary(tree: BinaryNode, param: P): R {
     throw "unimplemented";
   }
-  visit_quote(QuoteNode, P): R {
+  visit_quote(tree: QuoteNode, param: P): R {
     throw "unimplemented";
   }
-  visit_run(RunNode, P): R {
+  visit_run(tree: RunNode, param: P): R {
     throw "unimplemented";
   }
 }
