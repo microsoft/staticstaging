@@ -1,4 +1,5 @@
 /// <reference path="ast.ts" />
+/// <reference path="visitor.ts" />
 
 // Dynamic syntax.
 
