@@ -1,7 +1,7 @@
 /// <reference path="ast.ts" />
 /// <reference path="visitor.ts" />
 
-let Pretty : ASTVisitor<void, string> = {
+let Pretty : ASTVisit<void, string> = {
   visit_literal(tree: LiteralNode, _: void): string {
     return tree.value.toString();
   },

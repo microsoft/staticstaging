@@ -16,7 +16,7 @@ class Code {
 
 // Dynamic semantics rules.
 
-let Interp : ASTVisitor<Env, [Value, Env]> = {
+let Interp : ASTVisit<Env, [Value, Env]> = {
   visit_literal(tree: LiteralNode, env: Env): [Value, Env] {
     return [tree.value, env];
   },

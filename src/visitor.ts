@@ -1,6 +1,6 @@
 /// <reference path="ast.ts" />
 
-interface ASTVisitor<P, R> {
+interface ASTVisit<P, R> {
   visit_literal(tree: LiteralNode, param: P): R;
   visit_seq(tree: SeqNode, param: P): R;
   visit_let(tree: LetNode, param: P): R;
@@ -12,7 +12,7 @@ interface ASTVisitor<P, R> {
 
 // Tag-based dispatch to the visit functions. A somewhat messy alternative
 // to constructing the AST in a type-safe way, but it'll do.
-function ast_visit<P, R>(visitor: ASTVisitor<P, R>,
+function ast_visit<P, R>(visitor: ASTVisit<P, R>,
                          tree: SyntaxNode, param: P): R {
   switch (tree.tag) {
     case "literal":
