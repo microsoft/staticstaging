@@ -7,4 +7,4 @@ A toy language with:
 * staging-based macros
 * cross-stage persistence
 
-Compile the compiler and run a few small programs with `make test`. (You'll need Node.js and npm.)
+Compile the interpreter and run a few small programs with `make test`. (You'll need Node.js and npm.)
