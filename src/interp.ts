@@ -49,7 +49,7 @@ class Interpret extends ASTVisitor<Env, [Value, Env]> {
     let [v, e] = this.visit(tree.expr, env);
     if (v instanceof Code) {
       // Fresh environment for now.
-      let res = this.visit(v.expr);
+      let res = interpret(v.expr);
       return [res, env];
     } else {
       console.log("error: tried to run non-code value");
@@ -83,6 +83,6 @@ class Interpret extends ASTVisitor<Env, [Value, Env]> {
 
 // Helper to execute to completion in an empty initial environment.
 function interpret(program: SyntaxNode): Value {
-  let [v, e] = new Interpret().visit(tree, {});
+  let [v, e] = new Interpret().visit(program, {});
   return v;
 }

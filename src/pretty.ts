@@ -7,11 +7,11 @@ class Pretty extends ASTVisitor<void, string> {
   }
 
   visit_seq(tree: SeqNode, _: void): string {
-    return this.visit(tree.lhs) + " ; " + this.visit(tree.rhs);
+    return this.pretty(tree.lhs) + " ; " + this.pretty(tree.rhs);
   }
 
   visit_let(tree: LetNode, _: void): string {
-    return "let " + tree.ident + " = " + this.visit(tree.expr);
+    return "let " + tree.ident + " = " + this.pretty(tree.expr);
   }
 
   visit_lookup(tree: LookupNode, _: void): string {
@@ -19,15 +19,20 @@ class Pretty extends ASTVisitor<void, string> {
   }
 
   visit_binary(tree: BinaryNode, _: void): string {
-    return this.visit(tree.lhs) + " " + tree.op + " " + this.visit(tree.rhs);
+    return this.pretty(tree.lhs) + " " + tree.op + " " + this.pretty(tree.rhs);
   }
 
   visit_quote(tree: QuoteNode, _: void): string {
-    return "< " + this.visit(tree.expr) + " >";
+    return "< " + this.pretty(tree.expr) + " >";
   }
 
   visit_run(tree: RunNode, _: void): string {
-    return "!" + this.visit(tree);
+    return "!" + this.pretty(tree);
+  }
+
+  // Shorthand without extra argument.
+  pretty(tree: SyntaxNode): string {
+    return this.visit(tree, null);
   }
 }
 

@@ -4,7 +4,7 @@ TSD = node_modules/tsd/build/cli.js
 NODE_D = typings/node/node.d.ts
 SRCDIR = src
 GENERATED = parser.js atw.js
-SOURCES = atw.ts interp.ts ast.ts visitor.ts
+SOURCES = atw.ts interp.ts ast.ts visitor.ts pretty.ts
 TESTS = print comment whitespace seq let add quote dump
 
 .PHONY: all
