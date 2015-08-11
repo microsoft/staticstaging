@@ -1,6 +1,8 @@
 /// <reference path="ast.ts" />
 
 class ASTVisitor<P, R> {
+  // Tag-based dispatch to the interpreter rules. A somewhat messy alternative
+  // to constructing the AST in a type-safe way, but it'll do.
   visit(tree: SyntaxNode, param: P): R {
     switch (tree.tag) {
       case "literal":
