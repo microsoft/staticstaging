@@ -1,5 +1,5 @@
 /// <reference path="ast.ts" />
-/// <reference path="visitor.ts" />
+/// <reference path="visit.ts" />
 
 let Pretty : ASTVisit<void, string> = {
   visit_literal(tree: LiteralNode, _: void): string {

@@ -7,7 +7,7 @@
     "src/atw.ts",
     "src/interp.ts",
     "src/ast.ts",
-    "src/visitor.ts",
+    "src/visit.ts",
     "src/pretty.ts",
     "typings/node/node.d.ts"
   ]
