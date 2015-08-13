@@ -48,8 +48,18 @@ function main() {
   }
 
   parse(fn, function (tree) {
-    console.log(tree);
-    console.log(pretty_type(typecheck(tree)));
+    try {
+      console.log(tree);
+    } catch (e) {
+      console.log(e);
+      return;
+    }
+    try {
+      console.log(pretty_type(typecheck(tree)));
+    } catch (e) {
+      console.log(e);
+      return;
+    }
     console.log(dump(interpret(tree)));
   });
 }
