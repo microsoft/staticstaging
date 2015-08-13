@@ -31,6 +31,6 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_run(<RunNode> tree, param);
 
     default:
-      throw("error: unknown syntax node " + tree.tag);
+      throw "error: unknown syntax node " + tree.tag;
   }
 }

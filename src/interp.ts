@@ -37,7 +37,7 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
   visit_lookup(tree: LookupNode, env: Env): [Value, Env] {
     let v = env[tree.ident];
     if (v === undefined) {
-      console.log("error: undefined variable " + tree.ident);
+      throw "error: undefined variable " + tree.ident;
     }
     return [v, env];
   },
@@ -53,7 +53,7 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
       let res = interpret(v.expr);
       return [res, env];
     } else {
-      console.log("error: tried to run non-code value");
+      throw "error: tried to run non-code value";
     }
   },
 
@@ -72,11 +72,11 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
         case "/":
           v = v1 / v2; break;
         default:
-          console.log("error: unknown binary operator " + tree.op);
+          throw "error: unknown binary operator " + tree.op;
       }
       return [v, e2];
     } else {
-      console.log("error: non-numeric operands to operator");
+      throw "error: non-numeric operands to operator";
     }
   }
 }
