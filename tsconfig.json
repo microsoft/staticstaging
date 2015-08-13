@@ -9,6 +9,7 @@
     "src/ast.ts",
     "src/visit.ts",
     "src/pretty.ts",
+    "src/type.ts",
     "typings/node/node.d.ts"
   ]
 }

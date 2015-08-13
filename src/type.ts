@@ -19,7 +19,7 @@ function mktype(tag: TypeTag, stage: number = 0): Type {
 }
 
 function pretty_type(t: Type): string {
-  return t.tag + "@" + t.stage;
+  return TypeTag[t.tag] + "@" + t.stage;
 }
 
 interface TypeEnv {
@@ -45,12 +45,12 @@ let Typecheck : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
   },
 
   visit_seq(tree: SeqNode, env: TypeEnv): [Type, TypeEnv] {
-    let [t, e] = typecheck(tree.lhs, env);
-    return typecheck(tree.rhs, e);
+    let [t, e] = check(tree.lhs, env);
+    return check(tree.rhs, e);
   },
 
   visit_let(tree: LetNode, env: TypeEnv): [Type, TypeEnv] {
-    let [t, e] = typecheck(tree.expr, env);
+    let [t, e] = check(tree.expr, env);
     // Like the interpreter, we abuse prototypes to create an overlay
     // environment.
     let e2 = <TypeEnv> Object(e);
@@ -67,8 +67,8 @@ let Typecheck : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
   },
 
   visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
-    let [t1, e1] = typecheck(tree.lhs, env);
-    let [t2, e2] = typecheck(tree.rhs, e1);
+    let [t1, e1] = check(tree.lhs, env);
+    let [t2, e2] = check(tree.rhs, e1);
     if (t1.stage == 0 && t2.stage == 0) {
       if (t1.tag == TypeTag.Int && t2.tag == TypeTag.Int) {
         return [mktype(TypeTag.Int), env];
@@ -83,13 +83,13 @@ let Typecheck : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
   visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
     // Move the current context "up" before checking inside the quote.
     let inner_env = stage_env(env, -1);
-    let [t, e] = typecheck(tree.expr, inner_env);
+    let [t, e] = check(tree.expr, inner_env);
     // And move the result type back "down".
     return [mktype(t.tag, t.stage + 1), env];
   },
 
   visit_run(tree: RunNode, env: TypeEnv): [Type, TypeEnv] {
-    let [t, e] = typecheck(tree.expr);
+    let [t, e] = check(tree.expr, env);
     if (t.stage > 0) {
       return [mktype(t.tag, t.stage - 1), e];
     } else {
@@ -98,6 +98,11 @@ let Typecheck : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
   },
 }
 
-function typecheck(tree: SyntaxNode, env: TypeEnv = {}): [Type, TypeEnv] {
+function check(tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
   return ast_visit(Typecheck, tree, env);
+}
+
+function typecheck(tree: SyntaxNode): Type {
+  let [t, e] = check(tree, {});
+  return t;
 }

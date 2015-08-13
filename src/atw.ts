@@ -1,6 +1,7 @@
 /// <reference path="../typings/node/node.d.ts" />
 /// <reference path="interp.ts" />
 /// <reference path="pretty.ts" />
+/// <reference path="type.ts" />
 
 let fs = require('fs');
 let parser = require('./parser.js');
@@ -48,6 +49,7 @@ function main() {
 
   parse(fn, function (tree) {
     console.log(tree);
+    console.log(pretty_type(typecheck(tree)));
     console.log(dump(interpret(tree)));
   });
 }
