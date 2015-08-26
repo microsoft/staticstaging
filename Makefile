@@ -27,6 +27,7 @@ clean:
 .PHONY: test
 test: all
 	@ for fn in $(TESTS) ; do \
+	    echo ; \
 		echo $$fn ; \
 		node atw.js test/$$fn.atw ; \
 	done

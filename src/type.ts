@@ -18,8 +18,22 @@ function mktype(tag: TypeTag, stage: number = 0): Type {
   };
 }
 
+function _repeat(s: string, n: number): string {
+  let o = "";
+  for (let i = 0; i < n; ++i) {
+    o += s;
+  }
+  return o;
+}
+
 function pretty_type(t: Type): string {
-  return TypeTag[t.tag] + "@" + t.stage;
+  let s = TypeTag[t.tag];
+  if (t.stage > 0) {
+    s = _repeat("<", t.stage) + s + _repeat(">", t.stage);
+  } else if (t.stage < 0) {
+    s = _repeat("[", -t.stage) + s + _repeat("]", -t.stage);
+  }
+  return s;
 }
 
 interface TypeEnv {
