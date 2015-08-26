@@ -89,6 +89,55 @@ function interp(tree: SyntaxNode, env: Env): [Value, Env] {
   return ast_visit(Interp, tree, env);
 }
 
+// Another visitor for scanning over a quoted tree. Returns the tree
+// unchanged, except when it reaches an escape.
+// TODO Need to walk to children.
+let QuoteInterp : ASTVisit<Env, [SyntaxNode, Env]> = {
+  visit_literal(tree: LiteralNode, env: Env): [SyntaxNode, Env] {
+    return [tree, env];
+  },
+
+  visit_seq(tree: SeqNode, env: Env): [SyntaxNode, Env] {
+    let [t1, e1] = quote_interp(tree.lhs, env);
+    let [t2, e2] = quote_interp(tree.rhs, e1);
+    let t : SeqNode = {tag: "seq", lhs: t1, rhs: t2};
+    return [t, e2];
+  },
+
+  visit_let(tree: LetNode, env: Env): [SyntaxNode, Env] {
+    return [tree, env];
+  },
+
+  visit_lookup(tree: LookupNode, env: Env): [SyntaxNode, Env] {
+    return [tree, env];
+  },
+
+  visit_quote(tree: RunNode, env: Env): [SyntaxNode, Env] {
+    return [tree, env];
+  },
+
+  visit_escape(tree: EscapeNode, env: Env): [SyntaxNode, Env] {
+    let [v, e] = interp(tree, env);
+    if (typeof v === "code") {
+      return [v.expr, e];
+    } else {
+      throw "error: escaped to non-code value " + v;
+    }
+  },
+
+  visit_run(tree: RunNode, env: Env): [SyntaxNode, Env] {
+    return [tree, env];
+  },
+
+  visit_binary(tree: BinaryNode, env: Env): [SyntaxNode, Env] {
+    return [tree, env];
+  }
+}
+
+function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
+  return ast_visit(QuoteInterp, tree, env);
+}
+
 // Helper to execute to a value in an empty initial environment.
 function interpret(program: SyntaxNode): Value {
   let [v, e] = interp(program, {});
