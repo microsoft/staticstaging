@@ -35,11 +35,9 @@ test: all
 
 # Tools from npm.
 
-$(PEGJS):
-	npm install pegjs
+$(PEGJS): node_modules/pegjs/package.json
+$(TSC): node_modules/typescript/package.json
+$(TSD): node_modules/tsd/package.json
 
-$(TSC):
-	npm install typescript
-
-$(TSD):
-	npm install tsd
+node_modules/%/package.json:
+	npm install $*
