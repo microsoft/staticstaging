@@ -46,6 +46,10 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     return [new Code(tree.expr), env];
   },
 
+  visit_escape(tree: EscapeNode, env: Env): [Value, Env] {
+    throw "unimplemented";
+  },
+
   visit_run(tree: RunNode, env: Env): [Value, Env] {
     let [v, e] = interp(tree.expr, env);
     if (v instanceof Code) {

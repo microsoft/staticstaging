@@ -26,6 +26,10 @@ let Pretty : ASTVisit<void, string> = {
     return "< " + pretty(tree.expr) + " >";
   },
 
+  visit_escape(tree: EscapeNode, _: void): string {
+    return "[ " + pretty(tree.expr) + " ]";
+  },
+
   visit_run(tree: RunNode, _: void): string {
     return "!" + pretty(tree);
   },

@@ -12,7 +12,7 @@ SeqExpr "expression or sequence"
   = Seq / Expr
 
 TermExpr "atomic expression"
-  = Literal / Lookup / Quote
+  = Literal / Lookup / Quote / Escape
 
 Seq "sequence"
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -37,6 +37,10 @@ Binary "binary operation"
 Quote "quote"
   = quote_open _ e:SeqExpr _ quote_close
   { return {tag: "quote", expr: e}; }
+
+Escape "escape"
+  = escape_open _ e: SeqExpr _ escape_close
+  { return {tag: "escape", expr: e}; }
 
 Run "run"
   = run _ e:TermExpr

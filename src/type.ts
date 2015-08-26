@@ -102,6 +102,14 @@ let Typecheck : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
     return [mktype(t.tag, t.stage + 1), env];
   },
 
+  visit_escape(tree: EscapeNode, env: TypeEnv): [Type, TypeEnv] {
+    // Move the context "down", in the opposite direction of quotation. Then
+    // move the resulting type back "up".
+    let inner_env = stage_env(env, 1);
+    let [t, e] = check(tree.expr, inner_env);
+    return [mktype(t.tag, t.stage - 1), env];
+  },
+
   visit_run(tree: RunNode, env: TypeEnv): [Type, TypeEnv] {
     let [t, e] = check(tree.expr, env);
     if (t.stage > 0) {

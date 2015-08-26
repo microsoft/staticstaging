@@ -5,7 +5,7 @@ NODE_D = typings/node/node.d.ts
 SRCDIR = src
 GENERATED = parser.js atw.js
 SOURCES = atw.ts interp.ts ast.ts visit.ts pretty.ts type.ts
-TESTS = print comment whitespace seq let add quote dump typeerror
+TESTS = print comment whitespace seq let add quote dump typeerror escape
 
 .PHONY: all
 all: $(GENERATED)

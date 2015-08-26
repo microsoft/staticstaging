@@ -33,6 +33,10 @@ interface QuoteNode extends ExpressionNode {
   expr: ExpressionNode;
 }
 
+interface EscapeNode extends ExpressionNode {
+  expr: ExpressionNode;
+}
+
 interface RunNode extends ExpressionNode {
   expr: ExpressionNode;
 }
