@@ -39,18 +39,18 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
   }
 }
 
-// Create a copy of an object `o`, optionally with its fields updated
+// Create a copy of an object `obj`, optionally with its fields updated
 // according to `values`.
-function merge<T extends Object>(o: T, values: Object = {}): T {
-  let out = {};
-  for (let key in o) {
-    if (key in values) {
-      out[key] = values[key];
-    } else {
-      out[key] = o[key];
+function merge<T extends Object>(obj: T, values: Object = {}): T {
+  let out = <T> {};
+  for (let key in obj) {
+    if (values.hasOwnProperty(key)) {
+      (<any> out)[key] = (<any> values)[key];
+    } else if (obj.hasOwnProperty(key)) {
+      (<any> out)[key] = (<any> obj)[key];
     }
   }
-  return <T> out;  // An unsafe TypeScript cast.
+  return out;
 }
 
 // A visitor that traverses the AST recursively (in preorder) and creates a
