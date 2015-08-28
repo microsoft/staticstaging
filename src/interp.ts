@@ -101,33 +101,33 @@ function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
 
   // Sadly, the TypeScript type system does not yet know how to combine a
   // prototype overridden fields. So we're on our own.
-  let QuoteInterp = <ASTTranslate> Object.create(ASTTranslator, {
-    // A quote increments the level.
-    visit_quote(tree: RunNode, param: void): SyntaxNode {
-      level += 1;  // TODO
-      // Defer to the default ASTTranslator implementation.
-      return this.prototype.visit_quote(tree);
-    },
+  let QuoteInterp = <ASTTranslate> Object.create(ASTTranslator);
 
-    // An escape decrements the level or, if we're already at level 1,
-    // switches back to eager interpretation.
-    visit_escape(tree: EscapeNode, param: void): SyntaxNode {
-      level -= 1;  // TODO
-      if (level == 0) {
-        // Escaped back out of the top-level quote! Evaluate and splice.
-        let [v, e] = interp(tree, env);
-        if (typeof v === "code") {
-          env = e;  // TODO
-          return v.expr;
-        } else {
-          throw "error: escape produced non-code value " + v;
-        }
+  // A quote increments the level.
+  QuoteInterp.visit_quote = function (tree: RunNode, param: void): SyntaxNode {
+    level += 1;  // TODO
+    // Defer to the default ASTTranslator implementation.
+    return this.prototype.visit_quote(tree);
+  };
+
+  // An escape decrements the level or, if we're already at level 1,
+  // switches back to eager interpretation.
+  QuoteInterp.visit_escape = function(tree: EscapeNode, param: void): SyntaxNode {
+    level -= 1;  // TODO
+    if (level == 0) {
+      // Escaped back out of the top-level quote! Evaluate and splice.
+      let [v, e] = interp(tree, env);
+      if (typeof v === "code") {
+        env = e;  // TODO
+        return v.expr;
       } else {
-        // Keep going.
-        this.prototype.visit_escape(tree);
+        throw "error: escape produced non-code value " + v;
       }
-    },
-  });
+    } else {
+      // Keep going.
+      this.prototype.visit_escape(tree);
+    }
+  };
 
   return [ast_visit(QuoteInterp, tree, null), env];
 }
