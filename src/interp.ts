@@ -29,7 +29,7 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
   visit_let(tree: LetNode, env: Env): [Value, Env] {
     let [v, e] = interp(tree.expr, env);
     // Abuse prototypes to create an overlay environment.
-    let e2 = <Env> Object(e);
+    let e2 = <Env> Object.create(e);
     e2[tree.ident] = v;
     return [v, e2];
   },
@@ -91,59 +91,42 @@ function interp(tree: SyntaxNode, env: Env): [Value, Env] {
 
 // Another visitor for scanning over a quoted tree. Returns the tree
 // unchanged, except when it reaches an escape.
-// TODO Make a RecursiveASTVisit that encapsulates the walking?
-let QuoteInterp : ASTVisit<Env, [SyntaxNode, Env]> = {
-  visit_literal(tree: LiteralNode, env: Env): [SyntaxNode, Env] {
-    return [tree, env];
-  },
+// TODO Using closure state instead of parameters is very ugly.
+function quote_interp(tree: SyntaxNode, env: Env): SyntaxNode {
+  // We start out at level 1: inside a top-level quote.
+  let level = 1;  // TODO
 
-  visit_seq(tree: SeqNode, env: Env): [SyntaxNode, Env] {
-    let [t1, e1] = quote_interp(tree.lhs, env);
-    let [t2, e2] = quote_interp(tree.rhs, e1);
-    let out : SeqNode = {tag: "seq", lhs: t1, rhs: t2};
-    return [out, e2];
-  },
+  // Sadly, the TypeScript type system does not yet know how to combine a
+  // prototype overridden fields. So we're on our own.
+  let QuoteInterp = <ASTTranslate> Object.create(ASTTranslator, {
+    // A quote increments the level.
+    visit_quote(tree: RunNode, param: void): SyntaxNode {
+      level += 1;  // TODO
+      // Defer to the default ASTTranslator implementation.
+      return this.prototype.visit_quote(tree);
+    },
 
-  visit_let(tree: LetNode, env: Env): [SyntaxNode, Env] {
-    let [t, e] = quote_interp(tree.expr, env);
-    let out : LetNode = {tag: "let", ident: tree.ident, expr: t};
-    return [out, e];
-  },
+    // An escape decrements the level or, if we're already at level 1,
+    // switches back to eager interpretation.
+    visit_escape(tree: EscapeNode, param: void): SyntaxNode {
+      level -= 1;  // TODO
+      if (level == 0) {
+        // Escaped back out of the top-level quote! Evaluate and splice.
+        let [v, e] = interp(tree, env);
+        if (typeof v === "code") {
+          env = e;  // TODO
+          return v.expr;
+        } else {
+          throw "error: escape produced non-code value " + v;
+        }
+      } else {
+        // Keep going.
+        this.prototype.visit_escape(tree);
+      }
+    },
+  });
 
-  visit_lookup(tree: LookupNode, env: Env): [SyntaxNode, Env] {
-    return [tree, env];
-  },
-
-  visit_quote(tree: RunNode, env: Env): [SyntaxNode, Env] {
-    // TODO
-    return [tree, env];
-  },
-
-  visit_escape(tree: EscapeNode, env: Env): [SyntaxNode, Env] {
-    let [v, e] = interp(tree, env);
-    if (typeof v === "code") {
-      return [v.expr, e];
-    } else {
-      throw "error: escape produced non-code value " + v;
-    }
-  },
-
-  visit_run(tree: RunNode, env: Env): [SyntaxNode, Env] {
-    let [t, e] = quote_interp(tree.expr, env);
-    let out : RunNode = {tag: "run", expr: t};
-    return [out, e];
-  },
-
-  visit_binary(tree: BinaryNode, env: Env): [SyntaxNode, Env] {
-    let [t1, e1] = quote_interp(tree.lhs, env);
-    let [t2, e2] = quote_interp(tree.rhs, e1);
-    let out : BinaryNode = {tag: "binary", op: tree.op, lhs: t1, rhs: t2};
-    return [out, e2];
-  }
-}
-
-function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
-  return ast_visit(QuoteInterp, tree, env);
+  return ast_visit(QuoteInterp, tree, null);
 }
 
 // Helper to execute to a value in an empty initial environment.

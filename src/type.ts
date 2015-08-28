@@ -67,7 +67,7 @@ let Typecheck : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
     let [t, e] = check(tree.expr, env);
     // Like the interpreter, we abuse prototypes to create an overlay
     // environment.
-    let e2 = <TypeEnv> Object(e);
+    let e2 = <TypeEnv> Object.create(e);
     e2[tree.ident] = t;
     return [t, e2];
   },

@@ -1,5 +1,6 @@
 /// <reference path="ast.ts" />
 
+// An interface that can handle each AST node type.
 interface ASTVisit<P, R> {
   visit_literal(tree: LiteralNode, param: P): R;
   visit_seq(tree: SeqNode, param: P): R;
@@ -37,3 +38,70 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       throw "error: unknown syntax node " + tree.tag;
   }
 }
+
+// Create a copy of an object `o`, optionally with its fields updated
+// according to `values`.
+function merge<T extends Object>(o: T, values: Object = {}): T {
+  let out = {};
+  for (let key in o) {
+    if (key in values) {
+      out[key] = values[key];
+    } else {
+      out[key] = o[key];
+    }
+  }
+  return <T> out;  // An unsafe TypeScript cast.
+}
+
+// A visitor that traverses the AST recursively (in preorder) and creates a
+// copy of it. Override some of these functions to replace parts of the tree
+// with new SyntaxNodes.
+// TODO Opportunistically avoid copying identical expressions?
+type ASTTranslate = ASTVisit<void, SyntaxNode>;
+let ASTTranslator : ASTTranslate = {
+  visit_literal(tree: LiteralNode, param: void): SyntaxNode {
+    return merge(tree);
+  },
+
+  visit_seq(tree: SeqNode, param: void): SyntaxNode {
+    return merge(tree, {
+      lhs: ast_visit(this, tree.lhs, null),
+      rhs: ast_visit(this, tree.rhs, null),
+    });
+  },
+
+  visit_let(tree: LetNode, param: void): SyntaxNode {
+    return merge(tree, {
+      expr: ast_visit(this, tree.expr, null),
+    });
+  },
+
+  visit_lookup(tree: LookupNode, param: void): SyntaxNode {
+    return merge(tree);
+  },
+
+  visit_binary(tree: BinaryNode, param: void): SyntaxNode {
+    return merge(tree, {
+      lhs: ast_visit(this, tree.lhs, null),
+      rhs: ast_visit(this, tree.rhs, null),
+    });
+  },
+
+  visit_quote(tree: QuoteNode, param: void): SyntaxNode {
+    return merge(tree, {
+      expr: ast_visit(this, tree.expr, null),
+    });
+  },
+
+  visit_escape(tree: EscapeNode, param: void): SyntaxNode {
+    return merge(tree, {
+      expr: ast_visit(this, tree.expr, null),
+    });
+  },
+
+  visit_run(tree: RunNode, param: void): SyntaxNode {
+    return merge(tree, {
+      expr: ast_visit(this, tree.expr, null),
+    });
+  },
+};
