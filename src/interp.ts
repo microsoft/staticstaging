@@ -16,6 +16,9 @@ class Code {
 
 // Dynamic semantics rules.
 
+// This first set of rules applies at the "top level", for ordinary execution.
+// Escapes are not allowed at this level. At a quote, we transition to a
+// different set of rules.
 let Interp : ASTVisit<Env, [Value, Env]> = {
   visit_literal(tree: LiteralNode, env: Env): [Value, Env] {
     return [tree.value, env];
@@ -92,8 +95,10 @@ function interp(tree: SyntaxNode, env: Env): [Value, Env] {
   return ast_visit(Interp, tree, env);
 }
 
-// Another visitor for scanning over a quoted tree. Returns the tree
-// unchanged, except when it reaches an escape.
+// A second set of rules applies inside at least one quote. We keep track of
+// the current level while walking the tree, searching for escapes that bring
+// us back down to level 0. When this happens, we switch back to the first
+// rule set.
 // TODO Using closure state instead of parameters is very ugly.
 function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
   // We start out at level 1: inside a top-level quote.
