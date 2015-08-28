@@ -107,7 +107,7 @@ function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
   QuoteInterp.visit_quote = function (tree: RunNode, param: void): SyntaxNode {
     level += 1;  // TODO
     // Defer to the default ASTTranslator implementation.
-    return this.prototype.visit_quote(tree);
+    return ASTTranslator.visit_quote.call(this, tree);
   };
 
   // An escape decrements the level or, if we're already at level 1,
@@ -125,7 +125,7 @@ function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
       }
     } else {
       // Keep going.
-      this.prototype.visit_escape(tree);
+      ASTTranslator.visit_escape.call(this, tree);
     }
   };
 
