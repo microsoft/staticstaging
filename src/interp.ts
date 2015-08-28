@@ -50,7 +50,7 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
   },
 
   visit_escape(tree: EscapeNode, env: Env): [Value, Env] {
-    throw "unimplemented";
+    throw "error: top-level escape";
   },
 
   visit_run(tree: RunNode, env: Env): [Value, Env] {
@@ -116,8 +116,8 @@ function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
     level -= 1;  // TODO
     if (level == 0) {
       // Escaped back out of the top-level quote! Evaluate and splice.
-      let [v, e] = interp(tree, env);
-      if (typeof v === "code") {
+      let [v, e] = interp(tree.expr, env);
+      if (v instanceof Code) {
         env = e;  // TODO
         return v.expr;
       } else {
