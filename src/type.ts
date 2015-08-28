@@ -103,6 +103,10 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
   },
 
   visit_escape(tree: EscapeNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
+    if (level == 0) {
+      throw "type error: top-level escape";
+    }
+
     // Move the context "down", in the opposite direction of quotation. Then
     // move the resulting type back "up".
     let inner_env = stage_env(env, 1);
