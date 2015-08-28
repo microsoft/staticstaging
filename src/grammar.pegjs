@@ -5,16 +5,16 @@ Program
 
 // Syntax.
 
-Expr "expression"
+Expr
   = Let / Binary / Run / TermExpr
 
-SeqExpr "expression or sequence"
+SeqExpr
   = Seq / Expr
 
-TermExpr "atomic expression"
+TermExpr
   = Literal / Lookup / Quote / Escape
 
-Seq "sequence"
+Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
   { return {tag: "seq", lhs: lhs, rhs: rhs}; }
 
