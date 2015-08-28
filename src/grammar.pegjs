@@ -6,13 +6,13 @@ Program
 // Syntax.
 
 Expr
-  = Let / Binary / Run / TermExpr
+  = Let / Binary / TermExpr
 
 SeqExpr
   = Seq / Expr
 
 TermExpr
-  = Literal / Lookup / Quote / Escape
+  = Literal / Lookup / Quote / Escape / Run
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
