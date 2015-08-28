@@ -98,19 +98,28 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     // Move the current context "up" before checking inside the quote.
     let inner_env = stage_env(env, -1);
     let [t, e] = check(tree.expr, inner_env, level + 1);
+
     // And move the result type back "down".
     return [mktype(t.tag, t.stage + 1), env];
   },
 
   visit_escape(tree: EscapeNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
+    // Escaping beyond the top level is not allowed.
     if (level == 0) {
       throw "type error: top-level escape";
     }
 
-    // Move the context "down", in the opposite direction of quotation. Then
-    // move the resulting type back "up".
+    // Move the context "down", in the opposite direction of quotation.
     let inner_env = stage_env(env, 1);
     let [t, e] = check(tree.expr, inner_env, level - 1);
+
+    // Ensure that the result of the escape's expression is code, so it can be
+    // spliced.
+    if (t.stage < 1) {
+      throw "type error: escape produced non-code value";
+    }
+
+    // Since it is safe to do so, move the resulting type back "up" one stage.
     return [mktype(t.tag, t.stage - 1), env];
   },
 
