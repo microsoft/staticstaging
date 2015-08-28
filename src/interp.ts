@@ -43,7 +43,10 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
   },
 
   visit_quote(tree: RunNode, env: Env): [Value, Env] {
-    return [new Code(tree.expr), env];
+    // Jump to any escapes and execute them.
+    let [t, e] = quote_interp(tree.expr, env);
+    // Wrap the resulting AST as a code value.
+    return [new Code(t), e];
   },
 
   visit_escape(tree: EscapeNode, env: Env): [Value, Env] {
@@ -92,7 +95,7 @@ function interp(tree: SyntaxNode, env: Env): [Value, Env] {
 // Another visitor for scanning over a quoted tree. Returns the tree
 // unchanged, except when it reaches an escape.
 // TODO Using closure state instead of parameters is very ugly.
-function quote_interp(tree: SyntaxNode, env: Env): SyntaxNode {
+function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
   // We start out at level 1: inside a top-level quote.
   let level = 1;  // TODO
 
@@ -126,7 +129,7 @@ function quote_interp(tree: SyntaxNode, env: Env): SyntaxNode {
     },
   });
 
-  return ast_visit(QuoteInterp, tree, null);
+  return [ast_visit(QuoteInterp, tree, null), env];
 }
 
 // Helper to execute to a value in an empty initial environment.
