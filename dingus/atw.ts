@@ -3,6 +3,7 @@
 /// <reference path="../src/type.ts" />
 
 declare var parser : any;
+
 const RUN_DELAY_MS = 200;
 
 // Run code and return:
@@ -25,7 +26,7 @@ function atw_run(code: string) : [string, string, string, string] {
   // Log the parse tree.
   let parse_tree : string;
   try {
-    parse_tree = tree.toString();
+    parse_tree = JSON.stringify(tree, null, '  ');
   } catch (e) {
     return [e, null, null, null];
   }
@@ -35,7 +36,7 @@ function atw_run(code: string) : [string, string, string, string] {
   try {
     type_str = pretty_type(typecheck(tree));
   } catch (e) {
-    return [e, null, null, null];
+    return [e, parse_tree, null, null];
   }
 
   // Show the result value.
