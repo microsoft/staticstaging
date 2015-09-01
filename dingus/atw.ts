@@ -5,6 +5,7 @@
 declare var parser : any;
 
 const RUN_DELAY_MS = 200;
+const HASH_CODE = '#code=';
 
 // Run code and return:
 // - an error, if any
@@ -72,12 +73,24 @@ document.addEventListener("DOMContentLoaded", function () {
       show(tree, treebox);
       show(typ, typebox);
       show(res, outbox);
+      location.hash = HASH_CODE + encodeURIComponent(code);
     } else {
       show(null, errbox);
       show(null, treebox);
       show(null, typebox);
       show(null, outbox);
+      location.hash = '';
     }
+  }
+
+  function handle_hash() {
+    let hash = location.hash;
+    if (hash.indexOf(HASH_CODE) == 0) {
+      codebox.value = decodeURIComponent(hash.slice(HASH_CODE.length));
+    } else {
+      codebox.value = '';
+    }
+    run_code();
   }
 
   let tid : number = null;
@@ -88,5 +101,9 @@ document.addEventListener("DOMContentLoaded", function () {
     tid = setTimeout(run_code, RUN_DELAY_MS);
   });
 
-  run_code();
+  window.addEventListener('hashchange', function () {
+    handle_hash();
+  });
+
+  handle_hash();
 });
