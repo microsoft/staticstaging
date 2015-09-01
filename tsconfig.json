@@ -10,6 +10,7 @@
     "src/visit.ts",
     "src/pretty.ts",
     "src/type.ts",
+    "src/util.ts",
     "typings/node/node.d.ts"
   ]
 }

@@ -4,7 +4,7 @@ TSD = node_modules/tsd/build/cli.js
 NODE_D = typings/node/node.d.ts
 SRCDIR = src
 GENERATED = parser.js atw.js
-SOURCES = atw.ts interp.ts ast.ts visit.ts pretty.ts type.ts
+SOURCES = atw.ts interp.ts ast.ts visit.ts pretty.ts type.ts util.ts
 TESTS = print comment whitespace seq let add quote dump typeerror escape \
 		splice badsplice topescape nesteddump nestedrun nested
 
