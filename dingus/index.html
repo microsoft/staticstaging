@@ -1,24 +1,34 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>atw dingus</title>
-        <link rel="stylesheet" href="https://cmcenroe.me/writ/writ.min.css">
-    </head>
-    <body>
-        <h1>atw dingus</h1>
+<head>
+    <title>atw dingus</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css">
+    <style>
+textarea {
+    width: 100%;
+}
+    </style>
+</head>
+<body>
+<div class="container">
 
-        <div id="input">
-            <textarea id="code"></textarea>
-        </div>
+<h1>atw dingus</h1>
 
-        <div id="output">
-            <p id="error"></p>
-            <pre id="tree"></pre>
-            <p id="type"></p>
-            <pre id="result"></pre>
-        </div>
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="code"></textarea>
+        <p id="type"></p>
+    </div>
 
-        <script type="text/javascript" src="parser.js"></script>
-        <script type="text/javascript" src="atw.js"></script>
-    </body>
+    <div class="col-sm-6">
+        <div id="error" class="alert alert-danger"></div>
+        <pre id="result"></pre>
+        <pre id="tree"></pre>
+    </div>
+</div>
+
+</div>
+<script type="text/javascript" src="parser.js"></script>
+<script type="text/javascript" src="atw.js"></script>
+</body>
 </html>

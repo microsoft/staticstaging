@@ -59,10 +59,10 @@ function show(text: string, el: HTMLElement) {
 
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
-  let errbox = <HTMLParagraphElement> document.querySelector('#error');
-  let treebox = <HTMLPreElement> document.querySelector('#tree');
-  let typebox = <HTMLParagraphElement> document.querySelector('#type');
-  let outbox = <HTMLPreElement> document.querySelector('#result');
+  let errbox = <HTMLElement> document.querySelector('#error');
+  let treebox = <HTMLElement> document.querySelector('#tree');
+  let typebox = <HTMLElement> document.querySelector('#type');
+  let outbox = <HTMLElement> document.querySelector('#result');
 
   function run_code() {
     let code = codebox.value;
