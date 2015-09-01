@@ -48,6 +48,15 @@ function atw_run(code: string) : [string, string, string, string] {
   ];
 }
 
+function show(text: string, el: HTMLElement) {
+  if (text) {
+    el.textContent = text;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
   let errbox = <HTMLParagraphElement> document.querySelector('#error');
@@ -57,14 +66,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function run_code() {
     let code = codebox.value;
-    let [err, tree, typ, res] = atw_run(code);
-    errbox.textContent = err;
-    treebox.textContent = tree;
-    typebox.textContent = typ;
-    outbox.textContent = res;
+    if (code !== "") {
+      let [err, tree, typ, res] = atw_run(code);
+      show(err, errbox);
+      show(tree, treebox);
+      show(typ, typebox);
+      show(res, outbox);
+    } else {
+      show(null, errbox);
+      show(null, treebox);
+      show(null, typebox);
+      show(null, outbox);
+    }
   }
 
   codebox.addEventListener('input', function () {
     setTimeout(run_code, RUN_DELAY_MS);
   });
+
+  run_code();
 });
