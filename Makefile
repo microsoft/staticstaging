@@ -49,6 +49,12 @@ test: $(CLI_JS)
 		node atw.js test/$$fn.atw ; \
 	done
 
+.PHONY: deploy
+RSYNCARGS := --compress --recursive --checksum --delete -e ssh
+DEST := dh:domains/adriansampson.net/atw
+deploy: dingus
+	rsync $(RSYNCARGS) dingus/ $(DEST)
+
 
 # Tools from npm.
 
