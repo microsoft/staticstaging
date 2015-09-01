@@ -80,8 +80,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  let tid : number = null;
   codebox.addEventListener('input', function () {
-    setTimeout(run_code, RUN_DELAY_MS);
+    if (tid) {
+      clearTimeout(tid);
+    }
+    tid = setTimeout(run_code, RUN_DELAY_MS);
   });
 
   run_code();
