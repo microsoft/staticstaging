@@ -37,15 +37,17 @@ function atw_run(code: string) {
   }
 
   // Show the result value.
-  console.log(pretty_value(interpret(tree)));
+  return pretty_value(interpret(tree));
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
   let runbtn = <HTMLButtonElement> document.querySelector('button');
+  let outbox = <HTMLPreElement> document.querySelector('pre');
 
   runbtn.addEventListener('click', function () {
     let code = codebox.value;
-    atw_run(code);
+    let res = atw_run(code);
+    outbox.textContent = res;
   });
 });
