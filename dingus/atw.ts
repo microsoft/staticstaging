@@ -3,6 +3,7 @@
 /// <reference path="../src/type.ts" />
 
 declare var parser : any;
+const RUN_DELAY_MS = 200;
 
 function atw_run(code: string) {
   // Parse.
@@ -45,9 +46,13 @@ document.addEventListener("DOMContentLoaded", function () {
   let runbtn = <HTMLButtonElement> document.querySelector('button');
   let outbox = <HTMLPreElement> document.querySelector('pre');
 
-  runbtn.addEventListener('click', function () {
+  function run_code() {
     let code = codebox.value;
     let res = atw_run(code);
     outbox.textContent = res;
+  }
+
+  codebox.addEventListener('input', function () {
+    setTimeout(run_code, RUN_DELAY_MS);
   });
 });
