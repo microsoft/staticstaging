@@ -142,14 +142,30 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   // increment/decrement the stage number and (when the stage gets back down
   // to zero) swap back to normal interpretation.
 
+  // Just increment the stage further.
   visit_quote(tree: QuoteNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    let [t, e] = _quote_interp(tree.expr, stage, env);
+    let s = stage + 1;  // Recurse at a deeper stage.
+    let [t, e] = _quote_interp(tree.expr, s, env);
     return [merge(tree, { expr: t }), e];
   },
 
+  // Decrement the stage and either swap back or just keep recursing.
   visit_escape(tree: EscapeNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    let [t, e] = _quote_interp(tree.expr, stage, env);
-    return [merge(tree, { expr: t }), e];
+    let s = stage - 1;  // The escaped expression runs "up" one stage.
+    if (s == 0) {
+      // Escaped back out of the top-level quote! Evaluate and splice.
+      let [v, e] = interp(tree.expr, env);
+      // The resulting expression must be a quote we can splice.
+      if (v instanceof Code) {
+        return [v.expr, e];
+      } else {
+        throw "error: escape produced non-code value " + v;
+      }
+    } else {
+      // Keep going.
+      let [t, e] = _quote_interp(tree.expr, s, env);
+      return [merge(tree, { expr: t }), e];
+    }
   },
 
   // The rest of the cases are boring: just copy the input tree and recurse
