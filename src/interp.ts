@@ -47,7 +47,7 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
 
   visit_quote(tree: RunNode, env: Env): [Value, Env] {
     // Jump to any escapes and execute them.
-    let [t, e] = quote_interp(tree.expr, env);
+    let [t, e] = quote_interp(tree.expr, 1, env);
     // Wrap the resulting AST as a code value.
     return [new Code(t), e];
   },
@@ -99,44 +99,6 @@ function interp(tree: SyntaxNode, env: Env): [Value, Env] {
 // the current level while walking the tree, searching for escapes that bring
 // us back down to level 0. When this happens, we switch back to the first
 // rule set.
-// TODO Using closure state instead of parameters is very ugly.
-function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
-  // We start out at level 1: inside a top-level quote.
-  let level = 1;  // TODO
-
-  // Sadly, the TypeScript type system does not yet know how to combine a
-  // prototype overridden fields. So we're on our own.
-  let QuoteInterp = <ASTTranslate> Object.create(ASTTranslator);
-
-  // A quote increments the level.
-  QuoteInterp.visit_quote = function (tree: RunNode, param: void): SyntaxNode {
-    level += 1;  // TODO
-    // Defer to the default ASTTranslator implementation.
-    return ASTTranslator.visit_quote.call(this, tree);
-  };
-
-  // An escape decrements the level or, if we're already at level 1,
-  // switches back to eager interpretation.
-  QuoteInterp.visit_escape = function(tree: EscapeNode, param: void): SyntaxNode {
-    level -= 1;  // TODO
-    if (level == 0) {
-      // Escaped back out of the top-level quote! Evaluate and splice.
-      let [v, e] = interp(tree.expr, env);
-      if (v instanceof Code) {
-        env = e;  // TODO
-        return v.expr;
-      } else {
-        throw "error: escape produced non-code value " + v;
-      }
-    } else {
-      // Keep going.
-      ASTTranslator.visit_escape.call(this, tree);
-    }
-  };
-
-  return [ast_visit(QuoteInterp, tree, null), env];
-}
-
 let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   // The `quote` and `escape` cases are the only interesting ones. We
   // increment/decrement the stage number and (when the stage gets back down
@@ -145,7 +107,7 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   // Just increment the stage further.
   visit_quote(tree: QuoteNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
     let s = stage + 1;  // Recurse at a deeper stage.
-    let [t, e] = _quote_interp(tree.expr, s, env);
+    let [t, e] = quote_interp(tree.expr, s, env);
     return [merge(tree, { expr: t }), e];
   },
 
@@ -163,7 +125,7 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
       }
     } else {
       // Keep going.
-      let [t, e] = _quote_interp(tree.expr, s, env);
+      let [t, e] = quote_interp(tree.expr, s, env);
       return [merge(tree, { expr: t }), e];
     }
   },
@@ -178,13 +140,13 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   },
 
   visit_seq(tree: SeqNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    let [t1, e1] = _quote_interp(tree.lhs, stage, env);
-    let [t2, e2] = _quote_interp(tree.rhs, stage, e1);
+    let [t1, e1] = quote_interp(tree.lhs, stage, env);
+    let [t2, e2] = quote_interp(tree.rhs, stage, e1);
     return [merge(tree, { lhs: t1, rhs: t2 }), e2];
   },
 
   visit_let(tree: LetNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    let [t, e] = _quote_interp(tree.expr, stage, env);
+    let [t, e] = quote_interp(tree.expr, stage, env);
     return [merge(tree, { expr: t }), e];
   },
 
@@ -193,18 +155,18 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   },
 
   visit_binary(tree: BinaryNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    let [t1, e1] = _quote_interp(tree.lhs, stage, env);
-    let [t2, e2] = _quote_interp(tree.rhs, stage, e1);
+    let [t1, e1] = quote_interp(tree.lhs, stage, env);
+    let [t2, e2] = quote_interp(tree.rhs, stage, e1);
     return [merge(tree, { lhs: t1, rhs: t2 }), e2];
   },
 
   visit_run(tree: RunNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    let [t, e] = _quote_interp(tree.expr, stage, env);
+    let [t, e] = quote_interp(tree.expr, stage, env);
     return [merge(tree, { expr: t }), e];
   },
 }
 
-function _quote_interp(tree: SyntaxNode, stage: number, env: Env): [SyntaxNode, Env] {
+function quote_interp(tree: SyntaxNode, stage: number, env: Env): [SyntaxNode, Env] {
   return ast_visit(QuoteInterp, tree, [stage, env]);
 }
 
