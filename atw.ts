@@ -1,7 +1,7 @@
-/// <reference path="../typings/node/node.d.ts" />
-/// <reference path="interp.ts" />
-/// <reference path="pretty.ts" />
-/// <reference path="type.ts" />
+/// <reference path="typings/node/node.d.ts" />
+/// <reference path="src/interp.ts" />
+/// <reference path="src/pretty.ts" />
+/// <reference path="src/type.ts" />
 
 let fs = require('fs');
 let parser = require('./parser.js');

@@ -1,12 +1,16 @@
-PEGJS = node_modules/pegjs/bin/pegjs
-TSC = node_modules/typescript/bin/tsc
-TSD = node_modules/tsd/build/cli.js
-NODE_D = typings/node/node.d.ts
-SRCDIR = src
-GENERATED = parser.js atw.js
-SOURCES = atw.ts interp.ts ast.ts visit.ts pretty.ts type.ts util.ts
-TESTS = print comment whitespace seq let add quote dump typeerror escape \
-		splice badsplice topescape nesteddump nestedrun nested
+PEGJS := node_modules/pegjs/bin/pegjs
+TSC := node_modules/typescript/bin/tsc
+TSD := node_modules/tsd/build/cli.js
+NODE_D := typings/node/node.d.ts
+SRCDIR := src
+GENERATED := parser.js atw.js
+SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts
+TESTS := print comment whitespace seq let add quote dump typeerror escape \
+	splice badsplice topescape nesteddump nestedrun nested
+TSCARGS := --noImplicitAny
+
+# All frontend-independent TypeScript source files.
+SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
 
 .PHONY: all
 all: $(GENERATED)
@@ -14,9 +18,10 @@ all: $(GENERATED)
 parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 	$(PEGJS) < $(<) > $@
 
-# Use TypeScript 1.5 `tsconfig.json` to build.
-atw.js: $(SOURCES:%=$(SRCDIR)/%) $(TSC) $(NODE_D) tsconfig.json
-	$(TSC)
+# Build the command-line Node tool.
+CLI_SRCS := $(SRC_FILES) atw.ts $(NODE_D)
+atw.js: $(TSC) $(CLI_SRCS)
+	$(TSC) $(TSCARGS) --out $@ $(CLI_SRCS)
 
 $(NODE_D): $(TSD)
 	./$< install node
