@@ -12,3 +12,11 @@ function merge<T extends Object>(obj: T, values: Object = {}): T {
   }
   return out;
 }
+
+function _repeat(s: string, n: number): string {
+  let o = "";
+  for (let i = 0; i < n; ++i) {
+    o += s;
+  }
+  return o;
+}

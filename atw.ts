@@ -32,14 +32,6 @@ function parse(filename: string, f: (tree: SyntaxNode) => void) {
   });
 }
 
-function dump(value: Value) {
-  if (typeof value == 'number') {
-    return value.toString();
-  } else if (value instanceof Code) {
-    return "< " + pretty(value.expr) + " >";
-  }
-}
-
 function main() {
   let fn = process.argv[2];
   if (!fn) {
@@ -60,7 +52,7 @@ function main() {
       console.log(e);
       return;
     }
-    console.log(dump(interpret(tree)));
+    console.log(pretty_value(interpret(tree)));
   });
 }
 

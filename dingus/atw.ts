@@ -37,7 +37,7 @@ function atw_run(code: string) {
   }
 
   // Show the result value.
-  console.log(interpret(tree));
+  console.log(pretty_value(interpret(tree)));
 }
 
 document.addEventListener("DOMContentLoaded", function () {
