@@ -137,6 +137,61 @@ function quote_interp(tree: SyntaxNode, env: Env): [SyntaxNode, Env] {
   return [ast_visit(QuoteInterp, tree, null), env];
 }
 
+let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
+  // The `quote` and `escape` cases are the only interesting ones. We
+  // increment/decrement the stage number and (when the stage gets back down
+  // to zero) swap back to normal interpretation.
+
+  visit_quote(tree: QuoteNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    let [t, e] = _quote_interp(tree.expr, stage, env);
+    return [merge(tree, { expr: t }), e];
+  },
+
+  visit_escape(tree: EscapeNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    let [t, e] = _quote_interp(tree.expr, stage, env);
+    return [merge(tree, { expr: t }), e];
+  },
+
+  // The rest of the cases are boring: just copy the input tree and recurse
+  // while threading through the stage and environment parameters. I would
+  // *really* like to put this recursion in a library, but I haven't yet found
+  // a clean way to do so.
+
+  visit_literal(tree: LiteralNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    return [merge(tree), env];
+  },
+
+  visit_seq(tree: SeqNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    let [t1, e1] = _quote_interp(tree.lhs, stage, env);
+    let [t2, e2] = _quote_interp(tree.rhs, stage, e1);
+    return [merge(tree, { lhs: t1, rhs: t2 }), e2];
+  },
+
+  visit_let(tree: LetNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    let [t, e] = _quote_interp(tree.expr, stage, env);
+    return [merge(tree, { expr: t }), e];
+  },
+
+  visit_lookup(tree: LookupNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    return [merge(tree), env];
+  },
+
+  visit_binary(tree: BinaryNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    let [t1, e1] = _quote_interp(tree.lhs, stage, env);
+    let [t2, e2] = _quote_interp(tree.rhs, stage, e1);
+    return [merge(tree, { lhs: t1, rhs: t2 }), e2];
+  },
+
+  visit_run(tree: RunNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    let [t, e] = _quote_interp(tree.expr, stage, env);
+    return [merge(tree, { expr: t }), e];
+  },
+}
+
+function _quote_interp(tree: SyntaxNode, stage: number, env: Env): [SyntaxNode, Env] {
+  return ast_visit(QuoteInterp, tree, [stage, env]);
+}
+
 // Helper to execute to a value in an empty initial environment.
 function interpret(program: SyntaxNode): Value {
   let [v, e] = interp(program, {});
