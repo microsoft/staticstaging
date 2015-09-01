@@ -5,50 +5,61 @@
 declare var parser : any;
 const RUN_DELAY_MS = 200;
 
-function atw_run(code: string) {
+// Run code and return:
+// - an error, if any
+// - the parse tree
+// - the type
+// - the result of interpretation
+function atw_run(code: string) : [string, string, string, string] {
   // Parse.
   let tree: SyntaxNode;
   try {
     tree = parser.parse(code);
   } catch (e) {
-    if (e instanceof parser.SyntaxError) {
-      console.log('parse error at '
-                  + e.line + ',' + e.column
-                  + ': ' + e.message);
-      return;
-    } else {
-      throw e;
-    }
+    let err = 'parse error at '
+              + e.line + ',' + e.column
+              + ': ' + e.message;
+    return [err, null, null, null];
   }
 
   // Log the parse tree.
+  let parse_tree : string;
   try {
-    console.log(tree);
+    parse_tree = tree.toString();
   } catch (e) {
-    console.log(e);
-    return;
+    return [e, null, null, null];
   }
 
   // Log the type.
+  let type_str : string;
   try {
-    console.log(pretty_type(typecheck(tree)));
+    type_str = pretty_type(typecheck(tree));
   } catch (e) {
-    console.log(e);
-    return;
+    return [e, null, null, null];
   }
 
   // Show the result value.
-  return pretty_value(interpret(tree));
+  return [
+    null,
+    parse_tree,
+    type_str,
+    pretty_value(interpret(tree)),
+  ];
 }
 
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
-  let runbtn = <HTMLButtonElement> document.querySelector('button');
-  let outbox = <HTMLPreElement> document.querySelector('pre');
+  let errbox = <HTMLParagraphElement> document.querySelector('#error');
+  let treebox = <HTMLPreElement> document.querySelector('#tree');
+  let typebox = <HTMLParagraphElement> document.querySelector('#type');
+  let outbox = <HTMLPreElement> document.querySelector('#result');
 
   function run_code() {
     let code = codebox.value;
-    let res = atw_run(code);
+    let [err, tree, typ, res] = atw_run(code);
+    errbox.textContent = err;
+    treebox.textContent = tree;
+    typebox.textContent = typ;
     outbox.textContent = res;
   }
 
