@@ -64,6 +64,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let treebox = <HTMLElement> document.querySelector('#tree');
   let typebox = <HTMLElement> document.querySelector('#type');
   let outbox = <HTMLElement> document.querySelector('#result');
+  let helpbox = <HTMLElement> document.querySelector('#help');
+  let examples = document.querySelectorAll('.example');
 
   function run_code() {
     let code = codebox.value;
@@ -73,12 +75,14 @@ document.addEventListener("DOMContentLoaded", function () {
       show(tree, treebox);
       show(typ, typebox);
       show(res, outbox);
+      helpbox.style.display = 'none';
       location.hash = HASH_CODE + encodeURIComponent(code);
     } else {
       show(null, errbox);
       show(null, treebox);
       show(null, typebox);
       show(null, outbox);
+      helpbox.style.display = 'block';
       location.hash = '';
     }
   }
@@ -93,6 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
     run_code();
   }
 
+  // Wait for code input and run it.
   let tid : number = null;
   codebox.addEventListener('input', function () {
     if (tid) {
@@ -101,9 +106,22 @@ document.addEventListener("DOMContentLoaded", function () {
     tid = setTimeout(run_code, RUN_DELAY_MS);
   });
 
+  // Example clicks load code.
+  // Using a function here because JavaScript scoping is so sad.
+  function add_example_handler(ex: HTMLElement) {
+    ex.addEventListener('click', function () {
+      let code = ex.textContent;
+      history.pushState(null, null, HASH_CODE + encodeURIComponent(code));
+      handle_hash();
+    });
+  }
+  for (let i = 0; i < examples.length; ++i) {
+    add_example_handler(<HTMLElement> examples[i]);
+  }
+
+  // Handle the empty hash and any new ones that are set.
   window.addEventListener('hashchange', function () {
     handle_hash();
   });
-
   handle_hash();
 });

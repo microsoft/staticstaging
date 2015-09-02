@@ -9,8 +9,11 @@ textarea {
     height: 20ex;
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-#error, #result, #tree {
+#error, #result, #tree, #help {
     display: none;
+}
+.example:hover {
+    background: rgba(0, 0, 0, 0.2);
 }
     </style>
 </head>
@@ -26,6 +29,28 @@ textarea {
     </div>
 
     <div class="col-sm-6">
+        <div id="help" class="alert alert-warning">
+            <p>You can use basic arithmetic:</p>
+            <pre class="example"><code>7 * 3</code></pre>
+
+            <p>And assign to variables:</p>
+            <pre class="example"><code>let x = 7;
+x * 3</code></pre>
+
+            <p>Use angle brackets to defer code:</p>
+            <pre class="example"><code>&lt; 45 - 3 &gt;</code></pre>
+
+            <p>And bang to execute it:</p>
+            <pre class="example"><code>!&lt; 45 - 3 &gt;</code></pre>
+
+            <p>Use square brackets to escape and splice code:</p>
+            <pre class="example"><code>let x = <5>;
+!&lt; 37 + [x] &gt;</code></pre>
+
+            <p>The type checker will catch you if you mix up your stages:</p>
+            <pre class="example"><code>let x = <5>;
+37 + x</code></pre>
+        </div>
         <div id="error" class="alert alert-danger"></div>
         <pre id="result"></pre>
         <pre id="tree"></pre>
