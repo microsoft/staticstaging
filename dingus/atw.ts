@@ -65,6 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let typebox = <HTMLElement> document.querySelector('#type');
   let outbox = <HTMLElement> document.querySelector('#result');
   let helpbox = <HTMLElement> document.querySelector('#help');
+  let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
 
   function run_code() {
@@ -97,6 +98,18 @@ document.addEventListener("DOMContentLoaded", function () {
     run_code();
   }
 
+  // Execute code by linking to it (pushing onto the history).
+  function link_to_code(code: string) {
+    let hash: string;
+    if (code === "") {
+      hash = '#';
+    } else {
+      hash = HASH_CODE + encodeURIComponent(code);
+    }
+    history.pushState(null, null, hash);
+    handle_hash();
+  }
+
   // Wait for code input and run it.
   let tid : number = null;
   codebox.addEventListener('input', function () {
@@ -110,14 +123,19 @@ document.addEventListener("DOMContentLoaded", function () {
   // Using a function here because JavaScript scoping is so sad.
   function add_example_handler(ex: HTMLElement) {
     ex.addEventListener('click', function () {
-      let code = ex.textContent;
-      history.pushState(null, null, HASH_CODE + encodeURIComponent(code));
-      handle_hash();
+      link_to_code(ex.textContent);
     });
   }
   for (let i = 0; i < examples.length; ++i) {
     add_example_handler(<HTMLElement> examples[i]);
   }
+
+  // Handle the "clear" button.
+  clearbtn.addEventListener('click', function () {
+    if (codebox.value != '') {
+      link_to_code('');
+    }
+  });
 
   // Handle the empty hash and any new ones that are set.
   window.addEventListener('hashchange', function () {

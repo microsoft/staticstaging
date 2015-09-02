@@ -15,6 +15,10 @@ textarea {
 .example:hover {
     background: rgba(0, 0, 0, 0.2);
 }
+#clear {
+    float: left;
+    margin-right: 1em;
+}
     </style>
 </head>
 <body>
@@ -25,6 +29,9 @@ textarea {
 <div class="row">
     <div class="col-sm-6">
         <textarea id="code"></textarea>
+        <button type="button" class="btn btn-secondary btn-sm" id="clear">
+            clear
+        </button>
         <p id="type"></p>
     </div>
 
