@@ -68,8 +68,12 @@ document.addEventListener("DOMContentLoaded", function () {
   let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
 
+  function code_value() {
+    return codebox.value.trim();
+  }
+
   function run_code() {
-    let code = codebox.value;
+    let code = code_value();
     if (code !== "") {
       let [err, tree, typ, res] = atw_run(code);
       show(err, errbox);
@@ -132,7 +136,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Handle the "clear" button.
   clearbtn.addEventListener('click', function () {
-    if (codebox.value != '') {
+    if (code_value() != '') {
       link_to_code('');
     }
   });
