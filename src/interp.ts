@@ -110,14 +110,16 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   // to zero) swap back to normal interpretation.
 
   // Just increment the stage further.
-  visit_quote(tree: QuoteNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+  visit_quote(tree: QuoteNode, [stage, env]: [number, Env]):
+      [SyntaxNode, Env] {
     let s = stage + 1;  // Recurse at a deeper stage.
     let [t, e] = quote_interp(tree.expr, s, env);
     return [merge(tree, { expr: t }), e];
   },
 
   // Decrement the stage and either swap back or just keep recursing.
-  visit_escape(tree: EscapeNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+  visit_escape(tree: EscapeNode, [stage, env]: [number, Env]):
+      [SyntaxNode, Env] {
     let s = stage - 1;  // The escaped expression runs "up" one stage.
     if (s == 0) {
       // Escaped back out of the top-level quote! Evaluate and splice.
@@ -140,7 +142,8 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   // *really* like to put this recursion in a library, but I haven't yet found
   // a clean way to do so.
 
-  visit_literal(tree: LiteralNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+  visit_literal(tree: LiteralNode, [stage, env]: [number, Env]):
+      [SyntaxNode, Env] {
     return [merge(tree), env];
   },
 
@@ -155,11 +158,13 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
     return [merge(tree, { expr: t }), e];
   },
 
-  visit_lookup(tree: LookupNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+  visit_lookup(tree: LookupNode, [stage, env]: [number, Env]):
+      [SyntaxNode, Env] {
     return [merge(tree), env];
   },
 
-  visit_binary(tree: BinaryNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+  visit_binary(tree: BinaryNode, [stage, env]: [number, Env]):
+      [SyntaxNode, Env] {
     let [t1, e1] = quote_interp(tree.lhs, stage, env);
     let [t2, e2] = quote_interp(tree.rhs, stage, e1);
     return [merge(tree, { lhs: t1, rhs: t2 }), e2];
@@ -175,7 +180,8 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   },
 }
 
-function quote_interp(tree: SyntaxNode, stage: number, env: Env): [SyntaxNode, Env] {
+function quote_interp(tree: SyntaxNode, stage: number, env: Env):
+    [SyntaxNode, Env] {
   return ast_visit(QuoteInterp, tree, [stage, env]);
 }
 
