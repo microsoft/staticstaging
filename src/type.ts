@@ -17,8 +17,7 @@ const INT = new IntType();
 
 // But function types are more complicated. Really wishing for ADTs here.
 class FunType {
-  params: Type[];
-  ret: Type;
+  constructor(public params: Type[], public ret: Type) {}
 };
 
 // These should probably be interned.
@@ -131,7 +130,27 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
   },
 
   visit_fun(tree: FunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
-    throw "unimplemented";
+    // Get the list of declared parameter types and accumulate them in an
+    // environment for type-checking the body.
+    let param_types : Type[] = [];
+    let body_env = overlay(env);
+    for (let param of tree.params) {
+      let ptype : Type;
+      if (param.type == "Int") {
+        ptype = mktype(INT, 0);
+      } else {
+        throw "TODO: parameters must be Int for now";
+      }
+      param_types.push(ptype);
+      body_env[param.name] = ptype;
+    }
+
+    // Check the body and get the return type.
+    let [ret_type, _] = check(tree.body, body_env, level);
+
+    // Construct the function type.
+    let fun_type = new FunType(param_types, ret_type);
+    return [mktype(fun_type, 0), env];
   },
 }
 

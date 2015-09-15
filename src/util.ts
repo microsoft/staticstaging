@@ -20,3 +20,9 @@ function _repeat(s: string, n: number): string {
   }
   return o;
 }
+
+// A bit of a hack that abuses prototypes to create overlay. Return a copy of
+// the argument where changing the new object won't affect the original.
+function overlay<T>(base: T): T {
+  return <T> Object.create(base);
+}
