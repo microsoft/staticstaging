@@ -1,3 +1,2 @@
-let f = fun x:Int -> 2 * x;
-f 9
-# -> 18
+fun x:Int -> x
+# -> (fun)
