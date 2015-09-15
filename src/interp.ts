@@ -89,7 +89,11 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     } else {
       throw "error: non-numeric operands to operator";
     }
-  }
+  },
+
+  visit_fun(tree: FunNode, env: Env): [Value, Env] {
+    throw "unimplemented";
+  },
 }
 
 function interp(tree: SyntaxNode, env: Env): [Value, Env] {
@@ -164,6 +168,10 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   visit_run(tree: RunNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
     let [t, e] = quote_interp(tree.expr, stage, env);
     return [merge(tree, { expr: t }), e];
+  },
+
+  visit_fun(tree: FunNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    throw "unimplemented";
   },
 }
 

@@ -1,3 +1,10 @@
+{
+  // From the PEG.js examples.
+  function build_list(first, rest, index) {
+    return [first].concat(extractList(rest, index));
+  }
+}
+
 Program
   = _ e:SeqExpr _
   { return e; }
@@ -6,7 +13,7 @@ Program
 // Syntax.
 
 Expr
-  = Let / Binary / TermExpr
+  = Let / Fun / Binary / TermExpr
 
 SeqExpr
   = Seq / Expr
@@ -39,12 +46,20 @@ Quote "quote"
   { return {tag: "quote", expr: e}; }
 
 Escape "escape"
-  = escape_open _ e: SeqExpr _ escape_close
+  = escape_open _ e:SeqExpr _ escape_close
   { return {tag: "escape", expr: e}; }
 
 Run "run"
   = run _ e:TermExpr
   { return {tag: "run", expr: e}; }
+
+Fun "lambda"
+  = fun _ ps:Param* _ arrow _ e:Expr
+  { return {tag: "fun", params: ps, body: e}; }
+
+Param "parameter declaration"
+  = i:ident _ typed _ t:ident _
+  { return {name: i, type: t}; }
 
 
 // Tokens.
@@ -85,6 +100,18 @@ escape_close "escape end"
 
 run "run operator"
   = "!"
+
+fun "fun"
+  = "fun"
+
+arrow "arrow"
+  = "->"
+
+typed "type marker"
+  = ":"
+
+comma "comma"
+  = ","
 
 
 // Empty space.

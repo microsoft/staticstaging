@@ -33,7 +33,15 @@ let Pretty : ASTVisit<void, string> = {
   },
 
   visit_run(tree: RunNode, _: void): string {
-    return "!" + pretty(tree);
+    return "!" + pretty(tree.expr);
+  },
+
+  visit_fun(tree: FunNode, _: void): string {
+    let params = "";
+    for (let param of tree.params) {
+      params += param.name + " " + param.type + " ";
+    }
+    return "fun " + params + "-> " + pretty(tree.body);
   },
 }
 

@@ -40,3 +40,8 @@ interface EscapeNode extends ExpressionNode {
 interface RunNode extends ExpressionNode {
   expr: ExpressionNode;
 }
+
+interface FunNode extends ExpressionNode {
+  params: {name: string, type: string}[];
+  body: ExpressionNode;
+}

@@ -114,6 +114,10 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
       throw "type error: running a non-code type";
     }
   },
+
+  visit_fun(tree: FunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
+    throw "unimplemented";
+  },
 }
 
 function check(tree: SyntaxNode, env: TypeEnv, level: number): [Type, TypeEnv] {
