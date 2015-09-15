@@ -20,9 +20,12 @@ function parse(filename: string, f: (tree: SyntaxNode) => void) {
       tree = parser.parse(s);
     } catch (e) {
       if (e instanceof parser.SyntaxError) {
-        console.log('parse error at '
-                    + filename + ':' + e.line + ',' + e.column
-                    + ': ' + e.message);
+        let loc = e.location.start;
+        console.log(
+          'parse error at '
+          + filename + ':' + loc.line + ',' + loc.column
+          + ': ' + e.message
+        );
         process.exit(1);
       } else {
         throw e;

@@ -18,8 +18,9 @@ function atw_run(code: string) : [string, string, string, string] {
   try {
     tree = parser.parse(code);
   } catch (e) {
+    let loc = e.location.start;
     let err = 'parse error at '
-              + e.line + ',' + e.column
+              + loc.line + ',' + loc.column
               + ': ' + e.message;
     return [err, null, null, null];
   }
