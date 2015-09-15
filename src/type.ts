@@ -2,19 +2,29 @@
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
 
+// A stage-qualified type.
 interface Type {
-  tag: TypeTag,
+  basic: BasicType,
   stage: number,
 }
 
-enum TypeTag {
-  Int,
-}
+// Two kinds of types.
+type BasicType = IntType | FunType;
+
+// There is only one Int type.
+class IntType {};
+const INT = new IntType();
+
+// But function types are more complicated. Really wishing for ADTs here.
+class FunType {
+  params: Type[];
+  ret: Type;
+};
 
 // These should probably be interned.
-function mktype(tag: TypeTag, stage: number = 0): Type {
+function mktype(basic: BasicType, stage: number = 0): Type {
   return {
-    tag: tag,
+    basic: basic,
     stage: stage,
   };
 }
@@ -28,7 +38,7 @@ function stage_env(e: TypeEnv, amount: number = 1): TypeEnv {
   let e2 : TypeEnv = {};
   for (let key in e) {
     let t : Type = e[key];
-    e2[key] = mktype(t.tag, t.stage + amount);
+    e2[key] = mktype(t.basic, t.stage + amount);
   }
   return e2;
 }
@@ -39,7 +49,7 @@ function stage_env(e: TypeEnv, amount: number = 1): TypeEnv {
 let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
   visit_literal(tree: LiteralNode, [env, level]: [TypeEnv, number]):
       [Type, TypeEnv] {
-    return [mktype(TypeTag.Int), env];
+    return [mktype(INT), env];
   },
 
   visit_seq(tree: SeqNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
@@ -70,8 +80,8 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     let [t1, e1] = check(tree.lhs, env, level);
     let [t2, e2] = check(tree.rhs, e1, level);
     if (t1.stage == 0 && t2.stage == 0) {
-      if (t1.tag == TypeTag.Int && t2.tag == TypeTag.Int) {
-        return [mktype(TypeTag.Int), env];
+      if (t1 instanceof IntType && t2 instanceof IntType) {
+        return [mktype(INT), env];
       } else {
         throw "type error: binary operation on non-numbers";
       }
@@ -87,7 +97,7 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     let [t, e] = check(tree.expr, inner_env, level + 1);
 
     // And move the result type back "down".
-    return [mktype(t.tag, t.stage + 1), env];
+    return [mktype(t.basic, t.stage + 1), env];
   },
 
   visit_escape(tree: EscapeNode, [env, level]: [TypeEnv, number]):
@@ -108,13 +118,13 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     }
 
     // Since it is safe to do so, move the resulting type back "up" one stage.
-    return [mktype(t.tag, t.stage - 1), env];
+    return [mktype(t.basic, t.stage - 1), env];
   },
 
   visit_run(tree: RunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
     let [t, e] = check(tree.expr, env, level);
     if (t.stage > 0) {
-      return [mktype(t.tag, t.stage - 1), e];
+      return [mktype(t.basic, t.stage - 1), e];
     } else {
       throw "type error: running a non-code type";
     }

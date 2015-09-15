@@ -63,7 +63,20 @@ function pretty_value(v: Value): string {
 
 // Format a type as a string.
 function pretty_type(t: Type): string {
-  let s = TypeTag[t.tag];
+  let s : string;
+  let bt = t.basic;
+  if (bt instanceof IntType) {
+    s = "Int";
+  } else if (bt instanceof FunType) {
+    s = "";
+    for (let pt of bt.params) {
+      s += pretty_type(pt) + " ";
+    }
+    s += "-> " + pretty_type(bt.ret);
+  } else {
+    throw "error: unknown type kind";
+  }
+
   if (t.stage > 0) {
     s = _repeat("<", t.stage) + s + _repeat(">", t.stage);
   } else if (t.stage < 0) {
