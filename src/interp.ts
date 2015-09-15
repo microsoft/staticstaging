@@ -106,6 +106,10 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     let fun = new Fun(param_names, tree.body);
     return [fun, env];
   },
+
+  visit_call(tree: CallNode, env: Env): [Value, Env] {
+    throw "unimplemented";
+  },
 }
 
 function interp(tree: SyntaxNode, env: Env): [Value, Env] {
@@ -191,6 +195,11 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
     let [t, e] = quote_interp(tree.body, stage, env);
     return [merge(tree, { body: t }), e];
   },
+
+  visit_call(tree: CallNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
+    // let [t, e] = quote_interp(tree.fun, stage, env);
+    throw "unimplemented";
+  }
 }
 
 function quote_interp(tree: SyntaxNode, stage: number, env: Env):

@@ -43,6 +43,14 @@ let Pretty : ASTVisit<void, string> = {
     }
     return "fun " + params + "-> " + pretty(tree.body);
   },
+
+  visit_call(tree: CallNode, _: void): string {
+    let s = pretty(tree.fun);
+    for (let arg of tree.args) {
+      s += " " + pretty(arg);
+    }
+    return s;
+  },
 }
 
 // Format an AST as a string.

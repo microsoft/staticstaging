@@ -154,6 +154,11 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     let fun_type = new FunType(param_types, ret_type);
     return [mktype(fun_type, 0), env];
   },
+
+  visit_call(tree: CallNode, [env, level]: [TypeEnv, number]):
+      [Type, TypeEnv] {
+    throw "unimplemented";
+  },
 }
 
 function check(tree: SyntaxNode, env: TypeEnv, level: number):

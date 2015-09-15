@@ -11,6 +11,7 @@ interface ASTVisit<P, R> {
   visit_escape(tree: EscapeNode, param: P): R;
   visit_run(tree: RunNode, param: P): R;
   visit_fun(tree: FunNode, param: P): R;
+  visit_call(tree: CallNode, param: P): R;
 }
 
 // Tag-based dispatch to the visit functions. A somewhat messy alternative
@@ -36,6 +37,8 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_run(<RunNode> tree, param);
     case "fun":
       return visitor.visit_fun(<FunNode> tree, param);
+    case "call":
+      return visitor.visit_call(<CallNode> tree, param);
 
     default:
       throw "error: unknown syntax node " + tree.tag;
