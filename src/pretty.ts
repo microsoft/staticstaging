@@ -56,6 +56,8 @@ function pretty_value(v: Value): string {
     return v.toString();
   } else if (v instanceof Code) {
     return "< " + pretty(v.expr) + " >";
+  } else if (v instanceof Fun) {
+    return "(fun)";
   } else {
     throw "error: unknown value kind";
   }
