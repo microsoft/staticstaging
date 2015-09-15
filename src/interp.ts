@@ -4,7 +4,7 @@
 
 // Dynamic syntax.
 
-type Value = number | Code;
+type Value = number | Code | Fun;
 
 interface Env {
   [key: string]: Value;
@@ -12,6 +12,10 @@ interface Env {
 
 class Code {
   constructor(public expr: ExpressionNode) {}
+}
+
+class Fun {
+  constructor(public params: string[], public body: ExpressionNode) {}
 }
 
 
@@ -92,7 +96,15 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
   },
 
   visit_fun(tree: FunNode, env: Env): [Value, Env] {
-    throw "unimplemented";
+    // Extract the parameter names.
+    let param_names : string[] = [];
+    for (let param of tree.params) {
+      param_names.push(param.name);
+    }
+
+    // Construct a function value.
+    let fun = new Fun(param_names, tree.body);
+    return [fun, env];
   },
 }
 
@@ -176,7 +188,8 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   },
 
   visit_fun(tree: FunNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    throw "unimplemented";
+    let [t, e] = quote_interp(tree.body, stage, env);
+    return [merge(tree, { body: t }), e];
   },
 }
 
