@@ -157,8 +157,52 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
   visit_call(tree: CallNode, [env, level]: [TypeEnv, number]):
       [Type, TypeEnv] {
-    throw "unimplemented";
+    // Get the type of function we're calling. It must be a stage-zero
+    // function.
+    let [target_type, e] = check(tree.fun, env, level);
+    if (target_type.stage != 0) {
+      throw "type error: call of wrong-stage value";
+    }
+    let fun_type : FunType;
+    let target_basic_type = target_type.basic;
+    if (target_basic_type instanceof FunType) {
+      fun_type = target_basic_type;
+    } else {
+      throw "type error: call of non-function";
+    }
+
+    // Check that the arguments are the right type.
+    if (tree.args.length != fun_type.params.length) {
+      throw "type error: mismatched argument length";
+    }
+    for (let i = 0; i < tree.args.length; ++i) {
+      let arg = tree.args[i];
+      let param_type = fun_type.params[i];
+
+      let arg_type : Type;
+      [arg_type, e] = check(arg, e, level);
+      if (!compatible(param_type, arg_type)) {
+        throw "type error: mismatched argument type at index " + i +
+          ": expected " + pretty_type(param_type) +
+          ", got " + pretty_type(arg_type);
+      }
+    }
+
+    // Yield the result type.
+    return [fun_type.ret, e];
   },
+}
+
+// Check type compatibility.
+function compatible(ltype: Type, rtype: Type): boolean {
+  if (ltype.stage != rtype.stage) {
+    return false;
+  }
+  if (ltype.basic instanceof IntType && rtype.basic instanceof IntType) {
+    return true;
+  } else {
+    throw "TODO: can't yet compare non-Int types";
+  }
 }
 
 function check(tree: SyntaxNode, env: TypeEnv, level: number):
