@@ -1,6 +1,7 @@
 /// <reference path="ast.ts" />
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
+/// <reference path="pretty.ts" />
 
 // A stage-qualified type.
 interface Type {
@@ -79,10 +80,11 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     let [t1, e1] = check(tree.lhs, env, level);
     let [t2, e2] = check(tree.rhs, e1, level);
     if (t1.stage == 0 && t2.stage == 0) {
-      if (t1 instanceof IntType && t2 instanceof IntType) {
+      if (t1.basic instanceof IntType && t2.basic instanceof IntType) {
         return [mktype(INT), env];
       } else {
-        throw "type error: binary operation on non-numbers";
+        throw "type error: binary operation on non-numbers (" +
+          pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
       }
     } else {
       throw "type error: binary operation on wrong stage";
