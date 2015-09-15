@@ -4,6 +4,7 @@
 /// <reference path="src/type.ts" />
 
 let fs = require('fs');
+let util = require('util');
 let parser = require('./parser.js');
 
 function parse(filename: string, f: (tree: SyntaxNode) => void) {
@@ -41,7 +42,7 @@ function main() {
 
   parse(fn, function (tree) {
     try {
-      console.log(tree);
+      console.log(util.inspect(tree, false, null));
     } catch (e) {
       console.log(e);
       return;

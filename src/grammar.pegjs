@@ -13,7 +13,7 @@ Program
 // Syntax.
 
 Expr
-  = Let / Fun / Binary / TermExpr
+  = Let / Fun / Binary / Call / TermExpr
 
 SeqExpr
   = Seq / Expr
@@ -56,10 +56,16 @@ Run "run"
 Fun "lambda"
   = fun _ ps:Param* _ arrow _ e:Expr
   { return {tag: "fun", params: ps, body: e}; }
-
-Param "parameter declaration"
+Param
   = i:ident _ typed _ t:ident _
   { return {name: i, type: t}; }
+
+Call "call"
+  = i:TermExpr _ as:Arg+
+  { return {tag: "call", fun: i, args: as}; }
+Arg
+  = e:TermExpr _
+  { return e; }
 
 
 // Tokens.

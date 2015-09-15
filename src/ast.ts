@@ -45,3 +45,8 @@ interface FunNode extends ExpressionNode {
   params: {name: string, type: string}[];
   body: ExpressionNode;
 }
+
+interface CallNode extends ExpressionNode {
+  fun: ExpressionNode;
+  args: ExpressionNode[];
+}
