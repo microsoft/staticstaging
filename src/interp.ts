@@ -108,7 +108,39 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
   },
 
   visit_call(tree: CallNode, env: Env): [Value, Env] {
-    throw "unimplemented";
+    // Evaluate the target expression to a function value.
+    let [target, e] = interp(tree.fun, env);
+    let fun : Fun;
+    if (target instanceof Fun) {
+      fun = target;
+    } else {
+      throw "error: call of non-function value";
+    }
+
+    // Evaluate the arguments. Produce a set of bindings for the function
+    // parameters.
+    let bindings : Env = {};
+    for (let i = 0; i < tree.args.length; ++i) {
+      let arg_expr = tree.args[i];
+      let param_name = fun.params[i];
+      let arg : Value;
+      [arg, e] = interp(arg_expr, e);
+      bindings[param_name] = arg;
+    }
+
+    // Create the environment for the function call. It overlays the
+    // environment after evaluating its argument expressions with the
+    // parameter bindings.
+    let call_env = overlay(e);
+    for (let key in bindings) {
+      call_env[key] = bindings[key];
+    }
+
+    // Evaluate the function body. Throw away any updates it makes to its
+    // environment.
+    let [ret, _] = interp(fun.body, call_env);
+
+    return [ret, e];
   },
 }
 
@@ -197,8 +229,14 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
   },
 
   visit_call(tree: CallNode, [stage, env]: [number, Env]): [SyntaxNode, Env] {
-    // let [t, e] = quote_interp(tree.fun, stage, env);
-    throw "unimplemented";
+    let [fun_tree, e] = quote_interp(tree.fun, stage, env);
+    let arg_trees : SyntaxNode[] = [];
+    for (let arg in tree.args) {
+      let arg_tree : SyntaxNode;
+      [arg_tree, e] = quote_interp(arg, stage, e);
+      arg_trees.push(arg_tree);
+    }
+    return [merge(tree, { fun: fun_tree, args: arg_trees }), e];
   }
 }
 
