@@ -14,6 +14,8 @@ type Pers = Value[];
 class Code {
   constructor(
     public expr: ExpressionNode,
+    // The Pers is a Code value's equivalent of a closure's environment. It is
+    // a list of values associated with the Persist nodes in the expression.
     public persisted: Pers
   ) {}
 }
@@ -189,7 +191,9 @@ let QuoteInterp : ASTVisit<[number, Env, Pers],
         }
 
       } else if (tree.kind === "persist") {
-        throw "TODO: create a persist node here";
+        let p = pers.concat([v]);
+        let expr : PersistNode = {tag: "persist", index: p.length - 1};
+        return [expr, e, p];
 
       } else {
         throw "error: unknown persist kind";
