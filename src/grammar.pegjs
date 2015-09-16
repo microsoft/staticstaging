@@ -19,7 +19,7 @@ SeqExpr
   = Seq / Expr
 
 TermExpr
-  = Literal / Lookup / Quote / Escape / Run
+  = Literal / Lookup / Quote / Splice / Persist / Run
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -45,9 +45,13 @@ Quote "quote"
   = quote_open _ e:SeqExpr _ quote_close
   { return {tag: "quote", expr: e}; }
 
-Escape "escape"
-  = escape_open _ e:SeqExpr _ escape_close
-  { return {tag: "escape", expr: e}; }
+Splice "splice escape"
+  = splice_open _ e:SeqExpr _ splice_close
+  { return {tag: "escape", expr: e, kind: "splice"}; }
+
+Persist "persist escape"
+  = persist_open _ e:SeqExpr _ persist_close
+  { return {tag: "escape", expr: e, kind: "persist"}; }
 
 Run "run"
   = run _ e:TermExpr
@@ -98,10 +102,16 @@ quote_open "quote start"
 quote_close "quote end"
   = ">"
 
-escape_open "escape begin"
+splice_open "splice start"
   = "["
 
-escape_close "escape end"
+splice_close "splice end"
+  = "]"
+
+persist_open "persist start"
+  = "%["
+
+persist_close "persist end"
   = "]"
 
 run "run operator"

@@ -35,6 +35,7 @@ interface QuoteNode extends ExpressionNode {
 
 interface EscapeNode extends ExpressionNode {
   expr: ExpressionNode;
+  kind: string;  // splice or persist
 }
 
 interface RunNode extends ExpressionNode {
