@@ -37,21 +37,35 @@ function parse(filename: string, f: (tree: SyntaxNode) => void) {
 }
 
 function main() {
-  let fn = process.argv[2];
+  let args = process.argv.slice(2);
+
+  // Check for a verbose -v flag.
+  let verbose = false;
+  if (args[0] === "-v") {
+    verbose = true;
+    args.shift();
+  }
+
+  // Get the filename.
+  let fn = args.shift();
   if (!fn) {
-    console.log("no input provided");
+    console.log("usage: " + process.argv[1] + " [-v] PROGRAM");
     process.exit(1);
   }
 
   parse(fn, function (tree) {
     try {
-      console.log(util.inspect(tree, false, null));
+      if (verbose) {
+        console.log(util.inspect(tree, false, null));
+      }
     } catch (e) {
       console.log(e);
       return;
     }
     try {
-      console.log(pretty_type(typecheck(tree)));
+      if (verbose) {
+        console.log(pretty_type(typecheck(tree)));
+      }
     } catch (e) {
       console.log(e);
       return;
