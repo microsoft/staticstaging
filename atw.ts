@@ -63,8 +63,9 @@ function main() {
       return;
     }
     try {
+      let type = typecheck(tree);
       if (verbose) {
-        console.log(pretty_type(typecheck(tree)));
+        console.log(pretty_type(type));
       }
     } catch (e) {
       console.log(e);
