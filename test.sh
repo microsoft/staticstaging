@@ -6,7 +6,7 @@ output=$(node atw.js $fn)
 expected=$(sed -n 's/^# -> \(.*\)/\1/p' $fn)
 
 if [ "$expected" = "type error" ] ; then
-    [[ "$output" == type\ error:* ]]
+    echo $output | sed -n '/^type error:/q ; q1'
 else
     [ "$output" = "$expected" ]
 fi
