@@ -3,5 +3,8 @@ cache:
     directories:
         - node_modules
         - typings
+env:
+    global:
+        - TSD_GITHUB_TOKEN=ef474500309daea53d5991b3079159a29520a40b
 install: make
 script: make test
