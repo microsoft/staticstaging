@@ -166,13 +166,23 @@ let QuoteInterp : ASTVisit<[number, Env], [SyntaxNode, Env]> = {
       [SyntaxNode, Env] {
     let s = stage - 1;  // The escaped expression runs "up" one stage.
     if (s == 0) {
-      // Escaped back out of the top-level quote! Evaluate and splice.
+      // Escaped back out of the top-level quote! Evaluate it and integrate it
+      // with the quote, either by splicing or persisting.
       let [v, e] = interp(tree.expr, env);
-      // The resulting expression must be a quote we can splice.
-      if (v instanceof Code) {
-        return [v.expr, e];
+
+      if (tree.kind === "splice") {
+        // The resulting expression must be a quote we can splice.
+        if (v instanceof Code) {
+          return [v.expr, e];
+        } else {
+          throw "error: escape produced non-code value " + v;
+        }
+
+      } else if (tree.kind === "persist") {
+        throw "TODO: create a persist node here";
+
       } else {
-        throw "error: escape produced non-code value " + v;
+        throw "error: unknown persist kind";
       }
     } else {
       // Keep going.

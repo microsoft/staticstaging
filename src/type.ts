@@ -112,14 +112,23 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     let inner_env = stage_env(env, 1);
     let [t, e] = check(tree.expr, inner_env, level - 1);
 
-    // Ensure that the result of the escape's expression is code, so it can be
-    // spliced.
-    if (t.stage < 1) {
-      throw "type error: escape produced non-code value";
-    }
+    if (tree.kind === "splice") {
+      // Ensure that the result of the escape's expression is code, so it can be
+      // spliced.
+      if (t.stage < 1) {
+        throw "type error: escape produced non-code value";
+      }
 
-    // Since it is safe to do so, move the resulting type back "up" one stage.
-    return [mktype(t.basic, t.stage - 1), env];
+      // Since it is safe to do so, move the resulting type back "up" one stage.
+      return [mktype(t.basic, t.stage - 1), env];
+
+    } else if (tree.kind === "persist") {
+      // A persist escape has the same type as the outer type.
+      return [t, env];
+
+    } else {
+      throw "error: unknown escape kind";
+    }
   },
 
   visit_run(tree: RunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
@@ -127,7 +136,7 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     if (t.stage > 0) {
       return [mktype(t.basic, t.stage - 1), e];
     } else {
-      throw "type error: running a non-code type";
+      throw "type error: running a non-code type " + pretty_type(t);
     }
   },
 
