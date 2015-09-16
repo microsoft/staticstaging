@@ -51,6 +51,10 @@ let Pretty : ASTVisit<void, string> = {
     }
     return s;
   },
+
+  visit_persist(tree: PersistNode, _: void): string {
+    return "%" + tree.index;
+  },
 }
 
 // Format an AST as a string.

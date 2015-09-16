@@ -144,6 +144,10 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
 
     return [ret, e];
   },
+
+  visit_persist(tree: PersistNode, env: Env): [Value, Env] {
+    throw "TODO: interpret persist";
+  },
 }
 
 function interp(tree: SyntaxNode, env: Env): [Value, Env] {
@@ -262,7 +266,12 @@ let QuoteInterp : ASTVisit<[number, Env, Pers],
       arg_trees.push(arg_tree);
     }
     return [merge(tree, { fun: fun_tree, args: arg_trees }), e, p];
-  }
+  },
+
+  visit_persist(tree: PersistNode, [stage, env, pers]: [number, Env, Pers]):
+      [SyntaxNode, Env, Pers] {
+    throw "error: persist cannot appear in source code";
+  },
 }
 
 function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers):

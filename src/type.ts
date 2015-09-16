@@ -200,6 +200,12 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     // Yield the result type.
     return [fun_type.ret, e];
   },
+
+
+  visit_persist(tree: PersistNode, [env, level]: [TypeEnv, number]):
+      [Type, TypeEnv] {
+    throw "error: persist cannot be type-checked in source code";
+  },
 }
 
 // Check type compatibility.
