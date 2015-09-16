@@ -17,3 +17,5 @@ if [ $success -eq 0 ] ; then
 else
     echo $name ✘: $output \($expected\)
 fi
+
+exit $success

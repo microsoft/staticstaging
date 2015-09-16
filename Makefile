@@ -46,7 +46,9 @@ clean:
 test: $(CLI_JS)
 	@ for name in $(TESTS) ; do \
 		sh test.sh test/$$name.atw $$name ; \
-	done
+		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
+	done ; \
+	[ ! $$failed ]
 
 .PHONY: deploy
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh
