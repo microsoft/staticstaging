@@ -6,7 +6,7 @@ SRCDIR := src
 SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts
 TESTS := print comment whitespace seq let add quote dump typeerror escape \
 	splice badsplice topescape nesteddump nestedrun nested func call \
-	quotefunc closure persist
+	quotefunc closure persist nestedpersist
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
