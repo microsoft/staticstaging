@@ -34,25 +34,25 @@ class Fun {
 // This first set of rules applies at the "top level", for ordinary execution.
 // Escapes are not allowed at this level. At a quote, we transition to a
 // different set of rules.
-let Interp : ASTVisit<Env, [Value, Env]> = {
-  visit_literal(tree: LiteralNode, env: Env): [Value, Env] {
+let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
+  visit_literal(tree: LiteralNode, [env, pers]: [Env, Pers]): [Value, Env] {
     return [tree.value, env];
   },
 
-  visit_seq(tree: SeqNode, env: Env): [Value, Env] {
-    let [v, e] = interp(tree.lhs, env);
-    return interp(tree.rhs, e);
+  visit_seq(tree: SeqNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    let [v, e] = interp(tree.lhs, env, pers);
+    return interp(tree.rhs, e, pers);
   },
 
-  visit_let(tree: LetNode, env: Env): [Value, Env] {
-    let [v, e] = interp(tree.expr, env);
+  visit_let(tree: LetNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    let [v, e] = interp(tree.expr, env, pers);
     // Abuse prototypes to create an overlay environment.
     let e2 = <Env> Object.create(e);
     e2[tree.ident] = v;
     return [v, e2];
   },
 
-  visit_lookup(tree: LookupNode, env: Env): [Value, Env] {
+  visit_lookup(tree: LookupNode, [env, pers]: [Env, Pers]): [Value, Env] {
     let v = env[tree.ident];
     if (v === undefined) {
       throw "error: undefined variable " + tree.ident;
@@ -60,19 +60,19 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     return [v, env];
   },
 
-  visit_quote(tree: RunNode, env: Env): [Value, Env] {
+  visit_quote(tree: RunNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Jump to any escapes and execute them.
     let [t, e, p] = quote_interp(tree.expr, 1, env, []);
     // Wrap the resulting AST as a code value.
     return [new Code(t, p), e];
   },
 
-  visit_escape(tree: EscapeNode, env: Env): [Value, Env] {
+  visit_escape(tree: EscapeNode, [env, pers]: [Env, Pers]): [Value, Env] {
     throw "error: top-level escape";
   },
 
-  visit_run(tree: RunNode, env: Env): [Value, Env] {
-    let [v, e] = interp(tree.expr, env);
+  visit_run(tree: RunNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    let [v, e] = interp(tree.expr, env, pers);
     if (v instanceof Code) {
       // Fresh environment for now.
       let res = interpret(v.expr);
@@ -82,9 +82,9 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     }
   },
 
-  visit_binary(tree: BinaryNode, env: Env): [Value, Env] {
-    let [v1, e1] = interp(tree.lhs, env);
-    let [v2, e2] = interp(tree.rhs, e1);
+  visit_binary(tree: BinaryNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    let [v1, e1] = interp(tree.lhs, env, pers);
+    let [v2, e2] = interp(tree.rhs, e1, pers);
     if (typeof v1 === 'number' && typeof v2 === 'number') {
       let v: Value;
       switch (tree.op) {
@@ -105,7 +105,7 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     }
   },
 
-  visit_fun(tree: FunNode, env: Env): [Value, Env] {
+  visit_fun(tree: FunNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Extract the parameter names.
     let param_names : string[] = [];
     for (let param of tree.params) {
@@ -117,9 +117,9 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     return [fun, env];
   },
 
-  visit_call(tree: CallNode, env: Env): [Value, Env] {
+  visit_call(tree: CallNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Evaluate the target expression to a function value.
-    let [target, e] = interp(tree.fun, env);
+    let [target, e] = interp(tree.fun, env, pers);
     let fun : Fun;
     if (target instanceof Fun) {
       fun = target;
@@ -134,24 +134,29 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
       let arg_expr = tree.args[i];
       let param_name = fun.params[i];
       let arg : Value;
-      [arg, e] = interp(arg_expr, e);
+      [arg, e] = interp(arg_expr, e, pers);
       call_env[param_name] = arg;
     }
 
     // Evaluate the function body. Throw away any updates it makes to its
     // environment.
-    let [ret, _] = interp(fun.body, call_env);
+    let [ret, _] = interp(fun.body, call_env, pers);
 
     return [ret, e];
   },
 
-  visit_persist(tree: PersistNode, env: Env): [Value, Env] {
-    throw "TODO: interpret persist";
+  visit_persist(tree: PersistNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    if (tree.index < 0 || tree.index >= pers.length) {
+      throw "error: persist index (" + tree.index +
+            ") out of range (" + pers.length + ")";
+    }
+    let value = pers[tree.index];
+    return [value, env];
   },
 }
 
-function interp(tree: SyntaxNode, env: Env): [Value, Env] {
-  return ast_visit(Interp, tree, env);
+function interp(tree: SyntaxNode, env: Env, pers: Pers): [Value, Env] {
+  return ast_visit(Interp, tree, [env, pers]);
 }
 
 // A second set of rules applies inside at least one quote.
@@ -184,7 +189,7 @@ let QuoteInterp : ASTVisit<[number, Env, Pers],
     if (s == 0) {
       // Escaped back out of the top-level quote! Evaluate it and integrate it
       // with the quote, either by splicing or persisting.
-      let [v, e] = interp(tree.expr, env);
+      let [v, e] = interp(tree.expr, env, []); // TODO need to "resume" Pers!
 
       if (tree.kind === "splice") {
         // The resulting expression must be a quote we can splice.
@@ -281,6 +286,6 @@ function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers):
 
 // Helper to execute to a value in an empty initial environment.
 function interpret(program: SyntaxNode): Value {
-  let [v, e] = interp(program, {});
+  let [v, e] = interp(program, {}, []);
   return v;
 }
