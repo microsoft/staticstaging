@@ -1,0 +1,3 @@
+langauge: node_js
+install: make
+script: make test
