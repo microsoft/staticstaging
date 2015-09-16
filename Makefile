@@ -44,10 +44,8 @@ clean:
 
 .PHONY: test
 test: $(CLI_JS)
-	@ for fn in $(TESTS) ; do \
-	    echo ; \
-		echo $$fn ; \
-		node atw.js test/$$fn.atw ; \
+	@ for name in $(TESTS) ; do \
+		sh test.sh test/$$name.atw $$name ; \
 	done
 
 .PHONY: deploy
