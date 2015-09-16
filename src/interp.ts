@@ -15,7 +15,11 @@ class Code {
 }
 
 class Fun {
-  constructor(public params: string[], public body: ExpressionNode) {}
+  constructor(
+    public params: string[],
+    public body: ExpressionNode,
+    public env: Env
+  ) {}
 }
 
 
@@ -103,7 +107,7 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
     }
 
     // Construct a function value.
-    let fun = new Fun(param_names, tree.body);
+    let fun = new Fun(param_names, tree.body, env);
     return [fun, env];
   },
 
@@ -117,23 +121,15 @@ let Interp : ASTVisit<Env, [Value, Env]> = {
       throw "error: call of non-function value";
     }
 
-    // Evaluate the arguments. Produce a set of bindings for the function
-    // parameters.
-    let bindings : Env = {};
+    // Evaluate the arguments. Bind the function parameters and overlay them
+    // on the function's closed environment.
+    let call_env : Env = overlay(fun.env);
     for (let i = 0; i < tree.args.length; ++i) {
       let arg_expr = tree.args[i];
       let param_name = fun.params[i];
       let arg : Value;
       [arg, e] = interp(arg_expr, e);
-      bindings[param_name] = arg;
-    }
-
-    // Create the environment for the function call. It overlays the
-    // environment after evaluating its argument expressions with the
-    // parameter bindings.
-    let call_env = overlay(e);
-    for (let key in bindings) {
-      call_env[key] = bindings[key];
+      call_env[param_name] = arg;
     }
 
     // Evaluate the function body. Throw away any updates it makes to its
