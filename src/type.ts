@@ -33,6 +33,11 @@ interface TypeEnv {
   [key: string]: Type;
 }
 
+// An environment "stack" places the current stage at the beginning. Prior
+// stages are to the right. Normal accesses must refer to the top environment;
+// subsequent ones are "auto-persists".
+type TypeEnvStack = TypeEnv[];
+
 // Adjust the stage of every type in an environment.
 function stage_env(e: TypeEnv, amount: number = 1): TypeEnv {
   let e2 : TypeEnv = {};
@@ -59,9 +64,7 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
   visit_let(tree: LetNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
     let [t, e] = check(tree.expr, env, level);
-    // Like the interpreter, we abuse prototypes to create an overlay
-    // environment.
-    let e2 = <TypeEnv> Object.create(e);
+    let e2 = overlay(e); // Update value in an overlay environment.
     e2[tree.ident] = t;
     return [t, e2];
   },
