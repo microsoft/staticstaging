@@ -46,8 +46,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
 
   visit_let(tree: LetNode, [env, pers]: [Env, Pers]): [Value, Env] {
     let [v, e] = interp(tree.expr, env, pers);
-    // Abuse prototypes to create an overlay environment.
-    let e2 = <Env> Object.create(e);
+    let e2 = overlay(e);  // Update the value in an overlay.
     e2[tree.ident] = v;
     return [v, e2];
   },

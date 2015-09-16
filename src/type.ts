@@ -64,7 +64,7 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
   visit_let(tree: LetNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
     let [t, e] = check(tree.expr, env, level);
-    let e2 = overlay(e); // Update value in an overlay environment.
+    let e2 = overlay(e); // Update type in an overlay environment.
     e2[tree.ident] = t;
     return [t, e2];
   },
