@@ -62,6 +62,11 @@ double 21</code></pre>
             <pre class="example"><code>let x = &lt;5&gt;;
 37 + x</code></pre>
 
+            <p>There's also another kind of escape that <em>persists</em>
+            outer-stage values:</p>
+            <pre class="example"><code>let x = 5;
+!&lt; 37 + %[x] &gt;</code></pre>
+
             <p>Click on an example above to run it.</p>
         </div>
         <div id="error" class="alert alert-danger"></div>
