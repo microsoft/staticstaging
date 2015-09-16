@@ -16,7 +16,7 @@ class Code {
     public expr: ExpressionNode,
     // The Pers is a Code value's equivalent of a closure's environment. It is
     // a list of values associated with the Persist nodes in the expression.
-    public persisted: Pers
+    public pers: Pers
   ) {}
 }
 
@@ -74,8 +74,8 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   visit_run(tree: RunNode, [env, pers]: [Env, Pers]): [Value, Env] {
     let [v, e] = interp(tree.expr, env, pers);
     if (v instanceof Code) {
-      // Fresh environment for now.
-      let res = interpret(v.expr);
+      // Execute the code in a fresh environment, with its persists.
+      let res = interpret(v.expr, /* pers */ v.pers);
       return [res, env];
     } else {
       throw "error: tried to run non-code value";
@@ -285,7 +285,7 @@ function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers):
 }
 
 // Helper to execute to a value in an empty initial environment.
-function interpret(program: SyntaxNode): Value {
-  let [v, e] = interp(program, {}, []);
+function interpret(program: SyntaxNode, pers: Pers = []): Value {
+  let [v, e] = interp(program, {}, pers);
   return v;
 }
