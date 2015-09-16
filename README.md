@@ -1,6 +1,8 @@
 Alltheworld
 ===========
 
+[![build status](https://travis-ci.org/sampsyo/alltheworld.svg)](https://travis-ci.org/sampsyo/alltheworld)
+
 A toy language with:
 
 * multi-stage programming
