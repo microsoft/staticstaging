@@ -62,7 +62,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
 
   visit_quote(tree: RunNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Jump to any escapes and execute them.
-    let [t, e, p] = quote_interp(tree.expr, 1, env, []);
+    let [t, e, p] = quote_interp(tree.expr, 1, env, [], pers);
     // Wrap the resulting AST as a code value.
     return [new Code(t, p), e];
   },
@@ -165,31 +165,36 @@ function interp(tree: SyntaxNode, env: Env, pers: Pers): [Value, Env] {
 // escapes that bring us back down to level 0. When this happens, we switch
 // back to the first rule set.
 //
-// We also accumulate a Pers, which is a list of values produced by each
-// *persistent* escape. The Persist nodes in the code contain indices into
-// this array.
-let QuoteInterp : ASTVisit<[number, Env, Pers],
+// Threaded through all of this, in addition to the level number, is an Env
+// that can get updated every time we hit an escape. There's also a Pers,
+// called `opers` for "outer" or "original", that makes up the rest of the
+// outer interpreter state for when we need to resume in an escape.
+//
+// We also accumulate a *new* Pers, just called `pers`, which is a list of
+// values produced by each *persistent* escape. The Persist nodes in the code
+// contain indices into this array.
+let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
                            [SyntaxNode, Env, Pers]> = {
   // The `quote` and `escape` cases are the only interesting ones. We
   // increment/decrement the stage number and (when the stage gets back down
   // to zero) swap back to normal interpretation.
 
   // Just increment the stage further.
-  visit_quote(tree: QuoteNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_quote(tree: QuoteNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     let s = stage + 1;  // Recurse at a deeper stage.
-    let [t, e, p] = quote_interp(tree.expr, s, env, pers);
+    let [t, e, p] = quote_interp(tree.expr, s, env, pers, opers);
     return [merge(tree, { expr: t }), e, p];
   },
 
   // Decrement the stage and either swap back or just keep recursing.
-  visit_escape(tree: EscapeNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_escape(tree: EscapeNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     let s = stage - 1;  // The escaped expression runs "up" one stage.
     if (s == 0) {
       // Escaped back out of the top-level quote! Evaluate it and integrate it
       // with the quote, either by splicing or persisting.
-      let [v, e] = interp(tree.expr, env, []); // TODO need to "resume" Pers!
+      let [v, e] = interp(tree.expr, env, opers);
 
       if (tree.kind === "splice") {
         // The resulting expression must be a quote we can splice.
@@ -209,7 +214,7 @@ let QuoteInterp : ASTVisit<[number, Env, Pers],
       }
     } else {
       // Keep going.
-      let [t, e, p] = quote_interp(tree.expr, s, env, pers);
+      let [t, e, p] = quote_interp(tree.expr, s, env, pers, opers);
       return [merge(tree, { expr: t }), e, p];
     }
   },
@@ -219,69 +224,69 @@ let QuoteInterp : ASTVisit<[number, Env, Pers],
   // *really* like to put this recursion in a library, but I haven't yet found
   // a clean way to do so.
 
-  visit_literal(tree: LiteralNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_literal(tree: LiteralNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     return [merge(tree), env, pers];
   },
 
-  visit_seq(tree: SeqNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_seq(tree: SeqNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    let [t1, e1, p1] = quote_interp(tree.lhs, stage, env, pers);
-    let [t2, e2, p2] = quote_interp(tree.rhs, stage, e1, p1);
+    let [t1, e1, p1] = quote_interp(tree.lhs, stage, env, pers, opers);
+    let [t2, e2, p2] = quote_interp(tree.rhs, stage, e1, p1, opers);
     return [merge(tree, { lhs: t1, rhs: t2 }), e2, p2];
   },
 
-  visit_let(tree: LetNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_let(tree: LetNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    let [t, e, p] = quote_interp(tree.expr, stage, env, pers);
+    let [t, e, p] = quote_interp(tree.expr, stage, env, pers, opers);
     return [merge(tree, { expr: t }), e, p];
   },
 
-  visit_lookup(tree: LookupNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_lookup(tree: LookupNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     return [merge(tree), env, pers];
   },
 
-  visit_binary(tree: BinaryNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_binary(tree: BinaryNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    let [t1, e1, p1] = quote_interp(tree.lhs, stage, env, pers);
-    let [t2, e2, p2] = quote_interp(tree.rhs, stage, e1, p1);
+    let [t1, e1, p1] = quote_interp(tree.lhs, stage, env, pers, opers);
+    let [t2, e2, p2] = quote_interp(tree.rhs, stage, e1, p1, opers);
     return [merge(tree, { lhs: t1, rhs: t2 }), e2, p2];
   },
 
-  visit_run(tree: RunNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_run(tree: RunNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    let [t, e, p] = quote_interp(tree.expr, stage, env, pers);
+    let [t, e, p] = quote_interp(tree.expr, stage, env, pers, opers);
     return [merge(tree, { expr: t }), e, p];
   },
 
-  visit_fun(tree: FunNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_fun(tree: FunNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    let [t, e, p] = quote_interp(tree.body, stage, env, pers);
+    let [t, e, p] = quote_interp(tree.body, stage, env, pers, opers);
     return [merge(tree, { body: t }), e, p];
   },
 
-  visit_call(tree: CallNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_call(tree: CallNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    let [fun_tree, e, p] = quote_interp(tree.fun, stage, env, pers);
+    let [fun_tree, e, p] = quote_interp(tree.fun, stage, env, pers, opers);
     let arg_trees : SyntaxNode[] = [];
     for (let arg in tree.args) {
       let arg_tree : SyntaxNode;
-      [arg_tree, e, p] = quote_interp(arg, stage, e, p);
+      [arg_tree, e, p] = quote_interp(arg, stage, e, p, opers);
       arg_trees.push(arg_tree);
     }
     return [merge(tree, { fun: fun_tree, args: arg_trees }), e, p];
   },
 
-  visit_persist(tree: PersistNode, [stage, env, pers]: [number, Env, Pers]):
+  visit_persist(tree: PersistNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     throw "error: persist cannot appear in source code";
   },
 }
 
-function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers):
+function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers, opers: Pers):
     [SyntaxNode, Env, Pers] {
-  return ast_visit(QuoteInterp, tree, [stage, env, pers]);
+  return ast_visit(QuoteInterp, tree, [stage, env, pers, opers]);
 }
 
 // Helper to execute to a value in an empty initial environment.
