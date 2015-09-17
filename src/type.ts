@@ -3,14 +3,8 @@
 /// <reference path="util.ts" />
 /// <reference path="pretty.ts" />
 
-// A stage-qualified type.
-interface Type {
-  basic: BasicType,
-  stage: number,
-}
-
-// Two kinds of types.
-type BasicType = IntType | FunType;
+// The kinds of types.
+type Type = IntType | FunType | CodeType;
 
 // There is only one Int type.
 class IntType {};
@@ -21,13 +15,10 @@ class FunType {
   constructor(public params: Type[], public ret: Type) {}
 };
 
-// These should probably be interned.
-function mktype(basic: BasicType, stage: number = 0): Type {
-  return {
-    basic: basic,
-    stage: stage,
-  };
-}
+// Same with code types.
+class CodeType {
+  constructor(public inner: Type) {}
+};
 
 // A single frame in a type environment holds all the bindings for one stage.
 interface TypeEnvFrame {
@@ -45,7 +36,7 @@ type TypeEnv = TypeEnvFrame[];
 let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
   visit_literal(tree: LiteralNode, [env, level]: [TypeEnv, number]):
       [Type, TypeEnv] {
-    return [mktype(INT), env];
+    return [INT, env];
   },
 
   visit_seq(tree: SeqNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
@@ -74,15 +65,11 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
       [Type, TypeEnv] {
     let [t1, e1] = check(tree.lhs, env, level);
     let [t2, e2] = check(tree.rhs, e1, level);
-    if (t1.stage == 0 && t2.stage == 0) {
-      if (t1.basic instanceof IntType && t2.basic instanceof IntType) {
-        return [mktype(INT), env];
-      } else {
-        throw "type error: binary operation on non-numbers (" +
-          pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
-      }
+    if (t1 instanceof IntType && t2 instanceof IntType) {
+      return [INT, env];
     } else {
-      throw "type error: binary operation on wrong stage";
+      throw "type error: binary operation on non-numbers (" +
+        pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
     }
   },
 
@@ -93,7 +80,7 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     let [t, e] = check(tree.expr, inner_env, level + 1);
 
     // Move the result type "down" to a code type.
-    return [mktype(t.basic, t.stage + 1), env];
+    return [new CodeType(t), env];
   },
 
   visit_escape(tree: EscapeNode, [env, level]: [TypeEnv, number]):
@@ -109,14 +96,14 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     let [t, e] = check(tree.expr, inner_env, level - 1);
 
     if (tree.kind === "splice") {
-      // Ensure that the result of the escape's expression is code, so it can be
+      // The result of the escape's expression must be code, so it can be
       // spliced.
-      if (t.stage < 1) {
+      if (t instanceof CodeType) {
+        // Move the type "up" one stage.
+        return [t.inner, env];
+      } else {
         throw "type error: escape produced non-code value";
       }
-
-      // Since it is safe to do so, move the resulting type back "up" one stage.
-      return [mktype(t.basic, t.stage - 1), env];
 
     } else if (tree.kind === "persist") {
       // A persist escape has the same type as the outer type.
@@ -129,8 +116,8 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
   visit_run(tree: RunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
     let [t, e] = check(tree.expr, env, level);
-    if (t.stage > 0) {
-      return [mktype(t.basic, t.stage - 1), e];
+    if (t instanceof CodeType) {
+      return [t.inner, e];
     } else {
       throw "type error: running a non-code type " + pretty_type(t);
     }
@@ -144,7 +131,7 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     for (let param of tree.params) {
       let ptype : Type;
       if (param.type == "Int") {
-        ptype = mktype(INT, 0);
+        ptype = INT;
       } else {
         throw "TODO: parameters must be Int for now";
       }
@@ -158,21 +145,16 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
     // Construct the function type.
     let fun_type = new FunType(param_types, ret_type);
-    return [mktype(fun_type, 0), env];
+    return [fun_type, env];
   },
 
   visit_call(tree: CallNode, [env, level]: [TypeEnv, number]):
       [Type, TypeEnv] {
-    // Get the type of function we're calling. It must be a stage-zero
-    // function.
+    // Check the type of the thing we're calling. It must be a function.
     let [target_type, e] = check(tree.fun, env, level);
-    if (target_type.stage != 0) {
-      throw "type error: call of wrong-stage value";
-    }
     let fun_type : FunType;
-    let target_basic_type = target_type.basic;
-    if (target_basic_type instanceof FunType) {
-      fun_type = target_basic_type;
+    if (target_type instanceof FunType) {
+      fun_type = target_type;
     } else {
       throw "type error: call of non-function";
     }
@@ -207,10 +189,7 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
 // Check type compatibility.
 function compatible(ltype: Type, rtype: Type): boolean {
-  if (ltype.stage != rtype.stage) {
-    return false;
-  }
-  if (ltype.basic instanceof IntType && rtype.basic instanceof IntType) {
+  if (ltype instanceof IntType && rtype instanceof IntType) {
     return true;
   } else {
     throw "TODO: can't yet compare non-Int types";
