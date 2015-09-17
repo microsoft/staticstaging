@@ -29,24 +29,15 @@ function mktype(basic: BasicType, stage: number = 0): Type {
   };
 }
 
-interface TypeEnv {
+// A single frame in a type environment holds all the bindings for one stage.
+interface TypeEnvFrame {
   [key: string]: Type;
 }
 
-// An environment "stack" places the current stage at the beginning. Prior
-// stages are to the right. Normal accesses must refer to the top environment;
-// subsequent ones are "auto-persists".
-type TypeEnvStack = TypeEnv[];
-
-// Adjust the stage of every type in an environment.
-function stage_env(e: TypeEnv, amount: number = 1): TypeEnv {
-  let e2 : TypeEnv = {};
-  for (let key in e) {
-    let t : Type = e[key];
-    e2[key] = mktype(t.basic, t.stage + amount);
-  }
-  return e2;
-}
+// An environment is a stack stack with the current stage at the front of the
+// list. Prior stages are to the right. Normal accesses must refer to the top
+// environment frame; subsequent ones are "auto-persists".
+type TypeEnv = TypeEnvFrame[];
 
 
 // Type rules.
@@ -64,14 +55,15 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
   visit_let(tree: LetNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
     let [t, e] = check(tree.expr, env, level);
-    let e2 = overlay(e); // Update type in an overlay environment.
-    e2[tree.ident] = t;
+    let head = overlay(hd(e)); // Update type in an overlay environment.
+    head[tree.ident] = t;
+    let e2 = cons(head, tl(e));
     return [t, e2];
   },
 
   visit_lookup(tree: LookupNode, [env, level]: [TypeEnv, number]):
       [Type, TypeEnv] {
-    let t = env[tree.ident];
+    let t = hd(env)[tree.ident];
     if (t === undefined) {
       throw "type error: undefined variable " + tree.ident;
     }
@@ -96,11 +88,11 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
   visit_quote(tree: QuoteNode, [env, level]: [TypeEnv, number]):
       [Type, TypeEnv] {
-    // Move the current context "up" before checking inside the quote.
-    let inner_env = stage_env(env, -1);
+    // Push an empty stack frame and check inside the quote.
+    let inner_env = cons(<TypeEnvFrame> {}, env);
     let [t, e] = check(tree.expr, inner_env, level + 1);
 
-    // And move the result type back "down".
+    // Move the result type "down" to a code type.
     return [mktype(t.basic, t.stage + 1), env];
   },
 
@@ -111,8 +103,9 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
       throw "type error: top-level escape";
     }
 
-    // Move the context "down", in the opposite direction of quotation.
-    let inner_env = stage_env(env, 1);
+    // Pop the current (quotation) environment off of the environment stack
+    // before checking the escape.
+    let inner_env = tl(env);
     let [t, e] = check(tree.expr, inner_env, level - 1);
 
     if (tree.kind === "splice") {
@@ -145,9 +138,9 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
 
   visit_fun(tree: FunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
     // Get the list of declared parameter types and accumulate them in an
-    // environment for type-checking the body.
+    // environment based on the top of the environment stack.
     let param_types : Type[] = [];
-    let body_env = overlay(env);
+    let body_env_hd = overlay(hd(env));
     for (let param of tree.params) {
       let ptype : Type;
       if (param.type == "Int") {
@@ -156,10 +149,11 @@ let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
         throw "TODO: parameters must be Int for now";
       }
       param_types.push(ptype);
-      body_env[param.name] = ptype;
+      body_env_hd[param.name] = ptype;
     }
 
     // Check the body and get the return type.
+    let body_env = cons(body_env_hd, tl(env));
     let [ret_type, _] = check(tree.body, body_env, level);
 
     // Construct the function type.
@@ -229,6 +223,6 @@ function check(tree: SyntaxNode, env: TypeEnv, level: number):
 }
 
 function typecheck(tree: SyntaxNode): Type {
-  let [t, e] = check(tree, {}, 0);
+  let [t, e] = check(tree, [{}], 0);
   return t;
 }

@@ -26,3 +26,21 @@ function _repeat(s: string, n: number): string {
 function overlay<T>(base: T): T {
   return <T> Object.create(base);
 }
+
+function hd<T> (list: T[]): T {
+  if (list.length === 0) {
+    throw "error: head of empty list";
+  }
+  return list[0];
+}
+
+function tl<T> (list: T[]): T[] {
+  if (list.length === 0) {
+    throw "error: tail of empty list";
+  }
+  return list.slice(1);
+}
+
+function cons<T> (x: T, xs: T[]): T[] {
+  return [x].concat(xs);
+}
