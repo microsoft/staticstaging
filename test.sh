@@ -6,7 +6,7 @@ output=$(node atw.js $fn)
 expected=$(sed -n 's/^# -> \(.*\)/\1/p' $fn)
 
 if [ "$expected" = "type error" ] ; then
-    echo $output | sed -n '/^type error:/q ; q1'
+    echo $output | grep '^type error:' > /dev/null
 else
     [ "$output" = "$expected" ]
 fi
