@@ -39,11 +39,54 @@ type TypeEnv = TypeEnvFrame[];
 
 // Type rules.
 
+// EXPERIMENTAL
 type Gen <T> = (_:T) => T;
 type TypeCheck = (tree: SyntaxNode, [env, level]: [TypeEnv, number]) => [Type, TypeEnv];
 let gen_check : Gen<TypeCheck> = function(fself) {
+  // Shorthand for the recursive call.
+  function check(tree: SyntaxNode, env: TypeEnv, level: number):
+      [Type, TypeEnv] {
+    return fself(tree, [env, level]);
+  }
+
+  let type_rules : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
+    visit_literal(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_seq(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_let(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_lookup(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_binary(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_quote(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_escape(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_run(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_fun(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_call(tree, [env, level]) {
+      return [INT, env];
+    },
+    visit_persist(tree, [env, level]) {
+      return [INT, env];
+    },
+  };
+
   return function (tree, [env, level]) {
-    return [INT, env];
+    return ast_visit(type_rules, tree, [env, level]);
   }
 }
 
