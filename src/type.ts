@@ -7,17 +7,23 @@
 type Type = IntType | FunType | CodeType;
 
 // There is only one Int type.
-class IntType {};
+class IntType {
+  // A workaround to compensate for TypeScript's structural subtyping:
+  // https://github.com/Microsoft/TypeScript/issues/202
+  _nominal_IntType: void;
+};
 const INT = new IntType();
 
 // But function types are more complicated. Really wishing for ADTs here.
 class FunType {
-  constructor(public params: Type[], public ret: Type) {}
+  constructor(public params: Type[], public ret: Type) {};
+  _nominal_FunType: void;
 };
 
 // Same with code types.
 class CodeType {
-  constructor(public inner: Type) {}
+  constructor(public inner: Type) {};
+  _nominal_CodeType: void;
 };
 
 // A single frame in a type environment holds all the bindings for one stage.
@@ -32,6 +38,14 @@ type TypeEnv = TypeEnvFrame[];
 
 
 // Type rules.
+
+type Gen <T> = (_:T) => T;
+type TypeCheck = (tree: SyntaxNode, [env, level]: [TypeEnv, number]) => [Type, TypeEnv];
+let gen_check : Gen<TypeCheck> = function(fself) {
+  return function (tree, [env, level]) {
+    return [INT, env];
+  }
+}
 
 let Typecheck : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
   visit_literal(tree: LiteralNode, [env, level]: [TypeEnv, number]):
