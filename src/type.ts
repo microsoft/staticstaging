@@ -37,9 +37,11 @@ interface TypeEnvFrame {
 type TypeEnv = TypeEnvFrame[];
 
 
-// Type rules.
+// The type checker.
+// The checker is written as a "function generator," and we'll later take its
+// fixed point to get an ordinary type checker function (of type `TypeCheck`,
+// below).
 
-// EXPERIMENTAL
 type TypeCheck = (tree: SyntaxNode, env: TypeEnv)
                  => [Type, TypeEnv];
 let gen_check : Gen<TypeCheck> = function(check) {
