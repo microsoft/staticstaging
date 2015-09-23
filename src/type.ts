@@ -40,29 +40,29 @@ type TypeEnv = TypeEnvFrame[];
 // Type rules.
 
 // EXPERIMENTAL
-type TypeCheck = (tree: SyntaxNode, env: TypeEnv, level: number)
+type TypeCheck = (tree: SyntaxNode, env: TypeEnv)
                  => [Type, TypeEnv];
 let gen_check : Gen<TypeCheck> = function(check) {
-  let type_rules : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
-    visit_literal(tree: LiteralNode, [env, level]: [TypeEnv, number]):
+  let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
+    visit_literal(tree: LiteralNode, env: TypeEnv):
         [Type, TypeEnv] {
       return [INT, env];
     },
 
-    visit_seq(tree: SeqNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
-      let [t, e] = check(tree.lhs, env, level);
-      return check(tree.rhs, e, level);
+    visit_seq(tree: SeqNode, env: TypeEnv): [Type, TypeEnv] {
+      let [t, e] = check(tree.lhs, env);
+      return check(tree.rhs, e);
     },
 
-    visit_let(tree: LetNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
-      let [t, e] = check(tree.expr, env, level);
+    visit_let(tree: LetNode, env: TypeEnv): [Type, TypeEnv] {
+      let [t, e] = check(tree.expr, env);
       let head = overlay(hd(e)); // Update type in an overlay environment.
       head[tree.ident] = t;
       let e2 = cons(head, tl(e));
       return [t, e2];
     },
 
-    visit_lookup(tree: LookupNode, [env, level]: [TypeEnv, number]):
+    visit_lookup(tree: LookupNode, env: TypeEnv):
         [Type, TypeEnv] {
       let t = hd(env)[tree.ident];
       if (t === undefined) {
@@ -71,10 +71,10 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [t, env];
     },
 
-    visit_binary(tree: BinaryNode, [env, level]: [TypeEnv, number]):
+    visit_binary(tree: BinaryNode, env: TypeEnv):
         [Type, TypeEnv] {
-      let [t1, e1] = check(tree.lhs, env, level);
-      let [t2, e2] = check(tree.rhs, e1, level);
+      let [t1, e1] = check(tree.lhs, env);
+      let [t2, e2] = check(tree.rhs, e1);
       if (t1 instanceof IntType && t2 instanceof IntType) {
         return [INT, env];
       } else {
@@ -83,19 +83,20 @@ let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_quote(tree: QuoteNode, [env, level]: [TypeEnv, number]):
+    visit_quote(tree: QuoteNode, env: TypeEnv):
         [Type, TypeEnv] {
       // Push an empty stack frame and check inside the quote.
       let inner_env = cons(<TypeEnvFrame> {}, env);
-      let [t, e] = check(tree.expr, inner_env, level + 1);
+      let [t, e] = check(tree.expr, inner_env);
 
       // Move the result type "down" to a code type.
       return [new CodeType(t), env];
     },
 
-    visit_escape(tree: EscapeNode, [env, level]: [TypeEnv, number]):
+    visit_escape(tree: EscapeNode, env: TypeEnv):
         [Type, TypeEnv] {
       // Escaping beyond the top level is not allowed.
+      let level = env.length;
       if (level == 0) {
         throw "type error: top-level escape";
       }
@@ -103,7 +104,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // Pop the current (quotation) environment off of the environment stack
       // before checking the escape.
       let inner_env = tl(env);
-      let [t, e] = check(tree.expr, inner_env, level - 1);
+      let [t, e] = check(tree.expr, inner_env);
 
       if (tree.kind === "splice") {
         // The result of the escape's expression must be code, so it can be
@@ -124,8 +125,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_run(tree: RunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
-      let [t, e] = check(tree.expr, env, level);
+    visit_run(tree: RunNode, env: TypeEnv): [Type, TypeEnv] {
+      let [t, e] = check(tree.expr, env);
       if (t instanceof CodeType) {
         return [t.inner, e];
       } else {
@@ -133,7 +134,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_fun(tree: FunNode, [env, level]: [TypeEnv, number]): [Type, TypeEnv] {
+    visit_fun(tree: FunNode, env: TypeEnv): [Type, TypeEnv] {
       // Get the list of declared parameter types and accumulate them in an
       // environment based on the top of the environment stack.
       let param_types : Type[] = [];
@@ -151,17 +152,17 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
       // Check the body and get the return type.
       let body_env = cons(body_env_hd, tl(env));
-      let [ret_type, _] = check(tree.body, body_env, level);
+      let [ret_type, _] = check(tree.body, body_env);
 
       // Construct the function type.
       let fun_type = new FunType(param_types, ret_type);
       return [fun_type, env];
     },
 
-    visit_call(tree: CallNode, [env, level]: [TypeEnv, number]):
+    visit_call(tree: CallNode, env: TypeEnv):
         [Type, TypeEnv] {
       // Check the type of the thing we're calling. It must be a function.
-      let [target_type, e] = check(tree.fun, env, level);
+      let [target_type, e] = check(tree.fun, env);
       let fun_type : FunType;
       if (target_type instanceof FunType) {
         fun_type = target_type;
@@ -178,7 +179,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
         let param_type = fun_type.params[i];
 
         let arg_type : Type;
-        [arg_type, e] = check(arg, e, level);
+        [arg_type, e] = check(arg, e);
         if (!compatible(param_type, arg_type)) {
           throw "type error: mismatched argument type at index " + i +
             ": expected " + pretty_type(param_type) +
@@ -190,15 +191,15 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [fun_type.ret, e];
     },
 
-    visit_persist(tree: PersistNode, [env, level]: [TypeEnv, number]):
+    visit_persist(tree: PersistNode, env: TypeEnv):
         [Type, TypeEnv] {
       throw "error: persist cannot be type-checked in source code";
     },
   };
 
   // The entry point for the recursion.
-  return function (tree, env, level) {
-    return ast_visit(type_rules, tree, [env, level]);
+  return function (tree, env) {
+    return ast_visit(type_rules, tree, env);
   }
 }
 
@@ -215,6 +216,6 @@ let check : TypeCheck = fix(gen_check);
 
 // A shorthand for typechecking in an empty initial context.
 function typecheck(tree: SyntaxNode): Type {
-  let [t, e] = check(tree, [{}], 0);
+  let [t, e] = check(tree, [{}]);
   return t;
 }
