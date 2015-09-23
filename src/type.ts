@@ -44,8 +44,7 @@ type TypeCheck = (tree: SyntaxNode, env: TypeEnv)
                  => [Type, TypeEnv];
 let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
-    visit_literal(tree: LiteralNode, env: TypeEnv):
-        [Type, TypeEnv] {
+    visit_literal(tree: LiteralNode, env: TypeEnv): [Type, TypeEnv] {
       return [INT, env];
     },
 
@@ -62,8 +61,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [t, e2];
     },
 
-    visit_lookup(tree: LookupNode, env: TypeEnv):
-        [Type, TypeEnv] {
+    visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
       let t = hd(env)[tree.ident];
       if (t === undefined) {
         throw "type error: undefined variable " + tree.ident;
@@ -71,8 +69,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [t, env];
     },
 
-    visit_binary(tree: BinaryNode, env: TypeEnv):
-        [Type, TypeEnv] {
+    visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
       let [t1, e1] = check(tree.lhs, env);
       let [t2, e2] = check(tree.rhs, e1);
       if (t1 instanceof IntType && t2 instanceof IntType) {
@@ -83,8 +80,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_quote(tree: QuoteNode, env: TypeEnv):
-        [Type, TypeEnv] {
+    visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
       // Push an empty stack frame and check inside the quote.
       let inner_env = cons(<TypeEnvFrame> {}, env);
       let [t, e] = check(tree.expr, inner_env);
@@ -93,8 +89,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [new CodeType(t), env];
     },
 
-    visit_escape(tree: EscapeNode, env: TypeEnv):
-        [Type, TypeEnv] {
+    visit_escape(tree: EscapeNode, env: TypeEnv): [Type, TypeEnv] {
       // Escaping beyond the top level is not allowed.
       let level = env.length;
       if (level == 0) {
@@ -159,8 +154,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [fun_type, env];
     },
 
-    visit_call(tree: CallNode, env: TypeEnv):
-        [Type, TypeEnv] {
+    visit_call(tree: CallNode, env: TypeEnv): [Type, TypeEnv] {
       // Check the type of the thing we're calling. It must be a function.
       let [target_type, e] = check(tree.fun, env);
       let fun_type : FunType;
@@ -191,8 +185,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [fun_type.ret, e];
     },
 
-    visit_persist(tree: PersistNode, env: TypeEnv):
-        [Type, TypeEnv] {
+    visit_persist(tree: PersistNode, env: TypeEnv): [Type, TypeEnv] {
       throw "error: persist cannot be type-checked in source code";
     },
   };
