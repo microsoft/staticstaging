@@ -40,15 +40,9 @@ type TypeEnv = TypeEnvFrame[];
 // Type rules.
 
 // EXPERIMENTAL
-type TypeCheck = (tree: SyntaxNode, [env, level]: [TypeEnv, number])
+type TypeCheck = (tree: SyntaxNode, env: TypeEnv, level: number)
                  => [Type, TypeEnv];
-let gen_check : Gen<TypeCheck> = function(fself) {
-  // Shorthand for the recursive call.
-  function check(tree: SyntaxNode, env: TypeEnv, level: number):
-      [Type, TypeEnv] {
-    return fself(tree, [env, level]);
-  }
-
+let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<[TypeEnv, number], [Type, TypeEnv]> = {
     visit_literal(tree: LiteralNode, [env, level]: [TypeEnv, number]):
         [Type, TypeEnv] {
@@ -202,7 +196,8 @@ let gen_check : Gen<TypeCheck> = function(fself) {
     },
   };
 
-  return function (tree, [env, level]) {
+  // The entry point for the recursion.
+  return function (tree, env, level) {
     return ast_visit(type_rules, tree, [env, level]);
   }
 }
@@ -220,6 +215,6 @@ let check : TypeCheck = fix(gen_check);
 
 // A shorthand for typechecking in an empty initial context.
 function typecheck(tree: SyntaxNode): Type {
-  let [t, e] = check(tree, [[{}], 0]);
+  let [t, e] = check(tree, [{}], 0);
   return t;
 }
