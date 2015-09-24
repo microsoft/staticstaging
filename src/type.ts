@@ -244,8 +244,8 @@ function elaborate_mixin(type_table : TypeTable): Gen<TypeCheck> {
 }
 
 // Deep copy an object structure and add IDs to every object.
-function stamp <T> (o: T): T & { id: number } {
-  let id = 0;
+function stamp <T> (o: T, start: number = 0): T & { id: number } {
+  let id = start;
 
   function helper (o: any): any {
     if (o instanceof Array) {
@@ -270,12 +270,22 @@ function stamp <T> (o: T): T & { id: number } {
   return helper(o);
 }
 
+// A helper for elaboration that works on subtrees. You can start with an
+// initial environment and a type table for other nodes; this will assign
+// fresh IDs to the subtree and *append* to the type table.
+function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
+                           type_table: TypeTable): SyntaxNode {
+  let stamped_tree = stamp(tree, type_table.length);
+  let _elaborate : TypeCheck = fix(compose(elaborate_mixin(type_table),
+                                           gen_check));
+  _elaborate(stamped_tree, initial_env);
+  return stamped_tree;
+}
+
 // Type elaboration. Create a copy of the AST with ID stamps and a table that
 // maps the IDs to type information.
 function elaborate(tree: SyntaxNode): [SyntaxNode, TypeTable] {
-  let stamped_tree = stamp(tree);
   let table : TypeTable = [];
-  let _elaborate : TypeCheck = fix(compose(elaborate_mixin(table), gen_check));
-  _elaborate(stamped_tree, [{}]);
-  return [stamped_tree, table];
+  let elaborated = elaborate_subtree(tree, [{}], table);
+  return [elaborated, table];
 }

@@ -83,6 +83,11 @@ function main() {
     let sugarfree = desugar(elaborated, type_table);
     if (verbose) {
       console.log(util.inspect(sugarfree, false, null));
+      let i = 0;
+      for (let context of type_table) {
+        console.log(i + ': ' + util.inspect(context, false, null));
+        ++i;
+      }
     }
 
     // Execute.

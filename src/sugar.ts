@@ -91,7 +91,8 @@ function is_lookup(tree: SyntaxNode): tree is LookupNode {
   return tree.tag === "lookup";
 }
 
-// An inheritance layer on ASTTranslate that desugars auto-persists.
+// An inheritance layer on ASTTranslate that desugars auto-persists. This
+// *updates* the type_table with information about any newly generated nodes.
 function gen_desugar(type_table: TypeTable): Gen<ASTTranslate> {
   return function (fsuper: ASTTranslate): ASTTranslate {
     return function (tree: SyntaxNode): SyntaxNode {
@@ -105,7 +106,6 @@ function gen_desugar(type_table: TypeTable): Gen<ASTTranslate> {
         } else {
           // A variable from any other stage is an auto-persist. Construct a
           // nested set of explicit persist escapes.
-          // TODO no types added to this yet
           let lookup : LookupNode = { tag: "lookup", ident: tree.ident };
           let escape : EscapeNode;
           let new_tree : ExpressionNode = lookup;
@@ -113,7 +113,12 @@ function gen_desugar(type_table: TypeTable): Gen<ASTTranslate> {
             escape = { tag: "escape", kind: "persist", expr: new_tree };
             new_tree = escape;
           }
-          return new_tree;
+
+          // Now we elaborate the subtree to preserve the restrictions of the
+          // IR.
+          let elaborated = elaborate_subtree(new_tree, env, type_table);
+
+          return elaborated;
         }
       } else {
         return fsuper(tree);
