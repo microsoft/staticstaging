@@ -82,22 +82,32 @@ function gen_translate(fself: ASTTranslate): ASTTranslate {
   };
 }
 
+// Another type test for the specific kind of node we're interested in. We'll
+// use this to follow one piece of advice from the "Scrap Your Boilerplate"
+// paper: when you're interested in one kind of node, first write a function
+// that dynamically tests for that kind and does its action. Then use separate
+// code to lift it to a recursive traversal.
+function is_lookup(tree: SyntaxNode): tree is LookupNode {
+  return tree.tag === "lookup";
+}
+
+// An inheritance layer on ASTTranslate that desugars auto-persists.
 function gen_desugar(type_table: TypeTable): Gen<ASTTranslate> {
   return function (fsuper: ASTTranslate): ASTTranslate {
     return function (tree: SyntaxNode): SyntaxNode {
       if (is_lookup(tree)) {
         let [type, env] = type_table[tree.id];
-        // console.log(tree.ident);
+        /*
+        console.log(tree.ident);
+        console.log(type);
+        console.log(env);
+        */
         return tree;
       } else {
         return fsuper(tree);
       }
     }
   }
-}
-
-function is_lookup(tree: SyntaxNode): tree is LookupNode {
-  return tree.tag === "lookup";
 }
 
 // Get a copy of the *elaborated* AST with syntactic sugar removed. For now,
