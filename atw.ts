@@ -80,10 +80,13 @@ function main() {
     }
 
     // Remove syntactic sugar.
-    let sugarfree_tree = desugar(elaborated, type_table);
+    let sugarfree = desugar(elaborated, type_table);
+    if (verbose) {
+      console.log(util.inspect(sugarfree, false, null));
+    }
 
     // Execute.
-    console.log(pretty_value(interpret(sugarfree_tree)));
+    console.log(pretty_value(interpret(sugarfree)));
   });
 }
 

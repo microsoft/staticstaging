@@ -82,6 +82,20 @@ function gen_translate(fself: ASTTranslate): ASTTranslate {
   };
 }
 
+function gen_desugar(type_table: TypeTable): Gen<ASTTranslate> {
+  return function (fsuper: ASTTranslate): ASTTranslate {
+    return function (tree: SyntaxNode): SyntaxNode {
+      if (is_lookup(tree)) {
+        let [type, env] = type_table[tree.id];
+        // console.log(tree.ident);
+        return tree;
+      } else {
+        return fsuper(tree);
+      }
+    }
+  }
+}
+
 function is_lookup(tree: SyntaxNode): tree is LookupNode {
   return tree.tag === "lookup";
 }
@@ -89,12 +103,7 @@ function is_lookup(tree: SyntaxNode): tree is LookupNode {
 // Get a copy of the *elaborated* AST with syntactic sugar removed. For now,
 // the only sugar is "auto-persists", i.e., references to variables from other
 // stages.
-function desugar(tree: SyntaxNode, type_map: TypeTable): SyntaxNode {
-  if (is_lookup(tree)) {
-    let [type, env] = type_map[tree.id];
-    console.log(tree.ident);
-    return tree;
-  } else {
-    return tree;
-  }
+function desugar(tree: SyntaxNode, type_table: TypeTable): SyntaxNode {
+  let _desugar = fix(compose(gen_desugar(type_table), gen_translate));
+  return _desugar(tree);
 }
