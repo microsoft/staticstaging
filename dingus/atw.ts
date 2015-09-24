@@ -1,6 +1,7 @@
 /// <reference path="../src/interp.ts" />
 /// <reference path="../src/pretty.ts" />
 /// <reference path="../src/type.ts" />
+/// <reference path="../src/sugar.ts" />
 
 declare var parser : any;
 
@@ -33,20 +34,26 @@ function atw_run(code: string) : [string, string, string, string] {
     return [e, null, null, null];
   }
 
-  // Log the type.
-  let type_str : string;
+  // Elaborate and log the type.
+  let elaborated : SyntaxNode;
+  let type_table : TypeTable;
   try {
-    type_str = pretty_type(typecheck(tree));
+    [elaborated, type_table] = elaborate(tree);
   } catch (e) {
     return [e, parse_tree, null, null];
   }
+  let [type, _] = type_table[elaborated.id];
+  let type_str = pretty_type(type);
+
+  // Desugar.
+  let sugarfree = desugar(elaborated, type_table);
 
   // Show the result value.
   return [
     null,
     parse_tree,
     type_str,
-    pretty_value(interpret(tree)),
+    pretty_value(interpret(sugarfree)),
   ];
 }
 

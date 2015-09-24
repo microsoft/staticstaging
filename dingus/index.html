@@ -67,6 +67,16 @@ double 21</code></pre>
             <pre class="example"><code>let x = 5;
 !&lt; 37 + %[x] &gt;</code></pre>
 
+            <p>In line with other staged languages, you can also get
+            cross-stage persistence transparently by just referring to
+            variables from a different stage. This works by desugaring
+            cross-stage references to persist escapes:</p>
+            <pre class="example"><code>let x = 5;
+!&lt;
+  let y = 10;
+  !&lt; x + y &gt;
+&gt;</code></pre>
+
             <p>Click on an example above to run it.</p>
         </div>
         <div id="error" class="alert alert-danger"></div>
