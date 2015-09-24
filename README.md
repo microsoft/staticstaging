@@ -1,7 +1,7 @@
 Alltheworld
 ===========
 
-[![build status](https://travis-ci.org/sampsyo/alltheworld.svg)](https://travis-ci.org/sampsyo/alltheworld)
+[![build status](https://img.shields.io/circleci/project/sampsyo/alltheworld.svg)](https://circleci.com/gh/sampsyo/alltheworld)
 
 A toy language with:
 
