@@ -2,6 +2,7 @@
 /// <reference path="src/interp.ts" />
 /// <reference path="src/pretty.ts" />
 /// <reference path="src/type.ts" />
+/// <reference path="src/sugar.ts" />
 
 let fs = require('fs');
 let util = require('util');
@@ -54,6 +55,7 @@ function main() {
   }
 
   parse(fn, function (tree) {
+    // Parse.
     try {
       if (verbose) {
         console.log(util.inspect(tree, false, null));
@@ -62,8 +64,12 @@ function main() {
       console.log(e);
       return;
     }
+
+    // Check and elaborate types.
+    let elaborated : SyntaxNode;
+    let type_table : TypeTable;
     try {
-      let [elaborated, type_table] = elaborate(tree);
+      [elaborated, type_table] = elaborate(tree);
       let [type, _] = type_table[elaborated.id];
       if (verbose) {
         console.log(pretty_type(type));
@@ -72,7 +78,12 @@ function main() {
       console.log(e);
       return;
     }
-    console.log(pretty_value(interpret(tree)));
+
+    // Remove syntactic sugar.
+    let sugarfree_tree = desugar(elaborated, type_table);
+
+    // Execute.
+    console.log(pretty_value(interpret(sugarfree_tree)));
   });
 }
 
