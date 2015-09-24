@@ -1,0 +1,7 @@
+dependencies:
+    post:
+        - make
+
+test:
+    override:
+        - make test
