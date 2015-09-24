@@ -1,6 +1,9 @@
 dependencies:
     post:
         - make
+    cache_directories:
+        - node_modules
+        - typings
 
 test:
     override:
