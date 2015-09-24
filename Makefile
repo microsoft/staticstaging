@@ -3,7 +3,7 @@ TSC := node_modules/typescript/bin/tsc
 TSD := node_modules/tsd/build/cli.js
 NODE_D := typings/node/node.d.ts
 SRCDIR := src
-SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts
+SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts sugar.ts
 TESTS := print comment whitespace seq let add quote dump typeerror escape \
 	splice badsplice topescape nesteddump nestedrun nested func call \
 	quotefunc closure persist nestedpersist share
