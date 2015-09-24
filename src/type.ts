@@ -207,10 +207,60 @@ function compatible(ltype: Type, rtype: Type): boolean {
   }
 }
 
-let check : TypeCheck = fix(gen_check);
-
 // A shorthand for typechecking in an empty initial context.
+let _typecheck : TypeCheck = fix(gen_check);
 function typecheck(tree: SyntaxNode): Type {
-  let [t, e] = check(tree, [{}]);
+  let [t, e] = _typecheck(tree, [{}]);
   return t;
+}
+
+// A container for elaborated type information.
+type TypeTable = [Type, TypeEnv][];
+
+// A functional mixin for the type checker that stores the results in a table
+// on the side. The AST must be stamped with IDs.
+function elaborate_mixin(type_table : TypeTable): Gen<TypeCheck> {
+  return function(fsuper: TypeCheck): TypeCheck {
+    return function(tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
+      let [t, e] = fsuper(tree, env);
+      type_table[tree.id] = [t, e];
+      return [t, e];
+    };
+  };
+}
+
+// Deep copy an object structure and add IDs to every object.
+function stamp <T> (o: T): T & { id: number } {
+  let id = 0;
+
+  function helper (o: any): any {
+    if (o instanceof Object) {
+      let copy = merge(o);
+      copy.id = id;
+      ++id;
+
+      for (let key in copy) {
+        console.log(key);
+        if (copy.hasOwnProperty(key)) {
+          copy[key] = helper(copy[key]);
+        }
+      }
+
+      return copy;
+    } else {
+      return o;
+    }
+  };
+
+  return helper(o);
+}
+
+// Type elaboration. Create a copy of the AST with ID stamps and a table that
+// maps the IDs to type information.
+function elaborate(tree: SyntaxNode): [SyntaxNode, TypeTable] {
+  let stamped_tree = stamp(tree);
+  let table : TypeTable = [];
+  let _elaborate : TypeCheck = fix(compose(elaborate_mixin(table), gen_check));
+  _elaborate(tree, [{}]);
+  return [stamped_tree, table];
 }

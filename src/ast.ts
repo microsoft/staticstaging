@@ -1,5 +1,6 @@
 interface SyntaxNode {
-  tag: string;
+  tag: string;  // The node type.
+  id?: number;  // Used in IRs to add computed information.
 }
 
 interface ExpressionNode extends SyntaxNode {
