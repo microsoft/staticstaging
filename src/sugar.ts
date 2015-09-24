@@ -97,12 +97,24 @@ function gen_desugar(type_table: TypeTable): Gen<ASTTranslate> {
     return function (tree: SyntaxNode): SyntaxNode {
       if (is_lookup(tree)) {
         let [type, env] = type_table[tree.id];
-        /*
-        console.log(tree.ident);
-        console.log(type);
-        console.log(env);
-        */
-        return tree;
+        let [_, index] = type_lookup(env, tree.ident);
+
+        if (index === 0) {
+          // A variable from the current stage. This is a normal access.
+          return fsuper(tree);
+        } else {
+          // A variable from any other stage is an auto-persist. Construct a
+          // nested set of explicit persist escapes.
+          // TODO no types added to this yet
+          let lookup : LookupNode = { tag: "lookup", ident: tree.ident };
+          let escape : EscapeNode;
+          let new_tree : ExpressionNode = lookup;
+          for (let i = 0; i < index; ++i) {
+            escape = { tag: "escape", kind: "persist", expr: new_tree };
+            new_tree = escape;
+          }
+          return new_tree;
+        }
       } else {
         return fsuper(tree);
       }
