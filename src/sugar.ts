@@ -63,7 +63,7 @@ function gen_translate(fself: ASTTranslate): ASTTranslate {
 
     visit_call(tree: CallNode, param: void): SyntaxNode {
       let arg_trees : SyntaxNode[] = [];
-      for (let arg in tree.args) {
+      for (let arg of tree.args) {
         arg_trees.push(fself(arg));
       }
       return merge(tree, {
