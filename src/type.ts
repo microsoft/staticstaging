@@ -36,6 +36,20 @@ interface TypeEnvFrame {
 // environment frame; subsequent ones are "auto-persists".
 type TypeEnv = TypeEnvFrame[];
 
+// Look up a variable in a TypeEnv. It can appear in any frame. Return the
+// value and the frame index where it was found.
+function type_lookup(env: TypeEnv, ident: string): [Type, number] {
+  let i = 0;
+  for (let frame of env) {
+    let type = frame[ident];
+    if (type !== undefined) {
+      return [type, i];
+    }
+    ++i;
+  }
+  return [undefined, undefined];
+}
+
 
 // The type checker.
 // The checker is written as a "function generator," and we'll later take its
@@ -64,7 +78,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
-      let t = hd(env)[tree.ident];
+      let [t, _] = type_lookup(env, tree.ident);
       if (t === undefined) {
         throw "type error: undefined variable " + tree.ident;
       }
