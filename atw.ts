@@ -63,7 +63,8 @@ function main() {
       return;
     }
     try {
-      let type = typecheck(tree);
+      let [elaborated, type_table] = elaborate(tree);
+      let [type, _] = type_table[elaborated.id];
       if (verbose) {
         console.log(pretty_type(type));
       }

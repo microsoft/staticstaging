@@ -240,7 +240,6 @@ function stamp <T> (o: T): T & { id: number } {
       ++id;
 
       for (let key in copy) {
-        console.log(key);
         if (copy.hasOwnProperty(key)) {
           copy[key] = helper(copy[key]);
         }
@@ -261,6 +260,6 @@ function elaborate(tree: SyntaxNode): [SyntaxNode, TypeTable] {
   let stamped_tree = stamp(tree);
   let table : TypeTable = [];
   let _elaborate : TypeCheck = fix(compose(elaborate_mixin(table), gen_check));
-  _elaborate(tree, [{}]);
+  _elaborate(stamped_tree, [{}]);
   return [stamped_tree, table];
 }
