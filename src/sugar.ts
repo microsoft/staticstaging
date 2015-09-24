@@ -73,7 +73,7 @@ let ASTTranslator : ASTTranslate = {
   },
 
   visit_persist(tree: PersistNode, param: void): SyntaxNode {
-    throw "error: persist cannot appear in source code";
+    return merge(tree);
   },
 };
 
