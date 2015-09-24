@@ -88,14 +88,12 @@ document.addEventListener("DOMContentLoaded", function () {
       show(tree, treebox);
       show(typ, typebox);
       show(res, outbox);
-      helpbox.style.display = 'none';
       history.replaceState(null, null, HASH_CODE + encodeURIComponent(code));
     } else {
       show(null, errbox);
       show(null, treebox);
       show(null, typebox);
       show(null, outbox);
-      helpbox.style.display = 'block';
       history.replaceState(null, null, '#');
     }
   }
