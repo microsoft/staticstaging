@@ -12,9 +12,6 @@ textarea {
 #error, #result, #tree {
     display: none;
 }
-.example:hover {
-    background: rgba(0, 0, 0, 0.2);
-}
 #clear {
     float: left;
     margin-right: 1em;
@@ -29,6 +26,17 @@ textarea {
 #tree {
     max-height: 30ex;
     overflow: scroll;
+}
+
+.example:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+#help p {
+    margin-bottom: 0;
+    color: #666;
+}
+#help pre {
+    font-weight: bold;
 }
     </style>
 </head>
@@ -55,47 +63,45 @@ textarea {
     </div>
 </div>
 
-<div class="row">
-    <div id="help" class="alert alert-success">
-        <p>You can use arithmetic and variables:</p>
-        <pre class="example"><code>let x = 7;
+<div class="row" id="help">
+    <p>You can use arithmetic and variables:</p>
+    <pre class="example"><code>let x = 7;
 x * 3</code></pre>
 
-        <p>And define functions:</p>
-        <pre class="example"><code>let double = fun x:Int -&gt; x * 2;
+    <p>And define functions:</p>
+    <pre class="example"><code>let double = fun x:Int -&gt; x * 2;
 double 21</code></pre>
 
-        <p>Use angle brackets to defer code:</p>
-        <pre class="example"><code>&lt; 45 - 3 &gt;</code></pre>
+    <p>Use angle brackets to defer code:</p>
+    <pre class="example"><code>&lt; 45 - 3 &gt;</code></pre>
 
-        <p>And bang to execute it:</p>
-        <pre class="example"><code>!&lt; 45 - 3 &gt;</code></pre>
+    <p>And bang to execute it:</p>
+    <pre class="example"><code>!&lt; 45 - 3 &gt;</code></pre>
 
-        <p>Use square brackets to escape and splice code:</p>
-        <pre class="example"><code>let x = &lt;5&gt;;
+    <p>Use square brackets to escape and splice code:</p>
+    <pre class="example"><code>let x = &lt;5&gt;;
 !&lt; 37 + [x] &gt;</code></pre>
 
-        <p>The type checker will catch you if you mix up your stages:</p>
-        <pre class="example"><code>let x = &lt;5&gt;;
+    <p>The type checker will catch you if you mix up your stages:</p>
+    <pre class="example"><code>let x = &lt;5&gt;;
 37 + x</code></pre>
 
-        <p>There's also another kind of escape that <em>persists</em>
-        outer-stage values:</p>
-        <pre class="example"><code>let x = 5;
+    <p>There's also another kind of escape that <em>persists</em>
+    outer-stage values:</p>
+    <pre class="example"><code>let x = 5;
 !&lt; 37 + %[x] &gt;</code></pre>
 
-        <p>In line with other staged languages, you can also get
-        cross-stage persistence transparently by just referring to
-        variables from a different stage. This works by desugaring
-        cross-stage references to persist escapes:</p>
-        <pre class="example"><code>let x = 5;
+    <p>In line with other staged languages, you can also get
+    cross-stage persistence transparently by just referring to
+    variables from a different stage. This works by desugaring
+    cross-stage references to persist escapes:</p>
+    <pre class="example"><code>let x = 5;
 !&lt;
-let y = 10;
-!&lt; x + y &gt;
+  let y = 10;
+  !&lt; x + y &gt;
 &gt;</code></pre>
 
-        <p>Click on an example above to run it.</p>
-    </div>
+    <p>Click on an example above to run it.</p>
 </div>
 
 </div>
