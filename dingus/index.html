@@ -28,7 +28,7 @@ textarea {
     margin-top: 1em;
 }
 #tree {
-    max-height: 30ex;
+    height: 30ex;
     overflow: scroll;
 }
 
@@ -41,6 +41,23 @@ textarea {
 }
 #help pre {
     font-weight: bold;
+}
+
+/* For the tree diagram. */
+#tree .node circle {
+  fill: #fff;
+  stroke: #ccc;
+  stroke-width: 3px;
+}
+
+#tree .node text {
+  font-size: 80%;
+}
+
+#tree .link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 2px;
 }
     </style>
 </head>
@@ -63,7 +80,7 @@ textarea {
     <div class="col-sm-6">
         <div id="error" class="alert alert-danger"></div>
         <pre id="result"></pre>
-        <pre id="tree" class="hidden-sm-down"></pre>
+        <div id="tree" class="hidden-sm-down"></div>
     </div>
 </div>
 
@@ -113,5 +130,7 @@ double 21</code></pre>
 </div>
 <script type="text/javascript" src="parser.js"></script>
 <script type="text/javascript" src="atw.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+<script type="text/javascript" src="tree.js"></script>
 </body>
 </html>

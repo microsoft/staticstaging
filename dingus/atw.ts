@@ -84,16 +84,28 @@ document.addEventListener("DOMContentLoaded", function () {
     let code = code_value();
     if (code !== "") {
       let [err, tree, typ, res] = atw_run(code);
+
       show(err, errbox);
-      show(tree, treebox);
       show(typ, typebox);
       show(res, outbox);
+
+      // XXX
+      treebox.style.display = 'block';
+      function get_name(d: any) {
+        return d.name;
+      };
+      function get_children(d: any) {
+        return d.children;
+      };
+      draw_tree(treeData, '#tree', get_name, get_children);
+
       history.replaceState(null, null, HASH_CODE + encodeURIComponent(code));
     } else {
       show(null, errbox);
       show(null, treebox);
       show(null, typebox);
       show(null, outbox);
+
       history.replaceState(null, null, '#');
     }
   }
