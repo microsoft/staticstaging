@@ -4,8 +4,6 @@
 var diagonal = d3.svg.diagonal()
  .projection(function(d) { return [d.y, d.x]; });
 
-var margin_left = 75;
-
 function tree_canvas(where, get_name, get_children) {
   var container = d3.select(where);
 
@@ -18,8 +16,7 @@ function tree_canvas(where, get_name, get_children) {
   var svg = container.append("svg")
    .attr("width", width)
    .attr("height", height)
-    .append("g")
-   .attr("transform", "translate(" + margin_left + ",0)");
+    .append("g");
 
   // Create the tree layout.
   var tree = d3.layout.tree()
