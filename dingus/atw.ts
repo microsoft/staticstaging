@@ -4,6 +4,12 @@
 /// <reference path="../src/sugar.ts" />
 
 declare var parser : any;
+declare function draw_tree (
+  tree_data: any,
+  where: string,
+  get_name: (_:any) => string,
+  get_children: (_:any) => any[]
+);
 
 const RUN_DELAY_MS = 200;
 const HASH_CODE = '#code=';
@@ -169,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
       show(typ, typebox);
       show(res, outbox);
 
-      // XXX
+      // Draw the syntax tree.
       treebox.style.display = 'block';
       draw_tree(tree, '#tree', get_name, get_children);
 
