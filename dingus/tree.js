@@ -53,21 +53,16 @@ function tree_canvas(where, get_name, get_children) {
      .attr("transform", function(d) {
       return "translate(" + d.y + "," + d.x + ")"; });
 
-    nodeEnter.append("circle")
-     .attr("r", 10)
-     .style("fill", "#fff");
-
     nodeEnter.append("text")
-     .attr("x", -13)
      .attr("dy", ".35em")
-     .attr("text-anchor", "end")
+     .attr("text-anchor", "center")
      .text(get_name)
      .style("fill-opacity", 1);
 
     // Declare the links.
     svg.selectAll("path.link").remove();  // UGLY
     var link = svg.selectAll("path.link")
-     .data(links, function(d) { return d.target.id; });
+     .data(links);
 
     // Enter the links.
     link.enter().insert("path", "g")
