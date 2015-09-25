@@ -8,12 +8,100 @@ declare var parser : any;
 const RUN_DELAY_MS = 200;
 const HASH_CODE = '#code=';
 
+let GetChildren : ASTVisit<void, SyntaxNode[]> = {
+  visit_literal(tree: LiteralNode, _: void): SyntaxNode[] {
+    return [];
+  },
+  visit_seq(tree: SeqNode, _: void): SyntaxNode[] {
+    return [tree.lhs, tree.rhs];
+  },
+  visit_let(tree: LetNode, _: void): SyntaxNode[] {
+    return [tree.expr];
+  },
+  visit_lookup(tree: LookupNode, _: void): SyntaxNode[] {
+    return [];
+  },
+  visit_binary(tree: BinaryNode, _: void): SyntaxNode[] {
+    return [tree.lhs, tree.rhs];
+  },
+  visit_quote(tree: QuoteNode, _: void): SyntaxNode[] {
+    return [tree.expr];
+  },
+  visit_escape(tree: EscapeNode, _: void): SyntaxNode[] {
+    return [tree.expr];
+  },
+  visit_run(tree: RunNode, _: void): SyntaxNode[] {
+    return [tree.expr];
+  },
+  visit_fun(tree: FunNode, _: void): SyntaxNode[] {
+    return [tree.body];
+  },
+  visit_call(tree: CallNode, _: void): SyntaxNode[] {
+    return [tree.fun].concat(tree.args);
+  },
+  visit_persist(tree: PersistNode, _: void): SyntaxNode[] {
+    return [];
+  },
+};
+
+function get_children(tree: SyntaxNode): SyntaxNode[] {
+  return ast_visit(GetChildren, tree, null);
+};
+
+let GetName : ASTVisit<void, string> = {
+  visit_literal(tree: LiteralNode, _: void): string {
+    return tree.value.toString();
+  },
+  visit_seq(tree: SeqNode, _: void): string {
+    return "seq";
+  },
+  visit_let(tree: LetNode, _: void): string {
+    return "let " + tree.ident;
+  },
+  visit_lookup(tree: LookupNode, _: void): string {
+    return tree.ident;
+  },
+  visit_binary(tree: BinaryNode, _: void): string {
+    return tree.op;
+  },
+  visit_quote(tree: QuoteNode, _: void): string {
+    return "quote";
+  },
+  visit_escape(tree: EscapeNode, _: void): string {
+    if (tree.kind === "persist") {
+      return "persist";
+    } else {
+      return "escape";
+    }
+  },
+  visit_run(tree: RunNode, _: void): string {
+    return "run";
+  },
+  visit_fun(tree: FunNode, _: void): string {
+    let params = "";
+    for (let param of tree.params) {
+      params += " " + param.name;
+    }
+    return "fun" + params;
+  },
+  visit_call(tree: CallNode, _: void): string {
+    return "call";
+  },
+  visit_persist(tree: PersistNode, _: void): string {
+    return "%" + tree.index;
+  },
+}
+
+function get_name(tree: SyntaxNode): string {
+  return ast_visit(GetName, tree, null);
+};
+
 // Run code and return:
 // - an error, if any
 // - the parse tree
 // - the type
 // - the result of interpretation
-function atw_run(code: string) : [string, string, string, string] {
+function atw_run(code: string) : [string, SyntaxNode, string, string] {
   // Parse.
   let tree: SyntaxNode;
   try {
@@ -26,21 +114,13 @@ function atw_run(code: string) : [string, string, string, string] {
     return [err, null, null, null];
   }
 
-  // Log the parse tree.
-  let parse_tree : string;
-  try {
-    parse_tree = JSON.stringify(tree, null, '  ');
-  } catch (e) {
-    return [e, null, null, null];
-  }
-
   // Elaborate and log the type.
   let elaborated : SyntaxNode;
   let type_table : TypeTable;
   try {
     [elaborated, type_table] = elaborate(tree);
   } catch (e) {
-    return [e, parse_tree, null, null];
+    return [e, tree, null, null];
   }
   let [type, _] = type_table[elaborated.id];
   let type_str = pretty_type(type);
@@ -51,7 +131,7 @@ function atw_run(code: string) : [string, string, string, string] {
   // Show the result value.
   return [
     null,
-    parse_tree,
+    tree,
     type_str,
     pretty_value(interpret(sugarfree)),
   ];
@@ -91,13 +171,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // XXX
       treebox.style.display = 'block';
-      function get_name(d: any) {
-        return d.name;
-      };
-      function get_children(d: any) {
-        return d.children;
-      };
-      draw_tree(treeData, '#tree', get_name, get_children);
+      draw_tree(tree, '#tree', get_name, get_children);
 
       history.replaceState(null, null, HASH_CODE + encodeURIComponent(code));
     } else {
