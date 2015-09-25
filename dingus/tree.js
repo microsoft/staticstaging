@@ -29,6 +29,12 @@ function tree_canvas(where, get_name, get_children) {
   tree.children(get_children);
 
   return function(tree_data) {
+    // Clear the display if no data.
+    if (!tree_data) {
+      svg.selectAll("g.node").remove();
+      svg.selectAll("path.link").remove();
+    }
+
     // Compute the new tree layout.
     var nodes = tree.nodes(tree_data).reverse(),
      links = tree.links(nodes);
