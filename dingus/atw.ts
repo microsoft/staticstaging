@@ -4,12 +4,11 @@
 /// <reference path="../src/sugar.ts" />
 
 declare var parser : any;
-declare function draw_tree (
-  tree_data: any,
+declare function tree_canvas (
   where: string,
   get_name: (_:any) => string,
   get_children: (_:any) => any[]
-);
+): (tree_data: any) => void;
 
 const RUN_DELAY_MS = 200;
 const HASH_CODE = '#code=';
@@ -162,6 +161,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
 
+  let draw_tree = tree_canvas('#tree', get_name, get_children);
+
   function code_value() {
     return codebox.value.trim();
   }
@@ -176,13 +177,11 @@ document.addEventListener("DOMContentLoaded", function () {
       show(res, outbox);
 
       // Draw the syntax tree.
-      treebox.style.display = 'block';
-      draw_tree(tree, '#tree', get_name, get_children);
+      draw_tree(tree);
 
       history.replaceState(null, null, HASH_CODE + encodeURIComponent(code));
     } else {
       show(null, errbox);
-      show(null, treebox);
       show(null, typebox);
       show(null, outbox);
 
