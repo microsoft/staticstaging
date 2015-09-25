@@ -59,11 +59,9 @@ function tree_canvas(where, get_name, get_children) {
      .style("fill", "#fff");
 
     nodeEnter.append("text")
-     .attr("x", function(d) {
-      return d.children || d._children ? -13 : 13; })
+     .attr("x", -13)
      .attr("dy", ".35em")
-     .attr("text-anchor", function(d) {
-      return d.children || d._children ? "end" : "start"; })
+     .attr("text-anchor", "end")
      .text(get_name)
      .style("fill-opacity", 1);
 

@@ -136,7 +136,7 @@ function atw_run(code: string) : [string, SyntaxNode, string, string] {
   // Show the result value.
   return [
     null,
-    tree,
+    sugarfree,
     type_str,
     pretty_value(interpret(sugarfree)),
   ];
