@@ -43,10 +43,9 @@ function tree_canvas(where, get_name, get_children) {
     nodes.forEach(function(d) { d.y = d.depth * 50; });
 
     // Declare the nodes.
-    var i = 0;
     svg.selectAll("g.node").remove();  // UGLY
     var node = svg.selectAll("g.node")
-     .data(nodes, function(d) { return d.id || (d.id = ++i); });
+     .data(nodes);
 
     // Enter the nodes.
     var nodeEnter = node.enter().append("g")
