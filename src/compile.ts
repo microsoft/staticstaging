@@ -10,7 +10,9 @@ function gen_jscompile(fself: JSCompile): JSCompile {
     },
 
     visit_seq(tree: SeqNode, param: void): string {
-      throw "unimplemented";
+      let p1 = fself(tree.lhs);
+      let p2 = fself(tree.rhs);
+      return p1 + ";\n" + p2;
     },
 
     visit_let(tree: LetNode, param: void): string {
@@ -22,7 +24,9 @@ function gen_jscompile(fself: JSCompile): JSCompile {
     },
 
     visit_binary(tree: BinaryNode, param: void): string {
-      throw "unimplemented";
+      let p1 = fself(tree.lhs);
+      let p2 = fself(tree.rhs);
+      return p1 + " " + tree.op + " " + p2;
     },
 
     visit_quote(tree: QuoteNode, param: void): string {
