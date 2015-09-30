@@ -11,7 +11,7 @@ function gen_ast_fold <T> (fself: ASTFold<T>): ASTFold<T> {
 
     visit_seq(tree: SeqNode, p: T): T {
       let p1 = fself(tree.lhs, p);
-      let p2 = fself(tree.lhs, p1);
+      let p2 = fself(tree.rhs, p1);
       return p2;
     },
 
@@ -25,7 +25,7 @@ function gen_ast_fold <T> (fself: ASTFold<T>): ASTFold<T> {
 
     visit_binary(tree: BinaryNode, p: T): T {
       let p1 = fself(tree.lhs, p);
-      let p2 = fself(tree.lhs, p1);
+      let p2 = fself(tree.rhs, p1);
       return p2;
     },
 
@@ -86,6 +86,8 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
       t[tree.id] = def_id;
       return [map, t];
     },
+
+    // TODO push & pop on quote & escape
   });
 
   return function (tree: SyntaxNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
@@ -94,8 +96,9 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
 };
 
 let _find_def_use = fix(compose(gen_find_def_use, gen_ast_fold));
-function find_def_use(tree: SyntaxNode): [DefUseNameMap, DefUseTable] {
-  return _find_def_use(tree, [{}, []]);
+function find_def_use(tree: SyntaxNode): DefUseTable {
+  let [_, t] = _find_def_use(tree, [{}, []]);
+  return t;
 }
 
 type JSCompile = (tree: SyntaxNode) => string;
