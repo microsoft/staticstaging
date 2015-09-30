@@ -82,6 +82,11 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
   };
 };
 
+let _find_def_use = fix(compose(gen_find_def_use, gen_ast_fold));
+function find_def_use(tree: SyntaxNode): [DefUseNameMap, DefUseTable] {
+  return _find_def_use(tree, [{}, []]);
+}
+
 type JSCompile = (tree: SyntaxNode) => string;
 function gen_jscompile(fself: JSCompile): JSCompile {
   let compile_rules : ASTVisit<void, string> = {

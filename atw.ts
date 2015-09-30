@@ -3,6 +3,7 @@
 /// <reference path="src/pretty.ts" />
 /// <reference path="src/type.ts" />
 /// <reference path="src/sugar.ts" />
+/// <reference path="src/compile.ts" />
 
 let fs = require('fs');
 let util = require('util');
@@ -88,6 +89,11 @@ function main() {
         console.log(i + ': ' + util.inspect(context, false, null));
         ++i;
       }
+    }
+
+    // IN PROGRESS
+    if (verbose) {
+      console.log(find_def_use(sugarfree));
     }
 
     // Execute.
