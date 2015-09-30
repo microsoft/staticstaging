@@ -70,11 +70,10 @@ type FindDefUse = ASTFold<[DefUseNameMap, DefUseTable]>;
 function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
   let rules = complete_visit(fsuper, {
     visit_let(tree: LetNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      let m = merge(map);
-      m[tree.ident] = tree.id;
-      // TODO: that should actually go to "self", somehow!
-      let [m2, t2] = fsuper(tree.expr, [m, table]);
-      return [m, table];
+      let [m1, t1] = fsuper(tree.expr, [map, table]);
+      let m2 = overlay(map);
+      m2[tree.ident] = tree.id;
+      return [m2, t1];
     },
   });
 
