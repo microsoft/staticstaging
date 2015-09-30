@@ -78,7 +78,7 @@ function complete_visit <P, R> (
   let total = < ASTVisit<P, R> > merge(partial);
   for (let kind of AST_TYPES) {
     let fun_name = 'visit_' + kind;
-    if (partial.hasOwnProperty(fun_name)) {
+    if (!partial.hasOwnProperty(fun_name)) {
       (<any> total)[fun_name] = fallback;
     }
   }
