@@ -4,64 +4,62 @@
 
 type DefUseTable = number[];
 type DefUseNameMap = { [name: string]: number };
-type FindDefUse = (tree: SyntaxNode, defs: DefUseNameMap) => [DefUseNameMap, DefUseTable];
+type FindDefUse = (tree: SyntaxNode, [map, table]: [DefUseNameMap, DefUseTable]) => [DefUseNameMap, DefUseTable];
 function gen_defuse(fself: FindDefUse): FindDefUse {
-  let def_use_rules : ASTVisit<DefUseNameMap, [DefUseNameMap, DefUseTable]> = {
-    visit_literal(tree: LiteralNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
-      return [defs, []];
+  let def_use_rules : ASTVisit<[DefUseNameMap, DefUseTable], [DefUseNameMap, DefUseTable]> = {
+    visit_literal(tree: LiteralNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+      return [map, table];
     },
 
-    visit_seq(tree: SeqNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
-      let [m1, t1] = fself(tree.lhs, defs);
-      let [m2, t2] = fself(tree.lhs, m1);
-      // MERGE t1 AND t2
+    visit_seq(tree: SeqNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+      let [m1, t1] = fself(tree.lhs, [map, table]);
+      let [m2, t2] = fself(tree.lhs, [m1, t1]);
       return [m2, t2];
     },
 
-    visit_let(tree: LetNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
-      let m = merge(defs);
+    visit_let(tree: LetNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+      let m = merge(map);
       m[tree.ident] = tree.id;
-      return [m, []];
+      return [m, table];
     },
 
-    visit_lookup(tree: LookupNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
+    visit_lookup(tree: LookupNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
       throw "unimplemented";
     },
 
-    visit_binary(tree: BinaryNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
-      let [m1, t1] = fself(tree.lhs, defs);
-      let [m2, t2] = fself(tree.lhs, m1);
-      // MERGE t1 AND t2 (OR THREAD)
+    visit_binary(tree: BinaryNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+      let [m1, t1] = fself(tree.lhs, [map, table]);
+      let [m2, t2] = fself(tree.lhs, [m1, t1]);
       return [m2, t2];
     },
 
-    visit_quote(tree: QuoteNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
+    visit_quote(tree: QuoteNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
       throw "unimplemented";
     },
 
-    visit_escape(tree: EscapeNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
+    visit_escape(tree: EscapeNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
       throw "unimplemented";
     },
 
-    visit_run(tree: RunNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
+    visit_run(tree: RunNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
       throw "unimplemented";
     },
 
-    visit_fun(tree: FunNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
+    visit_fun(tree: FunNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
       throw "unimplemented";
     },
 
-    visit_call(tree: CallNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
+    visit_call(tree: CallNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
       throw "unimplemented";
     },
 
-    visit_persist(tree: PersistNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
+    visit_persist(tree: PersistNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
       throw "error: persist cannot appear in source";
     },
   }
 
-  return function(tree: SyntaxNode): [DefUseNameMap, DefUseTable] {
-    return ast_visit(def_use_rules, tree, {});
+  return function(tree: SyntaxNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+    return ast_visit(def_use_rules, tree, [map, table]);
   };
 }
 
