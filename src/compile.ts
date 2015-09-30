@@ -14,11 +14,14 @@ function gen_defuse(fself: FindDefUse): FindDefUse {
     visit_seq(tree: SeqNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
       let [m1, t1] = fself(tree.lhs, defs);
       let [m2, t2] = fself(tree.lhs, m1);
+      // MERGE t1 AND t2
       return [m2, t2];
     },
 
     visit_let(tree: LetNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
-      throw "unimplemented";
+      let m = merge(defs);
+      m[tree.ident] = tree.id;
+      return [m, []];
     },
 
     visit_lookup(tree: LookupNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
@@ -28,6 +31,7 @@ function gen_defuse(fself: FindDefUse): FindDefUse {
     visit_binary(tree: BinaryNode, defs: DefUseNameMap): [DefUseNameMap, DefUseTable] {
       let [m1, t1] = fself(tree.lhs, defs);
       let [m2, t2] = fself(tree.lhs, m1);
+      // MERGE t1 AND t2 (OR THREAD)
       return [m2, t2];
     },
 
