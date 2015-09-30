@@ -87,6 +87,17 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
       return [map, t];
     },
 
+    visit_fun(tree: FunNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+      let m = overlay(map);
+      for (let param of tree.params) {
+        m[param.name] = tree.id;
+      }
+
+      // TODO should call "fself", not "fsuper", somehow
+      let [m2, t2] = fsuper(tree.body, [m, table]);
+      return [m2, t2];
+    },
+
     // TODO push & pop on quote & escape
   });
 
@@ -95,6 +106,8 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
   };
 };
 
+// Build a def/use table for lookups that links them to their corresponding
+// "let" or "fun" AST nodes.
 let _find_def_use = fix(compose(gen_find_def_use, gen_ast_fold));
 function find_def_use(tree: SyntaxNode): DefUseTable {
   let [_, t] = _find_def_use(tree, [{}, []]);
