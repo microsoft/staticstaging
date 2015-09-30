@@ -110,14 +110,14 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
 
     // On quote, push an empty name map.
     visit_quote(tree: QuoteNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
-      let m = cons({}, map);
-      return fsuper(tree, [map, table]);
+      let m = cons(<DefUseNameMap> {}, map);
+      return fsuper(tree, [m, table]);
     },
 
     // And pop on escape.
     visit_escape(tree: EscapeNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
       let m = tl(map);
-      return fsuper(tree, [map, table]);
+      return fsuper(tree, [m, table]);
     },
   });
 
