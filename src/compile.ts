@@ -75,6 +75,17 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
       m2[tree.ident] = tree.id;
       return [m2, t1];
     },
+
+    visit_lookup(tree: LookupNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+      let def_id = map[tree.ident];
+      if (def_id === undefined) {
+        throw "error: variable not in name map";
+      }
+
+      let t = table.slice(0);
+      t[tree.id] = def_id;
+      return [map, t];
+    },
   });
 
   return function (tree: SyntaxNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
