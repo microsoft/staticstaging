@@ -1,4 +1,5 @@
 /// <reference path="ast.ts" />
+/// <reference path="util.ts" />
 
 // An interface that can handle each AST node type.
 interface ASTVisit<P, R> {
@@ -46,4 +47,40 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
     default:
       throw "error: unknown syntax node " + tree.tag;
   }
+}
+
+// An interface that can handle *some* AST node types.
+// It's a shame this has to be copied n' pasted.
+interface PartialASTVisit<P, R> {
+  visit_literal? (tree: LiteralNode, param: P): R;
+  visit_seq? (tree: SeqNode, param: P): R;
+  visit_let? (tree: LetNode, param: P): R;
+  visit_lookup? (tree: LookupNode, param: P): R;
+  visit_binary? (tree: BinaryNode, param: P): R;
+  visit_quote? (tree: QuoteNode, param: P): R;
+  visit_escape? (tree: EscapeNode, param: P): R;
+  visit_run? (tree: RunNode, param: P): R;
+  visit_fun? (tree: FunNode, param: P): R;
+  visit_call? (tree: CallNode, param: P): R;
+  visit_persist? (tree: PersistNode, param: P): R;
+}
+
+let AST_TYPES = ["literal", "seq", "let", "lookup", "binary", "quote",
+                 "escape", "run", "fun", "call", "persist"];
+
+// Use a fallback function for any unhandled cases in a PartialASTVisit. This
+// is some messy run-time metaprogramming!
+function complete_visit <P, R> (
+  fallback: (_: SyntaxNode, p: P) => R,
+  partial: PartialASTVisit<P, R>):
+  ASTVisit<P, R>
+{
+  let total = < ASTVisit<P, R> > merge(partial);
+  for (let kind of AST_TYPES) {
+    let fun_name = 'visit_' + kind;
+    if (partial.hasOwnProperty(fun_name)) {
+      (<any> total)[fun_name] = fallback;
+    }
+  }
+  return total;
 }

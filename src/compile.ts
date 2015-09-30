@@ -2,66 +2,86 @@
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
 
-type DefUseTable = number[];
-type DefUseNameMap = { [name: string]: number };
-type FindDefUse = (tree: SyntaxNode, [map, table]: [DefUseNameMap, DefUseTable]) => [DefUseNameMap, DefUseTable];
-function gen_defuse(fself: FindDefUse): FindDefUse {
-  let def_use_rules : ASTVisit<[DefUseNameMap, DefUseTable], [DefUseNameMap, DefUseTable]> = {
-    visit_literal(tree: LiteralNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      return [map, table];
+type ASTFold <T> = (tree:SyntaxNode, p: T) => T;
+function gen_ast_fold <T> (fself: ASTFold<T>): ASTFold<T> {
+  let fold_rules : ASTVisit<T, T> = {
+    visit_literal(tree: LiteralNode, p: T): T {
+      return p;
     },
 
-    visit_seq(tree: SeqNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      let [m1, t1] = fself(tree.lhs, [map, table]);
-      let [m2, t2] = fself(tree.lhs, [m1, t1]);
-      return [m2, t2];
+    visit_seq(tree: SeqNode, p: T): T {
+      let p1 = fself(tree.lhs, p);
+      let p2 = fself(tree.lhs, p1);
+      return p2;
     },
 
-    visit_let(tree: LetNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      let m = merge(map);
-      m[tree.ident] = tree.id;
-      return [m, table];
+    visit_let(tree: LetNode, p: T): T {
+      return fself(tree.expr, p);
     },
 
-    visit_lookup(tree: LookupNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      throw "unimplemented";
+    visit_lookup(tree: LookupNode, p: T): T {
+      return p;
     },
 
-    visit_binary(tree: BinaryNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      let [m1, t1] = fself(tree.lhs, [map, table]);
-      let [m2, t2] = fself(tree.lhs, [m1, t1]);
-      return [m2, t2];
+    visit_binary(tree: BinaryNode, p: T): T {
+      let p1 = fself(tree.lhs, p);
+      let p2 = fself(tree.lhs, p1);
+      return p2;
     },
 
-    visit_quote(tree: QuoteNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      throw "unimplemented";
+    visit_quote(tree: QuoteNode, p: T): T {
+      return fself(tree.expr, p);
     },
 
-    visit_escape(tree: EscapeNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      throw "unimplemented";
+    visit_escape(tree: EscapeNode, p: T): T {
+      return fself(tree.expr, p);
     },
 
-    visit_run(tree: RunNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      throw "unimplemented";
+    visit_run(tree: RunNode, p: T): T {
+      return fself(tree.expr, p);
     },
 
-    visit_fun(tree: FunNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      throw "unimplemented";
+    visit_fun(tree: FunNode, p: T): T {
+      return fself(tree.body, p);
     },
 
-    visit_call(tree: CallNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      throw "unimplemented";
+    visit_call(tree: CallNode, p: T): T {
+      let p1 = p;
+      for (let arg of tree.args) {
+        p1 = fself(arg, p1);
+      }
+      let p2 = fself(tree.fun, p1);
+      return p2;
     },
 
-    visit_persist(tree: PersistNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-      throw "error: persist cannot appear in source";
+    visit_persist(tree: PersistNode, p: T): T {
+      return p;
     },
   }
 
-  return function(tree: SyntaxNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
-    return ast_visit(def_use_rules, tree, [map, table]);
+  return function(tree: SyntaxNode, p: T): T {
+    return ast_visit(fold_rules, tree, p);
   };
 }
+
+type DefUseTable = number[];
+type DefUseNameMap = { [name: string]: number };
+type FindDefUse = ASTFold<[DefUseNameMap, DefUseTable]>;
+function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
+  let rules = complete_visit(fsuper, {
+    visit_let(tree: LetNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+      let m = merge(map);
+      m[tree.ident] = tree.id;
+      // TODO: that should actually go to "self", somehow!
+      let [m2, t2] = fsuper(tree.expr, [m, table]);
+      return [m, table];
+    },
+  });
+
+  return function (tree: SyntaxNode, [map, table]: [DefUseNameMap, DefUseTable]): [DefUseNameMap, DefUseTable] {
+    return ast_visit(rules, tree, [map, table]);
+  };
+};
 
 type JSCompile = (tree: SyntaxNode) => string;
 function gen_jscompile(fself: JSCompile): JSCompile {
