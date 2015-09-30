@@ -75,6 +75,7 @@ type DefUseNameMap = { [name: string]: number };
 type FindDefUse = ASTFold<[DefUseNameMap[], DefUseTable]>;
 function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
   let rules = complete_visit(fsuper, {
+    // The "let" case defines a variable in a map to refer to the "let" node.
     visit_let(tree: LetNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
       // TODO also fself here
       let [m1, t1] = fsuper(tree.expr, [map, table]);
@@ -83,17 +84,7 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
       return [m2, t1];
     },
 
-    visit_lookup(tree: LookupNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
-      let def_id = hd(map)[tree.ident];
-      if (def_id === undefined) {
-        throw "error: variable not in name map";
-      }
-
-      let t = table.slice(0);
-      t[tree.id] = def_id;
-      return [map, t];
-    },
-
+    // Similarly, "fun" defines variables in the map for its parameters.
     visit_fun(tree: FunNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
       let m = hd_overlay(map);
       for (let param of tree.params) {
@@ -105,7 +96,29 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
       return [m2, t2];
     },
 
-    // TODO push & pop on quote & escape
+    // Lookup (i.e., a use) populates the def/use table based on the name map.
+    visit_lookup(tree: LookupNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
+      let def_id = hd(map)[tree.ident];
+      if (def_id === undefined) {
+        throw "error: variable not in name map";
+      }
+
+      let t = table.slice(0);
+      t[tree.id] = def_id;
+      return [map, t];
+    },
+
+    // On quote, push an empty name map.
+    visit_quote(tree: QuoteNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
+      let m = cons({}, map);
+      return fsuper(tree, [map, table]);
+    },
+
+    // And pop on escape.
+    visit_escape(tree: EscapeNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
+      let m = tl(map);
+      return fsuper(tree, [map, table]);
+    },
   });
 
   return function (tree: SyntaxNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
