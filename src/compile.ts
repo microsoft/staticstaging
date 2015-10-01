@@ -3,8 +3,8 @@
 /// <reference path="util.ts" />
 
 type ASTFold <T> = (tree:SyntaxNode, p: T) => T;
-function gen_ast_fold <T> (fself: ASTFold<T>): ASTFold<T> {
-  let fold_rules : ASTVisit<T, T> = {
+function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
+  return {
     visit_literal(tree: LiteralNode, p: T): T {
       return p;
     },
@@ -57,10 +57,6 @@ function gen_ast_fold <T> (fself: ASTFold<T>): ASTFold<T> {
     visit_persist(tree: PersistNode, p: T): T {
       return p;
     },
-  }
-
-  return function(tree: SyntaxNode, p: T): T {
-    return ast_visit(fold_rules, tree, p);
   };
 }
 
@@ -73,12 +69,12 @@ function hd_overlay <T> (a: T[]): T[] {
 type DefUseTable = number[];
 type DefUseNameMap = { [name: string]: number };
 type FindDefUse = ASTFold<[DefUseNameMap[], DefUseTable]>;
-function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
-  let rules = complete_visit(fsuper, {
+function gen_find_def_use(fself: FindDefUse): FindDefUse {
+  let fold_rules = ast_fold_rules(fself);
+  let rules = compose_visit(fold_rules, {
     // The "let" case defines a variable in a map to refer to the "let" node.
     visit_let(tree: LetNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
-      // TODO also fself here
-      let [m1, t1] = fsuper(tree.expr, [map, table]);
+      let [m1, t1] = fself(tree.expr, [map, table]);
       let m2 = hd_overlay(m1);
       hd(m2)[tree.ident] = tree.id;
       return [m2, t1];
@@ -91,8 +87,7 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
         hd(m)[param.name] = tree.id;
       }
 
-      // TODO should call "fself", not "fsuper", somehow
-      let [m2, t2] = fsuper(tree.body, [m, table]);
+      let [m2, t2] = fself(tree.body, [m, table]);
       return [m2, t2];
     },
 
@@ -111,13 +106,13 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
     // On quote, push an empty name map.
     visit_quote(tree: QuoteNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
       let m = cons(<DefUseNameMap> {}, map);
-      return fsuper(tree, [m, table]);
+      return fold_rules.visit_quote(tree, [m, table]);
     },
 
     // And pop on escape.
     visit_escape(tree: EscapeNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
       let m = tl(map);
-      return fsuper(tree, [m, table]);
+      return fold_rules.visit_escape(tree, [m, table]);
     },
   });
 
@@ -128,7 +123,7 @@ function gen_find_def_use(fsuper: FindDefUse): FindDefUse {
 
 // Build a def/use table for lookups that links them to their corresponding
 // "let" or "fun" AST nodes.
-let _find_def_use = fix(compose(gen_find_def_use, gen_ast_fold));
+let _find_def_use = fix(gen_find_def_use);
 function find_def_use(tree: SyntaxNode): DefUseTable {
   let [_, t] = _find_def_use(tree, [[{}], []]);
   return t;

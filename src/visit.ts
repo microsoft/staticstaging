@@ -84,3 +84,12 @@ function complete_visit <P, R> (
   }
   return total;
 }
+
+// Overlay a partial visitor on top of a complete visitor.
+function compose_visit <P, R> (
+  base: ASTVisit<P, R>,
+  partial: PartialASTVisit<P, R>):
+  ASTVisit<P, R>
+{
+  return merge(base, partial);
+}
