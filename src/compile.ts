@@ -116,7 +116,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       // Update the top map with the function parameters.
       let n = ns_push_scope(ns);
       for (let param of tree.params) {
-        ns_hd(n)[param.name] = tree.id;
+        ns_hd(n)[param.name] = param.id;
       }
 
       // Traverse the body with this new map.

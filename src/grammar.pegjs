@@ -60,9 +60,10 @@ Run "run"
 Fun "lambda"
   = fun _ ps:Param* _ arrow _ e:Expr
   { return {tag: "fun", params: ps, body: e}; }
-Param
+
+Param "parameter"
   = i:ident _ typed _ t:ident _
-  { return {name: i, type: t}; }
+  { return {tag: "param", name: i, type: t}; }
 
 Call "call"
   = i:TermExpr _ as:Arg+

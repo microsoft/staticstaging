@@ -235,7 +235,12 @@ function stamp <T> (o: T, start: number = 0): T & { id: number } {
 
   function helper (o: any): any {
     if (o instanceof Array) {
-      return o.slice(0);
+      let out: any[] = [];
+      for (let el of o) {
+        out.push(helper(el));
+      }
+      return out;
+
     } else if (o instanceof Object) {
       let copy = merge(o);
       copy.id = id;

@@ -44,8 +44,13 @@ interface RunNode extends ExpressionNode {
 }
 
 interface FunNode extends ExpressionNode {
-  params: {name: string, type: string}[];
+  params: ParamNode[];
   body: ExpressionNode;
+}
+
+interface ParamNode extends SyntaxNode {
+  name: string;
+  type: string;
 }
 
 interface CallNode extends ExpressionNode {

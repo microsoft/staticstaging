@@ -1,7 +1,7 @@
 /// <reference path="ast.ts" />
 /// <reference path="util.ts" />
 
-// An interface that can handle each AST node type.
+// An interface that can handle each expression AST node type.
 interface ASTVisit<P, R> {
   visit_literal(tree: LiteralNode, param: P): R;
   visit_seq(tree: SeqNode, param: P): R;
