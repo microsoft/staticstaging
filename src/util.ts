@@ -63,3 +63,21 @@ function compose <A, B, C> (g : (_:B) => C, f : (_:A) => B): (_:A) => C {
     return g(f(x));
   }
 }
+
+// Look up a key in a stack of maps, from left to right. Return the value and
+// the position where it was found (or [undefined, undefined] if not found).
+function stack_lookup <T> (
+  mapstack: { [key: string]: T }[],
+  ident: string):
+  [T, number]
+{
+  let i = 0;
+  for (let map of mapstack) {
+    let value = map[ident];
+    if (value !== undefined) {
+      return [value, i];
+    }
+    ++i;
+  }
+  return [undefined, undefined];
+}
