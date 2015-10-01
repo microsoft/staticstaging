@@ -48,10 +48,18 @@ function main() {
     args.shift();
   }
 
+  // And a compile -c flag.
+  // TODO Use a real option parser.
+  let compile = false;
+  if (args[0] === "-c") {
+    compile = true;
+    args.shift();
+  }
+
   // Get the filename.
   let fn = args.shift();
   if (!fn) {
-    console.log("usage: " + process.argv[1] + " [-v] PROGRAM");
+    console.log("usage: " + process.argv[1] + " [-vc] PROGRAM");
     process.exit(1);
   }
 
@@ -91,13 +99,18 @@ function main() {
       }
     }
 
-    // IN PROGRESS
-    if (verbose) {
-      console.log(find_def_use(sugarfree));
-    }
-
     // Execute.
-    console.log(pretty_value(interpret(sugarfree)));
+    if (compile) {
+      // Compile. IN PROGRESS.
+      if (verbose) {
+        console.log(find_def_use(sugarfree));
+      }
+      console.log(jscompile(sugarfree));
+
+    } else {
+      // Interpret.
+      console.log(pretty_value(interpret(sugarfree)));
+    }
   });
 }
 
