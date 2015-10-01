@@ -184,6 +184,62 @@ function find_def_use(tree: SyntaxNode): DefUseTable {
   return t;
 }
 
+// A procedure is a lambda-lifted function. It includes the original body of
+// the function and the IDs of the parameters and the closed-over free
+// variables used in the function.
+interface Proc {
+  body: ExpressionNode,
+  params: number[],
+  free: number[],
+};
+
+type LambdaLift = ASTFold<[number[], Proc[]]>;
+function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
+  return function (fself: LambdaLift): LambdaLift {
+    let fold_rules = ast_fold_rules(fself);
+    let rules = compose_visit(fold_rules, {
+      // Collect the free variables and construct a Proc.
+      visit_fun(tree: FunNode, [free, procs]: [number[], Proc[]]):
+        [number[], Proc[]]
+      {
+        let [f, p] = fold_rules.visit_fun(tree, [free, procs]);
+
+        let param_ids: number[] = [];
+        for (let param of tree.params) {
+          param_ids.push(param.id);
+        }
+        let proc: Proc = {
+          body: tree.body,
+          params: param_ids,
+          free: f,
+        };
+
+        return [free, cons(proc, p)];
+      },
+
+      // Add free variables to the free set.
+      visit_lookup(tree: LookupNode, [free, procs]: [number[], Proc[]]):
+        [number[], Proc[]]
+      {
+        let [defid, is_bound] = defuse[tree.id];
+        let f: number[];
+        if (!is_bound) {
+          f = set_add(free, defid);
+        } else {
+          f = free;
+        }
+        return [f, procs];
+      },
+    });
+
+    return function (tree: SyntaxNode, [free, procs]: [number[], Proc[]]):
+      [number[], Proc[]]
+    {
+      return ast_visit(rules, tree, [free, procs]);
+    }
+  }
+}
+
 function symbol_name(defid: number) {
   return 'v' + defid;
 }
@@ -253,6 +309,10 @@ function gen_jscompile(defuse: DefUseTable): Gen<JSCompile> {
 
 function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
+
+  let _lambda_lift = fix(gen_lambda_lift(table));
+  let procs = _lambda_lift(tree, [[], []]);
+
   let _jscompile = fix(gen_jscompile(table));
   return _jscompile(tree);
 }

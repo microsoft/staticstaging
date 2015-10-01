@@ -81,3 +81,15 @@ function stack_lookup <T> (
   }
   return [undefined, undefined];
 }
+
+// Treat an array as a set and insert into it. That is, do nothing if the
+// value is already present, and otherwise push it onto the list.
+function set_add <T> (a: T[], v: T): T[] {
+  for (let x of a) {
+    if (x === v) {
+      return a;
+    }
+  }
+
+  return cons(v, a);
+}
