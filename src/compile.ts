@@ -60,9 +60,9 @@ function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
   };
 }
 
-// The main output of def/use analysis: a defining node ID for every lookup
-// node ID.
-type DefUseTable = number[];
+// The main output of def/use analysis: For every lookup node ID, a defining
+// node ID and a flag indicating whether the variable is bound (vs. free).
+type DefUseTable = [number, boolean][];
 
 // The intermediate data structure for def/use analysis is a *stack of stack
 // of maps*. The map assigns a defining node ID for names. We need a stack to
@@ -135,15 +135,12 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
         throw "error: variable not in name map";
       }
 
-      // TODO
-      if (scope_index === 0) {
-        // A bound variable.
-      } else {
-        // A free variable.
-      }
+      // The variable is bound (as opposed to free) if it is found in the
+      // topmost function scope.
+      let bound = (scope_index === 0);
 
       let t = table.slice(0);
-      t[tree.id] = def_id;
+      t[tree.id] = [def_id, bound];
       return [ns, t];
     },
 
@@ -187,8 +184,8 @@ function find_def_use(tree: SyntaxNode): DefUseTable {
   return t;
 }
 
-function symbol_name(ident: string, defid: number) {
-  return ident + '_' + defid;
+function symbol_name(defid: number) {
+  return 'v' + defid;
 }
 
 type JSCompile = (tree: SyntaxNode) => string;
@@ -207,12 +204,13 @@ function gen_jscompile(defuse: DefUseTable): Gen<JSCompile> {
 
       visit_let(tree: LetNode, param: void): string {
         // TODO should declare these at some point
-        let jsvar = symbol_name(tree.ident, tree.id);
+        let jsvar = symbol_name(tree.id);
         return jsvar + " = " + fself(tree.expr);
       },
 
       visit_lookup(tree: LookupNode, param: void): string {
-        let jsvar = symbol_name(tree.ident, defuse[tree.id]);
+        let [defid, _] = defuse[tree.id];
+        let jsvar = symbol_name(defid);
         return jsvar;
       },
 
