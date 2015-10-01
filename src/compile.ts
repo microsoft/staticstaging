@@ -82,6 +82,12 @@ function ns_overlay <T> (a: T[][]): T[][] {
   return cons(cons(hm, tl(ha)), tl(a));
 }
 
+// Create an overlay *function* scope in the top stack of a NameStack.
+function ns_push_scope(ns: NameStack): NameStack {
+  let top_stack = cons(<NameMap> {}, hd(ns));
+  return cons(top_stack, tl(ns));
+}
+
 // Look up a value from any function scope in the top quote scope.
 function ns_lookup (a: NameStack, key: string): number {
   let [val, _] = stack_lookup(hd(a), key);
@@ -108,7 +114,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [NameStack, DefUseTable]
     {
       // Update the top map with the function parameters.
-      let n = ns_overlay(ns);
+      let n = ns_push_scope(ns);
       for (let param of tree.params) {
         ns_hd(n)[param.name] = tree.id;
       }
