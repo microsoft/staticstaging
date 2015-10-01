@@ -88,10 +88,10 @@ function ns_push_scope(ns: NameStack): NameStack {
   return cons(top_stack, tl(ns));
 }
 
-// Look up a value from any function scope in the top quote scope.
-function ns_lookup (a: NameStack, key: string): number {
-  let [val, _] = stack_lookup(hd(a), key);
-  return val;
+// Look up a value from any function scope in the top quote scope. Return the
+// value and the index (in *function* scopes) where the value was found.
+function ns_lookup (a: NameStack, key: string): [number, number] {
+  return stack_lookup(hd(a), key);
 }
 
 // Here's the core def/use analysis.
@@ -130,9 +130,16 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [ns, table]: [NameStack, DefUseTable]):
       [NameStack, DefUseTable]
     {
-      let def_id = ns_lookup(ns, tree.ident);
+      let [def_id, scope_index] = ns_lookup(ns, tree.ident);
       if (def_id === undefined) {
         throw "error: variable not in name map";
+      }
+
+      // TODO
+      if (scope_index === 0) {
+        // A bound variable.
+      } else {
+        // A free variable.
       }
 
       let t = table.slice(0);
