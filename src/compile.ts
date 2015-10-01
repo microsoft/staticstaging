@@ -82,13 +82,16 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 
     // Similarly, "fun" defines variables in the map for its parameters.
     visit_fun(tree: FunNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
+      // Update the top map with the function parameters.
       let m = hd_overlay(map);
       for (let param of tree.params) {
         hd(m)[param.name] = tree.id;
       }
 
+      // Traverse the body with this new map.
       let [m2, t2] = fself(tree.body, [m, table]);
-      return [m2, t2];
+      // Then continue outside of the `fun` with the old map.
+      return [map, t2];
     },
 
     // Lookup (i.e., a use) populates the def/use table based on the name map.
@@ -105,14 +108,20 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 
     // On quote, push an empty name map.
     visit_quote(tree: QuoteNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
+      // Traverse inside the quote using a new, empty name map.
       let m = cons(<DefUseNameMap> {}, map);
-      return fold_rules.visit_quote(tree, [m, table]);
+      let [_, t] = fold_rules.visit_quote(tree, [m, table]);
+      // Then throw away the name map but preserve the updated table.
+      return [map, t];
     },
 
     // And pop on escape.
     visit_escape(tree: EscapeNode, [map, table]: [DefUseNameMap[], DefUseTable]): [DefUseNameMap[], DefUseTable] {
+      // Temporarily pop the current quote's scope.
       let m = tl(map);
-      return fold_rules.visit_escape(tree, [m, table]);
+      let [_, t] = fold_rules.visit_escape(tree, [m, table]);
+      // Then restore the old scope and return the updated table.
+      return [map, t];
     },
   });
 
