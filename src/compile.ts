@@ -391,13 +391,18 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
     argnames.push(varsym(fv));
   }
 
-  // We also need the names of the non-parameter bound variables.
+  // We also need the names of the non-parameter bound variables so we can
+  // declare them.
   let localnames: string[] = [];
   for (let bv of proc.bound) {
     if (proc.params.indexOf(bv) == -1) {
       localnames.push(varsym(bv));
     }
   }
+  // We'll also declare our special "closure" and "args" temporaries, used for
+  // invoking closures.
+  localnames.push("closure");
+  localnames.push("args");
 
   // Function declaration.
   let out =  "function " + procsym(proc.id) + "(";
@@ -405,9 +410,7 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   out += ") {\n";
 
   // Declare all the bound variables as JavaScript locals.
-  if (localnames.length > 0) {
-    out += "var " + localnames.join(", ") + ";\n";
-  }
+  out += "var " + localnames.join(", ") + ";\n";
 
   // Body.
   out += "return ";
