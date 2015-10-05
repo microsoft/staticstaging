@@ -277,7 +277,7 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
       visit_seq(tree: SeqNode, param: void): string {
         let p1 = fself(tree.lhs);
         let p2 = fself(tree.rhs);
-        return p1 + ";\n" + p2;
+        return p1 + ",\n" + p2;
       },
 
       visit_let(tree: LetNode, param: void): string {
@@ -375,12 +375,13 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   let out =  "function " + procsym(proc.id) + "(";
   out += argnames.join(", ");
   out += ") {\n";
+  out += "return ";
   out += compile(proc.body);
-  out += "}\n";
+  out += "\n}\n";
   return out;
 }
 
-function jscompile(tree: SyntaxNode): string {
+function jscompile(tree: SyntaxNode, callback = "console.log"): string {
   let table = find_def_use(tree);
 
   let [procs, main] = lambda_lift(tree, table);
@@ -393,6 +394,6 @@ function jscompile(tree: SyntaxNode): string {
     }
   }
   out += jscompile_proc(_jscompile, main);
-  out += "main();\n";
+  out += callback + "(main());";
   return out;
 }
