@@ -4,6 +4,7 @@
 /// <reference path="src/type.ts" />
 /// <reference path="src/sugar.ts" />
 /// <reference path="src/compile.ts" />
+/// <reference path="src/backend_js.ts" />
 
 let fs = require('fs');
 let util = require('util');
