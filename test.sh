@@ -1,7 +1,7 @@
 #!/bin/sh
 fn=$1
-name=$2
 
+name=`basename $fn .atw`
 output=$(node atw.js $fn)
 expected=$(sed -n 's/^# -> \(.*\)/\1/p' $fn)
 

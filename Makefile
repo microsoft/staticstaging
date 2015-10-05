@@ -46,7 +46,7 @@ clean:
 .PHONY: test
 test: $(CLI_JS)
 	@ for name in $(TESTS) ; do \
-		sh test.sh test/$$name.atw $$name ; \
+		sh test.sh test/$$name.atw ; \
 		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
 	done ; \
 	[ ! $$failed ]
