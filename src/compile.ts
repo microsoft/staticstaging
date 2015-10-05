@@ -394,7 +394,7 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   // We also need the names of the non-parameter bound variables.
   let localnames: string[] = [];
   for (let bv of proc.bound) {
-    if (proc.params.indexOf(bv) != -1) {
+    if (proc.params.indexOf(bv) == -1) {
       localnames.push(varsym(bv));
     }
   }
