@@ -310,8 +310,19 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
         throw "unimplemented";
       },
 
+      // A function expression produces a pair containing the JavaScript
+      // function for the corresponding proc and a list of environment
+      // variables.
       visit_fun(tree: FunNode, param: void): string {
-        throw "unimplemented";
+        let captures: string[] = [];
+        for (let fv of procs[tree.id].free) {
+          captures.push(varsym(fv));
+        }
+
+        // Assemble the pair.
+        let out = "[" + procsym(tree.id) + ", ";
+        out += "[" + captures.join(', ') + "]]";
+        return out;
       },
 
       visit_call(tree: CallNode, param: void): string {
@@ -329,16 +340,12 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
   }
 }
 
-function funcsym(id: number) {
-  if (id === undefined) {
+function procsym(id: number) {
+  if (id === null) {
     return "main";
   } else {
     return "p" + id;
   }
-}
-
-function fvsym(id: number) {
-  return "fv" + id;
 }
 
 function jscompile_proc(compile: JSCompile, proc: Proc): string {
@@ -347,10 +354,10 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
     argnames.push(varsym(param));
   }
   for (let fv of proc.free) {
-    argnames.push(fvsym(fv));
+    argnames.push(varsym(fv));
   }
 
-  let out =  "function " + funcsym(proc.id) + "(";
+  let out =  "function " + procsym(proc.id) + "(";
   out += argnames.join(", ");
   out += ") {\n";
   out += compile(proc.body);
@@ -371,5 +378,6 @@ function jscompile(tree: SyntaxNode): string {
     }
   }
   out += jscompile_proc(_jscompile, main);
+  out += "main();\n";
   return out;
 }
