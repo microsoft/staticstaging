@@ -408,11 +408,7 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   let out =  "function " + procsym(proc.id) + "(";
   out += argnames.join(", ");
   out += ") {\n";
-
-  // Declare all the bound variables as JavaScript locals.
   out += "var " + localnames.join(", ") + ";\n";
-
-  // Body.
   out += "return ";
   out += compile(proc.body);
   out += ";\n}\n";
