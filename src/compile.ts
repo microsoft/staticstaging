@@ -284,6 +284,11 @@ function varsym(defid: number) {
   return 'v' + defid;
 }
 
+
+function paren(e: string) {
+  return "(" + e + ")";
+}
+
 type JSCompile = (tree: SyntaxNode) => string;
 function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
   return function (fself: JSCompile): JSCompile {
@@ -300,7 +305,7 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
 
       visit_let(tree: LetNode, param: void): string {
         let jsvar = varsym(tree.id);
-        return jsvar + " = " + fself(tree.expr);
+        return jsvar + " = " + paren(fself(tree.expr));
       },
 
       visit_lookup(tree: LookupNode, param: void): string {
@@ -312,7 +317,7 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
       visit_binary(tree: BinaryNode, param: void): string {
         let p1 = fself(tree.lhs);
         let p2 = fself(tree.rhs);
-        return p1 + " " + tree.op + " " + p2;
+        return paren(p1) + " " + tree.op + " " + paren(p2);
       },
 
       visit_quote(tree: QuoteNode, param: void): string {
@@ -349,7 +354,7 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
         let func = fself(tree.fun);
         let args: string[] = [];
         for (let arg of tree.args) {
-          args.push(fself(arg));
+          args.push(paren(fself(arg)));
         }
 
         // Get the closure pair, then invoke the first part on the arguments
