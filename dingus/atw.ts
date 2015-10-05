@@ -2,6 +2,7 @@
 /// <reference path="../src/pretty.ts" />
 /// <reference path="../src/type.ts" />
 /// <reference path="../src/sugar.ts" />
+/// <reference path="../src/backend_js.ts" />
 
 declare var parser : any;
 declare function tree_canvas (
@@ -106,7 +107,9 @@ function get_name(tree: SyntaxNode): string {
 // - the parse tree
 // - the type
 // - the result of interpretation
-function atw_run(code: string) : [string, SyntaxNode, string, string] {
+function atw_run(code: string, compile: boolean)
+  : [string, SyntaxNode, string, string]
+{
   // Parse.
   let tree: SyntaxNode;
   try {
@@ -133,12 +136,29 @@ function atw_run(code: string) : [string, SyntaxNode, string, string] {
   // Desugar.
   let sugarfree = desugar(elaborated, type_table);
 
+  // Execute.
+  let res_str: string;
+  if (compile) {
+    let jscode: string;
+    try {
+      jscode = jscompile(sugarfree);
+    } catch (e) {
+      return ['compile error: ' + e, sugarfree, type_str, null];
+    }
+
+    let res = eval(jscode);
+    res_str = pretty_js_value(res);
+  } else {
+    let res = interpret(sugarfree);
+    res_str = pretty_value(res);
+  }
+
   // Show the result value.
   return [
     null,
     sugarfree,
     type_str,
-    pretty_value(interpret(sugarfree)),
+    res_str,
   ];
 }
 
@@ -160,6 +180,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let helpbox = <HTMLElement> document.querySelector('#help');
   let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
+  let compiletoggle = <HTMLInputElement> document.querySelector('#compile');
 
   let draw_tree = tree_canvas('#tree', get_name, get_children);
 
@@ -169,8 +190,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function run_code() {
     let code = code_value();
+    let compile = compiletoggle.checked;
+
     if (code !== "") {
-      let [err, tree, typ, res] = atw_run(code);
+      let [err, tree, typ, res] = atw_run(code, compile);
 
       show(err, errbox);
       show(typ, typebox);
@@ -218,6 +241,11 @@ document.addEventListener("DOMContentLoaded", function () {
       clearTimeout(tid);
     }
     tid = setTimeout(run_code, RUN_DELAY_MS);
+  });
+
+  // Also run the code when toggling the compile checkbox.
+  compiletoggle.addEventListener('change', function () {
+    run_code();
   });
 
   // Example clicks load code.

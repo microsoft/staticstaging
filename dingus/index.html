@@ -16,12 +16,12 @@ textarea {
 #error, #result {
     display: none;
 }
-#clear {
-    float: left;
-    margin-right: 1em;
-}
 #tools {
     height: 2em;
+}
+#tools > * {
+    float: left;
+    margin-right: 1em;
 }
 #help {
     clear: both;
@@ -66,6 +66,10 @@ textarea {
             <button type="button" class="btn btn-secondary btn-sm" id="clear">
                 clear
             </button>
+            <p>
+                <input type="checkbox" id="compile">
+                <label for="compile">compile</label>
+            </p>
             <p id="type"></p>
         </div>
     </div>
