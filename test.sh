@@ -1,8 +1,13 @@
 #!/bin/sh
-fn=$1
+for arg; do
+    case $arg in
+        *.atw) fn=$arg;;
+        *) args="$args $arg";;
+    esac
+done
 
 name=`basename $fn .atw`
-output=$(node atw.js $fn)
+output=$(node atw.js $args $fn)
 expected=$(sed -n 's/^# -> \(.*\)/\1/p' $fn)
 
 if [ "$expected" = "type error" ] ; then
