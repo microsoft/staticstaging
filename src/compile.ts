@@ -236,16 +236,23 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
         let [defid, is_bound] = defuse[tree.id];
 
         let f: number[];
-        let b: number[];
-        if (is_bound) {
-          f = free;
-          b = set_add(bound, defid);
-        } else {
+        if (!is_bound) {
           f = set_add(free, defid);
-          b = bound;
+        } else {
+          f = free;
         }
 
-        return [f, b, procs];
+        return [f, bound, procs];
+      },
+
+      // Add bound variables to the bound set.
+      visit_let(tree: LetNode,
+        [free, bound, procs]: [number[], number[], Proc[]]):
+        [number[], number[], Proc[]]
+      {
+        let [f, b, p] = fold_rules.visit_let(tree, [free, bound, procs]);
+        let b2 = set_add(b, tree.id);
+        return [f, b2, p];
       },
     });
 
@@ -262,13 +269,13 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
 // with no free variables.
 function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
   let _lambda_lift = fix(gen_lambda_lift(table));
-  let [_, __, procs] = _lambda_lift(tree, [[], [], []]);
+  let [_, bound, procs] = _lambda_lift(tree, [[], [], []]);
   let main: Proc = {
     id: null,
     body: tree,
     params: [],
     free: [],
-    bound: [],
+    bound: bound,
   };
   return [procs, main];
 }
