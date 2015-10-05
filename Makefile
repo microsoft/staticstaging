@@ -46,10 +46,14 @@ clean:
 .PHONY: test
 test: $(CLI_JS)
 	@ for name in $(TESTS) ; do \
-		sh test.sh test/$$name.atw ; \
+		sh test.sh $(TEST_ARGS) test/$$name.atw ; \
 		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
 	done ; \
 	[ ! $$failed ]
+
+.PHONY: test-compile
+test-compile: TEST_ARGS := -c -x
+test-compile: test
 
 .PHONY: deploy
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh
