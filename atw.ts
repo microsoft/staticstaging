@@ -108,11 +108,11 @@ function main() {
 
     // Execute.
     if (compile) {
-      // Compile. IN PROGRESS.
+      // Compile.
       let jscode = jscompile(sugarfree);
       if (execute) {
         let res = eval(jscode);
-        console.log(res);
+        console.log(pretty_js_value(res));
       } else {
         console.log(jscode);
       }

@@ -420,6 +420,20 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   return out;
 }
 
+// Like `pretty_value`, but for values in the *compiled* JavaScript world.
+function pretty_js_value(v: any): string {
+  if (typeof v == 'number') {
+    return v.toString();
+  } else if (v instanceof Object) {
+    // This works because the only JS object type in compiled programs is a
+    // closure value.
+    return "(fun)";
+  } else {
+    throw "error: unknown value kind";
+  }
+  // TODO Format code values, whatever those are.
+}
+
 function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
