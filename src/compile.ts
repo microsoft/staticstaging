@@ -188,6 +188,7 @@ function find_def_use(tree: SyntaxNode): DefUseTable {
 // the function and the IDs of the parameters and the closed-over free
 // variables used in the function.
 interface Proc {
+  id: number,  // or null for the main proc
   body: ExpressionNode,
   params: number[],
   free: number[],
@@ -210,6 +211,7 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
           param_ids.push(param.id);
         }
         let proc: Proc = {
+          id: tree.id,
           body: tree.body,
           params: param_ids,
           free: f,
@@ -252,6 +254,7 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
   let _lambda_lift = fix(gen_lambda_lift(table));
   let [_, procs] = _lambda_lift(tree, [[], []]);
   let main: Proc = {
+    id: null,
     body: tree,
     params: [],
     free: [],
@@ -259,12 +262,12 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
   return [procs, main];
 }
 
-function symbol_name(defid: number) {
+function varsym(defid: number) {
   return 'v' + defid;
 }
 
 type JSCompile = (tree: SyntaxNode) => string;
-function gen_jscompile(defuse: DefUseTable): Gen<JSCompile> {
+function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
   return function (fself: JSCompile): JSCompile {
     let compile_rules : ASTVisit<void, string> = {
       visit_literal(tree: LiteralNode, param: void): string {
@@ -279,13 +282,13 @@ function gen_jscompile(defuse: DefUseTable): Gen<JSCompile> {
 
       visit_let(tree: LetNode, param: void): string {
         // TODO should declare these at some point
-        let jsvar = symbol_name(tree.id);
+        let jsvar = varsym(tree.id);
         return jsvar + " = " + fself(tree.expr);
       },
 
       visit_lookup(tree: LookupNode, param: void): string {
         let [defid, _] = defuse[tree.id];
-        let jsvar = symbol_name(defid);
+        let jsvar = varsym(defid);
         return jsvar;
       },
 
@@ -326,11 +329,47 @@ function gen_jscompile(defuse: DefUseTable): Gen<JSCompile> {
   }
 }
 
+function funcsym(id: number) {
+  if (id === undefined) {
+    return "main";
+  } else {
+    return "p" + id;
+  }
+}
+
+function fvsym(id: number) {
+  return "fv" + id;
+}
+
+function jscompile_proc(compile: JSCompile, proc: Proc): string {
+  let argnames: string[] = [];
+  for (let param of proc.params) {
+    argnames.push(varsym(param));
+  }
+  for (let fv of proc.free) {
+    argnames.push(fvsym(fv));
+  }
+
+  let out =  "function " + funcsym(proc.id) + "(";
+  out += argnames.join(", ");
+  out += ") {\n";
+  out += compile(proc.body);
+  out += "}\n";
+  return out;
+}
+
 function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
   let [procs, main] = lambda_lift(tree, table);
 
-  let _jscompile = fix(gen_jscompile(table));
-  return _jscompile(tree);
+  let _jscompile = fix(gen_jscompile(procs, table));
+  let out = "";
+  for (let i = 0; i < procs.length; ++i) {
+    if (procs[i] !== undefined) {
+      out += jscompile_proc(_jscompile, procs[i]);
+    }
+  }
+  out += jscompile_proc(_jscompile, main);
+  return out;
 }
