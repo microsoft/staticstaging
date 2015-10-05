@@ -106,8 +106,9 @@ function main() {
         let table = find_def_use(sugarfree);
         console.log(table);
 
-        let procs = lambda_lift(sugarfree, table);
+        let [procs, main] = lambda_lift(sugarfree, table);
         console.log(util.inspect(procs, false, null));
+        console.log(util.inspect(main, false, null));
       }
       console.log(jscompile(sugarfree));
 

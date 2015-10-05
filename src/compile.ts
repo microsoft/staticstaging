@@ -215,7 +215,12 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
           free: f,
         };
 
-        return [free, cons(proc, p)];
+        // Insert the new Proc. Procs are indexed by the ID of the defining
+        // `fun` node.
+        let p2 = p.slice(0);
+        p2[tree.id] = proc;
+
+        return [free, p2];
       },
 
       // Add free variables to the free set.
@@ -243,7 +248,7 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
 
 // A wrapper for lambda lifting also includes the "main" function as a Proc
 // with no free variables.
-function lambda_lift(tree: SyntaxNode, table: DefUseTable): Proc[] {
+function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
   let _lambda_lift = fix(gen_lambda_lift(table));
   let [_, procs] = _lambda_lift(tree, [[], []]);
   let main: Proc = {
@@ -251,7 +256,7 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable): Proc[] {
     params: [],
     free: [],
   };
-  return cons(main, procs);
+  return [procs, main];
 }
 
 function symbol_name(defid: number) {
@@ -324,7 +329,7 @@ function gen_jscompile(defuse: DefUseTable): Gen<JSCompile> {
 function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
-  let procs = lambda_lift(tree, table);
+  let [procs, main] = lambda_lift(tree, table);
 
   let _jscompile = fix(gen_jscompile(table));
   return _jscompile(tree);
