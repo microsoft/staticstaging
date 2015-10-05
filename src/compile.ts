@@ -420,7 +420,7 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   return out;
 }
 
-function jscompile(tree: SyntaxNode, callback = "console.log"): string {
+function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
   let [procs, main] = lambda_lift(tree, table);
@@ -433,6 +433,6 @@ function jscompile(tree: SyntaxNode, callback = "console.log"): string {
     }
   }
   out += jscompile_proc(_jscompile, main);
-  out += callback + "(main());";
+  out += "main()";
   return out;
 }

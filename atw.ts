@@ -111,7 +111,8 @@ function main() {
       // Compile. IN PROGRESS.
       let jscode = jscompile(sugarfree);
       if (execute) {
-        eval(jscode);
+        let res = eval(jscode);
+        console.log(res);
       } else {
         console.log(jscode);
       }
