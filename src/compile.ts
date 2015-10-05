@@ -192,19 +192,21 @@ interface Proc {
   body: ExpressionNode,
   params: number[],
   free: number[],
+  bound: number[],
 };
 
 // Core lambda lifting produces Procs for all the `fun` nodes in the program.
-type LambdaLift = ASTFold<[number[], Proc[]]>;
+type LambdaLift = ASTFold<[number[], number[], Proc[]]>;
 function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
   return function (fself: LambdaLift): LambdaLift {
     let fold_rules = ast_fold_rules(fself);
     let rules = compose_visit(fold_rules, {
       // Collect the free variables and construct a Proc.
-      visit_fun(tree: FunNode, [free, procs]: [number[], Proc[]]):
-        [number[], Proc[]]
+      visit_fun(tree: FunNode,
+        [free, bound, procs]: [number[], number[], Proc[]]):
+        [number[], number[], Proc[]]
       {
-        let [f, p] = fold_rules.visit_fun(tree, [free, procs]);
+        let [f, b, p] = fold_rules.visit_fun(tree, [free, [], procs]);
 
         let param_ids: number[] = [];
         for (let param of tree.params) {
@@ -215,6 +217,7 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
           body: tree.body,
           params: param_ids,
           free: f,
+          bound: b,
         };
 
         // Insert the new Proc. Procs are indexed by the ID of the defining
@@ -222,28 +225,35 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
         let p2 = p.slice(0);
         p2[tree.id] = proc;
 
-        return [free, p2];
+        return [free, bound, p2];
       },
 
       // Add free variables to the free set.
-      visit_lookup(tree: LookupNode, [free, procs]: [number[], Proc[]]):
-        [number[], Proc[]]
+      visit_lookup(tree: LookupNode,
+        [free, bound, procs]: [number[], number[], Proc[]]):
+        [number[], number[], Proc[]]
       {
         let [defid, is_bound] = defuse[tree.id];
+
         let f: number[];
+        let b: number[];
         if (!is_bound) {
           f = set_add(free, defid);
+          b = bound;
         } else {
           f = free;
+          b = set_add(bound, defid);
         }
-        return [f, procs];
+
+        return [f, bound, procs];
       },
     });
 
-    return function (tree: SyntaxNode, [free, procs]: [number[], Proc[]]):
-      [number[], Proc[]]
+    return function (tree: SyntaxNode,
+      [free, bound, procs]: [number[], number[], Proc[]]):
+      [number[], number[], Proc[]]
     {
-      return ast_visit(rules, tree, [free, procs]);
+      return ast_visit(rules, tree, [free, bound, procs]);
     }
   }
 }
@@ -252,12 +262,13 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
 // with no free variables.
 function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
   let _lambda_lift = fix(gen_lambda_lift(table));
-  let [_, procs] = _lambda_lift(tree, [[], []]);
+  let [_, __, procs] = _lambda_lift(tree, [[], [], []]);
   let main: Proc = {
     id: null,
     body: tree,
     params: [],
     free: [],
+    bound: [],
   };
   return [procs, main];
 }
@@ -281,7 +292,6 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
       },
 
       visit_let(tree: LetNode, param: void): string {
-        // TODO should declare these at some point
         let jsvar = varsym(tree.id);
         return jsvar + " = " + fself(tree.expr);
       },
@@ -364,6 +374,8 @@ function procsym(id: number) {
 }
 
 function jscompile_proc(compile: JSCompile, proc: Proc): string {
+  // The arguments consist of the actual parameters and the closure
+  // environment (free variables).
   let argnames: string[] = [];
   for (let param of proc.params) {
     argnames.push(varsym(param));
@@ -372,12 +384,26 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
     argnames.push(varsym(fv));
   }
 
+  // We also need the names of the bound variables.
+  let localnames: string[] = [];
+  for (let bv of proc.bound) {
+    localnames.push(varsym(bv));
+  }
+
+  // Function declaration.
   let out =  "function " + procsym(proc.id) + "(";
   out += argnames.join(", ");
   out += ") {\n";
+
+  // Declare all the bound variables as JavaScript locals.
+  if (localnames.length > 0) {
+    out += "var " + localnames.join(", ") + ";\n";
+  }
+
+  // Body.
   out += "return ";
   out += compile(proc.body);
-  out += "\n}\n";
+  out += ";\n}\n";
   return out;
 }
 
