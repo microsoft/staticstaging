@@ -106,9 +106,10 @@ function get_name(tree: SyntaxNode): string {
 // - an error, if any
 // - the parse tree
 // - the type
+// - the compiled code (if compiling)
 // - the result of interpretation
 function atw_run(code: string, compile: boolean)
-  : [string, SyntaxNode, string, string]
+  : [string, SyntaxNode, string, string, string]
 {
   // Parse.
   let tree: SyntaxNode;
@@ -119,7 +120,7 @@ function atw_run(code: string, compile: boolean)
     let err = 'parse error at '
               + loc.line + ',' + loc.column
               + ': ' + e.message;
-    return [err, null, null, null];
+    return [err, null, null, null, null];
   }
 
   // Elaborate and log the type.
@@ -128,7 +129,7 @@ function atw_run(code: string, compile: boolean)
   try {
     [elaborated, type_table] = elaborate(tree);
   } catch (e) {
-    return [e, tree, null, null];
+    return [e, tree, null, null, null];
   }
   let [type, _] = type_table[elaborated.id];
   let type_str = pretty_type(type);
@@ -138,12 +139,12 @@ function atw_run(code: string, compile: boolean)
 
   // Execute.
   let res_str: string;
+  let jscode: string = null;
   if (compile) {
-    let jscode: string;
     try {
       jscode = jscompile(sugarfree);
     } catch (e) {
-      return ['compile error: ' + e, sugarfree, type_str, null];
+      return ['compile error: ' + e, sugarfree, type_str, null, null];
     }
 
     let res = eval(jscode);
@@ -158,6 +159,7 @@ function atw_run(code: string, compile: boolean)
     null,
     sugarfree,
     type_str,
+    jscode,
     res_str,
   ];
 }
@@ -175,6 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
   let errbox = <HTMLElement> document.querySelector('#error');
   let treebox = <HTMLElement> document.querySelector('#tree');
+  let compiledbox = <HTMLElement> document.querySelector('#compiled');
   let typebox = <HTMLElement> document.querySelector('#type');
   let outbox = <HTMLElement> document.querySelector('#result');
   let helpbox = <HTMLElement> document.querySelector('#help');
@@ -193,20 +196,29 @@ document.addEventListener("DOMContentLoaded", function () {
     let compile = compiletoggle.checked;
 
     if (code !== "") {
-      let [err, tree, typ, res] = atw_run(code, compile);
+      let [err, tree, typ, compiled, res] = atw_run(code, compile);
 
       show(err, errbox);
       show(typ, typebox);
       show(res, outbox);
 
-      // Draw the syntax tree.
-      draw_tree(tree);
+      if (compile) {
+        // Show the compiled code.
+        show(compiled, compiledbox);
+        treebox.style.display = 'none';
+      } else {
+        // Draw the syntax tree.
+        draw_tree(tree);
+        treebox.style.display = 'block';
+      }
 
       history.replaceState(null, null, HASH_CODE + encodeURIComponent(code));
     } else {
       show(null, errbox);
       show(null, typebox);
       show(null, outbox);
+      treebox.style.display = 'none';
+      show(null, compiledbox);
 
       history.replaceState(null, null, '#');
     }
