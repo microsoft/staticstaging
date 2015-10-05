@@ -325,8 +325,23 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
         return out;
       },
 
+      // An invocation unpacks the closure environment and calls the function
+      // with its normal arguments and its free variables.
       visit_call(tree: CallNode, param: void): string {
-        throw "unimplemented";
+        // Compile the function and arguments.
+        let func = fself(tree.fun);
+        let args: string[] = [];
+        for (let arg of tree.args) {
+          args.push(fself(arg));
+        }
+
+        // Get the closure pair, then invoke the first part on the arguments
+        // and the second part.
+        let out = "closure = " + func + ", ";
+        out += "args = [" + args.join(", ") + "].concat(closure[1]), ";
+        out += "closure[0].apply(void 0, args)";
+
+        return out;
       },
 
       visit_persist(tree: PersistNode, param: void): string {
