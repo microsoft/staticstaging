@@ -332,7 +332,7 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
         throw "unimplemented";
       },
 
-      // A function expression produces a pair containing the JavaScript
+      // A function expression produces an object containing the JavaScript
       // function for the corresponding proc and a list of environment
       // variables.
       visit_fun(tree: FunNode, param: void): string {
@@ -342,8 +342,8 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
         }
 
         // Assemble the pair.
-        let out = "[" + procsym(tree.id) + ", ";
-        out += "[" + captures.join(', ') + "]]";
+        let out = "{ proc: " + procsym(tree.id) + ", ";
+        out += "env: [" + captures.join(', ') + "]}";
         return out;
       },
 
@@ -359,9 +359,9 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
 
         // Get the closure pair, then invoke the first part on the arguments
         // and the second part.
-        let out = "closure = " + func + ", ";
-        out += "args = [" + args.join(", ") + "].concat(closure[1]), ";
-        out += "closure[0].apply(void 0, args)";
+        let out = "closure = " + paren(func) + ", ";
+        out += "args = [" + args.join(", ") + "].concat(closure.env), ";
+        out += "closure.proc.apply(void 0, args)";
 
         return out;
       },
