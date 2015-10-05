@@ -109,7 +109,18 @@ function main() {
     // Execute.
     if (compile) {
       // Compile.
-      let jscode = jscompile(sugarfree);
+      let jscode: string;
+      try {
+        jscode = jscompile(sugarfree);
+      } catch (e) {
+        if (e === "unimplemented") {
+          console.log(e);
+          process.exit(1);
+        } else {
+          throw e;
+        }
+      }
+
       if (execute) {
         let res = eval(jscode);
         console.log(pretty_js_value(res));
