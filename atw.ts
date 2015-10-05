@@ -56,6 +56,13 @@ function main() {
     args.shift();
   }
 
+  // And, when compiling, actually execute the code.
+  let execute = false;
+  if (args[0] === "-x") {
+    execute = true;
+    args.shift();
+  }
+
   // Get the filename.
   let fn = args.shift();
   if (!fn) {
@@ -102,15 +109,12 @@ function main() {
     // Execute.
     if (compile) {
       // Compile. IN PROGRESS.
-      if (verbose) {
-        let table = find_def_use(sugarfree);
-        console.log(table);
-
-        let [procs, main] = lambda_lift(sugarfree, table);
-        console.log(util.inspect(procs, false, null));
-        console.log(util.inspect(main, false, null));
+      let jscode = jscompile(sugarfree);
+      if (execute) {
+        eval(jscode);
+      } else {
+        console.log(jscode);
       }
-      console.log(jscompile(sugarfree));
 
     } else {
       // Interpret.
