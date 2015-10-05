@@ -193,6 +193,7 @@ interface Proc {
   free: number[],
 };
 
+// Core lambda lifting produces Procs for all the `fun` nodes in the program.
 type LambdaLift = ASTFold<[number[], Proc[]]>;
 function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
   return function (fself: LambdaLift): LambdaLift {
@@ -238,6 +239,19 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
       return ast_visit(rules, tree, [free, procs]);
     }
   }
+}
+
+// A wrapper for lambda lifting also includes the "main" function as a Proc
+// with no free variables.
+function lambda_lift(tree: SyntaxNode, table: DefUseTable): Proc[] {
+  let _lambda_lift = fix(gen_lambda_lift(table));
+  let [_, procs] = _lambda_lift(tree, [[], []]);
+  let main: Proc = {
+    body: tree,
+    params: [],
+    free: [],
+  };
+  return cons(main, procs);
 }
 
 function symbol_name(defid: number) {
@@ -310,8 +324,7 @@ function gen_jscompile(defuse: DefUseTable): Gen<JSCompile> {
 function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
-  let _lambda_lift = fix(gen_lambda_lift(table));
-  let procs = _lambda_lift(tree, [[], []]);
+  let procs = lambda_lift(tree, table);
 
   let _jscompile = fix(gen_jscompile(table));
   return _jscompile(tree);

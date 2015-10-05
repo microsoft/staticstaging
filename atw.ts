@@ -106,8 +106,7 @@ function main() {
         let table = find_def_use(sugarfree);
         console.log(table);
 
-        let _lambda_lift = fix(gen_lambda_lift(table));
-        let procs = _lambda_lift(sugarfree, [[], []]);
+        let procs = lambda_lift(sugarfree, table);
         console.log(util.inspect(procs, false, null));
       }
       console.log(jscompile(sugarfree));
