@@ -237,15 +237,15 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
 
         let f: number[];
         let b: number[];
-        if (!is_bound) {
-          f = set_add(free, defid);
-          b = bound;
-        } else {
+        if (is_bound) {
           f = free;
           b = set_add(bound, defid);
+        } else {
+          f = set_add(free, defid);
+          b = bound;
         }
 
-        return [f, bound, procs];
+        return [f, b, procs];
       },
     });
 
@@ -384,10 +384,12 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
     argnames.push(varsym(fv));
   }
 
-  // We also need the names of the bound variables.
+  // We also need the names of the non-parameter bound variables.
   let localnames: string[] = [];
   for (let bv of proc.bound) {
-    localnames.push(varsym(bv));
+    if (proc.params.indexOf(bv) != -1) {
+      localnames.push(varsym(bv));
+    }
   }
 
   // Function declaration.
