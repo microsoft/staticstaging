@@ -2,15 +2,30 @@
 /// <reference path="util.ts" />
 /// <reference path="compile.ts" />
 
+// Get a JavaScript variable name for an ATW variable by its defining node
+// ID.
 function varsym(defid: number) {
   return 'v' + defid;
 }
 
+// Get a JavaScript function name for an ATW proc by its ID, which is the same
+// as the defining `fun` node ID.
+function procsym(procid: number) {
+  if (procid === null) {
+    return "main";
+  } else {
+    return "p" + procid;
+  }
+}
 
+// Parenthesize a JavaScript expression.
 function paren(e: string) {
   return "(" + e + ")";
 }
 
+// The core recursive compiler rules. Takes an elaborated, desugared,
+// lambda-lifted AST with its corresponding def/use table. Works on a single
+// proc body at a time.
 type JSCompile = (tree: SyntaxNode) => string;
 function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
   return function (fself: JSCompile): JSCompile {
@@ -99,14 +114,7 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
   }
 }
 
-function procsym(id: number) {
-  if (id === null) {
-    return "main";
-  } else {
-    return "p" + id;
-  }
-}
-
+// Compile a single Proc to a JavaScript function definition.
 function jscompile_proc(compile: JSCompile, proc: Proc): string {
   // The arguments consist of the actual parameters and the closure
   // environment (free variables).
@@ -156,6 +164,8 @@ function pretty_js_value(v: any): string {
   // TODO Format code values, whatever those are.
 }
 
+// Compile an entire (elaborated, desugared) AST to a complete JavaScript
+// program.
 function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
