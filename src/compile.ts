@@ -352,7 +352,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         splice: splices,
       };
 
-      return [bound, escs, p2];
+      return [tl(b), tl(e), p2];
     },
 
     // Add bound variables to the bound set.
