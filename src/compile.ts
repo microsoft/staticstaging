@@ -2,6 +2,8 @@
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
 
+// Basic AST visitor rules implementing a "fold," analogous to a list fold.
+// This threads a single function through the whole tree, bottom-up.
 type ASTFold <T> = (tree:SyntaxNode, p: T) => T;
 function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
   return {
@@ -196,6 +198,13 @@ interface Proc {
 };
 
 // Core lambda lifting produces Procs for all the `fun` nodes in the program.
+//
+// An important detail in our lambda-lifting interface is that the original
+// functions and calls are *left in the AST* instead of replaced with special
+// closure-creation and closure-invocation operations (as you might expect).
+// The Proc table on the side serves as *substitutes* for these nodes, so
+// their contents (especially `fun` nodes) are irrelevant even though they
+// still exist.
 type LambdaLift = ASTFold<[number[], number[], Proc[]]>;
 function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
   return function (fself: LambdaLift): LambdaLift {
@@ -279,3 +288,41 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
   };
   return [procs, main];
 }
+
+// A Prog represents a quoted program. It's the quotation analogue of a Proc.
+interface Prog {
+  id: number,
+  body: ExpressionNode,
+}
+
+// Quote lifting is like lambda lifting, but for quotes.
+//
+// Call this pass before lambda lifting on the entire program.
+type QuoteLift = ASTFold<Prog[]>;
+function gen_quote_lift(fself: QuoteLift): QuoteLift {
+  let fold_rules = ast_fold_rules(fself);
+  let rules = compose_visit(fold_rules, {
+    visit_quote(tree: QuoteNode, progs: Prog[]): Prog[] {
+      let p = fold_rules.visit_quote(tree, progs);
+
+      let p2 = p.slice(0);
+      p2[tree.id] = {
+        id: tree.id,
+        body: tree.expr,
+      };
+
+      return p;
+    },
+
+    visit_escape(tree: EscapeNode, progs: Prog[]): Prog[] {
+      throw "unimplemented";
+    },
+  });
+
+  return function (tree: SyntaxNode, progs: Prog[]): Prog[]
+  {
+    return ast_visit(rules, tree, progs);
+  };
+};
+
+let quote_lift = fix(gen_quote_lift);
