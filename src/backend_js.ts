@@ -11,11 +11,7 @@ function varsym(defid: number) {
 // Get a JavaScript function name for an ATW Proc by its ID, which is the same
 // as the defining `fun` node ID.
 function procsym(procid: number) {
-  if (procid === null) {
-    return "main";
-  } else {
-    return "f" + procid;
-  }
+  return "f" + procid;
 }
 
 // Get a JavaScript string constant name for an ATW quotation (i.e., a Prog)
@@ -124,7 +120,9 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
   }
 }
 
-// Compile a single Proc to a JavaScript function definition.
+// Compile a single Proc to a JavaScript function definition. If the Proc is
+// main, then it is an anonymous function expression; otherwise, this produces
+// an appropriately named function declaration.
 function jscompile_proc(compile: JSCompile, proc: Proc): string {
   // The arguments consist of the actual parameters and the closure
   // environment (free variables).
@@ -149,14 +147,26 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   localnames.push("closure");
   localnames.push("args");
 
+  // Check whether this is main (and hence anonymous).
+  let anon = (proc.id === null);
+
   // Function declaration.
-  let out =  "function " + procsym(proc.id) + "(";
-  out += argnames.join(", ");
-  out += ") {\n";
+  let out = "";
+  if (anon) {
+    out += "(";
+  }
+  out += "function ";
+  if (!anon) {
+    out += procsym(proc.id);
+  }
+  out += "(" + argnames.join(", ") + ") {\n";
   out += "  var " + localnames.join(", ") + ";\n";
   out += "  return ";
   out += compile(proc.body).replace(/,\n/g, ",\n  ");
-  out += ";\n}\n";
+  out += ";\n}";
+  if (anon) {
+    out += ")";
+  }
   return out;
 }
 
@@ -198,11 +208,13 @@ function jscompile(tree: SyntaxNode): string {
   for (let proc of procs) {
     if (proc !== undefined) {
       out += jscompile_proc(_jscompile, proc);
+      out += "\n";
     }
   }
-  out += jscompile_proc(_jscompile, main);
 
-  // Invoke the main function.
-  out += "main()";
+  // Emit and invoke the main (anonymous) function.
+  out += jscompile_proc(_jscompile, main);
+  out += "()";
+
   return out;
 }
