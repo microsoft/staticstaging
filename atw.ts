@@ -137,7 +137,7 @@ function main() {
 
       // Dump the resulting program or execute it.
       if (execute) {
-        let res = eval(jscode);
+        let res = scope_eval(jscode);
         console.log(pretty_js_value(res));
       } else {
         console.log(jscode);

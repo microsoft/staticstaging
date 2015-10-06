@@ -93,3 +93,10 @@ function set_add <T> (a: T[], v: T): T[] {
 
   return cons(v, a);
 }
+
+// Eval inside a scope.
+function scope_eval(code: string): any {
+  return (function () {
+    return eval(code);
+  })();
+}

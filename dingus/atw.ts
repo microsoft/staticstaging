@@ -147,7 +147,7 @@ function atw_run(code: string, compile: boolean)
       return ['compile error: ' + e, sugarfree, type_str, null, null];
     }
 
-    let res = eval(jscode);
+    let res = scope_eval(jscode);
     res_str = pretty_js_value(res);
   } else {
     let res = interpret(sugarfree);
