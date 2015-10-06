@@ -28,6 +28,12 @@ function splicesym(escid: number) {
   return "__SPLICE_" + escid + "__";
 }
 
+// Get a JavaScript variable name for communicating *persist* escapes into an
+// `eval` call.
+function persistsym(escid: number) {
+  return "p" + escid;
+}
+
 // Parenthesize a JavaScript expression.
 function paren(e: string) {
   return "(" + e + ")";
@@ -82,20 +88,39 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
             esc_body_expr + ")";
         }
 
-        return "{ prog: " + strexpr + " }";
+        // Compile each persist in this quote and pack them into a dictionary.
+        let persist_pairs: string[] = [];
+        for (let esc of progs[tree.id].persist) {
+          let esc_expr = fself(esc.body);
+          persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
+        }
+        let persists_str = "{ " + persist_pairs.join(", ") + " }";
+
+        return "{ prog: " + strexpr + ", persist: " + persists_str + " }";
       },
 
       visit_escape(tree: EscapeNode, param: void): string {
         if (tree.kind === "splice") {
           return splicesym(tree.id);
+        } else if (tree.kind === "persist") {
+          return persistsym(tree.id);
         } else {
-          throw "unimplemented";
+          throw "error: unknown escape kind";
         }
       },
 
       visit_run(tree: RunNode, param: void): string {
+        // Compile the expression producing the program we need to invoke.
         let progex = fself(tree.expr);
-        return "(function () { return eval((" + progex + ").prog); })()";
+
+        let out = "(function () { ";
+        out += "var code = " + progex + "; ";
+        // To fill in the persist values, we currently use JavaScript's
+        // much-maligned `with` statement.
+        out += "with (code.persist) ";
+        out += "return eval(code.prog); ";
+        out += "})()";
+        return out;
       },
 
       // A function expression produces an object containing the JavaScript
