@@ -120,6 +120,35 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
   }
 }
 
+// Create a JavaScript function definition. `name` can be null, in which case
+// this is an anonymous function expression. `body` must be an expression (so
+// we can `return` it).
+function emit_js_fun(name: string, argnames: string[], localnames: string[], body: string): string {
+  let anon = (name === null);
+
+  // We always add our internal, temporary variables to the local declarations.
+  localnames = localnames.concat(["closure", "args"]);
+
+  // Emit the definition.
+  let out = "";
+  if (anon) {
+    out += "(";
+  }
+  out += "function ";
+  if (!anon) {
+    out += name;
+  }
+  out += "(" + argnames.join(", ") + ") {\n";
+  out += "var " + localnames.join(", ") + ";\n";
+  out += "  return ";
+  out += body.replace(/,\n/g, ",\n  ");
+  out += ";\n}";
+  if (anon) {
+    out += ")";
+  }
+  return out;
+}
+
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
@@ -142,32 +171,17 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
       localnames.push(varsym(bv));
     }
   }
-  // We'll also declare our special "closure" and "args" temporaries, used for
-  // invoking closures.
-  localnames.push("closure");
-  localnames.push("args");
 
   // Check whether this is main (and hence anonymous).
-  let anon = (proc.id === null);
+  let name: string;
+  if (proc.id === null) {
+    name = null;
+  } else {
+    name = procsym(proc.id);
+  }
 
   // Function declaration.
-  let out = "";
-  if (anon) {
-    out += "(";
-  }
-  out += "function ";
-  if (!anon) {
-    out += procsym(proc.id);
-  }
-  out += "(" + argnames.join(", ") + ") {\n";
-  out += "  var " + localnames.join(", ") + ";\n";
-  out += "  return ";
-  out += compile(proc.body).replace(/,\n/g, ",\n  ");
-  out += ";\n}";
-  if (anon) {
-    out += ")";
-  }
-  return out;
+  return emit_js_fun(name, argnames, localnames, compile(proc.body));
 }
 
 // Like `pretty_value`, but for values in the *compiled* JavaScript world.
@@ -200,7 +214,11 @@ function jscompile(tree: SyntaxNode): string {
   for (let prog of progs) {
     if (prog !== undefined) {
       let code = _jscompile(prog.body);
-      out += "var " + progsym(prog.id) + " = " + JSON.stringify(code) + ";\n";
+      // Wrap the code in a function to avoid polluting the namespace.
+      let code_wrapped = emit_js_fun(null, [], [], code) + "()";
+      // Then escape it as a JavaScript string.
+      let code_str = JSON.stringify(code_wrapped);
+      out += "var " + progsym(prog.id) + " = " + code_str + ";\n";
     }
   }
 
