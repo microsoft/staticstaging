@@ -205,17 +205,23 @@ interface Proc {
 // The Proc table on the side serves as *substitutes* for these nodes, so
 // their contents (especially `fun` nodes) are irrelevant even though they
 // still exist.
-type LambdaLift = ASTFold<[number[], number[], Proc[]]>;
+//
+// The parameters are:
+// - Accumulated free variables.
+// - Accumulated bound variables.
+// - A stack indicating the current quote ID.
+// - The output list of Procs.
+type LambdaLift = ASTFold<[number[], number[], number[], Proc[]]>;
 function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
   return function (fself: LambdaLift): LambdaLift {
     let fold_rules = ast_fold_rules(fself);
     let rules = compose_visit(fold_rules, {
       // Collect the free variables and construct a Proc.
       visit_fun(tree: FunNode,
-        [free, bound, procs]: [number[], number[], Proc[]]):
-        [number[], number[], Proc[]]
+        [free, bound, qid, procs]: [number[], number[], number[], Proc[]]):
+        [number[], number[], number[], Proc[]]
       {
-        let [f, b, p] = fold_rules.visit_fun(tree, [free, [], procs]);
+        let [f, b, _, p] = fold_rules.visit_fun(tree, [free, [], qid, procs]);
 
         let param_ids: number[] = [];
         for (let param of tree.params) {
@@ -234,13 +240,13 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
         let p2 = p.slice(0);
         p2[tree.id] = proc;
 
-        return [free, bound, p2];
+        return [free, bound, qid, p2];
       },
 
       // Add free variables to the free set.
       visit_lookup(tree: LookupNode,
-        [free, bound, procs]: [number[], number[], Proc[]]):
-        [number[], number[], Proc[]]
+        [free, bound, qid, procs]: [number[], number[], number[], Proc[]]):
+        [number[], number[], number[], Proc[]]
       {
         let [defid, is_bound] = defuse[tree.id];
 
@@ -251,25 +257,25 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
           f = free;
         }
 
-        return [f, bound, procs];
+        return [f, bound, qid, procs];
       },
 
       // Add bound variables to the bound set.
       visit_let(tree: LetNode,
-        [free, bound, procs]: [number[], number[], Proc[]]):
-        [number[], number[], Proc[]]
+        [free, bound, qid, procs]: [number[], number[], number[], Proc[]]):
+        [number[], number[], number[], Proc[]]
       {
-        let [f, b, p] = fold_rules.visit_let(tree, [free, bound, procs]);
+        let [f, b, _, p] = fold_rules.visit_let(tree, [free, bound, qid, procs]);
         let b2 = set_add(b, tree.id);
-        return [f, b2, p];
+        return [f, b2, qid, p];
       },
     });
 
     return function (tree: SyntaxNode,
-      [free, bound, procs]: [number[], number[], Proc[]]):
-      [number[], number[], Proc[]]
+      [free, bound, qid, procs]: [number[], number[], number[], Proc[]]):
+      [number[], number[], number[], Proc[]]
     {
-      return ast_visit(rules, tree, [free, bound, procs]);
+      return ast_visit(rules, tree, [free, bound, qid, procs]);
     }
   }
 }
@@ -278,7 +284,7 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
 // with no free variables.
 function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
   let _lambda_lift = fix(gen_lambda_lift(table));
-  let [_, bound, procs] = _lambda_lift(tree, [[], [], []]);
+  let [_, bound, __, procs] = _lambda_lift(tree, [[], [], [], []]);
   let main: Proc = {
     id: null,
     body: tree,
