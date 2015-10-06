@@ -96,9 +96,9 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
 
         // Get the closure pair, then invoke the first part on the arguments
         // and the second part.
-        let out = "closure = " + paren(func) + ", ";
-        out += "args = [" + args.join(", ") + "].concat(closure.env), ";
-        out += "closure.proc.apply(void 0, args)";
+        let out = "closure = " + paren(func) + ",\n";
+        out += "  args = [" + args.join(", ") + "].concat(closure.env),\n";
+        out += "  closure.proc.apply(void 0, args)";
 
         return out;
       },
@@ -143,9 +143,9 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   let out =  "function " + procsym(proc.id) + "(";
   out += argnames.join(", ");
   out += ") {\n";
-  out += "var " + localnames.join(", ") + ";\n";
-  out += "return ";
-  out += compile(proc.body);
+  out += "  var " + localnames.join(", ") + ";\n";
+  out += "  return ";
+  out += compile(proc.body).replace(/,\n/g, ",\n  ");
   out += ";\n}\n";
   return out;
 }
