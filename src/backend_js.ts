@@ -184,6 +184,24 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   return emit_js_fun(name, argnames, localnames, compile(proc.body));
 }
 
+// Compile a quotation (a.k.a. Prog) to a JavaScript string constant.
+function jscompile_prog(compile: JSCompile, prog: Prog): string {
+  // Get the quote's local (bound) variables.
+  let localnames: string[] = [];
+  for (let bv of prog.bound) {
+    localnames.push(varsym(bv));
+  }
+
+  // Wrap the code in a function to avoid polluting the namespace.
+  let code = compile(prog.body);
+  let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
+
+  // Then escape it as a JavaScript string.
+  let code_str = JSON.stringify(code_wrapped);
+
+  return "var " + progsym(prog.id) + " = " + code_str + ";\n";
+}
+
 // Like `pretty_value`, but for values in the *compiled* JavaScript world.
 function pretty_js_value(v: any): string {
   if (typeof v == 'number') {
@@ -213,20 +231,7 @@ function jscompile(tree: SyntaxNode): string {
   // Compile each program to a string.
   for (let prog of progs) {
     if (prog !== undefined) {
-      // Get the quote's local (bound) variables.
-      let localnames: string[] = [];
-      for (let bv of prog.bound) {
-        localnames.push(varsym(bv));
-      }
-
-      // Wrap the code in a function to avoid polluting the namespace.
-      let code = _jscompile(prog.body);
-      let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
-
-      // Then escape it as a JavaScript string.
-      let code_str = JSON.stringify(code_wrapped);
-
-      out += "var " + progsym(prog.id) + " = " + code_str + ";\n";
+      out += jscompile_prog(_jscompile, prog);
     }
   }
 
