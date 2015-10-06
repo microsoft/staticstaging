@@ -74,7 +74,9 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
       },
 
       visit_run(tree: RunNode, param: void): string {
-        throw "unimplemented";
+        // TODO eval in a sandbox to avoid namespace pollution
+        let progex = fself(tree.expr);
+        return "eval((" + progex + ").prog)";
       },
 
       // A function expression produces an object containing the JavaScript
@@ -186,8 +188,10 @@ function jscompile(tree: SyntaxNode): string {
   // Compile each program to a string.
   // TODO do something about the bound variables in this world
   for (let prog of progs) {
-    let code = _jscompile(prog.body);
-    out += "var " + progsym(prog.id) + " = " + JSON.stringify(code) + ";\n";
+    if (prog !== undefined) {
+      let code = _jscompile(prog.body);
+      out += "var " + progsym(prog.id) + " = " + JSON.stringify(code) + ";\n";
+    }
   }
 
   // Compile each proc to a JS function.
