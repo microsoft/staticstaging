@@ -180,9 +180,17 @@ function jscompile(tree: SyntaxNode): string {
   let [procs, main] = lambda_lift(tree, table);
   let progs = quote_lift(tree);
 
-  // Compile each proc to a JS function.
   let _jscompile = fix(gen_jscompile(procs, progs, table));
   let out = "";
+
+  // Compile each program to a string.
+  // TODO do something about the bound variables in this world
+  for (let prog of progs) {
+    let code = _jscompile(prog.body);
+    out += "var " + progsym(prog.id) + " = " + JSON.stringify(code) + ";\n";
+  }
+
+  // Compile each proc to a JS function.
   for (let proc of procs) {
     if (proc !== undefined) {
       out += jscompile_proc(_jscompile, proc);
