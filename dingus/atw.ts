@@ -209,6 +209,7 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         // Draw the syntax tree.
         draw_tree(tree);
+        show(null, compiledbox);
         treebox.style.display = 'block';
       }
 
