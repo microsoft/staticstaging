@@ -94,9 +94,8 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
       },
 
       visit_run(tree: RunNode, param: void): string {
-        // TODO eval in a sandbox to avoid namespace pollution
         let progex = fself(tree.expr);
-        return "eval((" + progex + ").prog)";
+        return "(function () { return eval((" + progex + ").prog); })()";
       },
 
       // A function expression produces an object containing the JavaScript
