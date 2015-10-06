@@ -297,6 +297,9 @@ interface Prog {
 
 // Quote lifting is like lambda lifting, but for quotes.
 //
+// As with lambda lifting, we don't actually change the AST, but the resulting
+// Progs do *supplant* the in-AST quote nodes.
+//
 // Call this pass before lambda lifting on the entire program.
 type QuoteLift = ASTFold<Prog[]>;
 function gen_quote_lift(fself: QuoteLift): QuoteLift {
@@ -311,7 +314,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         body: tree.expr,
       };
 
-      return p;
+      return p2;
     },
 
     visit_escape(tree: EscapeNode, progs: Prog[]): Prog[] {
@@ -325,4 +328,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
   };
 };
 
-let quote_lift = fix(gen_quote_lift);
+let _quote_lift = fix(gen_quote_lift);
+function quote_lift(tree: SyntaxNode): Prog[] {
+  return _quote_lift(tree, []);
+}

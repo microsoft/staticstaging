@@ -109,6 +109,19 @@ function main() {
 
     // Execute.
     if (compile) {
+      // In verbose mode, show some intermediates.
+      if (verbose) {
+        let table = find_def_use(sugarfree);
+        console.log('def/use: ' + table);
+
+        let progs = quote_lift(sugarfree);
+        console.log('progs: ' + util.inspect(progs, false, null));
+
+        let [procs, main] = lambda_lift(sugarfree, table);
+        console.log('procs: ' + util.inspect(procs, false, null));
+        console.log('main: ' + util.inspect(main, false, null));
+      }
+
       // Compile.
       let jscode: string;
       try {
@@ -120,16 +133,6 @@ function main() {
         } else {
           throw e;
         }
-      }
-
-      // In verbose mode, show some intermediates.
-      if (verbose) {
-        let table = find_def_use(sugarfree);
-        console.log(table);
-
-        let [procs, main] = lambda_lift(sugarfree, table);
-        console.log(util.inspect(procs, false, null));
-        console.log(util.inspect(main, false, null));
       }
 
       // Dump the resulting program or execute it.
