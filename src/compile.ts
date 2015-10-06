@@ -433,3 +433,31 @@ function quote_lift(tree: SyntaxNode): Prog[] {
   let [_, __, progs] = _quote_lift(tree, [[[]], [[]], []]);
   return progs;
 }
+
+// Given a table of Procs, organize them by their containing Prog ID. Return:
+// - A list of unquoted Procs.
+// - A table of lists of quoted Procs, indexed by the Prog ID.
+function procs_by_prog(procs: Proc[], progs: Prog[]): [Proc[], Proc[][]] {
+  let toplevel: Proc[] = [];
+
+  // Initialize the quoted-procs table.
+  let quoted: Proc[][] = [];
+  for (let prog of progs) {
+    if (prog !== undefined) {
+      quoted[prog.id] = [];
+    }
+  }
+
+  // Insert each proc where it goes.
+  for (let proc of procs) {
+    if (proc !== undefined) {
+      if (proc.quote === null) {
+        toplevel.push(proc);
+      } else {
+        quoted[proc.quote].push(proc);
+      }
+    }
+  }
+
+  return [toplevel, quoted];
+}

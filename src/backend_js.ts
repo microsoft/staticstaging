@@ -208,8 +208,16 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   return emit_js_fun(name, argnames, localnames, compile(proc.body));
 }
 
-// Compile a quotation (a.k.a. Prog) to a JavaScript string constant.
-function jscompile_prog(compile: JSCompile, prog: Prog): string {
+// Compile a quotation (a.k.a. Prog) to a JavaScript string constant. Also
+// compiles the Procs that appear inside this quotation.
+function jscompile_prog(compile: JSCompile, prog: Prog, procs: Proc[]): string {
+  // Compile each function defined in this quote.
+  let procs_str = "";
+  for (let proc of procs) {
+    procs_str += jscompile_proc(compile, proc);
+    procs_str += "\n";
+  }
+
   // Get the quote's local (bound) variables.
   let localnames: string[] = [];
   for (let bv of prog.bound) {
@@ -221,7 +229,7 @@ function jscompile_prog(compile: JSCompile, prog: Prog): string {
   let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
 
   // Then escape it as a JavaScript string.
-  let code_str = JSON.stringify(code_wrapped);
+  let code_str = JSON.stringify(procs_str + code_wrapped);
 
   return "var " + progsym(prog.id) + " = " + code_str + ";\n";
 }
@@ -246,8 +254,10 @@ function pretty_js_value(v: any): string {
 function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
+  // Lift Procs and Progs, and index the Procs by Prog.
   let [procs, main] = lambda_lift(tree, table);
   let progs = quote_lift(tree);
+  let [toplevel_procs, quoted_procs] = procs_by_prog(procs, progs);
 
   let _jscompile = fix(gen_jscompile(procs, progs, table));
   let out = "";
@@ -255,16 +265,14 @@ function jscompile(tree: SyntaxNode): string {
   // Compile each program to a string.
   for (let prog of progs) {
     if (prog !== undefined) {
-      out += jscompile_prog(_jscompile, prog);
+      out += jscompile_prog(_jscompile, prog, quoted_procs[prog.id]);
     }
   }
 
   // Compile each proc to a JS function.
-  for (let proc of procs) {
-    if (proc !== undefined) {
-      out += jscompile_proc(_jscompile, proc);
-      out += "\n";
-    }
+  for (let proc of toplevel_procs) {
+    out += jscompile_proc(_jscompile, proc);
+    out += "\n";
   }
 
   // Emit and invoke the main (anonymous) function.
