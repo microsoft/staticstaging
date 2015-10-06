@@ -295,6 +295,12 @@ interface Prog {
   id: number,
   body: ExpressionNode,
   bound: number[],
+  persist: ProgEscape[],
+  splice: ProgEscape[],
+}
+
+interface ProgEscape {
+  body: ExpressionNode,
 }
 
 // Quote lifting is like lambda lifting, but for quotes.
@@ -303,51 +309,62 @@ interface Prog {
 // Progs do *supplant* the in-AST quote nodes.
 //
 // Call this pass on the entire program (it is insensitive to lambda lifting).
-type QuoteLift = ASTFold<[number[], Prog[]]>;
+//
+// To lift all the Progs, this threads through two stacks of lists: one for
+// bound variables (by id), and one for escape nodes.
+type QuoteLift = ASTFold<[number[][], EscapeNode[][], Prog[]]>;
 function gen_quote_lift(fself: QuoteLift): QuoteLift {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     // Create a new Prog for each quote.
-    visit_quote(tree: QuoteNode, [bound, progs]: [number[], Prog[]]):
-      [number[], Prog[]]
+    visit_quote(tree: QuoteNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+      [number[][], EscapeNode[][], Prog[]]
     {
-      let [b, p] = fold_rules.visit_quote(tree, [[], progs]);
+      let bound_inner = cons([], bound);
+      let escs_inner = cons([], escs);
+      let [b, e, p] = fold_rules.visit_quote(tree, [bound_inner, escs_inner, progs]);
 
+      // Ad a new Prog to the list of products.
       let p2 = p.slice(0);
       p2[tree.id] = {
         id: tree.id,
         body: tree.expr,
-        bound: b,
+        bound: hd(b),
+        persist: [],
+        splice: [],
       };
 
-      return [bound, p2];
+      return [bound, escs, p2];
     },
 
     // Add bound variables to the bound set.
-    visit_let(tree: LetNode, [bound, progs]: [number[], Prog[]]):
-      [number[], Prog[]]
+    visit_let(tree: LetNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+      [number[][], EscapeNode[][], Prog[]]
     {
-      let [b, p] = fold_rules.visit_let(tree, [bound, progs]);
-      let b2 = set_add(b, tree.id);
-      return [b2, p];
+      let [b, e, p] = fold_rules.visit_let(tree, [bound, escs, progs]);
+
+      // Add a new bound variable to the list at the top of the stack.
+      let b2 = cons(set_add(hd(b), tree.id), tl(b));
+
+      return [b2, e, p];
     },
 
-    visit_escape(tree: EscapeNode, [bound, progs]: [number[], Prog[]]):
-      [number[], Prog[]]
+    visit_escape(tree: EscapeNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+      [number[][], EscapeNode[][], Prog[]]
     {
       throw "unimplemented";
     },
   });
 
-  return function (tree: SyntaxNode, [bound, progs]: [number[], Prog[]]):
-    [number[], Prog[]]
+  return function (tree: SyntaxNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+    [number[][], EscapeNode[][], Prog[]]
   {
-    return ast_visit(rules, tree, [bound, progs]);
+    return ast_visit(rules, tree, [bound, escs, progs]);
   };
 };
 
 let _quote_lift = fix(gen_quote_lift);
 function quote_lift(tree: SyntaxNode): Prog[] {
-  let [_, progs] = _quote_lift(tree, [[], []]);
+  let [_, __, progs] = _quote_lift(tree, [[[]], [[]], []]);
   return progs;
 }
