@@ -1,0 +1,5 @@
+let x = 4;
+let c = <let x = 10; x>;
+let x = 11;
+!c
+# -> 10

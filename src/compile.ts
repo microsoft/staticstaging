@@ -290,9 +290,11 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
 }
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
+// Progs can have bound variables but not free variables.
 interface Prog {
   id: number,
   body: ExpressionNode,
+  bound: number[],
 }
 
 // Quote lifting is like lambda lifting, but for quotes.
@@ -301,34 +303,51 @@ interface Prog {
 // Progs do *supplant* the in-AST quote nodes.
 //
 // Call this pass on the entire program (it is insensitive to lambda lifting).
-type QuoteLift = ASTFold<Prog[]>;
+type QuoteLift = ASTFold<[number[], Prog[]]>;
 function gen_quote_lift(fself: QuoteLift): QuoteLift {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
-    visit_quote(tree: QuoteNode, progs: Prog[]): Prog[] {
-      let p = fold_rules.visit_quote(tree, progs);
+    // Create a new Prog for each quote.
+    visit_quote(tree: QuoteNode, [bound, progs]: [number[], Prog[]]):
+      [number[], Prog[]]
+    {
+      let [b, p] = fold_rules.visit_quote(tree, [[], progs]);
 
       let p2 = p.slice(0);
       p2[tree.id] = {
         id: tree.id,
         body: tree.expr,
+        bound: b,
       };
 
-      return p2;
+      return [bound, p2];
     },
 
-    visit_escape(tree: EscapeNode, progs: Prog[]): Prog[] {
+    // Add bound variables to the bound set.
+    visit_let(tree: LetNode, [bound, progs]: [number[], Prog[]]):
+      [number[], Prog[]]
+    {
+      let [b, p] = fold_rules.visit_let(tree, [bound, progs]);
+      let b2 = set_add(b, tree.id);
+      return [b2, p];
+    },
+
+    visit_escape(tree: EscapeNode, [bound, progs]: [number[], Prog[]]):
+      [number[], Prog[]]
+    {
       throw "unimplemented";
     },
   });
 
-  return function (tree: SyntaxNode, progs: Prog[]): Prog[]
+  return function (tree: SyntaxNode, [bound, progs]: [number[], Prog[]]):
+    [number[], Prog[]]
   {
-    return ast_visit(rules, tree, progs);
+    return ast_visit(rules, tree, [bound, progs]);
   };
 };
 
 let _quote_lift = fix(gen_quote_lift);
 function quote_lift(tree: SyntaxNode): Prog[] {
-  return _quote_lift(tree, []);
+  let [_, progs] = _quote_lift(tree, [[], []]);
+  return progs;
 }

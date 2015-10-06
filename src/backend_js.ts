@@ -212,14 +212,21 @@ function jscompile(tree: SyntaxNode): string {
   let out = "";
 
   // Compile each program to a string.
-  // TODO do something about the bound variables in this world
   for (let prog of progs) {
     if (prog !== undefined) {
-      let code = _jscompile(prog.body);
+      // Get the quote's local (bound) variables.
+      let localnames: string[] = [];
+      for (let bv of prog.bound) {
+        localnames.push(varsym(bv));
+      }
+
       // Wrap the code in a function to avoid polluting the namespace.
-      let code_wrapped = emit_js_fun(null, [], [], code) + "()";
+      let code = _jscompile(prog.body);
+      let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
+
       // Then escape it as a JavaScript string.
       let code_str = JSON.stringify(code_wrapped);
+
       out += "var " + progsym(prog.id) + " = " + code_str + ";\n";
     }
   }
