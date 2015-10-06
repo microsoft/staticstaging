@@ -116,7 +116,7 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
         let out = "(function () { ";
         out += "var code = " + progex + "; ";
         // To fill in the persist values, we currently use JavaScript's
-        // much-maligned `with` statement.
+        // much-maligned `with` statement. It's just what we need!
         out += "with (code.persist) ";
         out += "return eval(code.prog); ";
         out += "})()";
