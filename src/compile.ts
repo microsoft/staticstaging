@@ -300,13 +300,15 @@ interface Prog {
 }
 
 interface ProgEscape {
+  id: number,
   body: ExpressionNode,
 }
 
 // Quote lifting is like lambda lifting, but for quotes.
 //
 // As with lambda lifting, we don't actually change the AST, but the resulting
-// Progs do *supplant* the in-AST quote nodes.
+// Progs do *supplant* the in-AST quote nodes. The same is true of escape
+// nodes, which are replaced by the `persist` and `splice` members of Prog.
 //
 // Call this pass on the entire program (it is insensitive to lambda lifting).
 //
@@ -324,14 +326,29 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       let escs_inner = cons([], escs);
       let [b, e, p] = fold_rules.visit_quote(tree, [bound_inner, escs_inner, progs]);
 
+      // Sort out the splices and persists.
+      let persists: ProgEscape[] = [];
+      let splices: ProgEscape[] = [];
+      for (let tree of hd(e)) {
+        let esc: ProgEscape = {
+          id: tree.id,
+          body: tree.expr,
+        };
+        if (tree.kind === "persist") {
+          persists.push(esc);
+        } else if (tree.kind === "splice") {
+          splices.push(esc);
+        }
+      }
+
       // Ad a new Prog to the list of products.
       let p2 = p.slice(0);
       p2[tree.id] = {
         id: tree.id,
         body: tree.expr,
         bound: hd(b),
-        persist: [],
-        splice: [],
+        persist: persists,
+        splice: splices,
       };
 
       return [bound, escs, p2];
@@ -352,7 +369,13 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
     visit_escape(tree: EscapeNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
       [number[][], EscapeNode[][], Prog[]]
     {
-      throw "unimplemented";
+      // Pop off the current context when recursing.
+      let [b, e, p] = fself(tree.expr, [tl(bound), tl(escs), progs]);
+
+      // Add this node to the current escapes.
+      let escs_head = cons(tree, hd(escs));
+
+      return [cons(hd(bound), b), cons(escs_head, e), p];
     },
   });
 
