@@ -66,7 +66,7 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
       },
 
       visit_quote(tree: QuoteNode, param: void): string {
-        return progsym(tree.id);
+        return "{ prog: " + progsym(tree.id) + " }";
       },
 
       visit_escape(tree: EscapeNode, param: void): string {
@@ -162,10 +162,10 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
 function pretty_js_value(v: any): string {
   if (typeof v == 'number') {
     return v.toString();
-  } else if (v instanceof Object) {
-    // This works because the only JS object type in compiled programs is a
-    // closure value.
+  } else if (v.proc !== undefined) {
     return "(fun)";
+  } else if (v.prog !== undefined) {
+    return "<quote>";
   } else {
     throw "error: unknown value kind";
   }
@@ -180,14 +180,17 @@ function jscompile(tree: SyntaxNode): string {
   let [procs, main] = lambda_lift(tree, table);
   let progs = quote_lift(tree);
 
+  // Compile each proc to a JS function.
   let _jscompile = fix(gen_jscompile(procs, progs, table));
   let out = "";
-  for (let i = 0; i < procs.length; ++i) {
-    if (procs[i] !== undefined) {
-      out += jscompile_proc(_jscompile, procs[i]);
+  for (let proc of procs) {
+    if (proc !== undefined) {
+      out += jscompile_proc(_jscompile, proc);
     }
   }
   out += jscompile_proc(_jscompile, main);
+
+  // Invoke the main function.
   out += "main()";
   return out;
 }
