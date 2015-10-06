@@ -197,7 +197,6 @@ function pretty_js_value(v: any): string {
   } else {
     throw "error: unknown value kind";
   }
-  // TODO Format code values, whatever those are.
 }
 
 // Compile an entire (elaborated, desugared) AST to a complete JavaScript
