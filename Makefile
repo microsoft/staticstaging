@@ -5,9 +5,10 @@ NODE_D := typings/node/node.d.ts
 SRCDIR := src
 SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts sugar.ts \
 	compile.ts backend_js.ts
-TESTS := print comment whitespace seq let add quote dump typeerror escape \
-	splice badsplice topescape nesteddump nestedrun nested func call \
-	quotefunc closure persist nestedpersist share sharemulti
+TESTS_BASIC := print comment whitespace seq let add quote typeerror escape \
+	badsplice topescape nestedrun nested func call quotefunc closure \
+	persist nestedpersist share sharemulti
+TESTS_INTERP := dump splice nesteddump
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
@@ -43,18 +44,6 @@ dingus/parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 clean:
 	rm -rf $(GENERATED) node_modules typings
 
-.PHONY: test
-test: $(CLI_JS)
-	@ for name in $(TESTS) ; do \
-		sh test.sh $(TEST_ARGS) test/$$name.atw ; \
-		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
-	done ; \
-	[ ! $$failed ]
-
-.PHONY: test-compile
-test-compile: TEST_ARGS := -c -x
-test-compile: test
-
 .PHONY: deploy
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh
 DEST := dh:domains/adriansampson.net/atw
@@ -70,3 +59,26 @@ $(TSD): node_modules/tsd/package.json
 
 node_modules/%/package.json:
 	npm install $*
+
+
+# Running tests.
+
+.PHONY: run-tests
+run-tests: $(CLI_JS)
+	@ for name in $(TESTS) ; do \
+		sh test.sh $(TEST_ARGS) test/$$name.atw ; \
+		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
+	done ; \
+	[ ! $$failed ]
+
+.PHONY: test-compile
+test-compile: TEST_ARGS := -c -x
+test-compile: TESTS := $(TESTS_BASIC)
+test-compile: run-tests
+
+.PHONY: test-interp
+test-interp: TESTS := $(TESTS_BASIC) $(TESTS_INTERP)
+test-interp: run-tests
+
+.PHONY: test
+test: test-interp # for now...

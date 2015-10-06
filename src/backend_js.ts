@@ -191,6 +191,8 @@ function pretty_js_value(v: any): string {
   } else if (v.proc !== undefined) {
     return "(fun)";
   } else if (v.prog !== undefined) {
+    // It is a non-goal of this backend to be able to pretty-print quotations.
+    // You can use the interpreter if you want that.
     return "<quote>";
   } else {
     throw "error: unknown value kind";
