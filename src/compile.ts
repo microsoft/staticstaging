@@ -319,7 +319,8 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     // Create a new Prog for each quote.
-    visit_quote(tree: QuoteNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+    visit_quote(tree: QuoteNode,
+      [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
       [number[][], EscapeNode[][], Prog[]]
     {
       let bound_inner = cons([], bound);
@@ -355,7 +356,8 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
     },
 
     // Add bound variables to the bound set.
-    visit_let(tree: LetNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+    visit_let(tree: LetNode,
+      [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
       [number[][], EscapeNode[][], Prog[]]
     {
       let [b, e, p] = fold_rules.visit_let(tree, [bound, escs, progs]);
@@ -366,7 +368,8 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       return [b2, e, p];
     },
 
-    visit_escape(tree: EscapeNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+    visit_escape(tree: EscapeNode,
+      [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
       [number[][], EscapeNode[][], Prog[]]
     {
       // Pop off the current context when recursing.
@@ -379,7 +382,8 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
     },
   });
 
-  return function (tree: SyntaxNode, [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
+  return function (tree: SyntaxNode,
+    [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
     [number[][], EscapeNode[][], Prog[]]
   {
     return ast_visit(rules, tree, [bound, escs, progs]);
