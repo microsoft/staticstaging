@@ -139,7 +139,7 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[], bod
     out += name;
   }
   out += "(" + argnames.join(", ") + ") {\n";
-  out += "var " + localnames.join(", ") + ";\n";
+  out += "  var " + localnames.join(", ") + ";\n";
   out += "  return ";
   out += body.replace(/,\n/g, ",\n  ");
   out += ";\n}";
