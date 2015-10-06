@@ -195,6 +195,7 @@ interface Proc {
   params: number[],
   free: number[],
   bound: number[],
+  quote: number,  // or null for outside any quote
 };
 
 // Core lambda lifting produces Procs for all the `fun` nodes in the program.
@@ -223,20 +224,30 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
       {
         let [f, b, _, p] = fold_rules.visit_fun(tree, [free, [], qid, procs]);
 
+        // Accumulate the parameter IDs.
         let param_ids: number[] = [];
         for (let param of tree.params) {
           param_ids.push(param.id);
         }
+
+        // Get the top quote ID, or null for the outermost stage.
+        let q: number;
+        if (qid.length > 0) {
+          q = hd(qid);
+        } else {
+          q = null;
+        }
+
+        // Insert the new Proc. Procs are indexed by the ID of the defining
+        // `fun` node.
         let proc: Proc = {
           id: tree.id,
           body: tree.body,
           params: param_ids,
           free: f,
           bound: b,
+          quote: q,
         };
-
-        // Insert the new Proc. Procs are indexed by the ID of the defining
-        // `fun` node.
         let p2 = p.slice(0);
         p2[tree.id] = proc;
 
@@ -269,6 +280,26 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
         let b2 = set_add(b, tree.id);
         return [f, b2, qid, p];
       },
+
+      // Push a quote ID.
+      visit_quote(tree: QuoteNode,
+        [free, bound, qid, procs]: [number[], number[], number[], Proc[]]):
+        [number[], number[], number[], Proc[]]
+      {
+        let q = cons(tree.id, qid);
+        let [f, b, _, p] = fself(tree.expr, [free, bound, q, procs]);
+        return [f, b, qid, p];
+      },
+
+      // Pop a quote ID.
+      visit_escape(tree: EscapeNode,
+        [free, bound, qid, procs]: [number[], number[], number[], Proc[]]):
+        [number[], number[], number[], Proc[]]
+      {
+        let q = tl(qid);
+        let [f, b, _, p] = fself(tree.expr, [free, bound, q, procs]);
+        return [f, b, qid, p];
+      },
     });
 
     return function (tree: SyntaxNode,
@@ -291,6 +322,7 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
     params: [],
     free: [],
     bound: bound,
+    quote: null,
   };
   return [procs, main];
 }
