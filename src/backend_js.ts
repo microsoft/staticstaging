@@ -8,14 +8,20 @@ function varsym(defid: number) {
   return 'v' + defid;
 }
 
-// Get a JavaScript function name for an ATW proc by its ID, which is the same
+// Get a JavaScript function name for an ATW Proc by its ID, which is the same
 // as the defining `fun` node ID.
 function procsym(procid: number) {
   if (procid === null) {
     return "main";
   } else {
-    return "p" + procid;
+    return "f" + procid;
   }
+}
+
+// Get a JavaScript string constant name for an ATW quotation (i.e., a Prog)
+// by its ID, which is the same as the `quote` node ID.
+function progsym(progid: number) {
+  return "q" + progid;
 }
 
 // Parenthesize a JavaScript expression.
@@ -27,7 +33,9 @@ function paren(e: string) {
 // lambda-lifted AST with its corresponding def/use table. Works on a single
 // proc body at a time.
 type JSCompile = (tree: SyntaxNode) => string;
-function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
+function gen_jscompile(procs: Proc[], progs: Prog[],
+  defuse: DefUseTable): Gen<JSCompile>
+{
   return function (fself: JSCompile): JSCompile {
     let compile_rules : ASTVisit<void, string> = {
       visit_literal(tree: LiteralNode, param: void): string {
@@ -58,7 +66,7 @@ function gen_jscompile(procs: Proc[], defuse: DefUseTable): Gen<JSCompile> {
       },
 
       visit_quote(tree: QuoteNode, param: void): string {
-        throw "unimplemented";
+        return progsym(tree.id);
       },
 
       visit_escape(tree: EscapeNode, param: void): string {
@@ -170,8 +178,9 @@ function jscompile(tree: SyntaxNode): string {
   let table = find_def_use(tree);
 
   let [procs, main] = lambda_lift(tree, table);
+  let progs = quote_lift(tree);
 
-  let _jscompile = fix(gen_jscompile(procs, table));
+  let _jscompile = fix(gen_jscompile(procs, progs, table));
   let out = "";
   for (let i = 0; i < procs.length; ++i) {
     if (procs[i] !== undefined) {

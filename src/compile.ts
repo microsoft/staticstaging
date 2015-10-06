@@ -300,7 +300,7 @@ interface Prog {
 // As with lambda lifting, we don't actually change the AST, but the resulting
 // Progs do *supplant* the in-AST quote nodes.
 //
-// Call this pass before lambda lifting on the entire program.
+// Call this pass on the entire program (it is insensitive to lambda lifting).
 type QuoteLift = ASTFold<Prog[]>;
 function gen_quote_lift(fself: QuoteLift): QuoteLift {
   let fold_rules = ast_fold_rules(fself);

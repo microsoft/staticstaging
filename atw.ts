@@ -112,7 +112,7 @@ function main() {
       // In verbose mode, show some intermediates.
       if (verbose) {
         let table = find_def_use(sugarfree);
-        console.log('def/use: ' + table);
+        console.log('def/use: ' + util.inspect(table, false, null));
 
         let progs = quote_lift(sugarfree);
         console.log('progs: ' + util.inspect(progs, false, null));
