@@ -20,6 +20,14 @@ function progsym(progid: number) {
   return "q" + progid;
 }
 
+// Get a *placeholder token* for a splice escape. This will be used with find
+// & replace to substitute in code into an expression.
+// TODO Eventually, a better implementation of this idea would just
+// concatenate string fragments instead of using find & replace.
+function splicesym(escid: number) {
+  return "__SPLICE_" + escid + "__";
+}
+
 // Parenthesize a JavaScript expression.
 function paren(e: string) {
   return "(" + e + ")";
@@ -27,7 +35,7 @@ function paren(e: string) {
 
 // The core recursive compiler rules. Takes an elaborated, desugared,
 // lambda-lifted AST with its corresponding def/use table. Works on a single
-// proc body at a time.
+// Proc or Prog body at a time.
 type JSCompile = (tree: SyntaxNode) => string;
 function gen_jscompile(procs: Proc[], progs: Prog[],
   defuse: DefUseTable): Gen<JSCompile>
@@ -62,11 +70,27 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
       },
 
       visit_quote(tree: QuoteNode, param: void): string {
-        return "{ prog: " + progsym(tree.id) + " }";
+        let strvar = progsym(tree.id);
+
+        // Generate code to substitute in each spliced expression.
+        let strexpr = strvar;
+        for (let esc of progs[tree.id].splice) {
+          let esc_expr = fself(esc.body);
+          let esc_body_expr = paren(esc_expr) + ".prog";
+          strexpr = strexpr + ".replace(" +
+            JSON.stringify(splicesym(esc.id)) + ", " +
+            esc_body_expr + ")";
+        }
+
+        return "{ prog: " + strexpr + " }";
       },
 
       visit_escape(tree: EscapeNode, param: void): string {
-        throw "unimplemented";
+        if (tree.kind === "splice") {
+          return splicesym(tree.id);
+        } else {
+          throw "unimplemented";
+        }
       },
 
       visit_run(tree: RunNode, param: void): string {
