@@ -121,12 +121,12 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
         // Compile the expression producing the program we need to invoke.
         let progex = fself(tree.expr);
 
-        let out = "(function () { ";
-        out += "var code = " + progex + "; ";
+        let out = "(function () {\n";
+        out += "  var code = " + progex + ";\n";
         // To fill in the persist values, we currently use JavaScript's
         // much-maligned `with` statement. It's just what we need!
-        out += "with (code.persist) ";
-        out += "return eval(code.prog); ";
+        out += "  with (code.persist)\n";
+        out += "  return eval(code.prog);\n";
         out += "})()";
         return out;
       },
@@ -197,7 +197,7 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[], bod
   out += "(" + argnames.join(", ") + ") {\n";
   out += "  var " + localnames.join(", ") + ";\n";
   out += "  return ";
-  out += body.replace(/,\n/g, ",\n  ");
+  out += body.replace(/\n/g, "\n  ");
   out += ";\n}";
   if (anon) {
     out += ")";
