@@ -39,6 +39,16 @@ function paren(e: string) {
   return "(" + e + ")";
 }
 
+// A tiny runtime provides our splicing routine.
+const JS_RUNTIME =
+"function splice(outer, id, inner) {\n" +
+"  var prog = outer.prog.replace('__SPLICE_' + id + '__', inner.prog);\n" +
+"  var persist = {};\n" +
+"  for (var k in outer.persist) persist[k] = outer.persist[k];\n" +
+"  for (var k in inner.persist) persist[k] = inner.persist[k];\n" +
+"  return { prog: prog, persist: persist };\n" +
+"}\n";
+
 // The core recursive compiler rules. Takes an elaborated, desugared,
 // lambda-lifted AST with its corresponding def/use table. Works on a single
 // Proc or Prog body at a time.
@@ -76,18 +86,6 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
       },
 
       visit_quote(tree: QuoteNode, param: void): string {
-        let strvar = progsym(tree.id);
-
-        // Generate code to substitute in each spliced expression.
-        let strexpr = strvar;
-        for (let esc of progs[tree.id].splice) {
-          let esc_expr = fself(esc.body);
-          let esc_body_expr = paren(esc_expr) + ".prog";
-          strexpr = strexpr + ".replace(" +
-            JSON.stringify(splicesym(esc.id)) + ", " +
-            esc_body_expr + ")";
-        }
-
         // Compile each persist in this quote and pack them into a dictionary.
         let persist_pairs: string[] = [];
         for (let esc of progs[tree.id].persist) {
@@ -96,7 +94,17 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
         }
         let persists_str = "{ " + persist_pairs.join(", ") + " }";
 
-        return "{ prog: " + strexpr + ", persist: " + persists_str + " }";
+        // Create a pre-spliced code value.
+        let code_expr = "{ prog: " + progsym(tree.id) + ", persist: " + persists_str + " }";
+
+        // Compile each spliced escape expression. Then, call our runtime to
+        // splice it into the code value.
+        for (let esc of progs[tree.id].splice) {
+          let esc_expr = fself(esc.body);
+          code_expr = "splice(" + code_expr + ", " + esc.id + ", " + paren(esc_expr) + ")";
+        }
+
+        return code_expr;
       },
 
       visit_escape(tree: EscapeNode, param: void): string {
@@ -284,7 +292,9 @@ function jscompile(tree: SyntaxNode): string {
   let [toplevel_procs, quoted_procs] = procs_by_prog(procs, progs);
 
   let _jscompile = fix(gen_jscompile(procs, progs, table));
-  let out = "";
+
+  // Start with our run-time library.
+  let out = JS_RUNTIME;
 
   // Compile each program to a string.
   for (let prog of progs) {
