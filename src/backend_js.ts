@@ -41,12 +41,16 @@ function paren(e: string) {
 
 // A tiny runtime provides our splicing routine.
 const JS_RUNTIME =
+"function assign() {\n" +
+"  var t = arguments[0];\n" +
+"  for (var i = 1; i < arguments.length; ++i)\n" +
+"    for (var k in arguments[i])\n" +
+"      t[k] = arguments[i][k];\n" +
+"  return t;\n" +
+"}\n" +
 "function splice(outer, id, inner) {\n" +
-"  var prog = outer.prog.replace('__SPLICE_' + id + '__', inner.prog);\n" +
-"  var persist = {};\n" +
-"  for (var k in outer.persist) persist[k] = outer.persist[k];\n" +
-"  for (var k in inner.persist) persist[k] = inner.persist[k];\n" +
-"  return { prog: prog, persist: persist };\n" +
+"  return { prog: outer.prog.replace('__SPLICE_' + id + '__', inner.prog),\n" +
+"    persist: assign({}, outer.persist, inner.persist) };\n" +
 "}\n";
 
 // The core recursive compiler rules. Takes an elaborated, desugared,
