@@ -158,6 +158,20 @@ function interp(tree: SyntaxNode, env: Env, pers: Pers): [Value, Env] {
   return ast_visit(Interp, tree, [env, pers]);
 }
 
+// Add a number to every persis node in an AST. This is used when splicing
+// quotes into other quotes.
+function increment_persists(amount: number) {
+  function fself(tree: SyntaxNode): SyntaxNode {
+    let rules = compose_visit(ast_translate_rules(fself), {
+      visit_persist(tree: PersistNode, param: void): SyntaxNode {
+        return merge(tree, { index: tree.index + amount });
+      },
+    });
+    return ast_visit(rules, tree, null);
+  }
+  return fself;
+}
+
 // A second set of rules applies inside at least one quote.
 //
 // We keep track of the current level while walking the tree, searching for
@@ -200,7 +214,14 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
       if (tree.kind === "splice") {
         // The resulting expression must be a quote we can splice.
         if (v instanceof Code) {
-          return [v.expr, e, pers];
+          // Renumber the persist expressions in the code to reflect its
+          // position in the current context.
+          let spliced = increment_persists(pers.length)(v.expr);
+
+          // Combine the spliced code's persists with ours.
+          let p = pers.concat(v.pers);
+
+          return [spliced, e, p];
         } else {
           throw "error: escape produced non-code value " + v;
         }

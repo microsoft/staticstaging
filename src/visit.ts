@@ -93,3 +93,85 @@ function compose_visit <P, R> (
 {
   return merge(base, partial);
 }
+
+// A visitor that traverses the AST recursively (in preorder) and creates a
+// copy of it. Override some of these functions to replace parts of the tree
+// with new SyntaxNodes.
+type ASTTranslate = (tree: SyntaxNode) => SyntaxNode;
+function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, SyntaxNode> {
+  return {
+    visit_literal(tree: LiteralNode, param: void): SyntaxNode {
+      return merge(tree);
+    },
+
+    visit_seq(tree: SeqNode, param: void): SyntaxNode {
+      return merge(tree, {
+        lhs: fself(tree.lhs),
+        rhs: fself(tree.rhs),
+      });
+    },
+
+    visit_let(tree: LetNode, param: void): SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
+    },
+
+    visit_lookup(tree: LookupNode, param: void): SyntaxNode {
+      return merge(tree);
+    },
+
+    visit_binary(tree: BinaryNode, param: void): SyntaxNode {
+      return merge(tree, {
+        lhs: fself(tree.lhs),
+        rhs: fself(tree.rhs),
+      });
+    },
+
+    visit_quote(tree: QuoteNode, param: void): SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
+    },
+
+    visit_escape(tree: EscapeNode, param: void): SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
+    },
+
+    visit_run(tree: RunNode, param: void): SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
+    },
+
+    visit_fun(tree: FunNode, param: void): SyntaxNode {
+      return merge(tree, {
+        body: fself(tree.body),
+      });
+    },
+
+    visit_call(tree: CallNode, param: void): SyntaxNode {
+      let arg_trees : SyntaxNode[] = [];
+      for (let arg of tree.args) {
+        arg_trees.push(fself(arg));
+      }
+      return merge(tree, {
+        fun: fself(tree.fun),
+        args: arg_trees,
+      });
+    },
+
+    visit_persist(tree: PersistNode, param: void): SyntaxNode {
+      return merge(tree);
+    },
+  };
+}
+function gen_translate(fself: ASTTranslate): ASTTranslate {
+  let rules = ast_translate_rules(fself);
+  return function(tree: SyntaxNode): SyntaxNode {
+    return ast_visit(rules, tree, null);
+  };
+}
+
