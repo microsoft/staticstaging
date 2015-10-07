@@ -8,7 +8,7 @@ SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts sugar.ts \
 TESTS_BASIC := print comment whitespace seq let add quote escape nestedrun \
 	nested func call quotefunc closure persist nestedpersist share sharemulti \
 	quotelet splicepersist
-TESTS_INTERP := dump splice nesteddump
+TESTS_INTERP := dump splice nesteddump spdump
 TESTS_TYPE := typeerror badsplice topescape
 TSCARGS := --noImplicitAny
 
