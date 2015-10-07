@@ -5,10 +5,11 @@ NODE_D := typings/node/node.d.ts
 SRCDIR := src
 SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts sugar.ts \
 	compile.ts backend_js.ts
-TESTS_BASIC := print comment whitespace seq let add quote typeerror escape \
-	badsplice topescape nestedrun nested func call quotefunc closure \
-	persist nestedpersist share sharemulti quotelet splicepersist
+TESTS_BASIC := print comment whitespace seq let add quote escape nestedrun \
+	nested func call quotefunc closure persist nestedpersist share sharemulti \
+	quotelet splicepersist
 TESTS_INTERP := dump splice nesteddump
+TESTS_TYPE := typeerror badsplice topescape
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
@@ -63,22 +64,32 @@ node_modules/%/package.json:
 
 # Running tests.
 
-.PHONY: run-tests
-run-tests: $(CLI_JS)
-	@ for name in $(TESTS) ; do \
-		sh test.sh $(TEST_ARGS) test/$$name.atw ; \
-		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
-	done ; \
-	[ ! $$failed ]
+define run_tests
+for name in $1 ; do \
+	sh test.sh $2 test/$$name.atw ; \
+	if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
+done
+endef
+
+TEST_COMPILE := $(call run_tests,$(TESTS_BASIC),-c -x)
+TEST_INTERP := $(call run_tests,$(TESTS_BASIC) $(TESTS_TYPE) $(TESTS_INTERP),)
+TEST_FAIL := [ ! $$failed ]
 
 .PHONY: test-compile
-test-compile: TEST_ARGS := -c -x
-test-compile: TESTS := $(TESTS_BASIC)
-test-compile: run-tests
+test-compile: $(CLI_JS)
+	@ $(TEST_COMPILE) ; \
+	$(TEST_FAIL)
 
 .PHONY: test-interp
-test-interp: TESTS := $(TESTS_BASIC) $(TESTS_INTERP)
-test-interp: run-tests
+test-interp: $(CLI_JS)
+	@ $(TEST_INTERP) ; \
+	$(TEST_FAIL)
 
 .PHONY: test
-test: test-interp # for now...
+test:
+	@ echo "interpreter" ; \
+	$(TEST_INTERP) ; \
+	echo ; \
+	echo "compiler" ; \
+	$(TEST_COMPILE) ; \
+	$(TEST_FAIL)
