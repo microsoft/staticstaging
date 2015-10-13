@@ -80,14 +80,25 @@ Paren "parentheses"
 // Type syntax.
 
 Type "type"
+  = FunType / TermType
+
+TermType
   = PrimitiveType / ParenType
 
-PrimitiveType
+PrimitiveType "primitive type"
   = i:ident
   { return {tag: "type_primitive", name: i}; }
 
 ParenType
   = paren_open _ t:Type _ paren_close
+  { return t; }
+
+FunType "function type"
+  = p:FunTypeParam* arrow _ r:TermType
+  { return {tag: "type_fun", params: p, ret: r}; }
+
+FunTypeParam
+  = t:TermType _
   { return t; }
 
 
