@@ -288,8 +288,7 @@ function pretty_js_value(v: any): string {
   }
 }
 
-// Compile an entire (elaborated, desugared) AST to a complete JavaScript
-// program.
+// Compile the IR to a complete JavaScript program.
 function jscompile(ir: CompilerIR): string {
   let _jscompile = fix(gen_jscompile(ir.procs, ir.progs, ir.defuse));
 
