@@ -197,8 +197,18 @@ let gen_check : Gen<TypeCheck> = function(check) {
 function compatible(ltype: Type, rtype: Type): boolean {
   if (ltype instanceof IntType && rtype instanceof IntType) {
     return true;
-  } else {
-    throw "TODO: can't yet compare non-Int types";
+  } else if (ltype instanceof FunType && rtype instanceof FunType) {
+    if (ltype.params.length != rtype.params.length) {
+      return false;
+    }
+    for (let i = 0; i < ltype.params.length; ++i) {
+      let lparam = ltype.params[i];
+      let rparam = rtype.params[i];
+      if (!compatible(rparam, lparam)) {  // Contravariant.
+        return false;
+      }
+    }
+    return compatible(ltype.ret, rtype.ret);  // Covariant.
   }
 }
 
