@@ -9,6 +9,21 @@ function webgl_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
 {
   let js_rules = js_compile_rules(fself, procs, progs, defuse);
   return compose_visit(js_rules, {
+    // Compile calls to our intrinsics for binding shaders.
+    visit_call(tree: CallNode, p: void): string {
+      // Check for the intrinsic.
+      // TODO This should use a more robust `extern` system rather than a
+      // naming convention...
+      if (tree.fun.tag === "lookup") {
+        let fun = <LookupNode> tree.fun;
+        if (fun.ident === "frag") {
+          return "HEY";
+        }
+      }
+
+      // An ordinary function call.
+      return ast_visit(js_rules, tree, null);
+    },
   });
 }
 
