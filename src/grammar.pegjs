@@ -62,7 +62,7 @@ Fun "lambda"
   { return {tag: "fun", params: ps, body: e}; }
 
 Param "parameter"
-  = i:ident _ typed _ t:Type _
+  = i:ident _ typed _ t:TermType _
   { return {tag: "param", name: i, type: t}; }
 
 Call "call"
