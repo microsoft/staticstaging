@@ -1,0 +1,4 @@
+let f = fun n:<Int> -> < 9 + [n] >;
+let c = f <7>;
+!c
+# -> 16
