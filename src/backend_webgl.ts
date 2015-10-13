@@ -24,8 +24,8 @@ function get_webgl_compile(procs: Proc[], progs: Prog[],
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 function webgl_compile(ir: CompilerIR): string {
-  let _jscompile = get_js_compile(ir.procs, ir.progs, ir.defuse);
-  let _glslcompile = get_webgl_compile(ir.procs, ir.progs, ir.defuse);
+  let _jscompile = get_webgl_compile(ir.procs, ir.progs, ir.defuse);
+  let _glslcompile = get_glsl_compile(ir.procs, ir.progs, ir.defuse);
 
   let out = "";
 
