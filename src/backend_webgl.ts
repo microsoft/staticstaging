@@ -3,11 +3,29 @@
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_glsl.ts" />
 
+// Extend the JavaScript compiler with some WebGL specifics.
+function webgl_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
+  defuse: DefUseTable): ASTVisit<void, string>
+{
+  let js_rules = js_compile_rules(fself, procs, progs, defuse);
+  return compose_visit(js_rules, {
+  });
+}
+
+// Tie the recursion knot.
+function get_webgl_compile(procs: Proc[], progs: Prog[],
+                           defuse: DefUseTable): GLSLCompile {
+  let rules = webgl_compile_rules(f, procs, progs, defuse);
+  function f (tree: SyntaxNode): string {
+    return ast_visit(rules, tree, null);
+  };
+  return f;
+}
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 function webgl_compile(ir: CompilerIR): string {
   let _jscompile = get_js_compile(ir.procs, ir.progs, ir.defuse);
-  let _glslcompile = get_glsl_compile(ir.procs, ir.progs, ir.defuse);
+  let _glslcompile = get_webgl_compile(ir.procs, ir.progs, ir.defuse);
 
   let out = "";
 
