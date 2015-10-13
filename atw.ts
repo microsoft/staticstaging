@@ -1,4 +1,6 @@
 /// <reference path="typings/node/node.d.ts" />
+/// <reference path="typings/minimist/minimist.d.ts" />
+
 /// <reference path="src/interp.ts" />
 /// <reference path="src/pretty.ts" />
 /// <reference path="src/type.ts" />
@@ -8,6 +10,7 @@
 
 let fs = require('fs');
 let util = require('util');
+let minimist = require('minimist');
 let parser = require('./parser.js');
 
 function parse(filename: string, f: (tree: SyntaxNode) => void) {
@@ -40,34 +43,20 @@ function parse(filename: string, f: (tree: SyntaxNode) => void) {
 }
 
 function main() {
-  let args = process.argv.slice(2);
+  // Parse the command-line options.
+  let args = minimist(process.argv.slice(2), {
+    boolean: ['v', 'c', 'x'],
+  });
 
-  // Check for a verbose -v flag.
-  let verbose = false;
-  if (args[0] === "-v") {
-    verbose = true;
-    args.shift();
-  }
-
-  // And a compile -c flag.
-  // TODO Use a real option parser.
-  let compile = false;
-  if (args[0] === "-c") {
-    compile = true;
-    args.shift();
-  }
-
-  // And, when compiling, actually execute the code.
-  let execute = false;
-  if (args[0] === "-x") {
-    execute = true;
-    args.shift();
-  }
+  // The flags: -v, -c, and -x.
+  let verbose = args.v;
+  let compile = args.c;
+  let execute = args.x;
 
   // Get the filename.
-  let fn = args.shift();
+  let fn = args._[0];
   if (!fn) {
-    console.log("usage: " + process.argv[1] + " [-vc] PROGRAM");
+    console.error("usage: " + process.argv[1] + " [-vcx] PROGRAM");
     process.exit(1);
   }
 
