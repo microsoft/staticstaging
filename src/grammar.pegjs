@@ -19,7 +19,7 @@ SeqExpr
   = Seq / Expr
 
 TermExpr
-  = Literal / Lookup / Quote / Splice / Persist / Run / Paren
+  = Quote / Literal / Lookup / Splice / Persist / Run / Paren
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -42,8 +42,8 @@ Binary "binary operation"
   { return {tag: "binary", lhs: lhs, rhs: rhs, op: op}; }
 
 Quote "quote"
-  = quote_open _ e:SeqExpr _ quote_close
-  { return {tag: "quote", expr: e}; }
+  = a:ident? quote_open _ e:SeqExpr _ quote_close
+  { return {tag: "quote", expr: e, annotation: a || ""}; }
 
 Splice "splice escape"
   = splice_open _ e:SeqExpr _ splice_close

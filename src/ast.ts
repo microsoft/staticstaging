@@ -32,6 +32,7 @@ interface BinaryNode extends ExpressionNode {
 
 interface QuoteNode extends ExpressionNode {
   expr: ExpressionNode;
+  annotation: string;
 }
 
 interface EscapeNode extends ExpressionNode {
