@@ -177,6 +177,7 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
   };
 }
 
+// Tie the recursion knot.
 function get_js_compile(procs: Proc[], progs: Prog[],
                         defuse: DefUseTable): JSCompile {
   let rules = js_compile_rules(f, procs, progs, defuse);
