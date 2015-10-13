@@ -57,130 +57,133 @@ const JS_RUNTIME =
 // lambda-lifted AST with its corresponding def/use table. Works on a single
 // Proc or Prog body at a time.
 type JSCompile = (tree: SyntaxNode) => string;
-function gen_jscompile(procs: Proc[], progs: Prog[],
-  defuse: DefUseTable): Gen<JSCompile>
+function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
+  defuse: DefUseTable): ASTVisit<void, string>
 {
-  return function (fself: JSCompile): JSCompile {
-    let compile_rules : ASTVisit<void, string> = {
-      visit_literal(tree: LiteralNode, param: void): string {
-        return tree.value.toString();
-      },
+  return {
+    visit_literal(tree: LiteralNode, param: void): string {
+      return tree.value.toString();
+    },
 
-      visit_seq(tree: SeqNode, param: void): string {
-        let p1 = fself(tree.lhs);
-        let p2 = fself(tree.rhs);
-        return p1 + ",\n" + p2;
-      },
+    visit_seq(tree: SeqNode, param: void): string {
+      let p1 = fself(tree.lhs);
+      let p2 = fself(tree.rhs);
+      return p1 + ",\n" + p2;
+    },
 
-      visit_let(tree: LetNode, param: void): string {
-        let jsvar = varsym(tree.id);
-        return jsvar + " = " + paren(fself(tree.expr));
-      },
+    visit_let(tree: LetNode, param: void): string {
+      let jsvar = varsym(tree.id);
+      return jsvar + " = " + paren(fself(tree.expr));
+    },
 
-      visit_lookup(tree: LookupNode, param: void): string {
-        let [defid, _] = defuse[tree.id];
-        let jsvar = varsym(defid);
-        return jsvar;
-      },
+    visit_lookup(tree: LookupNode, param: void): string {
+      let [defid, _] = defuse[tree.id];
+      let jsvar = varsym(defid);
+      return jsvar;
+    },
 
-      visit_binary(tree: BinaryNode, param: void): string {
-        let p1 = fself(tree.lhs);
-        let p2 = fself(tree.rhs);
-        return paren(p1) + " " + tree.op + " " + paren(p2);
-      },
+    visit_binary(tree: BinaryNode, param: void): string {
+      let p1 = fself(tree.lhs);
+      let p2 = fself(tree.rhs);
+      return paren(p1) + " " + tree.op + " " + paren(p2);
+    },
 
-      visit_quote(tree: QuoteNode, param: void): string {
-        // Compile each persist in this quote and pack them into a dictionary.
-        let persist_pairs: string[] = [];
-        for (let esc of progs[tree.id].persist) {
-          let esc_expr = fself(esc.body);
-          persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
-        }
-        let persists_str = "{ " + persist_pairs.join(", ") + " }";
+    visit_quote(tree: QuoteNode, param: void): string {
+      // Compile each persist in this quote and pack them into a dictionary.
+      let persist_pairs: string[] = [];
+      for (let esc of progs[tree.id].persist) {
+        let esc_expr = fself(esc.body);
+        persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
+      }
+      let persists_str = "{ " + persist_pairs.join(", ") + " }";
 
-        // Create a pre-spliced code value.
-        let code_expr = "{ prog: " + progsym(tree.id) +
-          ", persist: " + persists_str + " }";
+      // Create a pre-spliced code value.
+      let code_expr = "{ prog: " + progsym(tree.id) +
+        ", persist: " + persists_str + " }";
 
-        // Compile each spliced escape expression. Then, call our runtime to
-        // splice it into the code value.
-        for (let esc of progs[tree.id].splice) {
-          let esc_expr = fself(esc.body);
-          code_expr = "splice(" + code_expr + ", " +
-            esc.id + ", " +
-            paren(esc_expr) + ")";
-        }
+      // Compile each spliced escape expression. Then, call our runtime to
+      // splice it into the code value.
+      for (let esc of progs[tree.id].splice) {
+        let esc_expr = fself(esc.body);
+        code_expr = "splice(" + code_expr + ", " +
+          esc.id + ", " +
+          paren(esc_expr) + ")";
+      }
 
-        return code_expr;
-      },
+      return code_expr;
+    },
 
-      visit_escape(tree: EscapeNode, param: void): string {
-        if (tree.kind === "splice") {
-          return splicesym(tree.id);
-        } else if (tree.kind === "persist") {
-          return persistsym(tree.id);
-        } else {
-          throw "error: unknown escape kind";
-        }
-      },
+    visit_escape(tree: EscapeNode, param: void): string {
+      if (tree.kind === "splice") {
+        return splicesym(tree.id);
+      } else if (tree.kind === "persist") {
+        return persistsym(tree.id);
+      } else {
+        throw "error: unknown escape kind";
+      }
+    },
 
-      visit_run(tree: RunNode, param: void): string {
-        // Compile the expression producing the program we need to invoke.
-        let progex = fself(tree.expr);
+    visit_run(tree: RunNode, param: void): string {
+      // Compile the expression producing the program we need to invoke.
+      let progex = fself(tree.expr);
 
-        let out = "(function () {\n";
-        out += "  var code = " + progex + ";\n";
-        // To fill in the persist values, we currently use JavaScript's
-        // much-maligned `with` statement. It's just what we need!
-        out += "  with (code.persist)\n";
-        out += "  return eval(code.prog);\n";
-        out += "})()";
-        return out;
-      },
+      let out = "(function () {\n";
+      out += "  var code = " + progex + ";\n";
+      // To fill in the persist values, we currently use JavaScript's
+      // much-maligned `with` statement. It's just what we need!
+      out += "  with (code.persist)\n";
+      out += "  return eval(code.prog);\n";
+      out += "})()";
+      return out;
+    },
 
-      // A function expression produces an object containing the JavaScript
-      // function for the corresponding proc and a list of environment
-      // variables.
-      visit_fun(tree: FunNode, param: void): string {
-        let captures: string[] = [];
-        for (let fv of procs[tree.id].free) {
-          captures.push(varsym(fv));
-        }
+    // A function expression produces an object containing the JavaScript
+    // function for the corresponding proc and a list of environment
+    // variables.
+    visit_fun(tree: FunNode, param: void): string {
+      let captures: string[] = [];
+      for (let fv of procs[tree.id].free) {
+        captures.push(varsym(fv));
+      }
 
-        // Assemble the pair.
-        let out = "{ proc: " + procsym(tree.id) + ", ";
-        out += "env: [" + captures.join(', ') + "]}";
-        return out;
-      },
+      // Assemble the pair.
+      let out = "{ proc: " + procsym(tree.id) + ", ";
+      out += "env: [" + captures.join(', ') + "]}";
+      return out;
+    },
 
-      // An invocation unpacks the closure environment and calls the function
-      // with its normal arguments and its free variables.
-      visit_call(tree: CallNode, param: void): string {
-        // Compile the function and arguments.
-        let func = fself(tree.fun);
-        let args: string[] = [];
-        for (let arg of tree.args) {
-          args.push(paren(fself(arg)));
-        }
+    // An invocation unpacks the closure environment and calls the function
+    // with its normal arguments and its free variables.
+    visit_call(tree: CallNode, param: void): string {
+      // Compile the function and arguments.
+      let func = fself(tree.fun);
+      let args: string[] = [];
+      for (let arg of tree.args) {
+        args.push(paren(fself(arg)));
+      }
 
-        // Get the closure pair, then invoke the first part on the arguments
-        // and the second part.
-        let out = "closure = " + paren(func) + ",\n";
-        out += "  args = [" + args.join(", ") + "].concat(closure.env),\n";
-        out += "  closure.proc.apply(void 0, args)";
+      // Get the closure pair, then invoke the first part on the arguments
+      // and the second part.
+      let out = "closure = " + paren(func) + ",\n";
+      out += "  args = [" + args.join(", ") + "].concat(closure.env),\n";
+      out += "  closure.proc.apply(void 0, args)";
 
-        return out;
-      },
+      return out;
+    },
 
-      visit_persist(tree: PersistNode, param: void): string {
-        throw "error: persist cannot appear in source";
-      },
-    }
+    visit_persist(tree: PersistNode, param: void): string {
+      throw "error: persist cannot appear in source";
+    },
+  };
+}
 
-    return function(tree: SyntaxNode): string {
-      return ast_visit(compile_rules, tree, null);
-    };
-  }
+function get_js_compile(procs: Proc[], progs: Prog[],
+                        defuse: DefUseTable): JSCompile {
+  let rules = js_compile_rules(f, procs, progs, defuse);
+  function f (tree: SyntaxNode): string {
+    return ast_visit(rules, tree, null);
+  };
+  return f;
 }
 
 // Create a JavaScript function definition. `name` can be null, in which case
@@ -293,7 +296,7 @@ function pretty_js_value(v: any): string {
 
 // Compile the IR to a complete JavaScript program.
 function jscompile(ir: CompilerIR): string {
-  let _jscompile = fix(gen_jscompile(ir.procs, ir.progs, ir.defuse));
+  let _jscompile = get_js_compile(ir.procs, ir.progs, ir.defuse);
 
   // Start with our run-time library.
   let out = JS_RUNTIME;
