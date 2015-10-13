@@ -71,6 +71,10 @@ interface FunTypeNode extends TypeNode {
   ret: TypeNode;
 }
 
+interface CodeTypeNode extends TypeNode {
+  inner: TypeNode;
+}
+
 // An AST node that is not allowed to appear in source; it replaces persistent
 // escapes when they are evaluated. A `Persist` has an index into the value list
 // (called a `Pers` in the interpreter) associated with the `Code` that it

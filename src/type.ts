@@ -197,6 +197,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
 function compatible(ltype: Type, rtype: Type): boolean {
   if (ltype instanceof IntType && rtype instanceof IntType) {
     return true;
+
   } else if (ltype instanceof FunType && rtype instanceof FunType) {
     if (ltype.params.length != rtype.params.length) {
       return false;
@@ -209,7 +210,12 @@ function compatible(ltype: Type, rtype: Type): boolean {
       }
     }
     return compatible(ltype.ret, rtype.ret);  // Covariant.
+
+  } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
+    return compatible(ltype.inner, rtype.inner);
   }
+
+  return false;
 }
 
 // Get the Type denoted by the type syntax tree.
@@ -230,7 +236,12 @@ let get_type_rules: TypeASTVisit<void, Type> = {
     let ret = get_type(tree.ret);
 
     return new FunType(params, ret);
-  }
+  },
+
+  visit_code(tree: CodeTypeNode, p: void) {
+    let inner = get_type(tree.inner);
+    return new CodeType(inner);
+  },
 };
 function get_type(ttree: TypeNode): Type {
   return type_ast_visit(get_type_rules, ttree, null);

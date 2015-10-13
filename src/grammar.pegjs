@@ -83,7 +83,7 @@ Type "type"
   = FunType / TermType
 
 TermType
-  = PrimitiveType / ParenType
+  = PrimitiveType / CodeType / ParenType
 
 PrimitiveType "primitive type"
   = i:ident
@@ -96,6 +96,10 @@ ParenType
 FunType "function type"
   = p:FunTypeParam* arrow _ r:TermType
   { return {tag: "type_fun", params: p, ret: r}; }
+
+CodeType "code type"
+  = quote_open _ t:Type _ quote_close
+  { return {tag: "type_code", inner: t}; }
 
 FunTypeParam
   = t:TermType _
