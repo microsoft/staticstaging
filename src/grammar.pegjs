@@ -10,7 +10,7 @@ Program
   { return e; }
 
 
-// Syntax.
+// Expression syntax.
 
 Expr
   = Let / Fun / Binary / Call / TermExpr
@@ -62,7 +62,7 @@ Fun "lambda"
   { return {tag: "fun", params: ps, body: e}; }
 
 Param "parameter"
-  = i:ident _ typed _ t:ident _
+  = i:ident _ typed _ t:Type _
   { return {tag: "param", name: i, type: t}; }
 
 Call "call"
@@ -75,6 +75,20 @@ Arg
 Paren "parentheses"
   = paren_open _ e:Expr _ paren_close
   { return e; }
+
+
+// Type syntax.
+
+Type "type"
+  = PrimitiveType / ParenType
+
+PrimitiveType
+  = t:ident
+  { return t; }
+
+ParenType
+  = paren_open _ t:Type _ paren_close
+  { return t; }
 
 
 // Tokens.
