@@ -19,7 +19,7 @@ SeqExpr
   = Seq / Expr
 
 TermExpr
-  = Literal / Lookup / Quote / Splice / Persist / Run
+  = Literal / Lookup / Quote / Splice / Persist / Run / Paren
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -70,6 +70,10 @@ Call "call"
   { return {tag: "call", fun: i, args: as}; }
 Arg
   = e:TermExpr _
+  { return e; }
+
+Paren "parentheses"
+  = paren_open _ e:Expr _ paren_close
   { return e; }
 
 
@@ -129,6 +133,12 @@ typed "type marker"
 
 comma "comma"
   = ","
+
+paren_open
+  = "("
+
+paren_close
+  = ")"
 
 
 // Empty space.
