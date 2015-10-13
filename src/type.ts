@@ -203,17 +203,17 @@ function compatible(ltype: Type, rtype: Type): boolean {
 }
 
 // Get the Type denoted by the type syntax tree.
-function get_type(ttree: TypeNode): Type {
-  if (ttree.tag === "type_primitive") {
-    let primitive_type = <PrimitiveTypeNode> ttree;
-    if (primitive_type.name === "Int") {
+let get_type_rules: TypeASTVisit<void, Type> = {
+  visit_primitive(tree: PrimitiveTypeNode, p: void) {
+    if (tree.name === "Int") {
       return INT;
     } else {
-      throw "error: unknown primitive type " + primitive_type.name;
+      throw "error: unknown primitive type " + tree.name;
     }
-  } else {
-    throw "TODO: parameters must be Int for now";
-  }
+  },
+};
+function get_type(ttree: TypeNode): Type {
+  return type_ast_visit(get_type_rules, ttree, null);
 }
 
 // A shorthand for typechecking in an empty initial context.

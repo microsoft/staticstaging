@@ -175,3 +175,19 @@ function gen_translate(fself: ASTTranslate): ASTTranslate {
   };
 }
 
+// An interface for visiting *type* nodes.
+interface TypeASTVisit<P, R> {
+  visit_primitive(tree: PrimitiveTypeNode, param: P): R;
+}
+
+// Tag-based dispatch to the type visitor visit functions.
+function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
+                              tree: TypeNode, param: P): R {
+  switch (tree.tag) {
+    case "type_primitive":
+      return visitor.visit_primitive(<PrimitiveTypeNode> tree, param);
+
+    default:
+      throw "error: unknown type syntax node " + tree.tag;
+  }
+}
