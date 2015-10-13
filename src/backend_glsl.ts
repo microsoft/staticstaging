@@ -59,3 +59,15 @@ function gen_glslcompile(procs: Proc[], progs: Prog[],
     };
   };
 }
+
+function glsl_compile_prog(compile: GLSLCompile, prog: Prog,
+    procs: Proc[]): string {
+  // TODO compile the functions
+  // TODO compile the bound variable declarations
+
+  // Wrap the code in a "main" function.
+  let code = compile(prog.body);
+  let main = "void main() {\n" + code + "\n}";
+
+  return main;
+}

@@ -332,6 +332,7 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
 interface Prog {
   id: number,
   body: ExpressionNode,
+  annotation: string,
   bound: number[],
   persist: ProgEscape[],
   splice: ProgEscape[],
@@ -386,6 +387,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       p2[tree.id] = {
         id: tree.id,
         body: tree.expr,
+        annotation: tree.annotation,
         bound: hd(b),
         persist: persists,
         splice: splices,

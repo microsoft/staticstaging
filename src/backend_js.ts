@@ -247,8 +247,14 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   return emit_js_fun(name, argnames, localnames, compile(proc.body));
 }
 
-// Compile a quotation (a.k.a. Prog) to a JavaScript string constant. Also
-// compiles the Procs that appear inside this quotation.
+// Emit a JavaScript variable declaration.
+function emit_js_var(name: string, value: any): string {
+  return "var " + name + " = " + JSON.stringify(value) + ";";
+}
+
+// Compile a quotation (a.k.a. Prog) to a string. This string should be
+// embedded in JavaScript so it can be `eval`ed. Also compiles the Procs that
+// appear inside this quotation.
 function jscompile_prog(compile: JSCompile, prog: Prog, procs: Proc[]): string {
   // Compile each function defined in this quote.
   let procs_str = "";
@@ -267,10 +273,7 @@ function jscompile_prog(compile: JSCompile, prog: Prog, procs: Proc[]): string {
   let code = compile(prog.body);
   let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
 
-  // Then escape it as a JavaScript string.
-  let code_str = JSON.stringify(procs_str + code_wrapped);
-
-  return "var " + progsym(prog.id) + " = " + code_str + ";\n";
+  return procs_str + code_wrapped;
 }
 
 // Like `pretty_value`, but for values in the *compiled* JavaScript world.
@@ -298,7 +301,9 @@ function jscompile(ir: CompilerIR): string {
   // Compile each program to a string.
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      out += jscompile_prog(_jscompile, prog, ir.quoted_procs[prog.id]);
+      let code = jscompile_prog(_jscompile, prog, ir.quoted_procs[prog.id]);
+      let prog_var = emit_js_var(progsym(prog.id), code);
+      out += prog_var + "\n";
     }
   }
 
