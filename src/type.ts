@@ -211,6 +211,16 @@ let get_type_rules: TypeASTVisit<void, Type> = {
       throw "error: unknown primitive type " + tree.name;
     }
   },
+
+  visit_fun(tree: FunTypeNode, p: void) {
+    let params: Type[] = [];
+    for (let param_node of tree.params) {
+      params.push(get_type(param_node));
+    }
+    let ret = get_type(tree.ret);
+
+    return new FunType(params, ret);
+  }
 };
 function get_type(ttree: TypeNode): Type {
   return type_ast_visit(get_type_rules, ttree, null);

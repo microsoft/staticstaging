@@ -65,6 +65,11 @@ interface PrimitiveTypeNode extends TypeNode {
   name: string;
 }
 
+interface FunTypeNode extends TypeNode {
+  params: TypeNode[];
+  ret: TypeNode;
+}
+
 // An AST node that is not allowed to appear in source; it replaces persistent
 // escapes when they are evaluated. A `Persist` has an index into the value list
 // (called a `Pers` in the interpreter) associated with the `Code` that it
