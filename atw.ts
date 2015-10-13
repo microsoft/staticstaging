@@ -7,6 +7,7 @@
 /// <reference path="src/sugar.ts" />
 /// <reference path="src/compile.ts" />
 /// <reference path="src/backend_js.ts" />
+/// <reference path="src/backend_webgl.ts" />
 
 let fs = require('fs');
 let util = require('util');
@@ -45,13 +46,14 @@ function parse(filename: string, f: (tree: SyntaxNode) => void) {
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
-    boolean: ['v', 'c', 'x'],
+    boolean: ['v', 'c', 'x', 'w'],
   });
 
   // The flags: -v, -c, and -x.
-  let verbose = args.v;
-  let compile = args.c;
-  let execute = args.x;
+  let verbose: boolean = args.v;
+  let compile: boolean = args.c;
+  let execute: boolean = args.x;
+  let webgl: boolean = args.w;
 
   // Get the filename.
   let fn = args._[0];
@@ -111,7 +113,11 @@ function main() {
       // Compile.
       let jscode: string;
       try {
-        jscode = jscompile(ir);
+        if (webgl) {
+          jscode = webgl_compile(ir);
+        } else {
+          jscode = jscompile(ir);
+        }
       } catch (e) {
         if (e === "unimplemented") {
           console.log(e);
