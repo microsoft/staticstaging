@@ -50,12 +50,19 @@ interface FunNode extends ExpressionNode {
 
 interface ParamNode extends SyntaxNode {
   name: string;
-  type: string;
+  type: TypeNode;
 }
 
 interface CallNode extends ExpressionNode {
   fun: ExpressionNode;
   args: ExpressionNode[];
+}
+
+interface TypeNode extends SyntaxNode {
+}
+
+interface PrimitiveTypeNode extends TypeNode {
+  name: string;
 }
 
 // An AST node that is not allowed to appear in source; it replaces persistent

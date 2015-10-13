@@ -83,8 +83,8 @@ Type "type"
   = PrimitiveType / ParenType
 
 PrimitiveType
-  = t:ident
-  { return t; }
+  = i:ident
+  { return {tag: "type_primitive", name: i}; }
 
 ParenType
   = paren_open _ t:Type _ paren_close

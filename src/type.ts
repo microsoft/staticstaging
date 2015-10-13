@@ -137,12 +137,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let param_types : Type[] = [];
       let body_env_hd = overlay(hd(env));
       for (let param of tree.params) {
-        let ptype : Type;
-        if (param.type == "Int") {
-          ptype = INT;
-        } else {
-          throw "TODO: parameters must be Int for now";
-        }
+        let ptype = get_type(param.type);
         param_types.push(ptype);
         body_env_hd[param.name] = ptype;
       }
@@ -204,6 +199,20 @@ function compatible(ltype: Type, rtype: Type): boolean {
     return true;
   } else {
     throw "TODO: can't yet compare non-Int types";
+  }
+}
+
+// Get the Type denoted by the type syntax tree.
+function get_type(ttree: TypeNode): Type {
+  if (ttree.tag === "type_primitive") {
+    let primitive_type = <PrimitiveTypeNode> ttree;
+    if (primitive_type.name === "Int") {
+      return INT;
+    } else {
+      throw "error: unknown primitive type " + primitive_type.name;
+    }
+  } else {
+    throw "TODO: parameters must be Int for now";
   }
 }
 
