@@ -109,23 +109,20 @@ function main() {
 
     // Execute.
     if (compile) {
+      let ir = semantically_analyze(sugarfree);
+
       // In verbose mode, show some intermediates.
       if (verbose) {
-        let table = find_def_use(sugarfree);
-        console.log('def/use: ' + util.inspect(table, false, null));
-
-        let progs = quote_lift(sugarfree);
-        console.log('progs: ' + util.inspect(progs, false, null));
-
-        let [procs, main] = lambda_lift(sugarfree, table);
-        console.log('procs: ' + util.inspect(procs, false, null));
-        console.log('main: ' + util.inspect(main, false, null));
+        console.log('def/use: ' + util.inspect(ir.defuse, false, null));
+        console.log('progs: ' + util.inspect(ir.progs, false, null));
+        console.log('procs: ' + util.inspect(ir.procs, false, null));
+        console.log('main: ' + util.inspect(ir.main, false, null));
       }
 
       // Compile.
       let jscode: string;
       try {
-        jscode = jscompile(sugarfree);
+        jscode = jscompile(ir);
       } catch (e) {
         if (e === "unimplemented") {
           console.log(e);

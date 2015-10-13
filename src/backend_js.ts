@@ -99,13 +99,16 @@ function gen_jscompile(procs: Proc[], progs: Prog[],
         let persists_str = "{ " + persist_pairs.join(", ") + " }";
 
         // Create a pre-spliced code value.
-        let code_expr = "{ prog: " + progsym(tree.id) + ", persist: " + persists_str + " }";
+        let code_expr = "{ prog: " + progsym(tree.id) +
+          ", persist: " + persists_str + " }";
 
         // Compile each spliced escape expression. Then, call our runtime to
         // splice it into the code value.
         for (let esc of progs[tree.id].splice) {
           let esc_expr = fself(esc.body);
-          code_expr = "splice(" + code_expr + ", " + esc.id + ", " + paren(esc_expr) + ")";
+          code_expr = "splice(" + code_expr + ", " +
+            esc.id + ", " +
+            paren(esc_expr) + ")";
         }
 
         return code_expr;
@@ -287,34 +290,27 @@ function pretty_js_value(v: any): string {
 
 // Compile an entire (elaborated, desugared) AST to a complete JavaScript
 // program.
-function jscompile(tree: SyntaxNode): string {
-  let table = find_def_use(tree);
-
-  // Lift Procs and Progs, and index the Procs by Prog.
-  let [procs, main] = lambda_lift(tree, table);
-  let progs = quote_lift(tree);
-  let [toplevel_procs, quoted_procs] = procs_by_prog(procs, progs);
-
-  let _jscompile = fix(gen_jscompile(procs, progs, table));
+function jscompile(ir: CompilerIR): string {
+  let _jscompile = fix(gen_jscompile(ir.procs, ir.progs, ir.defuse));
 
   // Start with our run-time library.
   let out = JS_RUNTIME;
 
   // Compile each program to a string.
-  for (let prog of progs) {
+  for (let prog of ir.progs) {
     if (prog !== undefined) {
-      out += jscompile_prog(_jscompile, prog, quoted_procs[prog.id]);
+      out += jscompile_prog(_jscompile, prog, ir.quoted_procs[prog.id]);
     }
   }
 
   // Compile each proc to a JS function.
-  for (let proc of toplevel_procs) {
+  for (let proc of ir.toplevel_procs) {
     out += jscompile_proc(_jscompile, proc);
     out += "\n";
   }
 
   // Emit and invoke the main (anonymous) function.
-  out += jscompile_proc(_jscompile, main);
+  out += jscompile_proc(_jscompile, ir.main);
   out += "()";
 
   return out;

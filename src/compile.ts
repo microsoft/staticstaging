@@ -363,7 +363,8 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
     {
       let bound_inner = cons([], bound);
       let escs_inner = cons([], escs);
-      let [b, e, p] = fold_rules.visit_quote(tree, [bound_inner, escs_inner, progs]);
+      let [b, e, p] = fold_rules.visit_quote(tree,
+          [bound_inner, escs_inner, progs]);
 
       // Sort out the splices and persists.
       let persists: ProgEscape[] = [];
@@ -460,4 +461,48 @@ function procs_by_prog(procs: Proc[], progs: Prog[]): [Proc[], Proc[][]] {
   }
 
   return [toplevel, quoted];
+}
+
+// The mid-level IR structure.
+interface CompilerIR {
+  tree: SyntaxNode;  // Elaborated and desugared.
+
+  // The def/use table.
+  defuse: DefUseTable;
+
+  // The lambda-lifted Procs. We have all the Procs except main, indexed by
+  // ID, and main separately.
+  procs: Proc[];
+  main: Proc;
+
+  // The quote-lifted Progs. Again, the Progs are indexed by ID.
+  progs: Prog[];
+
+  // Association tables between Progs and their asociated Procs. Also, a list
+  // of Procs from the top level---not associated with any quote.
+  toplevel_procs: Proc[];
+  quoted_procs: Proc[][];
+}
+
+// This is the semantic analysis that produces our mid-level IR given an
+// elaborated, desugared AST.
+function semantically_analyze(tree: SyntaxNode): CompilerIR {
+  let table = find_def_use(tree);
+
+  // Lambda lifting and quote lifting.
+  let [procs, main] = lambda_lift(tree, table);
+  let progs = quote_lift(tree);
+
+  // Prog-to-Proc mapping.
+  let [toplevel_procs, quoted_procs] = procs_by_prog(procs, progs);
+
+  return {
+    tree: tree,
+    defuse: table,
+    procs: procs,
+    progs: progs,
+    main: main,
+    toplevel_procs: toplevel_procs,
+    quoted_procs: quoted_procs,
+  };
 }
