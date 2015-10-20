@@ -138,8 +138,7 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
     },
 
     visit_extern(tree: ExternNode, param: void): string {
-      // TODO
-      return "";
+      return tree.name;
     },
 
     visit_persist(tree: PersistNode, param: void): string {
