@@ -73,8 +73,10 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   visit_run(tree: RunNode, [env, pers]: [Env, Pers]): [Value, Env] {
     let [v, e] = interp(tree.expr, env, pers);
     if (v instanceof Code) {
-      // Execute the code in a fresh environment, with its persists.
-      let res = interpret(v.expr, /* pers */ v.pers);
+      // Execute the code. In order to carry along the `extern` intrinsics, we
+      // include the current environment even though quoted code is
+      // *ordinarily* prohibited from looking up values in it.
+      let res = interpret(v.expr, e, v.pers);
       return [res, env];
     } else {
       throw "error: tried to run non-code value";
@@ -147,7 +149,14 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   visit_extern(tree: ExternNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Look the value up in JavaScript land.
     let value = eval(tree.name);
-    return [value, env];
+
+    // Add the value to the environment. It may seem a little messy to mix
+    // together normal variables and externs, but the type system keeps them
+    // straight so we don't have to.
+    let e = overlay(env);
+    e[tree.name] = value;
+
+    return [value, e];
   },
 
   visit_persist(tree: PersistNode, [env, pers]: [Env, Pers]): [Value, Env] {
@@ -272,7 +281,8 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
     return [merge(tree, { expr: t }), e, p];
   },
 
-  visit_lookup(tree: LookupNode, [stage, env, pers, opers]: [number, Env, Pers, Pers]):
+  visit_lookup(tree: LookupNode,
+      [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     return [merge(tree), env, pers];
   },
@@ -331,8 +341,8 @@ function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers,
   return ast_visit(QuoteInterp, tree, [stage, env, pers, opers]);
 }
 
-// Helper to execute to a value in an empty initial environment.
-function interpret(program: SyntaxNode, pers: Pers = []): Value {
-  let [v, e] = interp(program, {}, pers);
+// Helper to execute to a value in an (optionally) empty initial environment.
+function interpret(program: SyntaxNode, e: Env = {}, p: Pers = []): Value {
+  let [v, _] = interp(program, e, p);
   return v;
 }
