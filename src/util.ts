@@ -15,6 +15,17 @@ function merge<T extends Object>(obj: T, values: Object = {}): T {
   return out;
 }
 
+// An alternative that more closely matches ES6 Object.assign.
+function assign <T, U> (target: T, ...sources: U[]): T & U {
+  var t: any = {};
+  for (var i = 0; i < arguments.length; ++i) {
+    for (var k in arguments[i]) {
+      t[k] = arguments[i][k];
+    }
+  }
+  return t;
+};
+
 function _repeat(s: string, n: number): string {
   let o = "";
   for (let i = 0; i < n; ++i) {

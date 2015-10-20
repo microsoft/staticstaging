@@ -349,6 +349,31 @@ interface ProgEscape {
   body: ExpressionNode,
 }
 
+// Bookkeeping for the quote-lifting process. This struct holds all the
+// details that need to be passed recursively through quote-lifting to
+// construct Progs.
+interface QuoteLiftFrame {
+  bound: number[],  // List of local variable IDs.
+  escapes: EscapeNode[],  // Escapes in the quote.
+  subprograms: number[],  // IDs of contained quotes.
+};
+
+function quote_lift_frame(): QuoteLiftFrame {
+  return {
+    bound: [],
+    escapes: [],
+    subprograms: [],
+  };
+}
+
+// Utility for updating the head of a quote lifting frame stack.
+function update_ql_frames <T> (fs: QuoteLiftFrame[],
+    update: (old: QuoteLiftFrame) => T): QuoteLiftFrame[] {
+  let old = hd(fs);
+  let head = assign(old, update(old));
+  return cons(head, tl(fs));
+}
+
 // Quote lifting is like lambda lifting, but for quotes.
 //
 // As with lambda lifting, we don't actually change the AST, but the resulting
@@ -359,18 +384,6 @@ interface ProgEscape {
 //
 // To lift all the Progs, this threads through two stacks of lists: one for
 // bound variables (by id), and one for escape nodes.
-interface QuoteLiftFrame {
-  bound: number[],  // List of local variable IDs.
-  escapes: EscapeNode[],  // Escapes in the quote.
-  subprograms: number[],  // IDs of contained quotes.
-};
-function quote_lift_frame(): QuoteLiftFrame {
-  return {
-    bound: [],
-    escapes: [],
-    subprograms: [],
-  };
-}
 type QuoteLift = ASTFold<[QuoteLiftFrame[], Prog[]]>;
 function gen_quote_lift(fself: QuoteLift): QuoteLift {
   let fold_rules = ast_fold_rules(fself);
@@ -416,14 +429,10 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       };
 
       // Add this program as a subprogram of the containing program.
-      let old_frame = hd(tl(f));
-      let new_frame = {
-        bound: old_frame.bound,
-        escapes: old_frame.escapes,
-        subprograms: cons(tree.id, old_frame.subprograms),
-      };
-
-      return [cons(new_frame, tl(tl(f))), p2];
+      let f2 = update_ql_frames(tl(f), function (old) { return {
+        subprograms: cons(tree.id, old.subprograms),
+      }});
+      return [f2, p2];
     },
 
     // Add bound variables to the bound set.
@@ -434,14 +443,10 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       let [f, p] = fold_rules.visit_let(tree, [frames, progs]);
 
       // Add a new bound variable to the top frame post-recursion.
-      let old_frame = hd(f);
-      let frame: QuoteLiftFrame = {
-        bound: set_add(old_frame.bound, tree.id),
-        escapes: old_frame.escapes,
-        subprograms: old_frame.subprograms,
-      };
-
-      return [cons(frame, tl(f)), p];
+      let f2 = update_ql_frames(f, function (old) { return {
+        bound: set_add(old.bound, tree.id),
+      }});
+      return [f2, p];
     },
 
     visit_escape(tree: EscapeNode,
@@ -451,16 +456,14 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       // Pop off the current context when recursing.
       let [f, p] = fself(tree.expr, [tl(frames), progs]);
 
-      // Add this node to the *current* escapes. We add to the frame that we
-      // popped off during recursion.
-      let old_frame = hd(frames);
-      let frame: QuoteLiftFrame = {
-        bound: old_frame.bound,
-        escapes: cons(tree, old_frame.escapes),
-        subprograms: old_frame.subprograms,
-      };
-
-      return [cons(frame, f), p];
+      // Add this node to the *current* escapes. This time, we add to the
+      // frame that we popped off during recursion and then slap it back onto
+      // the front of the result returned from the recusion.
+      let old = hd(frames);
+      let f2 = cons(assign(old, {
+        escapes: cons(tree, old.escapes),
+      }), f);
+      return [f2, p];
     },
   });
 
