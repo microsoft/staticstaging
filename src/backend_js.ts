@@ -164,9 +164,11 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
 
       // Get the closure pair, then invoke the first part on the arguments
       // and the second part.
-      let out = "closure = " + paren(func) + ",\n";
-      out += "  args = [" + args.join(", ") + "].concat(closure.env),\n";
-      out += "  closure.proc.apply(void 0, args)";
+      let out = "(function () { /* call */\n";
+      out += "  var closure = " + paren(func) + ";\n";
+      out += "  var args = [" + args.join(", ") + "].concat(closure.env);\n";
+      out += "  return closure.proc.apply(void 0, args);\n";
+      out += "})()";
 
       return out;
     },
@@ -193,9 +195,6 @@ function get_js_compile(procs: Proc[], progs: Prog[],
 function emit_js_fun(name: string, argnames: string[], localnames: string[], body: string): string {
   let anon = (name === null);
 
-  // We always add our internal, temporary variables to the local declarations.
-  localnames = localnames.concat(["closure", "args"]);
-
   // Emit the definition.
   let out = "";
   if (anon) {
@@ -206,7 +205,9 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[], bod
     out += name;
   }
   out += "(" + argnames.join(", ") + ") {\n";
-  out += "  var " + localnames.join(", ") + ";\n";
+  if (localnames.length) {
+    out += "  var " + localnames.join(", ") + ";\n";
+  }
   out += "  return ";
   out += body.replace(/\n/g, "\n  ");
   out += ";\n}";
