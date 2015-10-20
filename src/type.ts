@@ -31,10 +31,13 @@ interface TypeEnvFrame {
   [key: string]: Type;
 }
 
-// An environment is a stack stack with the current stage at the front of the
-// list. Prior stages are to the right. Normal accesses must refer to the top
-// environment frame; subsequent ones are "auto-persists".
-type TypeEnv = TypeEnvFrame[];
+// An environment consists of:
+// - A stack stack with the current stage at the front of the list. Prior
+//   stages are to the right. Normal accesses must refer to the top
+//   environment frame; subsequent ones are "auto-persists".
+// - A single frame for "extern" values, which are always available without
+//   any persisting.
+type TypeEnv = [TypeEnvFrame[], TypeEnvFrame];
 
 
 // The type checker.
@@ -57,14 +60,16 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_let(tree: LetNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = check(tree.expr, env);
-      let head = overlay(hd(e)); // Update type in an overlay environment.
+      let [stack, externs] = e;
+      let head = overlay(hd(stack)); // Update type in an overlay environment.
       head[tree.ident] = t;
-      let e2 = cons(head, tl(e));
+      let e2: TypeEnv = [cons(head, tl(stack)), externs];
       return [t, e2];
     },
 
     visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
-      let [t, _] = stack_lookup(env, tree.ident);
+      let [stack, _] = env;
+      let [t, __] = stack_lookup(stack, tree.ident);
       if (t === undefined) {
         throw "type error: undefined variable " + tree.ident;
       }
@@ -83,8 +88,11 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
-      // Push an empty stack frame and check inside the quote.
-      let inner_env = cons(<TypeEnvFrame> {}, env);
+      // Push an empty stack frame.
+      let [stack, externs] = env;
+      let inner_env: TypeEnv = [cons(<TypeEnvFrame> {}, stack), externs];
+
+      // Check inside the quote using the empty frame.
       let [t, e] = check(tree.expr, inner_env);
 
       // Move the result type "down" to a code type.
@@ -100,7 +108,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
       // Pop the current (quotation) environment off of the environment stack
       // before checking the escape.
-      let inner_env = tl(env);
+      let [stack, externs] = env;
+      let inner_env: TypeEnv = [tl(stack), externs];
       let [t, e] = check(tree.expr, inner_env);
 
       if (tree.kind === "splice") {
@@ -135,7 +144,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // Get the list of declared parameter types and accumulate them in an
       // environment based on the top of the environment stack.
       let param_types : Type[] = [];
-      let body_env_hd = overlay(hd(env));
+      let [stack, externs] = env;
+      let body_env_hd = overlay(hd(stack));
       for (let param of tree.params) {
         let ptype = get_type(param.type);
         param_types.push(ptype);
@@ -143,7 +153,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       }
 
       // Check the body and get the return type.
-      let body_env = cons(body_env_hd, tl(env));
+      let body_env: TypeEnv = [cons(body_env_hd, tl(stack)), externs];
       let [ret_type, _] = check(tree.body, body_env);
 
       // Construct the function type.
@@ -254,7 +264,7 @@ function get_type(ttree: TypeNode): Type {
 // A shorthand for typechecking in an empty initial context.
 let _typecheck : TypeCheck = fix(gen_check);
 function typecheck(tree: SyntaxNode): Type {
-  let [t, e] = _typecheck(tree, [{}]);
+  let [t, e] = _typecheck(tree, [[{}], {}]);
   return t;
 }
 
@@ -321,6 +331,6 @@ function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
 // maps the IDs to type information.
 function elaborate(tree: SyntaxNode): [SyntaxNode, TypeTable] {
   let table : TypeTable = [];
-  let elaborated = elaborate_subtree(tree, [{}], table);
+  let elaborated = elaborate_subtree(tree, [[{}], {}], table);
   return [elaborated, table];
 }

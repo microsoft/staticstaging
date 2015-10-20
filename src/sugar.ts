@@ -19,7 +19,8 @@ function gen_desugar(type_table: TypeTable): Gen<ASTTranslate> {
     return function (tree: SyntaxNode): SyntaxNode {
       if (is_lookup(tree)) {
         let [type, env] = type_table[tree.id];
-        let [_, index] = stack_lookup(env, tree.ident);
+        let [stack, _] = env;
+        let [__, index] = stack_lookup(stack, tree.ident);
 
         if (index === 0) {
           // A variable from the current stage. This is a normal access.
