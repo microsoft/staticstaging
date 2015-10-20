@@ -339,6 +339,9 @@ interface Prog {
   // Plain lists of all the escapes in the program.
   persist: ProgEscape[],
   splice: ProgEscape[],
+
+  // List of IDs of subprograms inside the program.
+  subprograms: number[],
 }
 
 interface ProgEscape {
@@ -356,19 +359,21 @@ interface ProgEscape {
 //
 // To lift all the Progs, this threads through two stacks of lists: one for
 // bound variables (by id), and one for escape nodes.
-type QuoteLift = ASTFold<[number[][], EscapeNode[][], Prog[]]>;
+type QuoteLift = ASTFold<[number[][], EscapeNode[][], number[][], Prog[]]>;
 function gen_quote_lift(fself: QuoteLift): QuoteLift {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     // Create a new Prog for each quote.
     visit_quote(tree: QuoteNode,
-      [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
-      [number[][], EscapeNode[][], Prog[]]
+      [bound, escs, subs, progs]:
+        [number[][], EscapeNode[][], number[][], Prog[]]):
+      [number[][], EscapeNode[][], number[][], Prog[]]
     {
       let bound_inner = cons([], bound);
       let escs_inner = cons([], escs);
-      let [b, e, p] = fold_rules.visit_quote(tree,
-          [bound_inner, escs_inner, progs]);
+      let subs_inner = cons([], subs);
+      let [b, e, s, p] = fold_rules.visit_quote(tree,
+          [bound_inner, escs_inner, subs_inner, progs]);
 
       // Sort out the splices and persists.
       let persists: ProgEscape[] = [];
@@ -394,49 +399,54 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         bound: hd(b),
         persist: persists,
         splice: splices,
+        subprograms: hd(s),
       };
 
-      return [tl(b), tl(e), p2];
+      return [tl(b), tl(e), tl(s), p2];
     },
 
     // Add bound variables to the bound set.
     visit_let(tree: LetNode,
-      [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
-      [number[][], EscapeNode[][], Prog[]]
+      [bound, escs, subs, progs]:
+        [number[][], EscapeNode[][], number[][], Prog[]]):
+      [number[][], EscapeNode[][], number[][], Prog[]]
     {
-      let [b, e, p] = fold_rules.visit_let(tree, [bound, escs, progs]);
+      let [b, e, s, p] = fold_rules.visit_let(tree, [bound, escs, subs, progs]);
 
       // Add a new bound variable to the list at the top of the stack.
       let b2 = cons(set_add(hd(b), tree.id), tl(b));
 
-      return [b2, e, p];
+      return [b2, e, s, p];
     },
 
     visit_escape(tree: EscapeNode,
-      [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
-      [number[][], EscapeNode[][], Prog[]]
+      [bound, escs, subs, progs]:
+        [number[][], EscapeNode[][], number[][], Prog[]]):
+      [number[][], EscapeNode[][], number[][], Prog[]]
     {
       // Pop off the current context when recursing.
-      let [b, e, p] = fself(tree.expr, [tl(bound), tl(escs), progs]);
+      let [b, e, s, p] =
+        fself(tree.expr, [tl(bound), tl(escs), tl(subs), progs]);
 
       // Add this node to the current escapes.
       let escs_head = cons(tree, hd(escs));
 
-      return [cons(hd(bound), b), cons(escs_head, e), p];
+      return [cons(hd(bound), b), cons(escs_head, e), cons(hd(subs), s), p];
     },
   });
 
   return function (tree: SyntaxNode,
-    [bound, escs, progs]: [number[][], EscapeNode[][], Prog[]]):
-    [number[][], EscapeNode[][], Prog[]]
+    [bound, escs, subs, progs]:
+      [number[][], EscapeNode[][], number[][], Prog[]]):
+    [number[][], EscapeNode[][], number[][], Prog[]]
   {
-    return ast_visit(rules, tree, [bound, escs, progs]);
+    return ast_visit(rules, tree, [bound, escs, subs, progs]);
   };
 };
 
 let _quote_lift = fix(gen_quote_lift);
 function quote_lift(tree: SyntaxNode): Prog[] {
-  let [_, __, progs] = _quote_lift(tree, [[[]], [[]], []]);
+  let [_, __, ___, progs] = _quote_lift(tree, [[[]], [[]], [[]], []]);
   return progs;
 }
 
