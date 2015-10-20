@@ -52,6 +52,10 @@ let Pretty : ASTVisit<void, string> = {
     return s;
   },
 
+  visit_extern(tree: ExternNode, _: void): string {
+    return "extern " + tree.name + " : " + tree.type;
+  },
+
   visit_persist(tree: PersistNode, _: void): string {
     return "%" + tree.index;
   },

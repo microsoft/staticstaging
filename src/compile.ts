@@ -57,6 +57,10 @@ function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
       return p2;
     },
 
+    visit_extern(tree: ExternNode, p: T): T {
+      return p;
+    },
+
     visit_persist(tree: PersistNode, p: T): T {
       return p;
     },

@@ -93,6 +93,11 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
       throw "unimplemented";
     },
 
+    visit_extern(tree: ExternNode, param: void): string {
+      // TODO
+      return "";
+    },
+
     visit_persist(tree: PersistNode, param: void): string {
       throw "error: persist cannot appear in source";
     },

@@ -13,6 +13,7 @@ interface ASTVisit<P, R> {
   visit_run(tree: RunNode, param: P): R;
   visit_fun(tree: FunNode, param: P): R;
   visit_call(tree: CallNode, param: P): R;
+  visit_extern(tree: ExternNode, param: P): R;
   visit_persist(tree: PersistNode, param: P): R;
 }
 
@@ -41,6 +42,8 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_fun(<FunNode> tree, param);
     case "call":
       return visitor.visit_call(<CallNode> tree, param);
+    case "extern":
+      return visitor.visit_extern(<ExternNode> tree, param);
     case "persist":
       return visitor.visit_persist(<PersistNode> tree, param);
 
@@ -62,6 +65,7 @@ interface PartialASTVisit<P, R> {
   visit_run? (tree: RunNode, param: P): R;
   visit_fun? (tree: FunNode, param: P): R;
   visit_call? (tree: CallNode, param: P): R;
+  visit_extern? (tree: ExternNode, param: P): R;
   visit_persist? (tree: PersistNode, param: P): R;
 }
 
@@ -161,6 +165,10 @@ function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, SyntaxNode> {
         fun: fself(tree.fun),
         args: arg_trees,
       });
+    },
+
+    visit_extern(tree: ExternNode, param: void): ExternNode {
+      return merge(tree);
     },
 
     visit_persist(tree: PersistNode, param: void): SyntaxNode {

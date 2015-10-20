@@ -59,6 +59,11 @@ interface CallNode extends ExpressionNode {
   args: ExpressionNode[];
 }
 
+interface ExternNode extends ExpressionNode {
+  name: string;
+  type: TypeNode;
+}
+
 interface TypeNode extends SyntaxNode {
 }
 

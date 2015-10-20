@@ -137,6 +137,11 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
       return out;
     },
 
+    visit_extern(tree: ExternNode, param: void): string {
+      // TODO
+      return "";
+    },
+
     visit_persist(tree: PersistNode, param: void): string {
       throw "error: persist cannot appear in source";
     },

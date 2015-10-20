@@ -144,6 +144,12 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     return [ret, e];
   },
 
+  visit_extern(tree: ExternNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    // Look the value up in JavaScript land.
+    let value = eval(tree.name);
+    return [value, env];
+  },
+
   visit_persist(tree: PersistNode, [env, pers]: [Env, Pers]): [Value, Env] {
     if (tree.index < 0 || tree.index >= pers.length) {
       throw "error: persist index (" + tree.index +
@@ -242,9 +248,8 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
   },
 
   // The rest of the cases are boring: just copy the input tree and recurse
-  // while threading through the stage and environment parameters. I would
-  // *really* like to put this recursion in a library, but I haven't yet found
-  // a clean way to do so.
+  // while threading through the stage and environment parameters.
+  // TODO Use the Translate machinery from the desugaring step.
 
   visit_literal(tree: LiteralNode,
       [stage, env, pers, opers]: [number, Env, Pers, Pers]):
@@ -305,6 +310,12 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
       arg_trees.push(arg_tree);
     }
     return [merge(tree, { fun: fun_tree, args: arg_trees }), e, p];
+  },
+
+  visit_extern(tree: ExternNode,
+      [stage, env, pers, opers]: [number, Env, Pers, Pers]):
+      [SyntaxNode, Env, Pers] {
+    return [merge(tree), env, pers];
   },
 
   visit_persist(tree: PersistNode,

@@ -182,6 +182,10 @@ let gen_check : Gen<TypeCheck> = function(check) {
       return [fun_type.ret, e];
     },
 
+    visit_extern(tree: ExternNode, env: TypeEnv): [Type, TypeEnv] {
+      return [get_type(tree.type), env];
+    },
+
     visit_persist(tree: PersistNode, env: TypeEnv): [Type, TypeEnv] {
       throw "error: persist cannot be type-checked in source code";
     },

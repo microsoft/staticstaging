@@ -13,7 +13,7 @@ Program
 // Expression syntax.
 
 Expr
-  = Let / Fun / Binary / Call / TermExpr
+  = Let / Extern / Fun / Binary / Call / TermExpr
 
 SeqExpr
   = Seq / Expr
@@ -60,7 +60,6 @@ Run "run"
 Fun "lambda"
   = fun _ ps:Param* _ arrow _ e:Expr
   { return {tag: "fun", params: ps, body: e}; }
-
 Param "parameter"
   = i:ident _ typed _ t:TermType _
   { return {tag: "param", name: i, type: t}; }
@@ -71,6 +70,10 @@ Call "call"
 Arg
   = e:TermExpr _
   { return e; }
+
+Extern "extern declaration"
+  = extern _ i:ident _ typed _ t:Type
+  { return {tag: "extern", name: i, type: t}; }
 
 Paren "parentheses"
   = paren_open _ e:Expr _ paren_close
@@ -113,7 +116,7 @@ num "number"
   { return parseInt(text()); }
 
 ident "identifier"
-  = ALPHA ALPHANUM*
+  = (ALPHA / [_]) (ALPHA / DIGIT / [_.])*
   { return text(); }
 
 let "let"
@@ -169,6 +172,9 @@ paren_open
 paren_close
   = ")"
 
+extern
+  = "extern"
+
 
 // Empty space.
 
@@ -187,5 +193,4 @@ _
 SPACE = [ \t\r\n\v\f]
 ALPHA = [A-Za-z]
 DIGIT = [0-9]
-ALPHANUM = ALPHA / DIGIT
 NEWLINE = [\r\n]
