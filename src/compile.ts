@@ -354,14 +354,16 @@ interface ProgEscape {
 // construct Progs.
 interface QuoteLiftFrame {
   bound: number[],  // List of local variable IDs.
-  escapes: EscapeNode[],  // Escapes in the quote.
+  persists: ProgEscape[],  // Persist escapes in the quote.
+  splices: ProgEscape[],  // Splice escapes.
   subprograms: number[],  // IDs of contained quotes.
 };
 
 function quote_lift_frame(): QuoteLiftFrame {
   return {
     bound: [],
-    escapes: [],
+    persists: [],
+    splices: [],
     subprograms: [],
   };
 }
@@ -393,21 +395,6 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       // quote.
       let frame = hd(f);
 
-      // Sort out the splices and persists.
-      let persists: ProgEscape[] = [];
-      let splices: ProgEscape[] = [];
-      for (let tree of frame.escapes) {
-        let esc: ProgEscape = {
-          id: tree.id,
-          body: tree.expr,
-        };
-        if (tree.kind === "persist") {
-          persists.push(esc);
-        } else if (tree.kind === "splice") {
-          splices.push(esc);
-        }
-      }
-
       // Ad a new Prog to the list of products.
       let p2 = p.slice(0);
       p2[tree.id] = {
@@ -415,8 +402,8 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         body: tree.expr,
         annotation: tree.annotation,
         bound: frame.bound,
-        persist: persists,
-        splice: splices,
+        persist: frame.persists,
+        splice: frame.splices,
         subprograms: frame.subprograms,
       };
 
@@ -453,13 +440,31 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       // Pop off the current context when recursing.
       let [f, p] = fself(tree.expr, [tl(frames), progs]);
 
+      // Construct a new ProgEscape for this node.
+      let esc: ProgEscape = {
+        id: tree.id,
+        body: tree.expr,
+      };
+
       // Add this node to the *current* escapes. This time, we add to the
-      // frame that we popped off during recursion and then slap it back onto
-      // the front of the result returned from the recusion.
+      // frame that we popped off for recursion.
       let old = hd(frames);
-      let f2 = cons(assign(old, {
-        escapes: cons(tree, old.escapes),
-      }), f);
+      let newf: QuoteLiftFrame;
+      if (tree.kind === "persist") {
+        newf = assign(old, {
+          persists: cons(esc, old.persists),
+        });
+      } else if (tree.kind === "splice") {
+        newf = assign(old, {
+          splices: cons(esc, old.splices),
+        });
+      } else {
+        throw "unknown escape kind";
+      }
+
+      // Then slap the updated frame back onto the remainder of the result
+      // returned from the recursion.
+      let f2 = cons(newf, f);
       return [f2, p];
     },
   });
