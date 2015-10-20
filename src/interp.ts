@@ -156,7 +156,8 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
 
     // Call a "native" JavaScript function.
     } else if (target instanceof ExternFun) {
-      return target.fun(...args);
+      let ret = target.fun(...args);
+      return [ret, e];
 
     } else {
       throw "error: call of non-function value";
