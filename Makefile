@@ -112,7 +112,7 @@ test: $(CLI_JS)
 # Just dump the WebGL examples.
 .PHONY: dump-gl
 dump-gl: $(CLI_JS)
-	for name in $(TESTS_WEBGL) ; do \
+	@for name in $(TESTS_WEBGL) ; do \
 		echo $$name ; \
 		node atw.js -cw test/$$name.atw ; \
 		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \

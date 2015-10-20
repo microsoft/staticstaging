@@ -157,9 +157,12 @@ function glsl_compile_prog(compile: GLSLCompile,
 
   // Wrap the code in a "main" function.
   let code = compile(prog.body);
-  let main = "void main() {\n" + code + "\n}";
+  let main = "void main() {\n" + indent(code, true) + "\n}";
 
-  let out = decls.join("\n") + "\n";
+  let out = "";
+  if (decls.length) {
+    out += decls.join("\n") + "\n";
+  }
   out += main + "\n";
   return out;
 }
