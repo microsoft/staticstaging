@@ -252,9 +252,29 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   return emit_js_fun(name, argnames, localnames, compile(proc.body));
 }
 
+// Turn a value into a JavaScript string literal. Mutli-line strings become
+// nice, readable multi-line concatenations. (This will be obviated by ES6's
+// template strings.)
+function emit_js_string(value: any) {
+  if (typeof(value) === "string") {
+    let parts: string[] = [];
+    let chunks = value.split("\n");
+    for (let i = 0; i < chunks.length; ++i) {
+      let chunk = chunks[i];
+      if (i < chunks.length - 1) {
+        chunk += "\n";
+      }
+      parts.push(JSON.stringify(chunk));
+    }
+    return parts.join(" +\n");
+  } else {
+    return JSON.stringify(value);
+  }
+}
+
 // Emit a JavaScript variable declaration.
 function emit_js_var(name: string, value: any): string {
-  return "var " + name + " = " + JSON.stringify(value) + ";";
+  return "var " + name + " = " + emit_js_string(value) + ";";
 }
 
 // Compile a quotation (a.k.a. Prog) to a string. This string should be
