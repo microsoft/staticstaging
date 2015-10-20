@@ -366,14 +366,6 @@ function quote_lift_frame(): QuoteLiftFrame {
   };
 }
 
-// Utility for updating the head of a quote lifting frame stack.
-function update_ql_frames <T> (fs: QuoteLiftFrame[],
-    update: (old: QuoteLiftFrame) => T): QuoteLiftFrame[] {
-  let old = hd(fs);
-  let head = assign(old, update(old));
-  return cons(head, tl(fs));
-}
-
 // Quote lifting is like lambda lifting, but for quotes.
 //
 // As with lambda lifting, we don't actually change the AST, but the resulting
@@ -428,10 +420,14 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         subprograms: frame.subprograms,
       };
 
-      // Add this program as a subprogram of the containing program.
-      let f2 = update_ql_frames(tl(f), function (old) { return {
+      // Pop off the frame we just consumed at the head of the recursion
+      // result. Then add this program as a subprogram of the containing
+      // program.
+      let tail = tl(f);
+      let old = hd(tail);
+      let f2 = cons(assign(old, {
         subprograms: cons(tree.id, old.subprograms),
-      }});
+      }), tl(tail));
       return [f2, p2];
     },
 
@@ -443,9 +439,10 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       let [f, p] = fold_rules.visit_let(tree, [frames, progs]);
 
       // Add a new bound variable to the top frame post-recursion.
-      let f2 = update_ql_frames(f, function (old) { return {
+      let old = hd(f);
+      let f2 = cons(assign(old, {
         bound: set_add(old.bound, tree.id),
-      }});
+      }), tl(f));
       return [f2, p];
     },
 
