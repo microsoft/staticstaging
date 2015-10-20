@@ -16,7 +16,7 @@ function webgl_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
       // naming convention...
       if (tree.fun.tag === "lookup") {
         let fun = <LookupNode> tree.fun;
-        if (fun.ident === "frag") {
+        if (fun.ident === "vtx") {
           // A shader invocation!
           let progex = fself(tree.args[0]);
           return "gl.useProgram(" + paren(progex) + ".prog)";

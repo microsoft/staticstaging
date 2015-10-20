@@ -13,19 +13,30 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
     },
 
     visit_seq(tree: SeqNode, param: void): string {
-      throw "unimplemented";
+      let p1 = fself(tree.lhs);
+      let p2 = fself(tree.rhs);
+      return p1 + ",\n" + p2;
     },
 
     visit_let(tree: LetNode, param: void): string {
-      throw "unimplemented";
+      // TODO Ugh, more intrinsic ugliness.
+      if (tree.ident === "frag") {
+        return "";
+      }
+
+      let varname = varsym(tree.id);
+      return varname + " = " + paren(fself(tree.expr));
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      throw "unimplemented";
+      let [defid, _] = defuse[tree.id];
+      return varsym(defid);
     },
 
     visit_binary(tree: BinaryNode, param: void): string {
-      throw "unimplemented";
+      return paren(fself(tree.lhs)) + " " +
+             tree.op + " " +
+             paren(fself(tree.rhs));
     },
 
     visit_quote(tree: QuoteNode, param: void): string {
@@ -51,6 +62,15 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
     },
 
     visit_call(tree: CallNode, param: void): string {
+      // TODO Again with the needing intrinsics...
+      if (tree.fun.tag === "lookup") {
+        let fun = <LookupNode> tree.fun;
+        if (fun.ident === "frag") {
+          // A transition to fragment shading.
+          return "";
+        }
+      }
+
       throw "unimplemented";
     },
 

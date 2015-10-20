@@ -3,11 +3,6 @@
 /// <reference path="compile.ts" />
 /// <reference path="backends.ts" />
 
-// Parenthesize a JavaScript expression.
-function paren(e: string) {
-  return "(" + e + ")";
-}
-
 // A tiny runtime provides our splicing routine.
 const JS_RUNTIME =
 "function assign() {\n" +

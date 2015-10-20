@@ -30,3 +30,8 @@ function splicesym(escid: number) {
 function persistsym(escid: number) {
   return "p" + escid;
 }
+
+// Parenthesize an expression.
+function paren(e: string) {
+  return "(" + e + ")";
+}
