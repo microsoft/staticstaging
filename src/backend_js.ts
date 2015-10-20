@@ -127,7 +127,7 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
       // Compile the expression producing the program we need to invoke.
       let progex = fself(tree.expr);
 
-      let out = "(function () {\n";
+      let out = "(function () { /* run */\n";
       out += "  var code = " + progex + ";\n";
       // To fill in the persist values, we currently use JavaScript's
       // much-maligned `with` statement. It's just what we need!
