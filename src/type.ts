@@ -59,21 +59,34 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_let(tree: LetNode, env: TypeEnv): [Type, TypeEnv] {
+      // Check the assignment expression.
       let [t, e] = check(tree.expr, env);
+
+      // Insert the new type into the front of the map stack.
       let [stack, externs] = e;
       let head = overlay(hd(stack)); // Update type in an overlay environment.
       head[tree.ident] = t;
       let e2: TypeEnv = [cons(head, tl(stack)), externs];
+
       return [t, e2];
     },
 
     visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
-      let [stack, _] = env;
+      let [stack, externs] = env;
+
+      // Try a normal variable first.
       let [t, __] = stack_lookup(stack, tree.ident);
-      if (t === undefined) {
-        throw "type error: undefined variable " + tree.ident;
+      if (t !== undefined) {
+        return [t, env];
       }
-      return [t, env];
+
+      // Next, try looking for an extern.
+      let et = externs[tree.ident];
+      if (et !== undefined) {
+        return [et, env];
+      }
+
+      throw "type error: undefined variable " + tree.ident;
     },
 
     visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
@@ -95,7 +108,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // Check inside the quote using the empty frame.
       let [t, e] = check(tree.expr, inner_env);
 
-      // Move the result type "down" to a code type.
+      // Move the result type "down" to a code type. Ignore any changes to the
+      // environment.
       return [new CodeType(t), env];
     },
 
@@ -193,7 +207,15 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_extern(tree: ExternNode, env: TypeEnv): [Type, TypeEnv] {
-      return [get_type(tree.type), env];
+      let [stack, externs] = env;
+
+      // Add the type to the extern map.
+      let new_externs = overlay(externs);
+      let type = get_type(tree.type);
+      externs[tree.name] = type;
+      let e: TypeEnv = [stack, new_externs];
+
+      return [type, e];
     },
 
     visit_persist(tree: PersistNode, env: TypeEnv): [Type, TypeEnv] {
