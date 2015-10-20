@@ -475,6 +475,23 @@ function procs_by_prog(procs: Proc[], progs: Prog[]): [Proc[], Proc[][]] {
   return [toplevel, quoted];
 }
 
+// Find all the `extern`s in a program.
+type FindExterns = ASTFold<string[]>;
+function gen_find_externs(fself: FindExterns): FindExterns {
+  let fold_rules = ast_fold_rules(fself);
+  let rules = compose_visit(fold_rules, {
+    visit_extern(tree: ExternNode, externs: string[]): string[] {
+      let e = externs.slice(0);
+      e[tree.id] = tree.name;
+      return e;
+    }
+  });
+  return function (tree: SyntaxNode, externs: string[]): string[] {
+    return ast_visit(rules, tree, externs);
+  };
+}
+let find_externs = fix(gen_find_externs);
+
 // The mid-level IR structure.
 interface CompilerIR {
   // The def/use table.
@@ -495,6 +512,9 @@ interface CompilerIR {
 
   // Type elaboration.
   type_table: TypeTable;
+
+  // Names of externs, indexed by the `extern` expression ID.
+  externs: string[];
 }
 
 // This is the semantic analysis that produces our mid-level IR given an
@@ -510,6 +530,8 @@ function semantically_analyze(tree: SyntaxNode,
   // Prog-to-Proc mapping.
   let [toplevel_procs, quoted_procs] = procs_by_prog(procs, progs);
 
+  let externs = find_externs(tree, []);
+
   return {
     defuse: table,
     procs: procs,
@@ -518,5 +540,6 @@ function semantically_analyze(tree: SyntaxNode,
     toplevel_procs: toplevel_procs,
     quoted_procs: quoted_procs,
     type_table: type_table,
+    externs: externs,
   };
 }
