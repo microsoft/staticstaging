@@ -67,7 +67,26 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
         let fun = <LookupNode> tree.fun;
         if (fun.ident === "frag") {
           // A transition to fragment shading.
-          return "";
+
+          // The argument must be a literal quote node.
+          let arg = tree.args[0];
+          if (arg.tag === "quote") {
+            let quote = <QuoteNode> arg;
+
+            // Assign to all the variables corresponding persists for the
+            // fragment shader's quotation.
+            let subprog = progs[quote.id];
+            let out = "/* pass to fragment shader*/\n";
+            for (let esc of subprog.persist) {
+              let varname = persistsym(esc.id);
+              let value = fself(esc.body);
+              out += varname + " = " + paren(value) + ",\n";
+            }
+            return out;
+
+          } else {
+            throw "error: non-quote used with frag";
+          }
         }
       }
 
