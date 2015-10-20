@@ -83,16 +83,37 @@ function emit_glsl_type(type: Type): string {
   }
 }
 
-function glsl_compile_prog(compile: GLSLCompile, prog: Prog,
-    procs: Proc[], type_table: TypeTable): string {
+function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
+    out: boolean): string {
+  let qual = out ? "out" : "in";
+  let [type, _] = ir.type_table[esc.body.id];
+  return emit_glsl_decl(qual, emit_glsl_type(type), persistsym(esc.id));
+}
+
+function glsl_compile_prog(compile: GLSLCompile,
+    ir: CompilerIR, progid: number): string {
   // TODO compile the functions
   // TODO compile the bound variable declarations
+
+  let prog = ir.progs[progid];
 
   // Declare `in` variables for the persists.
   let decls: string[] = [];
   for (let esc of prog.persist) {
-    let [type, _] = type_table[esc.body.id];
-    decls.push(emit_glsl_decl("in", emit_glsl_type(type), persistsym(esc.id)));
+    decls.push(glsl_persist_decl(ir, esc, false));
+  }
+
+  // Declare `out` variables for the persists in the subprogram. There can be
+  // at most one subprogram for every shader.
+  if (prog.subprograms.length > 1) {
+    throw "error: too many subprograms";
+  } else if (prog.subprograms.length === 1) {
+    let subprog = ir.progs[prog.subprograms[0]];
+    for (let esc of subprog.persist) {
+      if (esc !== undefined) {
+        decls.push(glsl_persist_decl(ir, esc, true));
+      }
+    }
   }
 
   // Wrap the code in a "main" function.

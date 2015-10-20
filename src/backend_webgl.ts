@@ -52,8 +52,7 @@ function webgl_compile(ir: CompilerIR): string {
       let code: string;
       if (prog.annotation === "s") {
         // A shader program.
-        code = glsl_compile_prog(_glslcompile, prog, ir.quoted_procs[prog.id],
-                                 ir.type_table);
+        code = glsl_compile_prog(_glslcompile, ir, prog.id);
       } else {
         // Ordinary JavaScript quotation.
         code = jscompile_prog(_jscompile, prog, ir.quoted_procs[prog.id]);
