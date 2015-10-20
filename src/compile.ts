@@ -67,7 +67,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 
       // Traverse the body with this new map.
       let [[n2, e2], t2] = fself(tree.body, [[n, externs], table]);
-      // Then continue outside of the `fun` with the old map.
+      // Then continue outside of the `fun` with the old maps.
       return [[ns, externs], t2];
     },
 
@@ -115,6 +115,10 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     {
       // Temporarily pop the current quote's scope.
       let n = tl(ns);
+      // TODO Technically, we should probably do something to "pop" the
+      // externs here so that externs declared in a quote aren't visible in an
+      // escape. But the type system should take care of this for us, and
+      // there can really only be one extern per name!
       let [_, t] = fold_rules.visit_escape(tree, [[n, externs], table]);
       // Then restore the old scope and return the updated table.
       return [[ns, externs], t];
