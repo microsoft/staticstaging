@@ -142,7 +142,7 @@ function atw_run(code: string, compile: boolean)
   let jscode: string = null;
   if (compile) {
     try {
-      jscode = jscompile(semantically_analyze(sugarfree));
+      jscode = jscompile(semantically_analyze(sugarfree, type_table));
     } catch (e) {
       return ['compile error: ' + e, sugarfree, type_str, null, null];
     }

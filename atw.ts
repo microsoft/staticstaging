@@ -100,7 +100,7 @@ function main() {
 
     // Execute.
     if (compile) {
-      let ir = semantically_analyze(sugarfree);
+      let ir = semantically_analyze(sugarfree, type_table);
 
       // In verbose mode, show some intermediates.
       if (verbose) {

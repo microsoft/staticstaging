@@ -1,6 +1,7 @@
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
 /// <reference path="compile.ts" />
+/// <reference path="backends.ts" />
 
 type GLSLCompile = (tree: SyntaxNode) => string;
 function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
@@ -32,7 +33,13 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
     },
 
     visit_escape(tree: EscapeNode, param: void): string {
-      throw "unimplemented";
+      if (tree.kind === "splice") {
+        return splicesym(tree.id);
+      } else if (tree.kind === "persist") {
+        return persistsym(tree.id);
+      } else {
+        throw "error: unknown escape kind";
+      }
     },
 
     visit_run(tree: RunNode, param: void): string {
@@ -64,14 +71,35 @@ function get_glsl_compile(procs: Proc[], progs: Prog[],
   return f;
 }
 
+function emit_glsl_decl(qualifier: string, type: string, name: string) {
+  return qualifier + " " + type + " " + name + ";";
+}
+
+function emit_glsl_type(type: Type): string {
+  if (type instanceof IntType) {
+    return "int";
+  } else {
+    throw "unimplemented type " + type;
+  }
+}
+
 function glsl_compile_prog(compile: GLSLCompile, prog: Prog,
-    procs: Proc[]): string {
+    procs: Proc[], type_table: TypeTable): string {
   // TODO compile the functions
   // TODO compile the bound variable declarations
+
+  // Declare `in` variables for the persists.
+  let decls: string[] = [];
+  for (let esc of prog.persist) {
+    let [type, _] = type_table[esc.body.id];
+    decls.push(emit_glsl_decl("in", emit_glsl_type(type), persistsym(esc.id)));
+  }
 
   // Wrap the code in a "main" function.
   let code = compile(prog.body);
   let main = "void main() {\n" + code + "\n}";
 
-  return main;
+  let out = decls.join("\n") + "\n";
+  out += main + "\n";
+  return out;
 }

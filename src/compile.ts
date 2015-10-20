@@ -1,6 +1,7 @@
 /// <reference path="ast.ts" />
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
+/// <reference path="type.ts" />
 
 // Basic AST visitor rules implementing a "fold," analogous to a list fold.
 // This threads a single function through the whole tree, bottom-up.
@@ -334,6 +335,8 @@ interface Prog {
   body: ExpressionNode,
   annotation: string,
   bound: number[],
+
+  // Plain lists of all the escapes in the program.
   persist: ProgEscape[],
   splice: ProgEscape[],
 }
@@ -482,11 +485,15 @@ interface CompilerIR {
   // of Procs from the top level---not associated with any quote.
   toplevel_procs: Proc[];
   quoted_procs: Proc[][];
+
+  // Type elaboration.
+  type_table: TypeTable;
 }
 
 // This is the semantic analysis that produces our mid-level IR given an
 // elaborated, desugared AST.
-function semantically_analyze(tree: SyntaxNode): CompilerIR {
+function semantically_analyze(tree: SyntaxNode,
+                              type_table: TypeTable): CompilerIR {
   let table = find_def_use(tree);
 
   // Lambda lifting and quote lifting.
@@ -503,5 +510,6 @@ function semantically_analyze(tree: SyntaxNode): CompilerIR {
     main: main,
     toplevel_procs: toplevel_procs,
     quoted_procs: quoted_procs,
+    type_table: type_table,
   };
 }
