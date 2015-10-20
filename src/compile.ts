@@ -76,9 +76,15 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
       [[NameStack, NameMap], DefUseTable]
     {
+      // Try an ordinary variable lookup.
       let [def_id, scope_index] = ns_lookup(ns, tree.ident);
       if (def_id === undefined) {
-        throw "error: variable not in name map";
+
+        // Try an extern.
+        def_id = externs[tree.ident];
+        if (def_id  === undefined) {
+          throw "error: variable " + tree.ident + " not in name map";
+        }
       }
 
       // The variable is bound (as opposed to free) if it is found in the
@@ -112,6 +118,16 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       let [_, t] = fold_rules.visit_escape(tree, [[n, externs], table]);
       // Then restore the old scope and return the updated table.
       return [[ns, externs], t];
+    },
+
+    // Insert extern definitions.
+    visit_extern(tree: ExternNode,
+      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+      [[NameStack, NameMap], DefUseTable]
+    {
+      let e = overlay(externs);
+      e[tree.name] = tree.id;
+      return [[ns, e], table];
     },
   });
 
