@@ -359,26 +359,39 @@ interface ProgEscape {
 //
 // To lift all the Progs, this threads through two stacks of lists: one for
 // bound variables (by id), and one for escape nodes.
-type QuoteLift = ASTFold<[number[][], EscapeNode[][], number[][], Prog[]]>;
+interface QuoteLiftFrame {
+  bound: number[],  // List of local variable IDs.
+  escapes: EscapeNode[],  // Escapes in the quote.
+  subprograms: number[],  // IDs of contained quotes.
+};
+function quote_lift_frame(): QuoteLiftFrame {
+  return {
+    bound: [],
+    escapes: [],
+    subprograms: [],
+  };
+}
+type QuoteLift = ASTFold<[QuoteLiftFrame[], Prog[]]>;
 function gen_quote_lift(fself: QuoteLift): QuoteLift {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     // Create a new Prog for each quote.
     visit_quote(tree: QuoteNode,
-      [bound, escs, subs, progs]:
-        [number[][], EscapeNode[][], number[][], Prog[]]):
-      [number[][], EscapeNode[][], number[][], Prog[]]
+      [frames, progs]: [QuoteLiftFrame[], Prog[]]):
+      [QuoteLiftFrame[], Prog[]]
     {
-      let bound_inner = cons([], bound);
-      let escs_inner = cons([], escs);
-      let subs_inner = cons([], subs);
-      let [b, e, s, p] = fold_rules.visit_quote(tree,
-          [bound_inner, escs_inner, subs_inner, progs]);
+      // Push an empty context for the recursion.
+      let frames_inner = cons(quote_lift_frame(), frames);
+      let [f, p] = fold_rules.visit_quote(tree, [frames_inner, progs]);
+
+      // The filled-in result at the top of the stack is the data for this
+      // quote.
+      let frame = hd(f);
 
       // Sort out the splices and persists.
       let persists: ProgEscape[] = [];
       let splices: ProgEscape[] = [];
-      for (let tree of hd(e)) {
+      for (let tree of frame.escapes) {
         let esc: ProgEscape = {
           id: tree.id,
           body: tree.expr,
@@ -396,61 +409,72 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         id: tree.id,
         body: tree.expr,
         annotation: tree.annotation,
-        bound: hd(b),
+        bound: frame.bound,
         persist: persists,
         splice: splices,
-        subprograms: hd(s),
+        subprograms: frame.subprograms,
       };
 
       // Add this program as a subprogram of the containing program.
-      let result_subs = tl(s);
-      result_subs = cons(cons(tree.id, hd(result_subs)), tl(result_subs));
+      let old_frame = hd(tl(f));
+      let new_frame = {
+        bound: old_frame.bound,
+        escapes: old_frame.escapes,
+        subprograms: cons(tree.id, old_frame.subprograms),
+      };
 
-      return [tl(b), tl(e), result_subs, p2];
+      return [cons(new_frame, tl(tl(f))), p2];
     },
 
     // Add bound variables to the bound set.
     visit_let(tree: LetNode,
-      [bound, escs, subs, progs]:
-        [number[][], EscapeNode[][], number[][], Prog[]]):
-      [number[][], EscapeNode[][], number[][], Prog[]]
+      [frames, progs]: [QuoteLiftFrame[], Prog[]]):
+      [QuoteLiftFrame[], Prog[]]
     {
-      let [b, e, s, p] = fold_rules.visit_let(tree, [bound, escs, subs, progs]);
+      let [f, p] = fold_rules.visit_let(tree, [frames, progs]);
 
-      // Add a new bound variable to the list at the top of the stack.
-      let b2 = cons(set_add(hd(b), tree.id), tl(b));
+      // Add a new bound variable to the top frame post-recursion.
+      let old_frame = hd(f);
+      let frame: QuoteLiftFrame = {
+        bound: set_add(old_frame.bound, tree.id),
+        escapes: old_frame.escapes,
+        subprograms: old_frame.subprograms,
+      };
 
-      return [b2, e, s, p];
+      return [cons(frame, tl(f)), p];
     },
 
     visit_escape(tree: EscapeNode,
-      [bound, escs, subs, progs]:
-        [number[][], EscapeNode[][], number[][], Prog[]]):
-      [number[][], EscapeNode[][], number[][], Prog[]]
+      [frames, progs]: [QuoteLiftFrame[], Prog[]]):
+      [QuoteLiftFrame[], Prog[]]
     {
       // Pop off the current context when recursing.
-      let [b, e, s, p] =
-        fself(tree.expr, [tl(bound), tl(escs), tl(subs), progs]);
+      let [f, p] = fself(tree.expr, [tl(frames), progs]);
 
-      // Add this node to the current escapes.
-      let escs_head = cons(tree, hd(escs));
+      // Add this node to the *current* escapes. We add to the frame that we
+      // popped off during recursion.
+      let old_frame = hd(frames);
+      let frame: QuoteLiftFrame = {
+        bound: old_frame.bound,
+        escapes: cons(tree, old_frame.escapes),
+        subprograms: old_frame.subprograms,
+      };
 
-      return [cons(hd(bound), b), cons(escs_head, e), cons(hd(subs), s), p];
+      return [cons(frame, f), p];
     },
   });
 
   return function (tree: SyntaxNode,
-    [bound, escs, subs, progs]:
-      [number[][], EscapeNode[][], number[][], Prog[]]):
-    [number[][], EscapeNode[][], number[][], Prog[]]
+    [frames, progs]: [QuoteLiftFrame[], Prog[]]):
+    [QuoteLiftFrame[], Prog[]]
   {
-    return ast_visit(rules, tree, [bound, escs, subs, progs]);
+    return ast_visit(rules, tree, [frames, progs]);
   };
 };
 
 let _quote_lift = fix(gen_quote_lift);
 function quote_lift(tree: SyntaxNode): Prog[] {
-  let [_, __, ___, progs] = _quote_lift(tree, [[[]], [[]], [[]], []]);
+  let [_, progs] = _quote_lift(tree, [[quote_lift_frame()], []]);
   return progs;
 }
 
