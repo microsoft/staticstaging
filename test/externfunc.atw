@@ -1,0 +1,4 @@
+extern Math.floor : Int -> Int;
+extern Math.PI : Int;
+Math.floor (Math.PI + 5)
+# -> 8

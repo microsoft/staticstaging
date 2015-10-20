@@ -4,7 +4,7 @@
 
 // Dynamic syntax.
 
-type Value = number | Code | Fun;
+type Value = number | Code | Fun | ExternFun;
 
 interface Env {
   [key: string]: Value;
@@ -25,6 +25,13 @@ class Fun {
     public params: string[],
     public body: ExpressionNode,
     public env: Env
+  ) {}
+}
+
+// Extern functions use a different "calling convention".
+class ExternFun {
+  constructor(
+    public fun: Function
   ) {}
 }
 
@@ -121,34 +128,48 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   visit_call(tree: CallNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Evaluate the target expression to a function value.
     let [target, e] = interp(tree.fun, env, pers);
-    let fun : Fun;
+
+    // Evaluate the arguments.
+    let args: Value[] = [];
+    for (let i = 0; i < tree.args.length; ++i) {
+      let arg_expr = tree.args[i];
+      let arg: Value;
+      [arg, e] = interp(arg_expr, e, pers);
+      args.push(arg);
+    }
+
+    // Normal function.
     if (target instanceof Fun) {
-      fun = target;
+      // Bind the function parameters and overlay them on the function's
+      // closed environment.
+      let call_env : Env = overlay(target.env);
+      for (let i = 0; i < args.length; ++i) {
+        let param_name = target.params[i];
+        call_env[param_name] = args[i];
+      }
+
+      // Evaluate the function body. Throw away any updates it makes to its
+      // environment.
+      let [ret, _] = interp(target.body, call_env, pers);
+
+      return [ret, e];
+
+    // Call a "native" JavaScript function.
+    } else if (target instanceof ExternFun) {
+      return target.fun(...args);
+
     } else {
       throw "error: call of non-function value";
     }
-
-    // Evaluate the arguments. Bind the function parameters and overlay them
-    // on the function's closed environment.
-    let call_env : Env = overlay(fun.env);
-    for (let i = 0; i < tree.args.length; ++i) {
-      let arg_expr = tree.args[i];
-      let param_name = fun.params[i];
-      let arg : Value;
-      [arg, e] = interp(arg_expr, e, pers);
-      call_env[param_name] = arg;
-    }
-
-    // Evaluate the function body. Throw away any updates it makes to its
-    // environment.
-    let [ret, _] = interp(fun.body, call_env, pers);
-
-    return [ret, e];
   },
 
   visit_extern(tree: ExternNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Look the value up in JavaScript land.
     let value = eval(tree.name);
+    if (value instanceof Function) {
+      // Wrap functions in a special marker value kind.
+      value = new ExternFun(value);
+    }
 
     // Add the value to the environment. It may seem a little messy to mix
     // together normal variables and externs, but the type system keeps them
