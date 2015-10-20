@@ -467,8 +467,6 @@ function procs_by_prog(procs: Proc[], progs: Prog[]): [Proc[], Proc[][]] {
 
 // The mid-level IR structure.
 interface CompilerIR {
-  tree: SyntaxNode;  // Elaborated and desugared.
-
   // The def/use table.
   defuse: DefUseTable;
 
@@ -499,7 +497,6 @@ function semantically_analyze(tree: SyntaxNode): CompilerIR {
   let [toplevel_procs, quoted_procs] = procs_by_prog(procs, progs);
 
   return {
-    tree: tree,
     defuse: table,
     procs: procs,
     progs: progs,
