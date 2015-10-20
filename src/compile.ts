@@ -37,24 +37,27 @@ function ns_lookup (a: NameStack, key: string): [number, number] {
   return stack_lookup(hd(a), key);
 }
 
-// Here's the core def/use analysis.
-type FindDefUse = ASTFold<[NameStack, DefUseTable]>;
+// Here's the core def/use analysis. It threads through the ordinary NameStack
+// and a special NameMap for externs.
+type FindDefUse = ASTFold<[[NameStack, NameMap], DefUseTable]>;
 function gen_find_def_use(fself: FindDefUse): FindDefUse {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     // The "let" case defines a variable in a map to refer to the "let" node.
-    visit_let(tree: LetNode, [ns, table]: [NameStack, DefUseTable]):
-      [NameStack, DefUseTable]
+    visit_let(tree: LetNode,
+      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+      [[NameStack, NameMap], DefUseTable]
     {
-      let [n1, t1] = fself(tree.expr, [ns, table]);
+      let [[n1, e1], t1] = fself(tree.expr, [[ns, externs], table]);
       let n2 = ns_overlay(n1);
       ns_hd(n2)[tree.ident] = tree.id;
-      return [n2, t1];
+      return [[n2, e1], t1];
     },
 
     // Similarly, "fun" defines variables in the map for its parameters.
-    visit_fun(tree: FunNode, [ns, table]: [NameStack, DefUseTable]):
-      [NameStack, DefUseTable]
+    visit_fun(tree: FunNode,
+      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+      [[NameStack, NameMap], DefUseTable]
     {
       // Update the top map with the function parameters.
       let n = ns_push_scope(ns);
@@ -63,15 +66,15 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       }
 
       // Traverse the body with this new map.
-      let [n2, t2] = fself(tree.body, [n, table]);
+      let [[n2, e2], t2] = fself(tree.body, [[n, externs], table]);
       // Then continue outside of the `fun` with the old map.
-      return [ns, t2];
+      return [[ns, externs], t2];
     },
 
     // Lookup (i.e., a use) populates the def/use table based on the name map.
     visit_lookup(tree: LookupNode,
-      [ns, table]: [NameStack, DefUseTable]):
-      [NameStack, DefUseTable]
+      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+      [[NameStack, NameMap], DefUseTable]
     {
       let [def_id, scope_index] = ns_lookup(ns, tree.ident);
       if (def_id === undefined) {
@@ -84,38 +87,39 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 
       let t = table.slice(0);
       t[tree.id] = [def_id, bound];
-      return [ns, t];
+      return [[ns, externs], t];
     },
 
     // On quote, push an empty name map stack.
-    visit_quote(tree: QuoteNode, [ns, table]: [NameStack, DefUseTable]):
-      [NameStack, DefUseTable]
+    visit_quote(tree: QuoteNode,
+      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+      [[NameStack, NameMap], DefUseTable]
     {
       // Traverse inside the quote using a new, empty name map stack.
       let n = cons([<NameMap> {}], ns);
-      let [_, t] = fold_rules.visit_quote(tree, [n, table]);
+      let [_, t] = fold_rules.visit_quote(tree, [[n, externs], table]);
       // Then throw away the name map stack but preserve the updated table.
-      return [ns, t];
+      return [[ns, externs], t];
     },
 
     // And pop on escape.
     visit_escape(tree: EscapeNode,
-      [ns, table]: [NameStack, DefUseTable]):
-      [NameStack, DefUseTable]
+      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+      [[NameStack, NameMap], DefUseTable]
     {
       // Temporarily pop the current quote's scope.
       let n = tl(ns);
-      let [_, t] = fold_rules.visit_escape(tree, [n, table]);
+      let [_, t] = fold_rules.visit_escape(tree, [[n, externs], table]);
       // Then restore the old scope and return the updated table.
-      return [ns, t];
+      return [[ns, externs], t];
     },
   });
 
   return function (tree: SyntaxNode,
-    [ns, table]: [NameStack, DefUseTable]):
-    [NameStack, DefUseTable]
+    [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+    [[NameStack, NameMap], DefUseTable]
   {
-    return ast_visit(rules, tree, [ns, table]);
+    return ast_visit(rules, tree, [[ns, externs], table]);
   };
 };
 
@@ -123,7 +127,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 // "let" or "fun" AST nodes.
 let _find_def_use = fix(gen_find_def_use);
 function find_def_use(tree: SyntaxNode): DefUseTable {
-  let [_, t] = _find_def_use(tree, [[[{}]], []]);
+  let [_, t] = _find_def_use(tree, [[[[{}]], {}], []]);
   return t;
 }
 
