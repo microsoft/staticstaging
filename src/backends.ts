@@ -35,3 +35,22 @@ function persistsym(escid: number) {
 function paren(e: string) {
   return "(" + e + ")";
 }
+
+// Repeat a string n times.
+function repeat(s: string, n: number): string {
+  let o = "";
+  for (let i = 0; i < n; ++i) {
+    o += s;
+  }
+  return o;
+}
+
+// Indent a string by a given number of spaces.
+function indent(s: string, first=false, spaces=2): string {
+  let space = repeat(" ", spaces);
+  let out = s.replace(/\n/g, "\n" + space);
+  if (first) {
+    out = space + out;
+  }
+  return out;
+}

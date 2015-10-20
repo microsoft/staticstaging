@@ -26,14 +26,6 @@ function assign <T, U> (target: T, ...sources: U[]): T & U {
   return t;
 };
 
-function _repeat(s: string, n: number): string {
-  let o = "";
-  for (let i = 0; i < n; ++i) {
-    o += s;
-  }
-  return o;
-}
-
 // A bit of a hack that abuses prototypes to create overlay. Return a copy of
 // the argument where changing the new object won't affect the original.
 function overlay<T>(base: T): T {

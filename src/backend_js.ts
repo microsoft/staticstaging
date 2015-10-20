@@ -173,7 +173,7 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[], bod
     out += "  var " + localnames.join(", ") + ";\n";
   }
   out += "  return ";
-  out += body.replace(/\n/g, "\n  ");
+  out += indent(body);
   out += ";\n}";
   if (anon) {
     out += ")";
