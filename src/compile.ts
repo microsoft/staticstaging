@@ -402,7 +402,11 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         subprograms: hd(s),
       };
 
-      return [tl(b), tl(e), tl(s), p2];
+      // Add this program as a subprogram of the containing program.
+      let result_subs = tl(s);
+      result_subs = cons(cons(tree.id, hd(result_subs)), tl(result_subs));
+
+      return [tl(b), tl(e), result_subs, p2];
     },
 
     // Add bound variables to the bound set.
