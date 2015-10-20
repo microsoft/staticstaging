@@ -272,9 +272,17 @@ function emit_js_string(value: any) {
   }
 }
 
-// Emit a JavaScript variable declaration.
-function emit_js_var(name: string, value: any): string {
-  return "var " + name + " = " + emit_js_string(value) + ";";
+// Emit a JavaScript variable declaration. If `verbose`, then there will be a
+// newline between the name and the beginning of the initialization value.
+function emit_js_var(name: string, value: any, verbose=false): string {
+  let out = "var " + name + " =";
+  if (verbose) {
+    out += "\n";
+  } else {
+    out += " ";
+  }
+  out += emit_js_string(value) + ";";
+  return out;
 }
 
 // Compile a quotation (a.k.a. Prog) to a string. This string should be
@@ -327,7 +335,7 @@ function jscompile(ir: CompilerIR): string {
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       let code = jscompile_prog(_jscompile, prog, ir.quoted_procs[prog.id]);
-      let prog_var = emit_js_var(progsym(prog.id), code);
+      let prog_var = emit_js_var(progsym(prog.id), code, true);
       out += prog_var + "\n";
     }
   }
