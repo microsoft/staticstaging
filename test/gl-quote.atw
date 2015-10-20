@@ -1,0 +1,2 @@
+let vtx = fun c:<Int> -> 0;
+vtx s< 5 >

@@ -6,6 +6,7 @@ TESTS_BASIC := print comment whitespace seq let add quote escape nestedrun \
 	quotelet splicepersist paren parentype higherorder codearg
 TESTS_INTERP := dump splice nesteddump spdump
 TESTS_TYPE := typeerror badsplice topescape
+TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
@@ -107,3 +108,13 @@ test: $(CLI_JS)
 	echo "compiler" ; \
 	$(TEST_COMPILE) ; \
 	$(TEST_FAIL)
+
+# Just dump the WebGL examples.
+.PHONY: dump-gl
+dump-gl: $(CLI_JS)
+	for name in $(TESTS_WEBGL) ; do \
+		echo $$name ; \
+		node atw.js -cw test/$$name.atw ; \
+		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
+	done ; \
+	[ ! $$failed ]
