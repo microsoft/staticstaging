@@ -17,6 +17,19 @@ const JS_RUNTIME =
 "    persist: assign({}, outer.persist, inner.persist) };\n" +
 "}\n";
 
+function js_emit_extern(ir: CompilerIR, id: number) {
+  let name = ir.externs[id];
+  let [type, _] = ir.type_table[id];
+  if (type instanceof FunType) {
+    // The extern is a function. Wrap it in the clothing of our closure
+    // format (with no environment).
+    return "{ proc: " + name + ", env: [] }";
+  } else {
+    // An ordinary value. Just look it up by name.
+    return name;
+  }
+}
+
 // The core recursive compiler rules. Takes an elaborated, desugared,
 // lambda-lifted AST with its corresponding def/use table. Works on a single
 // Proc or Prog body at a time.
@@ -42,17 +55,8 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
 
     visit_lookup(tree: LookupNode, param: void): string {
       let [defid, _] = ir.defuse[tree.id];
-      let extern = ir.externs[defid];
-      if (extern !== undefined) {
-        let [type, _] = ir.type_table[tree.id];
-        if (type instanceof FunType) {
-          // The extern is a function. Wrap it in the clothing of our closure
-          // format (with no environment).
-          return "{ proc: " + extern + ", env: [] }";
-        } else {
-          // An ordinary value. Just look it up by name.
-          return extern;
-        }
+      if (ir.externs[defid] !== undefined) {
+        return js_emit_extern(ir, defid);
       } else {
         // An ordinary variable lookup.
         return varsym(defid);
@@ -151,7 +155,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_extern(tree: ExternNode, param: void): string {
-      return tree.name;
+      return js_emit_extern(ir, tree.id);
     },
 
     visit_persist(tree: PersistNode, param: void): string {
