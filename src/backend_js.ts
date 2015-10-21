@@ -42,8 +42,14 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
 
     visit_lookup(tree: LookupNode, param: void): string {
       let [defid, _] = ir.defuse[tree.id];
-      let jsvar = varsym(defid);
-      return jsvar;
+      let extern = ir.externs[defid];
+      if (extern !== undefined) {
+        // An extern. Just use its name.
+        return extern;
+      } else {
+        // An ordinary variable lookup.
+        return varsym(defid);
+      }
     },
 
     visit_binary(tree: BinaryNode, param: void): string {
