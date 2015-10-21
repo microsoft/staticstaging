@@ -4,10 +4,10 @@
 /// <reference path="backend_glsl.ts" />
 
 // Extend the JavaScript compiler with some WebGL specifics.
-function webgl_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
-  defuse: DefUseTable): ASTVisit<void, string>
+function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
+  ASTVisit<void, string>
 {
-  let js_rules = js_compile_rules(fself, procs, progs, defuse);
+  let js_rules = js_compile_rules(fself, ir);
   return compose_visit(js_rules, {
     // Compile calls to our intrinsics for binding shaders.
     visit_call(tree: CallNode, p: void): string {
@@ -30,9 +30,8 @@ function webgl_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
 }
 
 // Tie the recursion knot.
-function get_webgl_compile(procs: Proc[], progs: Prog[],
-                           defuse: DefUseTable): GLSLCompile {
-  let rules = webgl_compile_rules(f, procs, progs, defuse);
+function get_webgl_compile(ir: CompilerIR): GLSLCompile {
+  let rules = webgl_compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
@@ -41,8 +40,8 @@ function get_webgl_compile(procs: Proc[], progs: Prog[],
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 function webgl_compile(ir: CompilerIR): string {
-  let _jscompile = get_webgl_compile(ir.procs, ir.progs, ir.defuse);
-  let _glslcompile = get_glsl_compile(ir.procs, ir.progs, ir.defuse);
+  let _jscompile = get_webgl_compile(ir);
+  let _glslcompile = get_glsl_compile(ir);
 
   let out = "";
 

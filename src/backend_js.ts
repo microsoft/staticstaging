@@ -21,8 +21,8 @@ const JS_RUNTIME =
 // lambda-lifted AST with its corresponding def/use table. Works on a single
 // Proc or Prog body at a time.
 type JSCompile = (tree: SyntaxNode) => string;
-function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
-  defuse: DefUseTable): ASTVisit<void, string>
+function js_compile_rules(fself: JSCompile, ir: CompilerIR):
+  ASTVisit<void, string>
 {
   return {
     visit_literal(tree: LiteralNode, param: void): string {
@@ -41,7 +41,7 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      let [defid, _] = defuse[tree.id];
+      let [defid, _] = ir.defuse[tree.id];
       let jsvar = varsym(defid);
       return jsvar;
     },
@@ -55,7 +55,7 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
     visit_quote(tree: QuoteNode, param: void): string {
       // Compile each persist in this quote and pack them into a dictionary.
       let persist_pairs: string[] = [];
-      for (let esc of progs[tree.id].persist) {
+      for (let esc of ir.progs[tree.id].persist) {
         let esc_expr = fself(esc.body);
         persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
       }
@@ -67,7 +67,7 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
 
       // Compile each spliced escape expression. Then, call our runtime to
       // splice it into the code value.
-      for (let esc of progs[tree.id].splice) {
+      for (let esc of ir.progs[tree.id].splice) {
         let esc_expr = fself(esc.body);
         code_expr = "splice(" + code_expr + ", " +
           esc.id + ", " +
@@ -106,7 +106,7 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
     // variables.
     visit_fun(tree: FunNode, param: void): string {
       let captures: string[] = [];
-      for (let fv of procs[tree.id].free) {
+      for (let fv of ir.procs[tree.id].free) {
         captures.push(varsym(fv));
       }
 
@@ -148,9 +148,8 @@ function js_compile_rules(fself: JSCompile, procs: Proc[], progs: Prog[],
 }
 
 // Tie the recursion knot.
-function get_js_compile(procs: Proc[], progs: Prog[],
-                        defuse: DefUseTable): JSCompile {
-  let rules = js_compile_rules(f, procs, progs, defuse);
+function get_js_compile(ir: CompilerIR): JSCompile {
+  let rules = js_compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
@@ -294,7 +293,7 @@ function pretty_js_value(v: any): string {
 
 // Compile the IR to a complete JavaScript program.
 function jscompile(ir: CompilerIR): string {
-  let _jscompile = get_js_compile(ir.procs, ir.progs, ir.defuse);
+  let _jscompile = get_js_compile(ir);
 
   // Start with our run-time library.
   let out = JS_RUNTIME;

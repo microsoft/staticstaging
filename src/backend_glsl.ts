@@ -4,8 +4,8 @@
 /// <reference path="backends.ts" />
 
 type GLSLCompile = (tree: SyntaxNode) => string;
-function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
-  defuse: DefUseTable): ASTVisit<void, string>
+function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
+  ASTVisit<void, string>
 {
   return {
     visit_literal(tree: LiteralNode, param: void): string {
@@ -29,7 +29,7 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      let [defid, _] = defuse[tree.id];
+      let [defid, _] = ir.defuse[tree.id];
       return varsym(defid);
     },
 
@@ -75,7 +75,7 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
 
             // Assign to all the variables corresponding persists for the
             // fragment shader's quotation.
-            let subprog = progs[quote.id];
+            let subprog = ir.progs[quote.id];
             let out = "/* pass to fragment shader*/\n";
             for (let esc of subprog.persist) {
               let varname = persistsym(esc.id);
@@ -106,9 +106,8 @@ function glsl_compile_rules(fself: GLSLCompile, procs: Proc[], progs: Prog[],
 }
 
 // Tie the recursion knot.
-function get_glsl_compile(procs: Proc[], progs: Prog[],
-                          defuse: DefUseTable): GLSLCompile {
-  let rules = glsl_compile_rules(f, procs, progs, defuse);
+function get_glsl_compile(ir: CompilerIR): GLSLCompile {
+  let rules = glsl_compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
