@@ -45,6 +45,9 @@ let GetChildren : ASTVisit<void, SyntaxNode[]> = {
   visit_call(tree: CallNode, _: void): SyntaxNode[] {
     return [tree.fun].concat(tree.args);
   },
+  visit_extern(tree: ExternNode, _: void): SyntaxNode[] {
+    return [];
+  },
   visit_persist(tree: PersistNode, _: void): SyntaxNode[] {
     return [];
   },
@@ -92,6 +95,9 @@ let GetName : ASTVisit<void, string> = {
   },
   visit_call(tree: CallNode, _: void): string {
     return "call";
+  },
+  visit_extern(tree: ExternNode, _: void): string {
+    return "extern " + tree.name;
   },
   visit_persist(tree: PersistNode, _: void): string {
     return "%" + tree.index;
