@@ -44,8 +44,15 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
       let [defid, _] = ir.defuse[tree.id];
       let extern = ir.externs[defid];
       if (extern !== undefined) {
-        // An extern. Just use its name.
-        return extern;
+        let [type, _] = ir.type_table[tree.id];
+        if (type instanceof FunType) {
+          // The extern is a function. Wrap it in the clothing of our closure
+          // format (with no environment).
+          return "{ proc: " + extern + ", env: [] }";
+        } else {
+          // An ordinary value. Just look it up by name.
+          return extern;
+        }
       } else {
         // An ordinary variable lookup.
         return varsym(defid);
