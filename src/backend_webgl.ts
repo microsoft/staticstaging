@@ -35,6 +35,12 @@ function shadersym(progid: number) {
   return "s" + progid;
 }
 
+// Get a JavaScript variable name to hold a shader location. Uses the ID of
+// the corresponding escape expression inside the shader.
+function locsym(escid: number) {
+  return "l" + escid;
+}
+
 function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
     progid: number) {
   let vertex_prog = ir.progs[progid];
@@ -48,12 +54,42 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
 
   // Compile and link the shader program.
   // TODO move this to the setup stage!
-  let out = "var " + shadersym(vertex_prog.id) +
+  // TODO also *declare* the shader variable
+  let out = shadersym(vertex_prog.id) +
     " = get_shader(gl, " +
     progsym(vertex_prog.id) + ", " +
     progsym(fragment_prog.id) + ")";
-
   out += ",\n";
+
+  // Get the variable locations.
+  // TODO also move this
+  for (let esc of vertex_prog.persist) {
+    // TODO declare each variable
+    out += locsym(esc.id) + " = gl.getUniformLocation(" +
+      shadersym(vertex_prog.id) + ", " +
+      emit_js_string(persistsym(esc.id)) + ")";
+    out += ",\n";
+  }
+
+  // Emit and bind the uniforms.
+  for (let esc of vertex_prog.persist) {
+    let value = emit(esc.body);
+    let [type, _] = ir.type_table[esc.body.id];
+
+    // The WebGL call we use to bind the uniform depends on the value's type.
+    if (type instanceof IntType) {
+      out += "gl.uniform1i(" +
+        locsym(esc.id) + ", " + // location
+        paren(value) + // value
+        ")";
+    } else {
+      throw "error: only integer uniforms are supported";
+    }
+
+    out += ",\n";
+  }
+
+  // TODO varying/attributes!
 
   // Bind the shader program.
   out += "gl.useProgram(" + shadersym(vertex_prog.id) + ")";
