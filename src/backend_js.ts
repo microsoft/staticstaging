@@ -30,6 +30,13 @@ function js_emit_extern(ir: CompilerIR, id: number) {
   }
 }
 
+
+// Check whether an expression might have an effect. An expression without
+// effects can be considered "dead" if its results are not used.
+function has_effect(tree: SyntaxNode): boolean {
+  return tree.tag !== "extern" && tree.tag !== "lookup";
+}
+
 // The core recursive compiler rules. Takes an elaborated, desugared,
 // lambda-lifted AST with its corresponding def/use table. Works on a single
 // Proc or Prog body at a time.
@@ -43,9 +50,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_seq(tree: SeqNode, param: void): string {
-      let p1 = fself(tree.lhs);
-      let p2 = fself(tree.rhs);
-      return p1 + ",\n" + p2;
+      return emit_seq(tree, ",\n", "void 0", fself, has_effect);
     },
 
     visit_let(tree: LetNode, param: void): string {

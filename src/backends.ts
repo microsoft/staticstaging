@@ -1,5 +1,7 @@
 // Utilities used by the various code-generation backends.
 
+/// <reference path="ast.ts" />
+
 // Get a variable name for an ATW variable by its defining node ID.
 function varsym(defid: number) {
   return 'v' + defid;
@@ -51,6 +53,28 @@ function indent(s: string, first=false, spaces=2): string {
   let out = s.replace(/\n/g, "\n" + space);
   if (first) {
     out = space + out;
+  }
+  return out;
+}
+
+// A helper for emitting sequence expressions without emitting unneeded code.
+function emit_seq(seq: SeqNode, sep: string, fallback: string,
+    emit: (_:ExpressionNode) => string,
+    pred: (_:ExpressionNode) => boolean): string {
+  let e1 = pred(seq.lhs);
+  let e2 = pred(seq.rhs);
+  let out = "";
+  if (e1) {
+    out += emit(seq.lhs);
+    if (e2) {
+      out += sep;
+    }
+  }
+  if (e2) {
+    out += emit(seq.rhs);
+  }
+  if (!e1 && !e2) {
+    out = fallback;
   }
   return out;
 }
