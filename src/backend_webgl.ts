@@ -3,6 +3,32 @@
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_glsl.ts" />
 
+const WEBGL_RUNTIME = `
+function compile_glsl(gl, type, src) {
+  var shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    var errLog = gl.getShaderInfoLog(shader);
+    console.error("error: compiling shader:", errLog);
+  }
+  return shader;
+}
+function get_shader(gl, vertex_source, fragment_source) {
+  var vert = compile_glsl(gl, gl.VERTEX_SHADER, vertex_source);
+  var frag = compile_glsl(gl, gl.FRAGMENT_SHADER, fragment_source);
+  var program = gl.createProgram();
+  gl.attachShader(program, vert);
+  gl.attachShader(program, frag);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    var errLog = gl.getProgramInfoLog(program);
+    console.error("error linking program:", errLog);
+  }
+  return program;
+}
+`.trim();
+
 // Get a JavaScript variable name for a compiled shader program. Uses the ID
 // of the outermost (vertex) shader Prog.
 function shadersym(progid: number) {
@@ -96,6 +122,9 @@ function webgl_compile(ir: CompilerIR): string {
   // The main function.
   out += jscompile_proc(_jscompile, ir.main);
   out += "()";
+
+  // Add the runtime.
+  out = WEBGL_RUNTIME + "\n" + out;
 
   return out;
 }
