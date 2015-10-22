@@ -11,16 +11,10 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
   return compose_visit(js_rules, {
     // Compile calls to our intrinsics for binding shaders.
     visit_call(tree: CallNode, p: void): string {
-      // Check for the intrinsic.
-      // TODO This should use a more robust `extern` system rather than a
-      // naming convention...
-      if (tree.fun.tag === "lookup") {
-        let fun = <LookupNode> tree.fun;
-        if (fun.ident === "vtx") {
-          // A shader invocation!
-          let progex = fself(tree.args[0]);
-          return "gl.useProgram(" + paren(progex) + ".prog)";
-        }
+      // Check for the intrinsic that indicates a shader invocation.
+      if (vtx_expr(tree)) {
+        let progex = fself(tree.args[0]);
+        return "gl.useProgram(" + paren(progex) + ".prog)";
       }
 
       // An ordinary function call.
