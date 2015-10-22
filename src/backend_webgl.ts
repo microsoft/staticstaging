@@ -191,7 +191,8 @@ function webgl_compile(ir: CompilerIR): string {
   let main = jscompile_proc(_jscompile, ir.main);
 
   // Then wrap it in an outer function that includes the setup code.
-  out += emit_js_fun(null, [], [], setup_code + main + "();", false);
+  let body = setup_code + "return /* render */ " + main + ";"
+  out += emit_js_fun(null, [], [], body, false) + "()";
 
   return out;
 }

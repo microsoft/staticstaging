@@ -199,7 +199,10 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
     out += "  return ";
   }
   out += indent(body, !expr);
-  out += ";\n}";
+  if (expr) {
+    out += ";"
+  }
+  out += "\n}";
   if (anon) {
     out += ")";
   }
