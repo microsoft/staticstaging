@@ -3,9 +3,18 @@
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_glsl.ts" />
 
-function emit_shader_binding(emit: JSCompile, quote: QuoteNode) {
-  let vertex_quote = progsym(quote.id);
-  return "gl.useProgram(" + vertex_quote + ")";
+function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
+    progid: number) {
+  let vertex_prog = ir.progs[progid];
+
+  if (vertex_prog.subprograms.length > 1 ||
+      vertex_prog.subprograms.length < 1) {
+    throw "error: vertex quote must have exactly one fragment quote";
+  }
+  let fragment_prog = ir.progs[vertex_prog.subprograms[0]];
+
+  return "gl.useProgram(" + progsym(vertex_prog.id) + ", " +
+    progsym(fragment_prog.id) + ")";
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
@@ -22,7 +31,7 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
         // emit the bindings.
         if (tree.args[0].tag === "quote") {
           let quote = tree.args[0] as QuoteNode;
-          return emit_shader_binding(fself, quote);
+          return emit_shader_binding(fself, ir, quote.id);
         } else {
           throw "dynamic `vtx` calls unimplemented";
         }

@@ -96,6 +96,8 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
 
           // Assign to all the variables corresponding persists for the
           // fragment shader's quotation.
+          // TODO Maybe this should move to the end of emission instead of the
+          // call rule.
           let subprog = ir.progs[quote.id];
           let assignments: string[] = [];
           for (let esc of subprog.persist) {
