@@ -41,8 +41,7 @@ function locsym(escid: number) {
   return "l" + escid;
 }
 
-function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
-    progid: number) {
+function get_prog_pair(ir: CompilerIR, progid: number) {
   let vertex_prog = ir.progs[progid];
 
   // Get the fragment program.
@@ -52,8 +51,13 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
   }
   let fragment_prog = ir.progs[vertex_prog.subprograms[0]];
 
+  return [vertex_prog, fragment_prog];
+}
+
+function emit_shader_setup(ir: CompilerIR, progid: number) {
+  let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
+
   // Compile and link the shader program.
-  // TODO move this to the setup stage!
   // TODO also *declare* the shader variable
   let out = shadersym(vertex_prog.id) +
     " = get_shader(gl, " +
@@ -62,7 +66,6 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
   out += ",\n";
 
   // Get the variable locations.
-  // TODO also move this
   for (let esc of vertex_prog.persist) {
     // TODO declare each variable
     out += locsym(esc.id) + " = gl.getUniformLocation(" +
@@ -71,7 +74,15 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
     out += ",\n";
   }
 
+  return out;
+}
+
+function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
+    progid: number) {
+  let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
+
   // Emit and bind the uniforms.
+  let out = "";
   for (let esc of vertex_prog.persist) {
     let value = emit(esc.body);
     let [type, _] = ir.type_table[esc.body.id];
@@ -140,19 +151,39 @@ function webgl_compile(ir: CompilerIR): string {
   let out = "";
 
   // Compile each program to a string.
+  let setup_parts: string[] = [];
   for (let prog of ir.progs) {
     if (prog !== undefined) {
+      // Get the procs to compile.
+      let procs: Proc[] = [];
+      for (let id of ir.quoted_procs[prog.id]) {
+        procs.push(ir.procs[id]);
+      }
+
       let code: string;
       if (prog.annotation === "s") {
         // A shader program.
         code = glsl_compile_prog(_glslcompile, ir, prog.id);
       } else {
         // Ordinary JavaScript quotation.
-        code = jscompile_prog(_jscompile, prog, ir.quoted_procs[prog.id]);
+        code = jscompile_prog(_jscompile, prog, procs);
       }
 
       out += emit_js_var(progsym(prog.id), code, true) + "\n";
     }
+  }
+
+  /*
+  // Also emit the setup code for each shader quotation.
+  // If it's a top-level shader program (i.e., a vertex shader), also
+  // generate its setup code.
+  setup_parts.push(emit_shader_setup(ir, prog.id));
+  */
+
+  // Compile each *top-level* proc to a JavaScript function.
+  for (let id of ir.toplevel_procs) {
+    out += jscompile_proc(_jscompile, ir.procs[id]);
+    out += "\n";
   }
 
   // The main function.

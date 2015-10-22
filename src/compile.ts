@@ -450,11 +450,11 @@ function quote_lift(tree: SyntaxNode): Prog[] {
 // Given a table of Procs, organize them by their containing Prog ID. Return:
 // - A list of unquoted Procs.
 // - A table of lists of quoted Procs, indexed by the Prog ID.
-function procs_by_prog(procs: Proc[], progs: Prog[]): [Proc[], Proc[][]] {
-  let toplevel: Proc[] = [];
+function procs_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
+  let toplevel: number[] = [];
 
   // Initialize the quoted-procs table.
-  let quoted: Proc[][] = [];
+  let quoted: number[][] = [];
   for (let prog of progs) {
     if (prog !== undefined) {
       quoted[prog.id] = [];
@@ -465,9 +465,9 @@ function procs_by_prog(procs: Proc[], progs: Prog[]): [Proc[], Proc[][]] {
   for (let proc of procs) {
     if (proc !== undefined) {
       if (proc.quote === null) {
-        toplevel.push(proc);
+        toplevel.push(proc.id);
       } else {
-        quoted[proc.quote].push(proc);
+        quoted[proc.quote].push(proc.id);
       }
     }
   }
@@ -505,10 +505,10 @@ interface CompilerIR {
   // The quote-lifted Progs. Again, the Progs are indexed by ID.
   progs: Prog[];
 
-  // Association tables between Progs and their asociated Procs. Also, a list
+  // Association tables between Progs and their associated Procs. Also, a list
   // of Procs from the top level---not associated with any quote.
-  toplevel_procs: Proc[];
-  quoted_procs: Proc[][];
+  toplevel_procs: number[];
+  quoted_procs: number[][];
 
   // Type elaboration.
   type_table: TypeTable;

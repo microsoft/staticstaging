@@ -320,15 +320,21 @@ function jscompile(ir: CompilerIR): string {
   // Compile each program to a string.
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      let code = jscompile_prog(_jscompile, prog, ir.quoted_procs[prog.id]);
+      // Get the procs to compile.
+      let procs: Proc[] = [];
+      for (let id of ir.quoted_procs[prog.id]) {
+        procs.push(ir.procs[id]);
+      }
+
+      let code = jscompile_prog(_jscompile, prog, procs);
       let prog_var = emit_js_var(progsym(prog.id), code, true);
       out += prog_var + "\n";
     }
   }
 
   // Compile each proc to a JS function.
-  for (let proc of ir.toplevel_procs) {
-    out += jscompile_proc(_jscompile, proc);
+  for (let id of ir.toplevel_procs) {
+    out += jscompile_proc(_jscompile, ir.procs[id]);
     out += "\n";
   }
 
