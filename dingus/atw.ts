@@ -24,6 +24,9 @@ let GetChildren : ASTVisit<void, SyntaxNode[]> = {
   visit_let(tree: LetNode, _: void): SyntaxNode[] {
     return [tree.expr];
   },
+  visit_assign(tree: LetNode, _: void): SyntaxNode[] {
+    return [tree.expr];
+  },
   visit_lookup(tree: LookupNode, _: void): SyntaxNode[] {
     return [];
   },
@@ -66,6 +69,9 @@ let GetName : ASTVisit<void, string> = {
   },
   visit_let(tree: LetNode, _: void): string {
     return "let " + tree.ident;
+  },
+  visit_assign(tree: LetNode, _: void): string {
+    return tree.ident + " =";
   },
   visit_lookup(tree: LookupNode, _: void): string {
     return tree.ident;
