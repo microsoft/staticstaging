@@ -4,18 +4,19 @@
 /// <reference path="backends.ts" />
 
 // A tiny runtime provides our splicing routine.
-const JS_RUNTIME =
-"function assign() {\n" +
-"  var t = arguments[0];\n" +
-"  for (var i = 1; i < arguments.length; ++i)\n" +
-"    for (var k in arguments[i])\n" +
-"      t[k] = arguments[i][k];\n" +
-"  return t;\n" +
-"}\n" +
-"function splice(outer, id, inner) {\n" +
-"  return { prog: outer.prog.replace('__SPLICE_' + id + '__', inner.prog),\n" +
-"    persist: assign({}, outer.persist, inner.persist) };\n" +
-"}\n";
+const JS_RUNTIME = `
+function assign() {
+  var t = arguments[0];
+  for (var i = 1; i < arguments.length; ++i)
+    for (var k in arguments[i])
+      t[k] = arguments[i][k];
+  return t;
+}
+function splice(outer, id, inner) {
+  return { prog: outer.prog.replace('__SPLICE_' + id + '__', inner.prog),
+    persist: assign({}, outer.persist, inner.persist) };
+}
+`;
 
 function js_emit_extern(ir: CompilerIR, id: number) {
   let name = ir.externs[id];
