@@ -1,0 +1,13 @@
+extern vtx: <Int> -> Int;
+extern frag: <Int> -> Int;
+extern gl_Position: Int;
+extern gl_Color: Int;
+
+let x = 5;
+vtx s<
+  let y = %[x];
+  gl_Position = 5 + y;
+  frag s<
+    gl_Color = 9 * %[y]
+  >
+>
