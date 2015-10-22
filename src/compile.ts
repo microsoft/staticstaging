@@ -447,13 +447,13 @@ function quote_lift(tree: SyntaxNode): Prog[] {
   return progs;
 }
 
-// Given a table of Procs, organize them by their containing Prog ID. Return:
+// Given tables of Procs and Procs, index them by their containing Progs.
+// Return:
 // - A list of unquoted Procs.
 // - A table of lists of quoted Procs, indexed by the Prog ID.
-function procs_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
-  let toplevel: number[] = [];
-
-  // Initialize the quoted-procs table.
+// (Quoted progs are already listed in the `subprograms` field.
+function group_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
+  // Initialize the tables for quoted procs and progs.
   let quoted: number[][] = [];
   for (let prog of progs) {
     if (prog !== undefined) {
@@ -462,6 +462,7 @@ function procs_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
   }
 
   // Insert each proc where it goes.
+  let toplevel: number[] = [];
   for (let proc of procs) {
     if (proc !== undefined) {
       if (proc.quote === null) {
@@ -473,6 +474,21 @@ function procs_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
   }
 
   return [toplevel, quoted];
+}
+
+// Find the containing Prog ID for each Prog.
+function get_containing_progs(progs: Prog[]): number[] {
+  let containing_progs: number[] = [];
+
+  for (let prog of progs) {
+    if (prog !== undefined) {
+      for (let subprog of prog.subprograms) {
+        containing_progs[subprog] = prog.id;
+      }
+    }
+  }
+
+  return containing_progs;
 }
 
 // Find all the `extern`s in a program.
@@ -510,6 +526,9 @@ interface CompilerIR {
   toplevel_procs: number[];
   quoted_procs: number[][];
 
+  // The containing Prog ID for each Prog (or undefined for top-level Progs).
+  containing_progs: number[];
+
   // Type elaboration.
   type_table: TypeTable;
 
@@ -528,7 +547,9 @@ function semantically_analyze(tree: SyntaxNode,
   let progs = quote_lift(tree);
 
   // Prog-to-Proc mapping.
-  let [toplevel_procs, quoted_procs] = procs_by_prog(procs, progs);
+  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs);
+  // Prog-to-Prog mapping.
+  let containing_progs = get_containing_progs(progs);
 
   let externs = find_externs(tree, []);
 
@@ -539,6 +560,7 @@ function semantically_analyze(tree: SyntaxNode,
     main: main,
     toplevel_procs: toplevel_procs,
     quoted_procs: quoted_procs,
+    containing_progs: containing_progs,
     type_table: type_table,
     externs: externs,
   };

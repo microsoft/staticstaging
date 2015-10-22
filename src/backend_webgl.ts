@@ -151,7 +151,6 @@ function webgl_compile(ir: CompilerIR): string {
   let out = "";
 
   // Compile each program to a string.
-  let setup_parts: string[] = [];
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       // Get the procs to compile.
@@ -173,12 +172,17 @@ function webgl_compile(ir: CompilerIR): string {
     }
   }
 
-  /*
-  // Also emit the setup code for each shader quotation.
-  // If it's a top-level shader program (i.e., a vertex shader), also
-  // generate its setup code.
-  setup_parts.push(emit_shader_setup(ir, prog.id));
-  */
+  // For each *shader* quotation (i.e., top-level shader quote), generate the
+  // setup code.
+  let setup_parts: string[] = [];
+  for (let prog of ir.progs) {
+    if (prog !== undefined) {
+      if (prog.annotation === "s" &&
+          ir.containing_progs[prog.id] == undefined) {
+        setup_parts.push(emit_shader_setup(ir, prog.id));
+      }
+    }
+  }
 
   // Compile each *top-level* proc to a JavaScript function.
   for (let id of ir.toplevel_procs) {
