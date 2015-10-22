@@ -1,6 +1,5 @@
 /// <reference path="ast.ts" />
 /// <reference path="visit.ts" />
-/// <reference path="interp.ts" />
 /// <reference path="type.ts" />
 
 let Pretty : ASTVisit<void, string> = {
@@ -68,21 +67,6 @@ let Pretty : ASTVisit<void, string> = {
 // Format an AST as a string.
 function pretty(tree: SyntaxNode): string {
   return ast_visit(Pretty, tree, null);
-}
-
-// Format a resulting value as a string.
-function pretty_value(v: Value): string {
-  if (typeof v == 'number') {
-    return v.toString();
-  } else if (v instanceof Code) {
-    return "< " + pretty(v.expr) + " >";
-  } else if (v instanceof Fun) {
-    return "(fun)";
-  } else if (v instanceof Extern) {
-    return "(extern)";
-  } else {
-    throw "error: unknown value kind " + typeof(v);
-  }
 }
 
 // Format a type as a string.

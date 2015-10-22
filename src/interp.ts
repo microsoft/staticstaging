@@ -1,6 +1,7 @@
 /// <reference path="ast.ts" />
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
+/// <reference path="pretty.ts" />
 
 // Dynamic syntax.
 
@@ -70,11 +71,22 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   },
 
   visit_assign(tree: AssignNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    // Works exactly the same way as "let".
     let [v, e] = interp(tree.expr, env, pers);
-    let e2 = overlay(e);
-    e2[tree.ident] = v;
-    return [v, e2];
+
+    // Check whether we have an extern or a normal variable by looking at the
+    // current value.
+    let old_value = env[tree.ident];
+    if (old_value instanceof Extern) {
+      // Update the external value.
+      let f = eval("(function(value) { " + old_value.name + " = value })");
+      f(v);
+      return [v, e];
+    } else {
+      // Ordinary variable assignment.
+      let e2 = overlay(e);
+      e2[tree.ident] = v;
+      return [v, e2];
+    }
   },
 
   visit_lookup(tree: LookupNode, [env, pers]: [Env, Pers]): [Value, Env] {
@@ -191,16 +203,14 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   },
 
   visit_extern(tree: ExternNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    // Look the value up in JavaScript land.
-    let value = eval(tree.name);
-
-    // Add the value to the environment. It may seem a little messy to mix
-    // together normal variables and externs, but the type system keeps them
-    // straight so we don't have to.
+    // Add the placeholder value to the environment. It may seem a little
+    // messy to mix together normal variables and externs, but the type system
+    // keeps them straight so we don't have to.
+    let extern = new Extern(tree.name);
     let e = overlay(env);
-    e[tree.name] = new Extern(value);
+    e[tree.name] = extern;
 
-    return [value, e];
+    return [extern, e];
   },
 
   visit_persist(tree: PersistNode, [env, pers]: [Env, Pers]): [Value, Env] {
@@ -396,4 +406,19 @@ function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers,
 function interpret(program: SyntaxNode, e: Env = {}, p: Pers = []): Value {
   let [v, _] = interp(program, e, p);
   return v;
+}
+
+// Format a resulting value as a string.
+function pretty_value(v: Value): string {
+  if (typeof v == 'number') {
+    return v.toString();
+  } else if (v instanceof Code) {
+    return "< " + pretty(v.expr) + " >";
+  } else if (v instanceof Fun) {
+    return "(fun)";
+  } else if (v instanceof Extern) {
+    return eval(v.name).toString();
+  } else {
+    throw "error: unknown value kind " + typeof(v);
+  }
 }
