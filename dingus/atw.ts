@@ -211,6 +211,27 @@ function show(text: string, el: HTMLElement) {
   }
 }
 
+function decode_hash(s: string): { [key: string]: string } {
+  if (s[0] === "#") {
+    s = s.slice(1);
+  }
+
+  let out: { [key: string]: string } = {};
+  for (let part of s.split('&')) {
+    let [key, value] = part.split('=');
+    out[decodeURIComponent(key)] = decodeURIComponent(value);
+  }
+  return out;
+}
+
+function encode_hash(obj: { [key: string]: string }): string {
+  let parts: string[] = [];
+  for (let key in obj) {
+    parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+  }
+  return '#' + parts.join('&');
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
   let errbox = <HTMLElement> document.querySelector('#error');
@@ -264,9 +285,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function handle_hash() {
-    let hash = location.hash;
-    if (hash.indexOf(HASH_CODE) == 0) {
-      codebox.value = decodeURIComponent(hash.slice(HASH_CODE.length));
+    let values = decode_hash(location.hash);
+    if (values['code'] !== undefined) {
+      codebox.value = values['code'];
     } else {
       codebox.value = '';
     }
@@ -279,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (code === "") {
       hash = '#';
     } else {
-      hash = HASH_CODE + encodeURIComponent(code);
+      hash = encode_hash({code: code});
     }
     history.pushState(null, null, hash);
     handle_hash();
