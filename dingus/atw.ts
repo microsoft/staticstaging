@@ -13,7 +13,6 @@ declare function tree_canvas (
 ): (tree_data: any) => void;
 
 const RUN_DELAY_MS = 200;
-const HASH_CODE = '#code=';
 
 let GetChildren : ASTVisit<void, SyntaxNode[]> = {
   visit_literal(tree: LiteralNode, _: void): SyntaxNode[] {
@@ -227,7 +226,10 @@ function decode_hash(s: string): { [key: string]: string } {
 function encode_hash(obj: { [key: string]: string }): string {
   let parts: string[] = [];
   for (let key in obj) {
-    parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
+    let value = obj[key];
+    if (value !== undefined && value !== null && value !== "") {
+      parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+    }
   }
   return '#' + parts.join('&');
 }
@@ -272,7 +274,8 @@ document.addEventListener("DOMContentLoaded", function () {
         treebox.style.display = 'block';
       }
 
-      history.replaceState(null, null, HASH_CODE + encodeURIComponent(code));
+      let hash = encode_hash({code: code, mode: mode});
+      history.replaceState(null, null, hash);
     } else {
       show(null, errbox);
       show(null, typebox);
@@ -286,22 +289,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handle_hash() {
     let values = decode_hash(location.hash);
+
     if (values['code'] !== undefined) {
       codebox.value = values['code'];
     } else {
       codebox.value = '';
     }
+
+    if (values['mode'] !== undefined) {
+      modeselect.value = values['mode'];
+    }
+
     run_code();
   }
 
   // Execute code by linking to it (pushing onto the history).
-  function link_to_code(code: string) {
-    let hash: string;
-    if (code === "") {
-      hash = '#';
-    } else {
-      hash = encode_hash({code: code});
-    }
+  function link_to_code(code: string, mode: string = null) {
+    let hash = encode_hash({code: code, mode: mode});
     history.pushState(null, null, hash);
     handle_hash();
   }
