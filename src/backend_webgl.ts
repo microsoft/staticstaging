@@ -3,6 +3,11 @@
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_glsl.ts" />
 
+function emit_shader_binding(emit: JSCompile, quote: QuoteNode) {
+  let vertex_quote = progsym(quote.id);
+  return "gl.useProgram(" + vertex_quote + ")";
+}
+
 // Extend the JavaScript compiler with some WebGL specifics.
 function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
   ASTVisit<void, string>
@@ -13,8 +18,14 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
     visit_call(tree: CallNode, p: void): string {
       // Check for the intrinsic that indicates a shader invocation.
       if (vtx_expr(tree)) {
-        let progex = fself(tree.args[0]);
-        return "gl.useProgram(" + paren(progex) + ".prog)";
+        // For the moment, we require a literal quote so we can statically
+        // emit the bindings.
+        if (tree.args[0].tag === "quote") {
+          let quote = tree.args[0] as QuoteNode;
+          return emit_shader_binding(fself, quote);
+        } else {
+          throw "dynamic `vtx` calls unimplemented";
+        }
       }
 
       // An ordinary function call.
