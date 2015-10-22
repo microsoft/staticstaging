@@ -3,18 +3,36 @@
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_glsl.ts" />
 
+// Get a JavaScript variable name for a compiled shader program. Uses the ID
+// of the outermost (vertex) shader Prog.
+function shadersym(progid: number) {
+  return "s" + progid;
+}
+
 function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
     progid: number) {
   let vertex_prog = ir.progs[progid];
 
+  // Get the fragment program.
   if (vertex_prog.subprograms.length > 1 ||
       vertex_prog.subprograms.length < 1) {
     throw "error: vertex quote must have exactly one fragment quote";
   }
   let fragment_prog = ir.progs[vertex_prog.subprograms[0]];
 
-  return "gl.useProgram(" + progsym(vertex_prog.id) + ", " +
+  // Compile and link the shader program.
+  // TODO move this to the setup stage!
+  let out = "var " + shadersym(vertex_prog.id) +
+    " = get_shader(gl, " +
+    progsym(vertex_prog.id) + ", " +
     progsym(fragment_prog.id) + ")";
+
+  out += ",\n";
+
+  // Bind the shader program.
+  out += "gl.useProgram(" + shadersym(vertex_prog.id) + ")";
+
+  return out;
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
