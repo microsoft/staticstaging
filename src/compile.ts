@@ -107,11 +107,15 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
 
     // A mutation is another kind of use.
-    visit_assign(tree: LookupNode,
+    visit_assign(tree: AssignNode,
       [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
       [[NameStack, NameMap], DefUseTable]
     {
-      return handle_use(tree, [[ns, externs], table]);
+      // Recurse into the RHS expression.
+      let [[n, e], t] = fself(tree.expr, [[ns, externs], table]);
+
+      // Record the use.
+      return handle_use(tree, [[n, e], t]);
     },
 
     // On quote, push an empty name map stack.
