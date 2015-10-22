@@ -71,8 +71,11 @@ textarea {
                 clear
             </button>
             <p>
-                <input type="checkbox" id="compile">
-                <label for="compile">compile</label>
+                <select id="mode">
+                    <option value="interp">interpreter</option>
+                    <option value="compile">compiler</option>
+                    <option value="webgl">WebGL</option>
+                </select>
             </p>
             <p id="type"></p>
         </div>

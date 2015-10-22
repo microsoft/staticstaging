@@ -3,6 +3,7 @@
 /// <reference path="../src/type.ts" />
 /// <reference path="../src/sugar.ts" />
 /// <reference path="../src/backend_js.ts" />
+/// <reference path="../src/backend_webgl.ts" />
 
 declare var parser : any;
 declare function tree_canvas (
@@ -120,7 +121,8 @@ function get_name(tree: SyntaxNode): string {
 // - the type
 // - the compiled code (if compiling)
 // - the result of interpretation
-function atw_run(code: string, compile: boolean)
+// The mode can be "interp", "compile", or "webgl".
+function atw_run(code: string, mode: string)
   : [string, SyntaxNode, string, string, string]
 {
   // Parse.
@@ -152,24 +154,42 @@ function atw_run(code: string, compile: boolean)
   // Execute.
   let res_str: string;
   let jscode: string = null;
-  if (compile) {
+  if (mode === "interp") {
+    // Interpret.
+    let res: Value;
     try {
-      jscode = jscompile(semantically_analyze(sugarfree, type_table));
+      res = interpret(sugarfree);
+    } catch (e) {
+      return ['interpreter error: ' + e, sugarfree, type_str, null, null];
+    }
+    res_str = pretty_value(res);
+
+  } else {
+    // Compile.
+    try {
+      let ir = semantically_analyze(sugarfree, type_table);
+      if (mode === "webgl") {
+        jscode = webgl_compile(ir);
+      } else {
+        jscode = jscompile(ir);
+      }
     } catch (e) {
       return ['compile error: ' + e, sugarfree, type_str, null, null];
     }
 
+    // Execute.
     let runtime = JS_RUNTIME + "\n";
-    /*
-    if (webgl) {
+    if (mode === "webgl") {
       runtime += WEBGL_RUNTIME + "\n";
     }
-    */
-    let res = scope_eval(jscode);
-    res_str = pretty_js_value(res);
-  } else {
-    let res = interpret(sugarfree);
-    res_str = pretty_value(res);
+
+    if (mode === "webgl") {
+      // TODO
+      res_str = "";
+    } else {
+      let res = scope_eval(runtime + jscode);
+      res_str = pretty_js_value(res);
+    }
   }
 
   // Show the result value.
@@ -201,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let helpbox = <HTMLElement> document.querySelector('#help');
   let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
-  let compiletoggle = <HTMLInputElement> document.querySelector('#compile');
+  let modeselect = <HTMLSelectElement> document.querySelector('#mode');
 
   let draw_tree = tree_canvas('#tree', get_name, get_children);
 
@@ -211,16 +231,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function run_code() {
     let code = code_value();
-    let compile = compiletoggle.checked;
+    let mode = modeselect.value;
 
     if (code !== "") {
-      let [err, tree, typ, compiled, res] = atw_run(code, compile);
+      let [err, tree, typ, compiled, res] = atw_run(code, mode);
 
       show(err, errbox);
       show(typ, typebox);
       show(res, outbox);
 
-      if (compile) {
+      if (mode !== "interp") {
         // Show the compiled code.
         show(compiled, compiledbox);
         treebox.style.display = 'none';
@@ -275,7 +295,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Also run the code when toggling the compile checkbox.
-  compiletoggle.addEventListener('change', function () {
+  modeselect.addEventListener('change', function () {
     run_code();
   });
 
