@@ -3,8 +3,9 @@
 /// <reference path="util.ts" />
 /// <reference path="type.ts" />
 
-// The main output of def/use analysis: For every lookup node ID, a defining
-// node ID and a flag indicating whether the variable is bound (vs. free).
+// The main output of def/use analysis: For every lookup and assignment node
+// ID, a defining node ID and a flag indicating whether the variable is bound
+// (vs. free).
 type DefUseTable = [number, boolean][];
 
 // The intermediate data structure for def/use analysis is a *stack of stack
@@ -35,6 +36,32 @@ function ns_push_scope(ns: NameStack): NameStack {
 // value and the index (in *function* scopes) where the value was found.
 function ns_lookup (a: NameStack, key: string): [number, number] {
   return stack_lookup(hd(a), key);
+}
+
+// The def/use analysis case for uses: both lookup and assignment nodes work
+// the same way.
+function handle_use(tree: LookupNode | AssignNode,
+    [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+    [[NameStack, NameMap], DefUseTable]
+{
+  // Try an ordinary variable lookup.
+  let [def_id, scope_index] = ns_lookup(ns, tree.ident);
+  if (def_id === undefined) {
+
+    // Try an extern.
+    def_id = externs[tree.ident];
+    if (def_id  === undefined) {
+      throw "error: variable " + tree.ident + " not in name map";
+    }
+  }
+
+  // The variable is bound (as opposed to free) if it is found in the
+  // topmost function scope.
+  let bound = (scope_index === 0);
+
+  let t = table.slice(0);
+  t[tree.id] = [def_id, bound];
+  return [[ns, externs], t];
 }
 
 // Here's the core def/use analysis. It threads through the ordinary NameStack
@@ -76,24 +103,15 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
       [[NameStack, NameMap], DefUseTable]
     {
-      // Try an ordinary variable lookup.
-      let [def_id, scope_index] = ns_lookup(ns, tree.ident);
-      if (def_id === undefined) {
+      return handle_use(tree, [[ns, externs], table]);
+    },
 
-        // Try an extern.
-        def_id = externs[tree.ident];
-        if (def_id  === undefined) {
-          throw "error: variable " + tree.ident + " not in name map";
-        }
-      }
-
-      // The variable is bound (as opposed to free) if it is found in the
-      // topmost function scope.
-      let bound = (scope_index === 0);
-
-      let t = table.slice(0);
-      t[tree.id] = [def_id, bound];
-      return [[ns, externs], t];
+    // A mutation is another kind of use.
+    visit_assign(tree: LookupNode,
+      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
+      [[NameStack, NameMap], DefUseTable]
+    {
+      return handle_use(tree, [[ns, externs], table]);
     },
 
     // On quote, push an empty name map stack.

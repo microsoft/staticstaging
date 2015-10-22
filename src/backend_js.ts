@@ -56,8 +56,16 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_assign(tree: LetNode, param: void): string {
-      let jsvar = varsym(tree.id);
-      return jsvar + " = " + paren(fself(tree.expr));
+      let [defid, _] = ir.defuse[tree.id];
+      let extern = ir.externs[defid];
+      if (extern !== undefined) {
+        // Extern assignment.
+        return extern + " = " + paren(fself(tree.expr));
+      } else {
+        // Ordinary variable assignment.
+        let jsvar = varsym(tree.id);
+        return jsvar + " = " + paren(fself(tree.expr));
+      }
     },
 
     visit_lookup(tree: LookupNode, param: void): string {

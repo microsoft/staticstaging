@@ -1,0 +1,4 @@
+extern Math.PI : Int;
+Math.PI = 3;  # https://en.wikipedia.org/wiki/Indiana_Pi_Bill
+Math.PI
+# -> 3.141592653589793

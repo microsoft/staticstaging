@@ -78,8 +78,15 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let [expr_t, e] = check(tree.expr, env);
 
       // Check that the new value is compatible with the variable's type.
-      // TODO assignment to extern
+      // Try a normal variable first.
       let [var_t, _] = stack_lookup(stack, tree.ident);
+      if (var_t === undefined) {
+        var_t = externs[tree.ident];
+        if (var_t === undefined) {
+          throw "type error: assignment to undeclared variable " + tree.ident;
+        }
+      }
+
       if (!compatible(var_t, expr_t)) {
         throw "type error: mismatched type in assigment:" +
           "expected " + pretty_type(var_t) +
