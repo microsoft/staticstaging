@@ -4,7 +4,7 @@
 
 // Dynamic syntax.
 
-type Value = number | Code | Fun | ExternFun;
+type Value = number | Code | Fun | Extern;
 
 interface Env {
   [key: string]: Value;
@@ -28,11 +28,22 @@ class Fun {
   ) {}
 }
 
-// Extern functions use a different "calling convention".
-class ExternFun {
+// A marker for values from the external world. This helps with two
+// extern-related issues:
+// - We need to invoke functions with a different "calling convention".
+// - Assignments work differently.
+class Extern {
   constructor(
-    public fun: Function
+    public name: string
   ) {}
+}
+
+function unwrap_extern(v: Value): Value {
+  if (v instanceof Extern) {
+    return eval(v.name);
+  } else {
+    return v;
+  }
 }
 
 
@@ -101,6 +112,8 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   visit_binary(tree: BinaryNode, [env, pers]: [Env, Pers]): [Value, Env] {
     let [v1, e1] = interp(tree.lhs, env, pers);
     let [v2, e2] = interp(tree.rhs, e1, pers);
+    v1 = unwrap_extern(v1);
+    v2 = unwrap_extern(v2);
     if (typeof v1 === 'number' && typeof v2 === 'number') {
       let v: Value;
       switch (tree.op) {
@@ -163,8 +176,13 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
       return [ret, e];
 
     // Call a "native" JavaScript function.
-    } else if (target instanceof ExternFun) {
-      let ret = target.fun(...args);
+    } else if (target instanceof Extern) {
+      let fun = eval(target.name);
+      let unwrapped_args: Value[] = [];
+      for (let arg of args) {
+        unwrapped_args.push(unwrap_extern(arg));
+      }
+      let ret = fun(...unwrapped_args);
       return [ret, e];
 
     } else {
@@ -175,16 +193,12 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
   visit_extern(tree: ExternNode, [env, pers]: [Env, Pers]): [Value, Env] {
     // Look the value up in JavaScript land.
     let value = eval(tree.name);
-    if (value instanceof Function) {
-      // Wrap functions in a special marker value kind.
-      value = new ExternFun(value);
-    }
 
     // Add the value to the environment. It may seem a little messy to mix
     // together normal variables and externs, but the type system keeps them
     // straight so we don't have to.
     let e = overlay(env);
-    e[tree.name] = value;
+    e[tree.name] = new Extern(value);
 
     return [value, e];
   },

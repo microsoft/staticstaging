@@ -78,8 +78,8 @@ function pretty_value(v: Value): string {
     return "< " + pretty(v.expr) + " >";
   } else if (v instanceof Fun) {
     return "(fun)";
-  } else if (v instanceof ExternFun) {
-    return "(extern fun)";
+  } else if (v instanceof Extern) {
+    return "(extern)";
   } else {
     throw "error: unknown value kind " + typeof(v);
   }
