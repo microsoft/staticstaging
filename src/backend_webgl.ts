@@ -58,20 +58,16 @@ function emit_shader_setup(ir: CompilerIR, progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
   // Compile and link the shader program.
-  // TODO also *declare* the shader variable
-  let out = shadersym(vertex_prog.id) +
+  let out = "var " + shadersym(vertex_prog.id) +
     " = get_shader(gl, " +
     progsym(vertex_prog.id) + ", " +
-    progsym(fragment_prog.id) + ")";
-  out += ",\n";
+    progsym(fragment_prog.id) + ");\n";
 
   // Get the variable locations.
   for (let esc of vertex_prog.persist) {
-    // TODO declare each variable
-    out += locsym(esc.id) + " = gl.getUniformLocation(" +
+    out += "var " + locsym(esc.id) + " = gl.getUniformLocation(" +
       shadersym(vertex_prog.id) + ", " +
-      emit_js_string(persistsym(esc.id)) + ")";
-    out += ",\n";
+      emit_js_string(persistsym(esc.id)) + ");\n";
   }
 
   return out;
@@ -148,7 +144,7 @@ function webgl_compile(ir: CompilerIR): string {
   let _jscompile = get_webgl_compile(ir);
   let _glslcompile = get_glsl_compile(ir);
 
-  let out = "";
+  let out = WEBGL_RUNTIME + "\n";
 
   // Compile each program to a string.
   for (let prog of ir.progs) {
@@ -172,6 +168,12 @@ function webgl_compile(ir: CompilerIR): string {
     }
   }
 
+  // Compile each *top-level* proc to a JavaScript function.
+  for (let id of ir.toplevel_procs) {
+    out += jscompile_proc(_jscompile, ir.procs[id]);
+    out += "\n";
+  }
+
   // For each *shader* quotation (i.e., top-level shader quote), generate the
   // setup code.
   let setup_parts: string[] = [];
@@ -183,19 +185,13 @@ function webgl_compile(ir: CompilerIR): string {
       }
     }
   }
+  let setup_code = setup_parts.join("");
 
-  // Compile each *top-level* proc to a JavaScript function.
-  for (let id of ir.toplevel_procs) {
-    out += jscompile_proc(_jscompile, ir.procs[id]);
-    out += "\n";
-  }
+  // Compile the main function.
+  let main = jscompile_proc(_jscompile, ir.main);
 
-  // The main function.
-  out += jscompile_proc(_jscompile, ir.main);
-  out += "()";
-
-  // Add the runtime.
-  out = WEBGL_RUNTIME + "\n" + out;
+  // Then wrap it in an outer function that includes the setup code.
+  out += emit_js_fun(null, [], [], setup_code + main + "();", false);
 
   return out;
 }

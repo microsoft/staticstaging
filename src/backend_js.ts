@@ -176,9 +176,10 @@ function get_js_compile(ir: CompilerIR): JSCompile {
 }
 
 // Create a JavaScript function definition. `name` can be null, in which case
-// this is an anonymous function expression. `body` must be an expression (so
-// we can `return` it).
-function emit_js_fun(name: string, argnames: string[], localnames: string[], body: string): string {
+// this is an anonymous function expression. If `expr`, `body` is an
+// expression (so we can `return` it).
+function emit_js_fun(name: string, argnames: string[], localnames: string[],
+    body: string, expr=true): string {
   let anon = (name === null);
 
   // Emit the definition.
@@ -194,8 +195,10 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[], bod
   if (localnames.length) {
     out += "  var " + localnames.join(", ") + ";\n";
   }
-  out += "  return ";
-  out += indent(body);
+  if (expr) {
+    out += "  return ";
+  }
+  out += indent(body, !expr);
   out += ";\n}";
   if (anon) {
     out += ")";
