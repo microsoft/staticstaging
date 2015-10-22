@@ -194,6 +194,6 @@ function glsl_compile_prog(compile: GLSLCompile,
   if (decls.length) {
     out += decls.join("\n") + "\n";
   }
-  out += main + "\n";
+  out += main;
   return out;
 }
