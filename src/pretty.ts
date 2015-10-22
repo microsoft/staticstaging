@@ -16,6 +16,10 @@ let Pretty : ASTVisit<void, string> = {
     return "let " + tree.ident + " = " + pretty(tree.expr);
   },
 
+  visit_assign(tree: AssignNode, _: void): string {
+    return tree.ident + " = " + pretty(tree.expr);
+  },
+
   visit_lookup(tree: LookupNode, _: void): string {
     return tree.ident;
   },

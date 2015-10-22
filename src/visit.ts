@@ -6,6 +6,7 @@ interface ASTVisit<P, R> {
   visit_literal(tree: LiteralNode, param: P): R;
   visit_seq(tree: SeqNode, param: P): R;
   visit_let(tree: LetNode, param: P): R;
+  visit_assign(tree: AssignNode, param: P): R;
   visit_lookup(tree: LookupNode, param: P): R;
   visit_binary(tree: BinaryNode, param: P): R;
   visit_quote(tree: QuoteNode, param: P): R;
@@ -28,6 +29,8 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_seq(<SeqNode> tree, param);
     case "let":
       return visitor.visit_let(<LetNode> tree, param);
+    case "assign":
+      return visitor.visit_assign(<AssignNode> tree, param);
     case "lookup":
       return visitor.visit_lookup(<LookupNode> tree, param);
     case "binary":
@@ -58,6 +61,7 @@ interface PartialASTVisit<P, R> {
   visit_literal? (tree: LiteralNode, param: P): R;
   visit_seq? (tree: SeqNode, param: P): R;
   visit_let? (tree: LetNode, param: P): R;
+  visit_assign? (tree: AssignNode, param: P): R;
   visit_lookup? (tree: LookupNode, param: P): R;
   visit_binary? (tree: BinaryNode, param: P): R;
   visit_quote? (tree: QuoteNode, param: P): R;
@@ -116,6 +120,12 @@ function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, SyntaxNode> {
     },
 
     visit_let(tree: LetNode, param: void): SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
+    },
+
+    visit_assign(tree: AssignNode, param: void): SyntaxNode {
       return merge(tree, {
         expr: fself(tree.expr),
       });
@@ -222,6 +232,10 @@ function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
     },
 
     visit_let(tree: LetNode, p: T): T {
+      return fself(tree.expr, p);
+    },
+
+    visit_assign(tree: AssignNode, p: T): T {
       return fself(tree.expr, p);
     },
 

@@ -13,7 +13,7 @@ Program
 // Expression syntax.
 
 Expr
-  = Let / Extern / Fun / Binary / Call / TermExpr
+  = Let / Extern / Fun / Binary / Assign / Call / TermExpr
 
 SeqExpr
   = Seq / Expr
@@ -78,6 +78,10 @@ Extern "extern declaration"
 Paren "parentheses"
   = paren_open _ e:Expr _ paren_close
   { return e; }
+
+Assign "assignment"
+  = i:ident _ eq _ e:Expr
+  { return {tag: "assign", ident: i, expr: e}; }
 
 
 // Type syntax.

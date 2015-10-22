@@ -58,6 +58,14 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     return [v, e2];
   },
 
+  visit_assign(tree: AssignNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    // Works exactly the same way as "let".
+    let [v, e] = interp(tree.expr, env, pers);
+    let e2 = overlay(e);
+    e2[tree.ident] = v;
+    return [v, e2];
+  },
+
   visit_lookup(tree: LookupNode, [env, pers]: [Env, Pers]): [Value, Env] {
     let v = env[tree.ident];
     if (v === undefined) {
@@ -297,6 +305,13 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
   },
 
   visit_let(tree: LetNode,
+      [stage, env, pers, opers]: [number, Env, Pers, Pers]):
+      [SyntaxNode, Env, Pers] {
+    let [t, e, p] = quote_interp(tree.expr, stage, env, pers, opers);
+    return [merge(tree, { expr: t }), e, p];
+  },
+
+  visit_assign(tree: AssignNode,
       [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     let [t, e, p] = quote_interp(tree.expr, stage, env, pers, opers);

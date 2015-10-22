@@ -20,6 +20,11 @@ interface LetNode extends ExpressionNode {
   expr: ExpressionNode;
 }
 
+interface AssignNode extends ExpressionNode {
+  ident: string;
+  expr: ExpressionNode;
+}
+
 interface LookupNode extends ExpressionNode {
   ident: string;
 }

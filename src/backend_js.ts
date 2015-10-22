@@ -55,6 +55,11 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
       return jsvar + " = " + paren(fself(tree.expr));
     },
 
+    visit_assign(tree: LetNode, param: void): string {
+      let jsvar = varsym(tree.id);
+      return jsvar + " = " + paren(fself(tree.expr));
+    },
+
     visit_lookup(tree: LookupNode, param: void): string {
       let [defid, _] = ir.defuse[tree.id];
       if (ir.externs[defid] !== undefined) {
