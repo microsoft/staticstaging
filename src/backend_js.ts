@@ -63,7 +63,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
         return extern + " = " + paren(fself(tree.expr));
       } else {
         // Ordinary variable assignment.
-        let jsvar = varsym(tree.id);
+        let jsvar = varsym(defid);
         return jsvar + " = " + paren(fself(tree.expr));
       }
     },
