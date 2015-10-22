@@ -44,7 +44,7 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_seq(tree: SeqNode, param: void): string {
-      return emit_seq(tree, ",\n", "void 0", fself,
+      return emit_seq(tree, ",\n", fself,
         e => e.tag !== "extern" && e.tag !== "lookup"
       );
     },

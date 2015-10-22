@@ -58,23 +58,15 @@ function indent(s: string, first=false, spaces=2): string {
 }
 
 // A helper for emitting sequence expressions without emitting unneeded code.
-function emit_seq(seq: SeqNode, sep: string, fallback: string,
+function emit_seq(seq: SeqNode, sep: string,
     emit: (_:ExpressionNode) => string,
     pred: (_:ExpressionNode) => boolean): string {
   let e1 = pred(seq.lhs);
-  let e2 = pred(seq.rhs);
   let out = "";
-  if (e1) {
+  if (pred(seq.lhs)) {
     out += emit(seq.lhs);
-    if (e2) {
-      out += sep;
-    }
+    out += sep;
   }
-  if (e2) {
-    out += emit(seq.rhs);
-  }
-  if (!e1 && !e2) {
-    out = fallback;
-  }
+  out += emit(seq.rhs);
   return out;
 }
