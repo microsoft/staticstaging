@@ -3,6 +3,37 @@
 /// <reference path="compile.ts" />
 /// <reference path="backends.ts" />
 
+// Checking for our magic `vtx` and `frag` intrinsics, which indicate the
+// structure of shader programs.
+// This could be more efficient by using the ID of the extern. For now, we
+// just match on the name.
+
+function is_intrinsic(tree: CallNode, name: string) {
+  if (tree.fun.tag === "lookup") {
+    let fun = <LookupNode> tree.fun;
+    return fun.ident === name;
+  }
+  return false;
+}
+
+function is_intrinsic_call(tree: ExpressionNode, name: string) {
+  if (tree.tag === "call") {
+    return is_intrinsic(tree as CallNode, name);
+  }
+  return false;
+}
+
+function vtx_expr(tree: ExpressionNode) {
+  return is_intrinsic_call(tree, "vtx");
+}
+
+function frag_expr(tree: ExpressionNode) {
+  return is_intrinsic_call(tree, "frag");
+}
+
+
+// The core compiler rules for emitting GLSL code.
+
 type GLSLCompile = (tree: SyntaxNode) => string;
 function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
   ASTVisit<void, string>
@@ -13,17 +44,12 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_seq(tree: SeqNode, param: void): string {
-      let p1 = fself(tree.lhs);
-      let p2 = fself(tree.rhs);
-      return p1 + ",\n" + p2;
+      return emit_seq(tree, ",\n", "void 0", fself,
+        e => e.tag !== "extern" && e.tag !== "lookup"
+      );
     },
 
     visit_let(tree: LetNode, param: void): string {
-      // TODO Ugh, more intrinsic ugliness.
-      if (tree.ident === "frag") {
-        return "";
-      }
-
       let varname = varsym(tree.id);
       return varname + " = " + paren(fself(tree.expr));
     },
@@ -62,31 +88,31 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_call(tree: CallNode, param: void): string {
-      // TODO Again with the needing intrinsics...
-      if (tree.fun.tag === "lookup") {
-        let fun = <LookupNode> tree.fun;
-        if (fun.ident === "frag") {
-          // A transition to fragment shading.
+      if (frag_expr(tree)) {
+        // The argument must be a literal quote node.
+        let arg = tree.args[0];
+        if (arg.tag === "quote") {
+          let quote = <QuoteNode> arg;
 
-          // The argument must be a literal quote node.
-          let arg = tree.args[0];
-          if (arg.tag === "quote") {
-            let quote = <QuoteNode> arg;
-
-            // Assign to all the variables corresponding persists for the
-            // fragment shader's quotation.
-            let subprog = ir.progs[quote.id];
-            let out = "/* pass to fragment shader*/\n";
-            for (let esc of subprog.persist) {
-              let varname = persistsym(esc.id);
-              let value = fself(esc.body);
-              out += varname + " = " + paren(value) + ",\n";
-            }
-            return out;
-
-          } else {
-            throw "error: non-quote used with frag";
+          // Assign to all the variables corresponding persists for the
+          // fragment shader's quotation.
+          let subprog = ir.progs[quote.id];
+          let assignments: string[] = [];
+          for (let esc of subprog.persist) {
+            let varname = persistsym(esc.id);
+            let value = fself(esc.body);
+            assignments.push(varname + " = " + paren(value));
           }
+
+          if (assignments.length) {
+            return "/* pass to fragment shader */\n" +
+                   assignments.join(",\n");
+          } else {
+            return "";
+          }
+
+        } else {
+          throw "error: non-quote used with frag";
         }
       }
 
@@ -94,8 +120,7 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_extern(tree: ExternNode, param: void): string {
-      // TODO
-      return "";
+      throw "unimplemented";
     },
 
     visit_persist(tree: PersistNode, param: void): string {
