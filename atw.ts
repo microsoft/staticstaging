@@ -129,7 +129,11 @@ function main() {
 
       // Dump the resulting program or execute it.
       if (execute) {
-        let res = scope_eval(jscode);
+        let runtime = JS_RUNTIME + "\n";
+        if (webgl) {
+          runtime += WEBGL_RUNTIME + "\n";
+        }
+        let res = scope_eval(runtime + jscode);
         console.log(pretty_js_value(res));
       } else {
         console.log(jscode);

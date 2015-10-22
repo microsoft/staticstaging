@@ -16,7 +16,7 @@ function splice(outer, id, inner) {
   return { prog: outer.prog.replace('__SPLICE_' + id + '__', inner.prog),
     persist: assign({}, outer.persist, inner.persist) };
 }
-`;
+`.trim();
 
 function js_emit_extern(name: string, type: Type) {
   if (type instanceof FunType) {
@@ -318,10 +318,8 @@ function pretty_js_value(v: any): string {
 function jscompile(ir: CompilerIR): string {
   let _jscompile = get_js_compile(ir);
 
-  // Start with our run-time library.
-  let out = JS_RUNTIME;
-
   // Compile each program to a string.
+  let out = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       // Get the procs to compile.

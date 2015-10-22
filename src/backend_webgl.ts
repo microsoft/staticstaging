@@ -144,9 +144,8 @@ function webgl_compile(ir: CompilerIR): string {
   let _jscompile = get_webgl_compile(ir);
   let _glslcompile = get_glsl_compile(ir);
 
-  let out = WEBGL_RUNTIME + "\n";
-
   // Compile each program to a string.
+  let out = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       // Get the procs to compile.
