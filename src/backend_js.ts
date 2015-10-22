@@ -16,6 +16,9 @@ function splice(outer, id, inner) {
   return { prog: outer.prog.replace('__SPLICE_' + id + '__', inner.prog),
     persist: assign({}, outer.persist, inner.persist) };
 }
+function call(closure, args) {
+  return closure.proc.apply(void 0, args.concat(closure.env));
+}
 `.trim();
 
 function js_emit_extern(name: string, type: Type) {
@@ -141,15 +144,8 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
         args.push(paren(fself(arg)));
       }
 
-      // Get the closure pair, then invoke the first part on the arguments
-      // and the second part.
-      let out = "(function () { /* call */\n";
-      out += "  var closure = " + paren(func) + ";\n";
-      out += "  var args = [" + args.join(", ") + "].concat(closure.env);\n";
-      out += "  return closure.proc.apply(void 0, args);\n";
-      out += "})()";
-
-      return out;
+      // Invoke our runtime to complete the closure call.
+      return "call(" + paren(func) + ", [" + args.join(", ") + "])";
     },
 
     visit_extern(tree: ExternNode, param: void): string {
