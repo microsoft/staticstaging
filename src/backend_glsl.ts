@@ -55,13 +55,11 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_assign(tree: AssignNode, param: void): string {
-      let varname = varsym(tree.id);
-      return varname + " = " + paren(fself(tree.expr));
+      return emit_assign(ir, fself, tree);
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      let [defid, _] = ir.defuse[tree.id];
-      return varsym(defid);
+      return emit_lookup(ir, fself, (name, _) => name, tree);
     },
 
     visit_binary(tree: BinaryNode, param: void): string {

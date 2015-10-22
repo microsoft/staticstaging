@@ -18,9 +18,7 @@ function splice(outer, id, inner) {
 }
 `;
 
-function js_emit_extern(ir: CompilerIR, id: number) {
-  let name = ir.externs[id];
-  let [type, _] = ir.type_table[id];
+function js_emit_extern(name: string, type: Type) {
   if (type instanceof FunType) {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
@@ -56,26 +54,11 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_assign(tree: LetNode, param: void): string {
-      let [defid, _] = ir.defuse[tree.id];
-      let extern = ir.externs[defid];
-      if (extern !== undefined) {
-        // Extern assignment.
-        return extern + " = " + paren(fself(tree.expr));
-      } else {
-        // Ordinary variable assignment.
-        let jsvar = varsym(defid);
-        return jsvar + " = " + paren(fself(tree.expr));
-      }
+      return emit_assign(ir, fself, tree);
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      let [defid, _] = ir.defuse[tree.id];
-      if (ir.externs[defid] !== undefined) {
-        return js_emit_extern(ir, defid);
-      } else {
-        // An ordinary variable lookup.
-        return varsym(defid);
-      }
+      return emit_lookup(ir, fself, js_emit_extern, tree);
     },
 
     visit_binary(tree: BinaryNode, param: void): string {
@@ -170,7 +153,9 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_extern(tree: ExternNode, param: void): string {
-      return js_emit_extern(ir, tree.id);
+      let name = ir.externs[tree.id];
+      let [type, _] = ir.type_table[tree.id];
+      return js_emit_extern(name, type);
     },
 
     visit_persist(tree: PersistNode, param: void): string {

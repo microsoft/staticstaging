@@ -1,6 +1,7 @@
-// Utilities used by the various code-generation backends.
-
 /// <reference path="ast.ts" />
+/// <reference path="compile.ts" />
+
+// Utilities used by the various code-generation backends.
 
 // Get a variable name for an ATW variable by its defining node ID.
 function varsym(defid: number) {
@@ -69,4 +70,36 @@ function emit_seq(seq: SeqNode, sep: string,
   }
   out += emit(seq.rhs);
   return out;
+}
+
+// A helper for emitting assignments. Handles both externs and normal
+// variables.
+function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
+    tree: AssignNode): string {
+  let [defid, _] = ir.defuse[tree.id];
+  let extern = ir.externs[defid];
+  if (extern !== undefined) {
+    // Extern assignment.
+    return extern + " = " + paren(emit(tree.expr));
+  } else {
+    // Ordinary variable assignment.
+    let jsvar = varsym(defid);
+    return jsvar + " = " + paren(emit(tree.expr));
+  }
+}
+
+// A helper for emitting lookups. Also handles both externs and ordinary
+// variables.
+function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
+    emit_extern: (name: string, type: Type) => string,
+    tree: LookupNode): string {
+  let [defid, _] = ir.defuse[tree.id];
+  let name = ir.externs[defid];
+  if (name !== undefined) {
+    let [type, _] = ir.type_table[tree.id];
+    return emit_extern(name, type);
+  } else {
+    // An ordinary variable lookup.
+    return varsym(defid);
+  }
 }
