@@ -1,3 +1,3 @@
-let vtx = fun c:<Int> -> 0;
+extern vtx: <Int> -> Int;
 let x = 5;
 vtx s< %[x] >

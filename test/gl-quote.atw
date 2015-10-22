@@ -1,2 +1,2 @@
-let vtx = fun c:<Int> -> 0;
+extern vtx: <Int> -> Int;
 vtx s< 5 >

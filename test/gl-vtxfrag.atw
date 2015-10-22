@@ -1,7 +1,8 @@
-let vtx = fun c:<Int> -> 0;  # "extern"
+extern vtx: <Int> -> Int;
+extern frag: <Int> -> Int;
+
 let x = 5;
 vtx s<
-  let frag = fun c:<Int> -> 0;  # extern
   let y = %[x];
   frag s< %[y] >
 >
