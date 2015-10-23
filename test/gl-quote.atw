@@ -1,4 +1,1 @@
-extern vtx: <Int> -> Int;
-extern frag: <Int> -> Int;
-
 vtx s< 5; frag s< 2 > >

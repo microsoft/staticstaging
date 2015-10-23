@@ -325,13 +325,6 @@ function get_type(ttree: TypeNode): Type {
   return type_ast_visit(get_type_rules, ttree, null);
 }
 
-// A shorthand for typechecking in an empty initial context.
-let _typecheck : TypeCheck = fix(gen_check);
-function typecheck(tree: SyntaxNode): Type {
-  let [t, e] = _typecheck(tree, [[{}], {}]);
-  return t;
-}
-
 // A container for elaborated type information.
 type TypeTable = [Type, TypeEnv][];
 
@@ -393,8 +386,12 @@ function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
 
 // Type elaboration. Create a copy of the AST with ID stamps and a table that
 // maps the IDs to type information.
-function elaborate(tree: SyntaxNode): [SyntaxNode, TypeTable] {
+// You can provide an initial type mapping for externs (for implementing
+// intrinsics).
+function elaborate(tree: SyntaxNode, externs: TypeEnvFrame = {}):
+  [SyntaxNode, TypeTable]
+{
   let table : TypeTable = [];
-  let elaborated = elaborate_subtree(tree, [[{}], {}], table);
+  let elaborated = elaborate_subtree(tree, [[{}], externs], table);
   return [elaborated, table];
 }

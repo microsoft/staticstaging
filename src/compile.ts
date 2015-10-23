@@ -167,9 +167,11 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 
 // Build a def/use table for lookups that links them to their corresponding
 // "let" or "fun" AST nodes.
+// You can provide an initial NameMap of externs (for implementing
+// intrinsics).
 let _find_def_use = fix(gen_find_def_use);
-function find_def_use(tree: SyntaxNode): DefUseTable {
-  let [_, t] = _find_def_use(tree, [[[[{}]], {}], []]);
+function find_def_use(tree: SyntaxNode, externs: NameMap): DefUseTable {
+  let [_, t] = _find_def_use(tree, [[[[{}]], externs], []]);
   return t;
 }
 
@@ -561,8 +563,17 @@ interface CompilerIR {
 // This is the semantic analysis that produces our mid-level IR given an
 // elaborated, desugared AST.
 function semantically_analyze(tree: SyntaxNode,
-                              type_table: TypeTable): CompilerIR {
-  let table = find_def_use(tree);
+  type_table: TypeTable, intrinsics: TypeEnvFrame = {}): CompilerIR
+{
+  // Give IDs to the intrinsics and add them to the type table.
+  let intrinsics_map: NameMap = {};
+  for (let name in intrinsics) {
+    let id = type_table.length;
+    type_table[id] = [intrinsics[name], null];
+    intrinsics_map[name] = id;
+  }
+
+  let table = find_def_use(tree, intrinsics_map);
 
   // Lambda lifting and quote lifting.
   let [procs, main] = lambda_lift(tree, table);
@@ -573,7 +584,13 @@ function semantically_analyze(tree: SyntaxNode,
   // Prog-to-Prog mapping.
   let containing_progs = get_containing_progs(progs);
 
+  // Find the "real" externs in the program, and add the intrinsics to the
+  // map.
   let externs = find_externs(tree, []);
+  for (let name in intrinsics_map) {
+    let id = intrinsics_map[name];
+    externs[id] = name;
+  }
 
   return {
     defuse: table,

@@ -77,7 +77,11 @@ function main() {
     let elaborated : SyntaxNode;
     let type_table : TypeTable;
     try {
-      [elaborated, type_table] = elaborate(tree);
+      if (webgl) {
+        [elaborated, type_table] = webgl_elaborate(tree);
+      } else {
+        [elaborated, type_table] = elaborate(tree);
+      }
       let [type, _] = type_table[elaborated.id];
       if (verbose) {
         console.log(pretty_type(type));

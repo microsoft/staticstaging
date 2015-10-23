@@ -199,3 +199,14 @@ function webgl_compile(ir: CompilerIR): string {
 
   return out;
 }
+
+const WEBGL_INTRINSICS: TypeEnvFrame = {
+  vtx: new FunType([new CodeType(INT)], INT),
+  frag: new FunType([new CodeType(INT)], INT),
+  gl_Position: INT,
+  gl_Color: INT,
+};
+
+function webgl_elaborate(tree: SyntaxNode): [SyntaxNode, TypeTable] {
+  return elaborate(tree, WEBGL_INTRINSICS);
+}
