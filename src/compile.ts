@@ -47,7 +47,6 @@ function handle_use(tree: LookupNode | AssignNode,
   // Try an ordinary variable lookup.
   let [def_id, scope_index] = ns_lookup(ns, tree.ident);
   if (def_id === undefined) {
-
     // Try an extern.
     def_id = externs[tree.ident];
     if (def_id  === undefined) {

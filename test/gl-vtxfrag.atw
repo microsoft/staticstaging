@@ -1,6 +1,3 @@
-extern vtx: <Int> -> Int;
-extern frag: <Int> -> Int;
-
 let x = 5;
 vtx s<
   let y = %[x];

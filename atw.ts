@@ -104,7 +104,12 @@ function main() {
 
     // Execute.
     if (compile) {
-      let ir = semantically_analyze(sugarfree, type_table);
+      let ir: CompilerIR;
+      if (webgl) {
+        ir = semantically_analyze(sugarfree, type_table, WEBGL_INTRINSICS);
+      } else {
+        ir = semantically_analyze(sugarfree, type_table, WEBGL_INTRINSICS);
+      }
 
       // In verbose mode, show some intermediates.
       if (verbose) {
