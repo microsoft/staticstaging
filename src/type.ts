@@ -97,7 +97,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       }
 
       if (!compatible(var_t, expr_t)) {
-        throw "type error: mismatched type in assigment:" +
+        throw "type error: mismatched type in assigment: " +
           "expected " + pretty_type(var_t) +
           ", got " + pretty_type(expr_t);
       }
@@ -128,7 +128,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let [t2, e2] = check(tree.rhs, e1);
       if (t1 === INT && t2 === INT) {
         return [INT, env];
-      } else if (t1 === FLOAT && t2 === FLOAT) {
+      } else if ((t1 === FLOAT || t1 === INT) &&
+                 (t2 === FLOAT || t2 === INT)) {
         return [FLOAT, env];
       } else {
         throw "type error: binary operation on non-numbers (" +
@@ -267,7 +268,10 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
 // Check type compatibility.
 function compatible(ltype: Type, rtype: Type): boolean {
-  if (ltype === INT && rtype === INT) {
+  if (ltype === rtype) {
+    return true;
+
+  } else if (ltype === FLOAT && rtype === INT) {
     return true;
 
   } else if (ltype instanceof FunType && rtype instanceof FunType) {
