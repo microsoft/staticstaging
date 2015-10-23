@@ -1,2 +1,2 @@
-let x = 5;
+var x = 5;
 vtx s< %[x]; frag s< 1 > >

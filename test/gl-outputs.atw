@@ -1,6 +1,6 @@
-let x = 5;
+var x = 5;
 vtx s<
-  let y = %[x];
+  var y = %[x];
   gl_Position = 5 + y;
   frag s<
     gl_Color = 9 * %[y]

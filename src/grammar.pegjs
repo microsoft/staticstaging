@@ -13,7 +13,7 @@ Program
 // Expression syntax.
 
 Expr
-  = Let / Extern / Fun / Binary / Assign / Call / TermExpr
+  = Var / Extern / Fun / Binary / Assign / Call / TermExpr
 
 SeqExpr
   = Seq / Expr
@@ -37,8 +37,8 @@ Lookup "variable reference"
   = i:ident
   { return {tag: "lookup", ident: i}; }
 
-Let "assignment"
-  = let _ i:ident _ eq _ e:Expr
+Var "definition"
+  = var _ i:ident _ eq _ e:Expr
   { return {tag: "let", ident: i, expr: e}; }
 
 Binary "binary operation"
@@ -131,13 +131,13 @@ ident "identifier"
   = (ALPHA / [_]) (ALPHA / DIGIT / [_.])*
   { return text(); }
 
-let "let"
-  = "let"
+var
+  = "var"
 
-eq "equals"
+eq
   = "="
 
-seq "semicolon"
+seq
   = ";"
 
 binop "binary operator"
@@ -166,7 +166,7 @@ persist_close "persist end"
 run "run operator"
   = "!"
 
-fun "fun"
+fun
   = "fun"
 
 arrow "arrow"

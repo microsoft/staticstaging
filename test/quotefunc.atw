@@ -1,4 +1,4 @@
-let x = <5>;
-let qf = < fun y:Int -> y * [x] >;
+var x = <5>;
+var qf = < fun y:Int -> y * [x] >;
 !qf 3
 # -> 15

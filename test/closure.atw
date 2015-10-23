@@ -1,5 +1,5 @@
-let x = 5;
-let f = fun y:Int -> y * x;
-let x = 2;
+var x = 5;
+var f = fun y:Int -> y * x;
+var x = 2;
 f 3
 # -> 15

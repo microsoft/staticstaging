@@ -1,6 +1,6 @@
-let x = 4;
-let y = 5;
-let xp = < %[ x ] >;
-let yp = < %[ y ] >;
+var x = 4;
+var y = 5;
+var xp = < %[ x ] >;
+var yp = < %[ y ] >;
 < [xp] + [yp] >
 # -> < %0 + %1 >
