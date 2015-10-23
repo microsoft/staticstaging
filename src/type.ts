@@ -10,7 +10,7 @@ type Type = IntType | FunType | CodeType;
 class IntType {
   // A workaround to compensate for TypeScript's structural subtyping:
   // https://github.com/Microsoft/TypeScript/issues/202
-  _nominal_IntType: void;
+  _brand_IntType: void;
 };
 const INT = new IntType();
 

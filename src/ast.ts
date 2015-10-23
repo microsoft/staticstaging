@@ -8,6 +8,7 @@ interface ExpressionNode extends SyntaxNode {
 
 interface LiteralNode extends ExpressionNode {
   value: number;
+  type: string;  // int or float
 }
 
 interface SeqNode extends ExpressionNode {

@@ -19,15 +19,19 @@ SeqExpr
   = Seq / Expr
 
 TermExpr
-  = Quote / Literal / Lookup / Splice / Persist / Run / Paren
+  = Quote / FloatLiteral / IntLiteral / Lookup / Splice / Persist / Run / Paren
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
   { return {tag: "seq", lhs: lhs, rhs: rhs}; }
 
-Literal "literal"
-  = n:num
-  { return {tag: "literal", value: n}; }
+IntLiteral "literal"
+  = n:int
+  { return {tag: "literal", type: "int", value: n}; }
+
+FloatLiteral
+  = n:float
+  { return {tag: "literal", type: "float", value: n}; }
 
 Lookup "variable reference"
   = i:ident
@@ -115,9 +119,13 @@ FunTypeParam
 
 // Tokens.
 
-num "number"
+int "integer"
   = DIGIT+
   { return parseInt(text()); }
+
+float "float"
+  = DIGIT+ [.] DIGIT+
+  { return parseFloat(text()); }
 
 ident "identifier"
   = (ALPHA / [_]) (ALPHA / DIGIT / [_.])*
