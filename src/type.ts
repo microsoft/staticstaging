@@ -295,6 +295,8 @@ let get_type_rules: TypeASTVisit<void, Type> = {
   visit_primitive(tree: PrimitiveTypeNode, p: void) {
     if (tree.name === "Int") {
       return INT;
+    } else if (tree.name === "Float") {
+      return FLOAT;
     } else {
       throw "error: unknown primitive type " + tree.name;
     }
