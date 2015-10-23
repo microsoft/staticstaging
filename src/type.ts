@@ -15,6 +15,7 @@ class PrimitiveType {
   _brand_PrimitiveType: void;
 };
 const INT = new PrimitiveType("Int");
+const FLOAT = new PrimitiveType("Float");
 
 // But function types are more complicated. Really wishing for ADTs here.
 class FunType {
@@ -52,7 +53,13 @@ type TypeCheck = (tree: SyntaxNode, env: TypeEnv)
 let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
     visit_literal(tree: LiteralNode, env: TypeEnv): [Type, TypeEnv] {
-      return [INT, env];
+      if (tree.type === "int") {
+        return [INT, env];
+      } else if (tree.type === "float") {
+        return [FLOAT, env];
+      } else {
+        throw "error: unknown literal type";
+      }
     },
 
     visit_seq(tree: SeqNode, env: TypeEnv): [Type, TypeEnv] {
@@ -121,6 +128,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let [t2, e2] = check(tree.rhs, e1);
       if (t1 === INT && t2 === INT) {
         return [INT, env];
+      } else if (t1 === FLOAT && t2 === FLOAT) {
+        return [FLOAT, env];
       } else {
         throw "type error: binary operation on non-numbers (" +
           pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
