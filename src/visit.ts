@@ -73,8 +73,8 @@ interface PartialASTVisit<P, R> {
   visit_persist? (tree: PersistNode, param: P): R;
 }
 
-let AST_TYPES = ["literal", "seq", "let", "lookup", "binary", "quote",
-                 "escape", "run", "fun", "call", "persist"];
+let AST_TYPES = ["literal", "seq", "let", "assign", "lookup", "binary", "quote",
+                 "escape", "run", "fun", "call", "extern", "persist"];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
 // is some messy run-time metaprogramming!

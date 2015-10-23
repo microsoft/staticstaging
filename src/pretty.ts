@@ -12,7 +12,7 @@ let Pretty : ASTVisit<void, string> = {
   },
 
   visit_let(tree: LetNode, _: void): string {
-    return "let " + tree.ident + " = " + pretty(tree.expr);
+    return "var " + tree.ident + " = " + pretty(tree.expr);
   },
 
   visit_assign(tree: AssignNode, _: void): string {

@@ -68,7 +68,7 @@ let GetName : ASTVisit<void, string> = {
     return "seq";
   },
   visit_let(tree: LetNode, _: void): string {
-    return "let " + tree.ident;
+    return "var " + tree.ident;
   },
   visit_assign(tree: LetNode, _: void): string {
     return tree.ident + " =";
