@@ -134,12 +134,7 @@ Math.pow 7 2</pre>
 
         <p>The WebGL compiler is experimental:</p>
         <pre class="example"
-            data-mode="webgl">extern vtx: &lt;Int&gt; -&gt; Int;
-extern frag: &lt;Int&gt; -&gt; Int;
-extern gl_Position: Int;
-extern gl_Color: Int;
-
-let x = 5;
+            data-mode="webgl">let x = 5;
 vtx s&lt;
   let y = %[x];
   gl_Position = 5 + y;

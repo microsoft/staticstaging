@@ -140,7 +140,11 @@ function atw_run(code: string, mode: string)
   let elaborated : SyntaxNode;
   let type_table : TypeTable;
   try {
-    [elaborated, type_table] = elaborate(tree);
+    if (mode === "webgl") {
+      [elaborated, type_table] = webgl_elaborate(tree);
+    } else {
+      [elaborated, type_table] = elaborate(tree);
+    }
   } catch (e) {
     return [e, tree, null, null, null];
   }
@@ -166,10 +170,11 @@ function atw_run(code: string, mode: string)
   } else {
     // Compile.
     try {
-      let ir = semantically_analyze(sugarfree, type_table);
       if (mode === "webgl") {
+        let ir = semantically_analyze(sugarfree, type_table, WEBGL_INTRINSICS);
         jscode = webgl_compile(ir);
       } else {
+        let ir = semantically_analyze(sugarfree, type_table);
         jscode = jscompile(ir);
       }
     } catch (e) {

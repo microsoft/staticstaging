@@ -108,7 +108,7 @@ function main() {
       if (webgl) {
         ir = semantically_analyze(sugarfree, type_table, WEBGL_INTRINSICS);
       } else {
-        ir = semantically_analyze(sugarfree, type_table, WEBGL_INTRINSICS);
+        ir = semantically_analyze(sugarfree, type_table);
       }
 
       // In verbose mode, show some intermediates.
