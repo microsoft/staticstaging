@@ -4,15 +4,17 @@
 /// <reference path="pretty.ts" />
 
 // The kinds of types.
-type Type = IntType | FunType | CodeType;
+type Type = PrimitiveType | FunType | CodeType;
 
-// There is only one Int type.
-class IntType {
+// Primitive types are singular instances.
+class PrimitiveType {
+  constructor(public name: string) {};
+
   // A workaround to compensate for TypeScript's structural subtyping:
   // https://github.com/Microsoft/TypeScript/issues/202
-  _brand_IntType: void;
+  _brand_PrimitiveType: void;
 };
-const INT = new IntType();
+const INT = new PrimitiveType("Int");
 
 // But function types are more complicated. Really wishing for ADTs here.
 class FunType {
@@ -117,7 +119,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
     visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
       let [t1, e1] = check(tree.lhs, env);
       let [t2, e2] = check(tree.rhs, e1);
-      if (t1 instanceof IntType && t2 instanceof IntType) {
+      if (t1 === INT && t2 === INT) {
         return [INT, env];
       } else {
         throw "type error: binary operation on non-numbers (" +
@@ -256,7 +258,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
 // Check type compatibility.
 function compatible(ltype: Type, rtype: Type): boolean {
-  if (ltype instanceof IntType && rtype instanceof IntType) {
+  if (ltype === INT && rtype === INT) {
     return true;
 
   } else if (ltype instanceof FunType && rtype instanceof FunType) {

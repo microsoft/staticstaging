@@ -84,13 +84,17 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
     let [type, _] = ir.type_table[esc.body.id];
 
     // The WebGL call we use to bind the uniform depends on the value's type.
-    if (type instanceof IntType) {
-      out += "gl.uniform1i(" +
-        locsym(esc.id) + ", " + // location
-        paren(value) + // value
-        ")";
+    if (type instanceof PrimitiveType) {
+      if (type.name === "Int") {
+        out += "gl.uniform1i(" +
+          locsym(esc.id) + ", " + // location
+          paren(value) + // value
+          ")";
+      } else {
+        throw "error: only integer uniforms are supported";
+      }
     } else {
-      throw "error: only integer uniforms are supported";
+      throw "error: uniforms must be primitive types";
     }
 
     out += ",\n";

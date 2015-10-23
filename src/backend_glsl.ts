@@ -149,8 +149,12 @@ function emit_glsl_decl(qualifier: string, type: string, name: string) {
 }
 
 function emit_glsl_type(type: Type): string {
-  if (type instanceof IntType) {
-    return "int";
+  if (type instanceof PrimitiveType) {
+    if (type.name === "Int") {
+      return "int";
+    } else {
+      throw "error: invalid primitive type " + type.name;
+    }
   } else {
     throw "unimplemented type " + type;
   }

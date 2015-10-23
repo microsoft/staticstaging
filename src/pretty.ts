@@ -72,8 +72,8 @@ function pretty(tree: SyntaxNode): string {
 // Format a type as a string.
 function pretty_type(t: Type): string {
   let s : string;
-  if (t instanceof IntType) {
-    s = "Int";
+  if (t instanceof PrimitiveType) {
+    s = t.name;
   } else if (t instanceof FunType) {
     s = "";
     for (let pt of t.params) {
