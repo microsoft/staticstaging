@@ -328,7 +328,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Using a function here because JavaScript scoping is so sad.
   function add_example_handler(ex: HTMLElement) {
     ex.addEventListener('click', function () {
-      link_to_code(ex.textContent);
+      link_to_code(ex.textContent, ex.dataset['mode']);
     });
   }
   for (let i = 0; i < examples.length; ++i) {

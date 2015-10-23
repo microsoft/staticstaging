@@ -122,7 +122,7 @@ double 21</code></pre>
         cross-stage persistence transparently by just referring to
         variables from a different stage. This works by desugaring
         cross-stage references to persist escapes:</p>
-        <pre class="example"><code>let x = 5;
+        <pre class="example" data-mode="compile"><code>let x = 5;
 !&lt;
   let y = 10;
   !&lt; x + y &gt;
@@ -131,6 +131,22 @@ double 21</code></pre>
         <p>To interoperate with JavaScript, use <code>extern</code>:</p>
         <pre class="example">extern Math.pow: Int Int -&gt; Int;
 Math.pow 7 2</pre>
+
+        <p>The WebGL compiler is experimental:</p>
+        <pre class="example"
+            data-mode="webgl">extern vtx: &lt;Int&gt; -&gt; Int;
+extern frag: &lt;Int&gt; -&gt; Int;
+extern gl_Position: Int;
+extern gl_Color: Int;
+
+let x = 5;
+vtx s&lt;
+  let y = %[x];
+  gl_Position = 5 + y;
+  frag s&lt;
+    gl_Color = 9 * %[y]
+  &gt;
+&gt;</pre>
 
         <p>Click on an example above to run it.</p>
     </div>
