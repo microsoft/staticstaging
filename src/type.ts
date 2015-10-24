@@ -16,6 +16,10 @@ class PrimitiveType {
 };
 const INT = new PrimitiveType("Int");
 const FLOAT = new PrimitiveType("Float");
+const NAMED_TYPES: { [name: string]: Type } = {
+  "Int": INT,
+  "Float": FLOAT,
+};
 
 // But function types are more complicated. Really wishing for ADTs here.
 class FunType {
@@ -297,10 +301,9 @@ function compatible(ltype: Type, rtype: Type): boolean {
 // Get the Type denoted by the type syntax tree.
 let get_type_rules: TypeASTVisit<void, Type> = {
   visit_primitive(tree: PrimitiveTypeNode, p: void) {
-    if (tree.name === "Int") {
-      return INT;
-    } else if (tree.name === "Float") {
-      return FLOAT;
+    let t = NAMED_TYPES[tree.name];
+    if (t !== undefined) {
+      return t;
     } else {
       throw "error: unknown primitive type " + tree.name;
     }
