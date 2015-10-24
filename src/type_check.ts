@@ -246,6 +246,9 @@ function compatible(ltype: Type, rtype: Type): boolean {
   } else if (ltype === FLOAT && rtype === INT) {
     return true;
 
+  } else if (ltype === ANY) {
+    return true;
+
   } else if (ltype instanceof FunType && rtype instanceof FunType) {
     if (ltype.params.length != rtype.params.length) {
       return false;

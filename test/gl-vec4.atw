@@ -2,7 +2,6 @@ extern a: Vec3;
 extern b: Vec4;
 vtx s<
   frag s<
-    b = vec4 a 1.0;
-    1
+    b = vec4 a 1.0
   >
 >

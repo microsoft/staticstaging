@@ -1,5 +1,5 @@
 // The kinds of types.
-type Type = PrimitiveType | FunType | CodeType;
+type Type = PrimitiveType | FunType | CodeType | AnyType;
 
 // Primitive types are singular instances.
 class PrimitiveType {
@@ -9,6 +9,11 @@ class PrimitiveType {
   // https://github.com/Microsoft/TypeScript/issues/202
   _brand_PrimitiveType: void;
 };
+
+class AnyType {
+  _brand_AnyType: void;
+};
+const ANY = new AnyType();
 
 // Function types are more complicated. Really wishing for ADTs here.
 class FunType {
