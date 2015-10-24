@@ -121,22 +121,19 @@ function atw_run(code: string, mode: string)
 {
   // Configure the driver to store a bunch of results.
   let error: string = null;
-  let tree: SyntaxNode = null;
   let type: string = null;
   let config: DriverConfig = {
     parser: parser,
     webgl: mode === "webgl",
 
     log(...msg: any[]) {
-      console.log("LOG SOMETHING TODO");
+      console.log(msg);
     },
     error (e: string) {
       error = e;
     },
 
-    parsed (t: SyntaxNode) {
-      tree = t;
-    },
+    parsed: (_ => void 0),
     typed (t: string) {
       type = t;
     },
@@ -145,7 +142,10 @@ function atw_run(code: string, mode: string)
   // Run the driver.
   let res: string = null;
   let jscode: string = null;
+  let ast: SyntaxNode = null;
   driver_frontend(config, code, null, function (tree, types) {
+    ast = tree;
+
     if (mode === "interp") {
       // Interpreter.
       driver_interpret(config, tree, types, function (r) {
@@ -165,7 +165,7 @@ function atw_run(code: string, mode: string)
     }
   });
 
-  return [error, tree, type, jscode, res];
+  return [error, ast, type, jscode, res];
 }
 
 function show(text: string, el: HTMLElement) {
