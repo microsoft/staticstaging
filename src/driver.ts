@@ -6,6 +6,18 @@
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_webgl.ts" />
 
+// This is a helper library that orchestrates all the parts of the compiler in
+// a configurable way. You invoke it by passing continuations through all the
+// steps using a configuration object that handles certain events. The steps
+// are:
+//
+// - `driver_frontend`: Parse, typecheck, and desugar. This needs to be done
+//   regardless of whether you want to compile or interpret.
+// - `driver_interpret`: More or less what it sounds like.
+// - `driver_compile`: Compile the checked code to executable code.
+// - `driver_execute`: Run the compiled code, hopefully getting the same
+//   result as the interpreter would.
+
 interface DriverConfig {
   parser: any,  // The parser object from PEG.js.
   webgl: boolean,
