@@ -51,6 +51,10 @@ function frag_expr(tree: ExpressionNode) {
   return is_intrinsic_call(tree, "frag");
 }
 
+function glsl_emit_extern(name: string, type: Type): string {
+  return name;
+}
+
 
 // The core compiler rules for emitting GLSL code.
 
@@ -79,7 +83,7 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      return emit_lookup(ir, fself, (name, _) => name, tree);
+      return emit_lookup(ir, fself, glsl_emit_extern, tree);
     },
 
     visit_binary(tree: BinaryNode, param: void): string {
@@ -141,11 +145,23 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
         }
       }
 
-      throw "unimplemented";
+      // Check that it's a static call.
+      if (tree.fun.tag === "lookup") {
+        let fun = fself(tree.fun);
+        let args: string[] = [];
+        for (let arg of tree.args) {
+          args.push(fself(arg));
+        }
+        return fun + "(" + args.join(", ") + ")";
+      }
+
+      throw "error: GLSL backend is not higher-order";
     },
 
     visit_extern(tree: ExternNode, param: void): string {
-      throw "unimplemented";
+      let [defid, _] = ir.defuse[tree.id];
+      let name = ir.externs[defid];
+      return glsl_emit_extern(name, null);
     },
 
     visit_persist(tree: PersistNode, param: void): string {
