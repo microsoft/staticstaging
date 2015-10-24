@@ -36,7 +36,7 @@ interface TypeMap {
 // The built-in primitive types.
 const INT = new PrimitiveType("Int");
 const FLOAT = new PrimitiveType("Float");
-const NAMED_TYPES: TypeMap = {
+const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
 };
@@ -302,9 +302,9 @@ function compatible(ltype: Type, rtype: Type): boolean {
 }
 
 // Get the Type denoted by the type syntax tree.
-let get_type_rules: TypeASTVisit<void, Type> = {
-  visit_primitive(tree: PrimitiveTypeNode, p: void) {
-    let t = NAMED_TYPES[tree.name];
+let get_type_rules: TypeASTVisit<TypeMap, Type> = {
+  visit_primitive(tree: PrimitiveTypeNode, types: TypeMap) {
+    let t = types[tree.name];
     if (t !== undefined) {
       return t;
     } else {
@@ -312,23 +312,23 @@ let get_type_rules: TypeASTVisit<void, Type> = {
     }
   },
 
-  visit_fun(tree: FunTypeNode, p: void) {
+  visit_fun(tree: FunTypeNode, types: TypeMap) {
     let params: Type[] = [];
     for (let param_node of tree.params) {
-      params.push(get_type(param_node));
+      params.push(get_type(param_node, types));
     }
-    let ret = get_type(tree.ret);
+    let ret = get_type(tree.ret, types);
 
     return new FunType(params, ret);
   },
 
-  visit_code(tree: CodeTypeNode, p: void) {
-    let inner = get_type(tree.inner);
+  visit_code(tree: CodeTypeNode, types: TypeMap) {
+    let inner = get_type(tree.inner, types);
     return new CodeType(inner);
   },
 };
-function get_type(ttree: TypeNode): Type {
-  return type_ast_visit(get_type_rules, ttree, null);
+function get_type(ttree: TypeNode, types=BUILTIN_TYPES): Type {
+  return type_ast_visit(get_type_rules, ttree, types);
 }
 
 // A container for elaborated type information.
