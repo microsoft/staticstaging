@@ -10,10 +10,6 @@ interface DriverConfig {
   parser: any,  // The parser object from PEG.js.
   webgl: boolean,
 
-  checked: (tree: SyntaxNode, type_table: TypeTable) => void,
-  compiled: (code: string) => void,
-  executed: (result: string) => void,
-
   parsed: (tree: SyntaxNode) => void,
   typed: (type: string) => void,
   error: (err: string) => void,
@@ -21,7 +17,8 @@ interface DriverConfig {
 }
 
 function driver_frontend(config: DriverConfig, source: string,
-    filename: string = null)
+    filename: string,
+    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
   // Parse.
   let tree: SyntaxNode;
@@ -64,11 +61,11 @@ function driver_frontend(config: DriverConfig, source: string,
   config.log('sugar-free', sugarfree);
   config.log('type table', type_table);
 
-  config.checked(sugarfree, type_table);
+  checked(sugarfree, type_table);
 }
 
 function driver_compile(config: DriverConfig, tree: SyntaxNode,
-    type_table: TypeTable)
+    type_table: TypeTable, compiled: (code: string) => void)
 {
   let ir: CompilerIR;
   if (config.webgl) {
@@ -100,22 +97,23 @@ function driver_compile(config: DriverConfig, tree: SyntaxNode,
     }
   }
 
-  config.compiled(jscode);
+  compiled(jscode);
 }
 
 function driver_interpret(config: DriverConfig, tree: SyntaxNode,
-    type_table: TypeTable)
+    type_table: TypeTable, executed: (result: string) => void)
 {
   let val = interpret(tree);
-  config.executed(pretty_value(val));
+  executed(pretty_value(val));
 }
 
-function driver_execute(config: DriverConfig, jscode: string)
+function driver_execute(config: DriverConfig, jscode: string,
+    executed: (result: string) => void)
 {
   let runtime = JS_RUNTIME + "\n";
   if (config.webgl) {
     runtime += WEBGL_RUNTIME + "\n";
   }
   let res = scope_eval(runtime + jscode);
-  config.executed(pretty_js_value(res));
+  executed(pretty_js_value(res));
 }

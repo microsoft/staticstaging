@@ -50,27 +50,30 @@ function main() {
 
     parsed: (_ => void 0),
     typed: (_ => void 0),
-
-    checked (tree: SyntaxNode, type_table: TypeTable) {
-      if (compile) {
-        driver_compile(config, tree, type_table);
-      } else {
-        driver_interpret(config, tree, type_table);
-      }
-    },
-    compiled (code: string) {
-      if (execute) {
-        driver_execute(config, code);
-      } else {
-        console.log(code);
-      }
-    },
-    executed: console.log,
   };
 
   // Read the source file and run the driver.
   read_string(fn, function (source) {
-    driver_frontend(config, source, fn);
+    driver_frontend(config, source, fn, function (tree, types) {
+      if (compile) {
+        // Compiler.
+        driver_compile(config, tree, types, function (code) {
+          if (execute) {
+            driver_execute(config, code, function (res) {
+              console.log(res);
+            });
+          } else {
+            console.log(code);
+          }
+        });
+
+      } else {
+        // Interpreter.
+        driver_interpret(config, tree, types, function (res) {
+          console.log(res);
+        });
+      }
+    });
   });
 }
 
