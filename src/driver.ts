@@ -1,6 +1,6 @@
 /// <reference path="interp.ts" />
 /// <reference path="pretty.ts" />
-/// <reference path="type.ts" />
+/// <reference path="type_elaborate.ts" />
 /// <reference path="sugar.ts" />
 /// <reference path="compile.ts" />
 /// <reference path="backend_js.ts" />

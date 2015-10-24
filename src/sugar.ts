@@ -1,6 +1,6 @@
 /// <reference path="util.ts" />
 /// <reference path="ast.ts" />
-/// <reference path="type.ts" />
+/// <reference path="type_elaborate.ts" />
 /// <reference path="visit.ts" />
 
 // Another type test for the specific kind of node we're interested in. We'll
