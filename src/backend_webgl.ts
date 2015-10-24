@@ -29,6 +29,13 @@ function get_shader(gl, vertex_source, fragment_source) {
 }
 `.trim();
 
+const WEBGL_INTRINSICS: TypeEnvFrame = {
+  vtx: new FunType([new CodeType(INT)], INT),
+  frag: new FunType([new CodeType(INT)], INT),
+  gl_Position: INT,
+  gl_Color: INT,
+};
+
 // Get a JavaScript variable name for a compiled shader program. Uses the ID
 // of the outermost (vertex) shader Prog.
 function shadersym(progid: number) {
@@ -198,15 +205,4 @@ function webgl_compile(ir: CompilerIR): string {
   out += emit_js_fun(null, [], [], body, false) + "()";
 
   return out;
-}
-
-const WEBGL_INTRINSICS: TypeEnvFrame = {
-  vtx: new FunType([new CodeType(INT)], INT),
-  frag: new FunType([new CodeType(INT)], INT),
-  gl_Position: INT,
-  gl_Color: INT,
-};
-
-function webgl_elaborate(tree: SyntaxNode): [SyntaxNode, TypeTable] {
-  return elaborate(tree, WEBGL_INTRINSICS);
 }

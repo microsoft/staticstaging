@@ -28,6 +28,22 @@ interface DriverConfig {
   log: (...msg: any[]) => void,
 }
 
+function _intrinsics(config: DriverConfig) {
+  if (config.webgl) {
+    return WEBGL_INTRINSICS;
+  } else {
+    return null;
+  }
+}
+
+function _runtime(config: DriverConfig) {
+  let runtime = JS_RUNTIME + "\n";
+  if (config.webgl) {
+    runtime += WEBGL_RUNTIME + "\n";
+  }
+  return runtime;
+}
+
 function driver_frontend(config: DriverConfig, source: string,
     filename: string,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
@@ -56,11 +72,7 @@ function driver_frontend(config: DriverConfig, source: string,
   let elaborated: SyntaxNode;
   let type_table: TypeTable;
   try {
-    if (config.webgl) {
-      [elaborated, type_table] = webgl_elaborate(tree);
-    } else {
-      [elaborated, type_table] = elaborate(tree);
-    }
+    [elaborated, type_table] = elaborate(tree, _intrinsics(config));
     let [type, _] = type_table[elaborated.id];
     config.typed(pretty_type(type));
   } catch (e) {
@@ -80,11 +92,7 @@ function driver_compile(config: DriverConfig, tree: SyntaxNode,
     type_table: TypeTable, compiled: (code: string) => void)
 {
   let ir: CompilerIR;
-  if (config.webgl) {
-    ir = semantically_analyze(tree, type_table, WEBGL_INTRINSICS);
-  } else {
-    ir = semantically_analyze(tree, type_table);
-  }
+  ir = semantically_analyze(tree, type_table, _intrinsics(config));
 
   // Log some intermediates.
   config.log('def/use', ir.defuse);
@@ -122,10 +130,6 @@ function driver_interpret(config: DriverConfig, tree: SyntaxNode,
 function driver_execute(config: DriverConfig, jscode: string,
     executed: (result: string) => void)
 {
-  let runtime = JS_RUNTIME + "\n";
-  if (config.webgl) {
-    runtime += WEBGL_RUNTIME + "\n";
-  }
-  let res = scope_eval(runtime + jscode);
+  let res = scope_eval(_runtime(config) + jscode);
   executed(pretty_js_value(res));
 }
