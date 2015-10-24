@@ -28,15 +28,15 @@ interface DriverConfig {
   log: (...msg: any[]) => void,
 }
 
-function _intrinsics(config: DriverConfig) {
+function _intrinsics(config: DriverConfig): TypeEnvFrame {
   if (config.webgl) {
     return WEBGL_INTRINSICS;
   } else {
-    return null;
+    return {};
   }
 }
 
-function _runtime(config: DriverConfig) {
+function _runtime(config: DriverConfig): string {
   let runtime = JS_RUNTIME + "\n";
   if (config.webgl) {
     runtime += WEBGL_RUNTIME + "\n";
