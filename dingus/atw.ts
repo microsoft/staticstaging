@@ -1,9 +1,4 @@
-/// <reference path="../src/interp.ts" />
-/// <reference path="../src/pretty.ts" />
-/// <reference path="../src/type.ts" />
-/// <reference path="../src/sugar.ts" />
-/// <reference path="../src/backend_js.ts" />
-/// <reference path="../src/backend_webgl.ts" />
+/// <reference path="../src/driver.ts" />
 
 declare var parser : any;
 declare function tree_canvas (
@@ -124,86 +119,53 @@ function get_name(tree: SyntaxNode): string {
 function atw_run(code: string, mode: string)
   : [string, SyntaxNode, string, string, string]
 {
-  // Parse.
-  let tree: SyntaxNode;
-  try {
-    tree = parser.parse(code);
-  } catch (e) {
-    let loc = e.location.start;
-    let err = 'parse error at '
-              + loc.line + ',' + loc.column
-              + ': ' + e.message;
-    return [err, null, null, null, null];
-  }
+  // Configure the driver to store a bunch of results.
+  let error: string = null;
+  let tree: SyntaxNode = null;
+  let type: string = null;
+  let config: DriverConfig = {
+    parser: parser,
+    webgl: mode === "webgl",
 
-  // Elaborate and log the type.
-  let elaborated : SyntaxNode;
-  let type_table : TypeTable;
-  try {
-    if (mode === "webgl") {
-      [elaborated, type_table] = webgl_elaborate(tree);
-    } else {
-      [elaborated, type_table] = elaborate(tree);
-    }
-  } catch (e) {
-    return [e, tree, null, null, null];
-  }
-  let [type, _] = type_table[elaborated.id];
-  let type_str = pretty_type(type);
+    log(...msg: any[]) {
+      console.log("LOG SOMETHING TODO");
+    },
+    error (e: string) {
+      error = e;
+    },
 
-  // Desugar.
-  let sugarfree = desugar(elaborated, type_table);
+    parsed (t: SyntaxNode) {
+      tree = t;
+    },
+    typed (t: string) {
+      type = t;
+    },
+  };
 
-  // Execute.
-  let res_str: string;
+  // Run the driver.
+  let res: string = null;
   let jscode: string = null;
-  if (mode === "interp") {
-    // Interpret.
-    let res: Value;
-    try {
-      res = interpret(sugarfree);
-    } catch (e) {
-      return ['interpreter error: ' + e, sugarfree, type_str, null, null];
-    }
-    res_str = pretty_value(res);
+  driver_frontend(config, code, null, function (tree, types) {
+    if (mode === "interp") {
+      // Interpreter.
+      driver_interpret(config, tree, types, function (r) {
+        res = r;
+      });
 
-  } else {
-    // Compile.
-    try {
-      if (mode === "webgl") {
-        let ir = semantically_analyze(sugarfree, type_table, WEBGL_INTRINSICS);
-        jscode = webgl_compile(ir);
-      } else {
-        let ir = semantically_analyze(sugarfree, type_table);
-        jscode = jscompile(ir);
-      }
-    } catch (e) {
-      return ['compile error: ' + e, sugarfree, type_str, null, null];
-    }
-
-    // Execute.
-    let runtime = JS_RUNTIME + "\n";
-    if (mode === "webgl") {
-      runtime += WEBGL_RUNTIME + "\n";
-    }
-
-    if (mode === "webgl") {
-      // TODO
-      res_str = "";
     } else {
-      let res = scope_eval(runtime + jscode);
-      res_str = pretty_js_value(res);
+      // Compiler.
+      driver_compile(config, tree, types, function (code) {
+        jscode = code;
+        if (mode !== "webgl") {
+          driver_execute(config, code, function (r) {
+            res = r;
+          });
+        }
+      });
     }
-  }
+  });
 
-  // Show the result value.
-  return [
-    null,
-    sugarfree,
-    type_str,
-    jscode,
-    res_str,
-  ];
+  return [error, tree, type, jscode, res];
 }
 
 function show(text: string, el: HTMLElement) {
