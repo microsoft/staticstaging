@@ -1,8 +1,9 @@
 var x = 5;
 vtx s<
   var y = %[x];
-  gl_Position = 5 + y;
+  gl_Position = gl_Position;
   frag s<
-    gl_FragColor = 9 * %[y]
+    gl_FragColor = gl_FragColor;
+    1
   >
 >
