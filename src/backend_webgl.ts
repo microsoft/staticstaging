@@ -29,7 +29,7 @@ function get_shader(gl, vertex_source, fragment_source) {
 }
 `.trim();
 
-const WEBGL_INTRINSICS: TypeEnvFrame = {
+const WEBGL_INTRINSICS: TypeMap = {
   vtx: new FunType([new CodeType(INT)], INT),
   frag: new FunType([new CodeType(INT)], INT),
   gl_Position: INT,

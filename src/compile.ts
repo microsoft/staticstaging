@@ -562,7 +562,7 @@ interface CompilerIR {
 // This is the semantic analysis that produces our mid-level IR given an
 // elaborated, desugared AST.
 function semantically_analyze(tree: SyntaxNode,
-  type_table: TypeTable, intrinsics: TypeEnvFrame = {}): CompilerIR
+  type_table: TypeTable, intrinsics: TypeMap = {}): CompilerIR
 {
   // Give IDs to the intrinsics and add them to the type table.
   let intrinsics_map: NameMap = {};

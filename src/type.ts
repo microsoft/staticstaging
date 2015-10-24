@@ -14,14 +14,8 @@ class PrimitiveType {
   // https://github.com/Microsoft/TypeScript/issues/202
   _brand_PrimitiveType: void;
 };
-const INT = new PrimitiveType("Int");
-const FLOAT = new PrimitiveType("Float");
-const NAMED_TYPES: { [name: string]: Type } = {
-  "Int": INT,
-  "Float": FLOAT,
-};
 
-// But function types are more complicated. Really wishing for ADTs here.
+// Function types are more complicated. Really wishing for ADTs here.
 class FunType {
   constructor(public params: Type[], public ret: Type) {};
   _nominal_FunType: void;
@@ -33,10 +27,19 @@ class CodeType {
   _nominal_CodeType: void;
 };
 
-// A single frame in a type environment holds all the bindings for one stage.
-interface TypeEnvFrame {
-  [key: string]: Type;
+// Type maps are used all over the place: most urgently, as "frames" in the
+// type checker's environment.
+interface TypeMap {
+  [name: string]: Type;
 }
+
+// The built-in primitive types.
+const INT = new PrimitiveType("Int");
+const FLOAT = new PrimitiveType("Float");
+const NAMED_TYPES: TypeMap = {
+  "Int": INT,
+  "Float": FLOAT,
+};
 
 // An environment consists of:
 // - A stack stack with the current stage at the front of the list. Prior
@@ -44,7 +47,7 @@ interface TypeEnvFrame {
 //   environment frame; subsequent ones are "auto-persists".
 // - A single frame for "extern" values, which are always available without
 //   any persisting.
-type TypeEnv = [TypeEnvFrame[], TypeEnvFrame];
+type TypeEnv = [TypeMap[], TypeMap];
 
 
 // The type checker.
@@ -144,7 +147,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
     visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
       // Push an empty stack frame.
       let [stack, externs] = env;
-      let inner_env: TypeEnv = [cons(<TypeEnvFrame> {}, stack), externs];
+      let inner_env: TypeEnv = [cons(<TypeMap> {}, stack), externs];
 
       // Check inside the quote using the empty frame.
       let [t, e] = check(tree.expr, inner_env);
@@ -391,7 +394,7 @@ function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
 // maps the IDs to type information.
 // You can provide an initial type mapping for externs (for implementing
 // intrinsics).
-function elaborate(tree: SyntaxNode, externs: TypeEnvFrame = {}):
+function elaborate(tree: SyntaxNode, externs: TypeMap = {}):
   [SyntaxNode, TypeTable]
 {
   let table : TypeTable = [];

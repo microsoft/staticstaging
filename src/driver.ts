@@ -28,7 +28,7 @@ interface DriverConfig {
   log: (...msg: any[]) => void,
 }
 
-function _intrinsics(config: DriverConfig): TypeEnvFrame {
+function _intrinsics(config: DriverConfig): TypeMap {
   if (config.webgl) {
     return WEBGL_INTRINSICS;
   } else {
