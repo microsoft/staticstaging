@@ -3,6 +3,6 @@ vtx s<
   var y = %[x];
   gl_Position = 5 + y;
   frag s<
-    gl_Color = 9 * %[y]
+    gl_FragColor = 9 * %[y]
   >
 >

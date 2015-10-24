@@ -2,6 +2,7 @@
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
 /// <reference path="type.ts" />
+/// <reference path="type_elaborate.ts" />
 
 // The main output of def/use analysis: For every lookup and assignment node
 // ID, a defining node ID and a flag indicating whether the variable is bound

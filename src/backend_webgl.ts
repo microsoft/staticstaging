@@ -29,11 +29,11 @@ function get_shader(gl, vertex_source, fragment_source) {
 }
 `.trim();
 
-const WEBGL_INTRINSICS: TypeMap = {
+const GL_INTRINSICS: TypeMap = {
   vtx: new FunType([new CodeType(INT)], INT),
   frag: new FunType([new CodeType(INT)], INT),
-  gl_Position: INT,
-  gl_Color: INT,
+  gl_Position: FLOAT4,
+  gl_FragColor: FLOAT4,
 };
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID

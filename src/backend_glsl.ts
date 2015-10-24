@@ -2,6 +2,26 @@
 /// <reference path="util.ts" />
 /// <reference path="compile.ts" />
 /// <reference path="backends.ts" />
+/// <reference path="type.ts" />
+
+// Special GLSL matrix and vector types.
+const FLOAT3 = new PrimitiveType("Float3");
+const FLOAT4 = new PrimitiveType("Float4");
+const FLOAT3X3 = new PrimitiveType("Float3x3");
+const FLOAT4X4 = new PrimitiveType("Float4x4");
+const GL_TYPES: TypeMap = {
+  "Float3": FLOAT3,
+  "Float4": FLOAT4,
+  "Vec3": FLOAT3,  // Convenient OpenGL-esque names.
+  "Vec4": FLOAT4,
+  "Float3x3": FLOAT3X3,
+  "Float4x4": FLOAT4X4,
+  "Mat3": FLOAT3,
+  "Mat4": FLOAT4,
+  "INT3": new PrimitiveType("Int3"),
+  "INT4": new PrimitiveType("Int4"),
+};
+
 
 // Checking for our magic `vtx` and `frag` intrinsics, which indicate the
 // structure of shader programs.

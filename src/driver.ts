@@ -30,7 +30,7 @@ interface DriverConfig {
 
 function _intrinsics(config: DriverConfig): TypeMap {
   if (config.webgl) {
-    return WEBGL_INTRINSICS;
+    return GL_INTRINSICS;
   } else {
     return {};
   }
@@ -42,6 +42,14 @@ function _runtime(config: DriverConfig): string {
     runtime += WEBGL_RUNTIME + "\n";
   }
   return runtime;
+}
+
+function _types(config: DriverConfig): TypeMap {
+  if (config.webgl) {
+    return assign({}, BUILTIN_TYPES, GL_TYPES);
+  } else {
+    return BUILTIN_TYPES;
+  }
 }
 
 function driver_frontend(config: DriverConfig, source: string,
@@ -72,7 +80,8 @@ function driver_frontend(config: DriverConfig, source: string,
   let elaborated: SyntaxNode;
   let type_table: TypeTable;
   try {
-    [elaborated, type_table] = elaborate(tree, _intrinsics(config));
+    [elaborated, type_table] = elaborate(tree, _intrinsics(config),
+                                         _types(config));
     let [type, _] = type_table[elaborated.id];
     config.typed(pretty_type(type));
   } catch (e) {
