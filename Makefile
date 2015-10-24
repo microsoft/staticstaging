@@ -1,6 +1,7 @@
 SRCDIR := src
 SOURCES := interp.ts ast.ts visit.ts pretty.ts type.ts util.ts sugar.ts \
-	compile.ts backends.ts backend_js.ts backend_glsl.ts backend_webgl.ts
+	compile.ts backends.ts backend_js.ts backend_glsl.ts backend_webgl.ts \
+	driver.ts
 TESTS_BASIC := print comment whitespace seq let add quote escape nestedrun \
 	nested func call quotefunc closure persist nestedpersist share sharemulti \
 	quotelet splicepersist paren parentype higherorder codearg \
