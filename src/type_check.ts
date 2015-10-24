@@ -10,7 +10,9 @@
 //   environment frame; subsequent ones are "auto-persists".
 // - A single frame for "extern" values, which are always available without
 //   any persisting.
-type TypeEnv = [TypeMap[], TypeMap];
+// - A map for *named types*. Unlike the other maps, each entry here
+//   represents a *type*, not a variable.
+type TypeEnv = [TypeMap[], TypeMap, TypeMap];
 
 
 // The type checker.
@@ -18,8 +20,7 @@ type TypeEnv = [TypeMap[], TypeMap];
 // fixed point to get an ordinary type checker function (of type `TypeCheck`,
 // below).
 
-type TypeCheck = (tree: SyntaxNode, env: TypeEnv)
-                 => [Type, TypeEnv];
+type TypeCheck = (tree: SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
 let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
     visit_literal(tree: LiteralNode, env: TypeEnv): [Type, TypeEnv] {
@@ -42,23 +43,23 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let [t, e] = check(tree.expr, env);
 
       // Insert the new type into the front of the map stack.
-      let [stack, externs] = e;
+      let [stack, externs, named] = e;
       let head = overlay(hd(stack)); // Update type in an overlay environment.
       head[tree.ident] = t;
-      let e2: TypeEnv = [cons(head, tl(stack)), externs];
+      let e2: TypeEnv = [cons(head, tl(stack)), externs, named];
 
       return [t, e2];
     },
 
     visit_assign(tree: AssignNode, env: TypeEnv): [Type, TypeEnv] {
-      let [stack, externs] = env;
+      let [stack, externs, _] = env;
 
       // Check the value expression.
       let [expr_t, e] = check(tree.expr, env);
 
       // Check that the new value is compatible with the variable's type.
       // Try a normal variable first.
-      let [var_t, _] = stack_lookup(stack, tree.ident);
+      let [var_t, __] = stack_lookup(stack, tree.ident);
       if (var_t === undefined) {
         var_t = externs[tree.ident];
         if (var_t === undefined) {
@@ -76,10 +77,10 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
-      let [stack, externs] = env;
+      let [stack, externs, _] = env;
 
       // Try a normal variable first.
-      let [t, _] = stack_lookup(stack, tree.ident);
+      let [t, __] = stack_lookup(stack, tree.ident);
       if (t !== undefined) {
         return [t, env];
       }
@@ -109,8 +110,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
       // Push an empty stack frame.
-      let [stack, externs] = env;
-      let inner_env: TypeEnv = [cons(<TypeMap> {}, stack), externs];
+      let [stack, externs, named] = env;
+      let inner_env: TypeEnv = [cons(<TypeMap> {}, stack), externs, named];
 
       // Check inside the quote using the empty frame.
       let [t, e] = check(tree.expr, inner_env);
@@ -129,8 +130,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
       // Pop the current (quotation) environment off of the environment stack
       // before checking the escape.
-      let [stack, externs] = env;
-      let inner_env: TypeEnv = [tl(stack), externs];
+      let [stack, externs, named] = env;
+      let inner_env: TypeEnv = [tl(stack), externs, named];
       let [t, e] = check(tree.expr, inner_env);
 
       if (tree.kind === "splice") {
@@ -162,19 +163,20 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_fun(tree: FunNode, env: TypeEnv): [Type, TypeEnv] {
+      let [stack, externs, named] = env;
+
       // Get the list of declared parameter types and accumulate them in an
       // environment based on the top of the environment stack.
       let param_types : Type[] = [];
-      let [stack, externs] = env;
       let body_env_hd = overlay(hd(stack));
       for (let param of tree.params) {
-        let ptype = get_type(param.type);
+        let ptype = get_type(param.type, named);
         param_types.push(ptype);
         body_env_hd[param.name] = ptype;
       }
 
       // Check the body and get the return type.
-      let body_env: TypeEnv = [cons(body_env_hd, tl(stack)), externs];
+      let body_env: TypeEnv = [cons(body_env_hd, tl(stack)), externs, named];
       let [ret_type, _] = check(tree.body, body_env);
 
       // Construct the function type.
@@ -214,13 +216,13 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_extern(tree: ExternNode, env: TypeEnv): [Type, TypeEnv] {
-      let [stack, externs] = env;
+      let [stack, externs, named] = env;
 
       // Add the type to the extern map.
       let new_externs = overlay(externs);
-      let type = get_type(tree.type);
+      let type = get_type(tree.type, named);
       externs[tree.name] = type;
-      let e: TypeEnv = [stack, new_externs];
+      let e: TypeEnv = [stack, new_externs, named];
 
       return [type, e];
     },
@@ -290,6 +292,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     return new CodeType(inner);
   },
 };
-function get_type(ttree: TypeNode, types=BUILTIN_TYPES): Type {
+
+function get_type(ttree: TypeNode, types: TypeMap): Type {
   return type_ast_visit(get_type_rules, ttree, types);
 }

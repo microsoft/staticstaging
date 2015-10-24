@@ -53,7 +53,8 @@ function stamp <T> (o: T, start: number = 0): T & { id: number } {
 // initial environment and a type table for other nodes; this will assign
 // fresh IDs to the subtree and *append* to the type table.
 function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
-                           type_table: TypeTable): SyntaxNode {
+  type_table: TypeTable): SyntaxNode
+{
   let stamped_tree = stamp(tree, type_table.length);
   let _elaborate : TypeCheck = fix(compose(elaborate_mixin(type_table),
                                            gen_check));
@@ -62,13 +63,14 @@ function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
 }
 
 // Type elaboration. Create a copy of the AST with ID stamps and a table that
-// maps the IDs to type information.
-// You can provide an initial type mapping for externs (for implementing
-// intrinsics).
-function elaborate(tree: SyntaxNode, externs: TypeMap = {}):
-  [SyntaxNode, TypeTable]
+// maps the IDs to type information. You can optionally provide:
+// - An initial type mapping for externs (for implementing intrinsics).
+// - The set of named types.
+function elaborate(tree: SyntaxNode, externs: TypeMap = {},
+  named_types: TypeMap = BUILTIN_TYPES): [SyntaxNode, TypeTable]
 {
   let table : TypeTable = [];
-  let elaborated = elaborate_subtree(tree, [[{}], externs], table);
+  let env: TypeEnv = [[{}], externs, named_types];
+  let elaborated = elaborate_subtree(tree, env, table);
   return [elaborated, table];
 }
