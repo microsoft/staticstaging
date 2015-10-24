@@ -1,0 +1,3 @@
+extern a: Vec3;
+extern b: Vec4;
+b = vec4 a 1.0
