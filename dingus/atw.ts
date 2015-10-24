@@ -127,7 +127,9 @@ function atw_run(code: string, mode: string)
     webgl: mode === "webgl",
 
     log(...msg: any[]) {
-      console.log(msg);
+      // Work around a TypeScript limitation.
+      // https://github.com/Microsoft/TypeScript/issues/4759
+      (console.log as any)(...msg);
     },
     error (e: string) {
       error = e;
