@@ -71,19 +71,22 @@ function pretty(tree: SyntaxNode): string {
 
 // Format a type as a string.
 function pretty_type(t: Type): string {
-  let s : string;
   if (t instanceof PrimitiveType) {
-    s = t.name;
+    return t.name;
   } else if (t instanceof FunType) {
-    s = "";
+    let s = "";
     for (let pt of t.params) {
       s += pretty_type(pt) + " ";
     }
     s += "-> " + pretty_type(t.ret);
+    return s;
   } else if (t instanceof CodeType) {
-    s = "<" + pretty_type(t.inner) + ">";
+    return "<" + pretty_type(t.inner) + ">";
+  } else if (t === ANY) {
+    return "any";
+  } else if (t === VOID) {
+    return "void";
   } else {
     throw "error: unknown type kind";
   }
-  return s;
 }

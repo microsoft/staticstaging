@@ -1,5 +1,5 @@
 // The kinds of types.
-type Type = PrimitiveType | FunType | CodeType | AnyType;
+type Type = PrimitiveType | FunType | CodeType | AnyType | VoidType;
 
 // Primitive types are singular instances.
 class PrimitiveType {
@@ -10,10 +10,15 @@ class PrimitiveType {
   _brand_PrimitiveType: void;
 };
 
+// Simple top and bottom types.
 class AnyType {
   _brand_AnyType: void;
 };
+class VoidType {
+  _brand_AnyType: void;
+};
 const ANY = new AnyType();
+const VOID = new VoidType();
 
 // Function types are more complicated. Really wishing for ADTs here.
 class FunType {

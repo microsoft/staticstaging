@@ -30,8 +30,8 @@ function get_shader(gl, vertex_source, fragment_source) {
 `.trim();
 
 const GL_INTRINSICS: TypeMap = {
-  vtx: new FunType([new CodeType(ANY)], INT),
-  frag: new FunType([new CodeType(ANY)], INT),
+  vtx: new FunType([new CodeType(ANY)], VOID),
+  frag: new FunType([new CodeType(ANY)], VOID),
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new FunType([FLOAT3, FLOAT], FLOAT4),
