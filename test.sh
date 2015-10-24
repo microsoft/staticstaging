@@ -7,7 +7,7 @@ for arg; do
 done
 
 name=`basename $fn .atw`
-output=$(node atw.js $args $fn)
+output=$(node atw.js $args $fn 2>&1)
 expected=$(sed -n 's/^# -> \(.*\)/\1/p' $fn)
 
 if [ "$expected" = "type error" ] ; then
