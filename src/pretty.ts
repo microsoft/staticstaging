@@ -70,25 +70,35 @@ function pretty(tree: SyntaxNode): string {
 }
 
 // Format a type as a string.
-function pretty_type(t: Type): string {
-  if (t instanceof PrimitiveType) {
-    return t.name;
-  } else if (t instanceof FunType) {
+let pretty_type_rules: TypeVisit<void, string> = {
+  visit_primitive(type: PrimitiveType, param: void): string {
+    return type.name;
+  },
+  visit_fun(type: FunType, param: void): string {
     let s = "";
-    for (let pt of t.params) {
+    for (let pt of type.params) {
       s += pretty_type(pt) + " ";
     }
-    s += "-> " + pretty_type(t.ret);
+    s += "-> " + pretty_type(type.ret);
     return s;
-  } else if (t instanceof CodeType) {
-    return "<" + pretty_type(t.inner) + ">";
-  } else if (t === ANY) {
+  },
+  visit_code(type: CodeType, param: void): string {
+    return "<" + pretty_type(type.inner) + ">";
+  },
+  visit_any(type: AnyType, param: void): string {
     return "any";
-  } else if (t === VOID) {
+  },
+  visit_void(type: VoidType, param: void): string {
     return "void";
-  } else if (t instanceof InstanceType) {
-    return pretty_type(t.arg) + " " + t.cons.name;
-  } else {
-    throw "error: unknown type kind";
-  }
+  },
+  visit_constructor(type: ConstructorType, param: void): string {
+    return type.name;
+  },
+  visit_instance(type: InstanceType, param: void): string {
+    return pretty_type(type.arg) + " " + type.cons.name;
+  },
+}
+
+function pretty_type(type: Type) {
+  return type_visit(pretty_type_rules, type, null);
 }

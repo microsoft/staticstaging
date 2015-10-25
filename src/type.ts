@@ -35,7 +35,7 @@ class CodeType extends Type {
 
 // Type constructors: the basic element of parametricity.
 class ConstructorType extends Type {
-  constructor(public name: String) { super() };
+  constructor(public name: string) { super() };
   instance(arg: Type) {
     return new InstanceType(this, arg);
   };
@@ -52,9 +52,12 @@ class QuantifiedType extends Type {
   _brand_QuantifiedType: void;
 }
 class VariableType extends Type {
-  constructor(public name: String) { super() };
+  constructor(public name: string) { super() };
   _brand_VariableType: void;
 }
+
+
+// Type-related data structures and built-in types.
 
 // Type maps are used all over the place: most urgently, as "frames" in the
 // type checker's environment.
@@ -69,3 +72,37 @@ const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
 };
+
+
+// Visiting type trees.
+
+interface TypeVisit<P, R> {
+  visit_primitive(type: PrimitiveType, param: P): R;
+  visit_fun(type: FunType, param: P): R;
+  visit_code(type: CodeType, param: P): R;
+  visit_any(type: AnyType, param: P): R;
+  visit_void(type: VoidType, param: P): R;
+  visit_constructor(type: ConstructorType, param: P): R;
+  visit_instance(type: InstanceType, param: P): R;
+}
+
+function type_visit<P, R>(visitor: TypeVisit<P, R>,
+                          type: Type, param: P): R {
+  if (type instanceof PrimitiveType) {
+    return visitor.visit_primitive(type, param);
+  } else if (type instanceof FunType) {
+    return visitor.visit_fun(type, param);
+  } else if (type instanceof CodeType) {
+    return visitor.visit_code(type, param);
+  } else if (type instanceof AnyType) {
+    return visitor.visit_any(type, param);
+  } else if (type instanceof VoidType) {
+    return visitor.visit_void(type, param);
+  } else if (type instanceof ConstructorType) {
+    return visitor.visit_constructor(type, param);
+  } else if (type instanceof InstanceType) {
+    return visitor.visit_instance(type, param);
+  } else {
+    throw "error: unknown type kind " + typeof(type);
+  }
+}
