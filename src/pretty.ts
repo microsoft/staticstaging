@@ -86,6 +86,8 @@ function pretty_type(t: Type): string {
     return "any";
   } else if (t === VOID) {
     return "void";
+  } else if (t instanceof InstanceType) {
+    return pretty_type(t.arg) + " " + t.cons.name;
   } else {
     throw "error: unknown type kind";
   }

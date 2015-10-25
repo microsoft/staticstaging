@@ -20,6 +20,7 @@ const GL_TYPES: TypeMap = {
   "Mat4": FLOAT4,
   "INT3": new PrimitiveType("Int3"),
   "INT4": new PrimitiveType("Int4"),
+  "Array": new ParameterizedType("Array"),
 };
 
 

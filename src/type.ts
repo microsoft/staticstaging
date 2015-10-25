@@ -55,5 +55,5 @@ class ParameterizedType {
   };
 }
 class InstanceType {
-  constructor(public cons: ParameterizedType, arg: Type) {};
+  constructor(public cons: ParameterizedType, public arg: Type) {};
 }
