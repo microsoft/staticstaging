@@ -39,9 +39,21 @@ class ConstructorType extends Type {
   instance(arg: Type) {
     return new InstanceType(this, arg);
   };
+  _brand_ConstructorType: void;
 }
 class InstanceType extends Type {
   constructor(public cons: ConstructorType, public arg: Type) { super() };
+  _brand_InstanceType: void;
+}
+
+// Slightly more general parametricity with a universal quantifier.
+class QuantifiedType extends Type {
+  constructor(public variable: VariableType, public arg: Type) { super() };
+  _brand_QuantifiedType: void;
+}
+class VariableType extends Type {
+  constructor(public name: String) { super() };
+  _brand_VariableType: void;
 }
 
 // Type maps are used all over the place: most urgently, as "frames" in the
