@@ -91,7 +91,7 @@ Assign "assignment"
 // Type syntax.
 
 Type "type"
-  = FunType / TermType
+  = FunType / InstanceType / TermType
 
 TermType
   = PrimitiveType / CodeType / ParenType
@@ -99,6 +99,10 @@ TermType
 PrimitiveType "primitive type"
   = i:ident
   { return {tag: "type_primitive", name: i}; }
+
+InstanceType "parameterized type instance"
+  = t:TermType _ i:ident
+  { return {tag: "type_instance", name: i, arg: t}; }
 
 ParenType
   = paren_open _ t:Type _ paren_close

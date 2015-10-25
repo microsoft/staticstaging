@@ -77,6 +77,11 @@ interface PrimitiveTypeNode extends TypeNode {
   name: string;
 }
 
+interface InstanceTypeNode extends TypeNode {
+  name: string;
+  arg: TypeNode;
+}
+
 interface FunTypeNode extends TypeNode {
   params: TypeNode[];
   ret: TypeNode;

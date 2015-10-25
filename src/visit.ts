@@ -198,6 +198,7 @@ interface TypeASTVisit<P, R> {
   visit_primitive(tree: PrimitiveTypeNode, param: P): R;
   visit_fun(tree: FunTypeNode, param: P): R;
   visit_code(tree: CodeTypeNode, param: P): R;
+  visit_instance(tree: InstanceTypeNode, param: P): R;
 }
 
 // Tag-based dispatch to the type visitor visit functions.
@@ -210,6 +211,8 @@ function type_ast_visit<P, R>(visitor: TypeASTVisit<P, R>,
       return visitor.visit_fun(<FunTypeNode> tree, param);
     case "type_code":
       return visitor.visit_code(<CodeTypeNode> tree, param);
+    case "type_instance":
+      return visitor.visit_instance(<InstanceTypeNode> tree, param);
 
     default:
       throw "error: unknown type syntax node " + tree.tag;

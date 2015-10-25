@@ -45,3 +45,9 @@ const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
 };
+
+// A parameterized type is just a type-level function.
+type ParameterizedType = (t: Type) => Type;
+type TypeConstructorMap = {
+  [name: string]: ParameterizedType;
+};
