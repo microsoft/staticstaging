@@ -274,7 +274,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_primitive(tree: PrimitiveTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
-      if (t instanceof ParameterizedType) {
+      if (t instanceof ConstructorType) {
         throw "type error: " + tree.name + " needs a parameter";
       } else {
         return t;
@@ -302,7 +302,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_instance(tree: InstanceTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
-      if (t instanceof ParameterizedType) {
+      if (t instanceof ConstructorType) {
         let arg = get_type(tree.arg, types);
         return t.instance(arg);
       } else {

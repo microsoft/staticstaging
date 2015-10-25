@@ -33,15 +33,15 @@ class CodeType extends Type {
   _brand_CodeType: void;
 };
 
-// A parameterized type is just a type-level function.
-class ParameterizedType extends Type {
+// Type constructors: the basic element of parametricity.
+class ConstructorType extends Type {
   constructor(public name: String) { super() };
   instance(arg: Type) {
     return new InstanceType(this, arg);
   };
 }
 class InstanceType extends Type {
-  constructor(public cons: ParameterizedType, public arg: Type) { super() };
+  constructor(public cons: ConstructorType, public arg: Type) { super() };
 }
 
 // Type maps are used all over the place: most urgently, as "frames" in the
