@@ -1,5 +1,6 @@
 // The kinds of types.
-type Type = PrimitiveType | FunType | CodeType | AnyType | VoidType;
+type Type = PrimitiveType | FunType | CodeType | AnyType | VoidType |
+  ParameterizedType | InstanceType;
 
 // Primitive types are singular instances.
 class PrimitiveType {
@@ -47,7 +48,12 @@ const BUILTIN_TYPES: TypeMap = {
 };
 
 // A parameterized type is just a type-level function.
-type ParameterizedType = (t: Type) => Type;
-type TypeConstructorMap = {
-  [name: string]: ParameterizedType;
-};
+class ParameterizedType {
+  constructor(public name: String) {};
+  instance(arg: Type) {
+    return new InstanceType(this, arg);
+  };
+}
+class InstanceType {
+  constructor(public cons: ParameterizedType, arg: Type) {};
+}

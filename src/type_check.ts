@@ -170,7 +170,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let param_types : Type[] = [];
       let body_env_hd = overlay(hd(stack));
       for (let param of tree.params) {
-        let ptype = get_type(param.type, named, {});
+        let ptype = get_type(param.type, named);
         param_types.push(ptype);
         body_env_hd[param.name] = ptype;
       }
@@ -220,7 +220,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
       // Add the type to the extern map.
       let new_externs = overlay(externs);
-      let type = get_type(tree.type, named, {});
+      let type = get_type(tree.type, named);
       externs[tree.name] = type;
       let e: TypeEnv = [stack, new_externs, named];
 
@@ -270,49 +270,50 @@ function compatible(ltype: Type, rtype: Type): boolean {
 }
 
 // Get the Type denoted by the type syntax tree.
-let get_type_rules: TypeASTVisit<[TypeMap, TypeConstructorMap], Type> = {
-  visit_primitive(tree: PrimitiveTypeNode,
-      [types, cons]: [TypeMap, TypeConstructorMap])
-  {
+let get_type_rules: TypeASTVisit<TypeMap, Type> = {
+  visit_primitive(tree: PrimitiveTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
-      return t;
+      if (t instanceof ParameterizedType) {
+        throw "type error: " + tree.name + " needs a parameter";
+      } else {
+        return t;
+      }
     } else {
       throw "type error: unknown primitive type " + tree.name;
     }
   },
 
-  visit_fun(tree: FunTypeNode, [types, cons]: [TypeMap, TypeConstructorMap])
-  {
+  visit_fun(tree: FunTypeNode, types: TypeMap) {
     let params: Type[] = [];
     for (let param_node of tree.params) {
-      params.push(get_type(param_node, types, cons));
+      params.push(get_type(param_node, types));
     }
-    let ret = get_type(tree.ret, types, cons);
+    let ret = get_type(tree.ret, types);
 
     return new FunType(params, ret);
   },
 
-  visit_code(tree: CodeTypeNode, [types, cons]: [TypeMap, TypeConstructorMap])
-  {
-    let inner = get_type(tree.inner, types, cons);
+  visit_code(tree: CodeTypeNode, types: TypeMap) {
+    let inner = get_type(tree.inner, types);
     return new CodeType(inner);
   },
 
-  visit_instance(tree: InstanceTypeNode,
-      [types, cons]: [TypeMap, TypeConstructorMap])
-  {
-    let tc = cons[tree.name];
-    if (tc !== undefined) {
-      let arg = get_type(tree.arg, types, cons);
-      return tc(arg);
+  visit_instance(tree: InstanceTypeNode, types: TypeMap) {
+    let t = types[tree.name];
+    if (t !== undefined) {
+      if (t instanceof ParameterizedType) {
+        let arg = get_type(tree.arg, types);
+        return t.instance(arg);
+      } else {
+        throw "type error: " + tree.name + " is not parameterized";
+      }
     } else {
       throw "type error: unknown type constructor " + tree.name;
     }
   },
 };
 
-function get_type(ttree: TypeNode, types: TypeMap,
-    cons: TypeConstructorMap): Type {
-  return type_ast_visit(get_type_rules, ttree, [types, cons]);
+function get_type(ttree: TypeNode, types: TypeMap): Type {
+  return type_ast_visit(get_type_rules, ttree, types);
 }
