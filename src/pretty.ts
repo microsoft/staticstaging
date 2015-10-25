@@ -97,6 +97,12 @@ let pretty_type_rules: TypeVisit<void, string> = {
   visit_instance(type: InstanceType, param: void): string {
     return pretty_type(type.arg) + " " + type.cons.name;
   },
+  visit_quantified(type: QuantifiedType, param: void): string {
+    return pretty_type(type.inner);
+  },
+  visit_variable(type: VariableType, param: void): string {
+    return type.name;
+  },
 }
 
 function pretty_type(type: Type) {

@@ -48,7 +48,7 @@ class InstanceType extends Type {
 
 // Slightly more general parametricity with a universal quantifier.
 class QuantifiedType extends Type {
-  constructor(public variable: VariableType, public arg: Type) { super() };
+  constructor(public variable: VariableType, public inner: Type) { super() };
   _brand_QuantifiedType: void;
 }
 class VariableType extends Type {
@@ -84,6 +84,8 @@ interface TypeVisit<P, R> {
   visit_void(type: VoidType, param: P): R;
   visit_constructor(type: ConstructorType, param: P): R;
   visit_instance(type: InstanceType, param: P): R;
+  visit_quantified(type: QuantifiedType, param: P): R;
+  visit_variable(type: VariableType, param: P): R;
 }
 
 function type_visit<P, R>(visitor: TypeVisit<P, R>,
@@ -102,6 +104,10 @@ function type_visit<P, R>(visitor: TypeVisit<P, R>,
     return visitor.visit_constructor(type, param);
   } else if (type instanceof InstanceType) {
     return visitor.visit_instance(type, param);
+  } else if (type instanceof QuantifiedType) {
+    return visitor.visit_quantified(type, param);
+  } else if (type instanceof VariableType) {
+    return visitor.visit_variable(type, param);
   } else {
     throw "error: unknown type kind " + typeof(type);
   }
