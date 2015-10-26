@@ -79,7 +79,8 @@ dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 	cd dingus ; npm run-script build
 
 .PHONY: deploy
-RSYNCARGS := --compress --recursive --checksum --delete -e ssh
+RSYNCARGS := --compress --recursive --checksum --delete -e ssh \
+	--exclude node_modules --exclude package.json --exclude gl.js
 DEST := dh:domains/adriansampson.net/atw
 deploy: dingus
 	rsync $(RSYNCARGS) dingus/ $(DEST)
