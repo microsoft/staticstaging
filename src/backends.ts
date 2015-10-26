@@ -61,16 +61,13 @@ function indent(s: string, first=false, spaces=2): string {
 // A helper for emitting sequence expressions without emitting unneeded code.
 function emit_seq(seq: SeqNode, sep: string,
     emit: (_:ExpressionNode) => string,
-    pred: (_:ExpressionNode) => boolean,
-    rhs_prefix: string = null): string {
+    pred: (_:ExpressionNode) => boolean = useful_pred): string
+{
   let e1 = pred(seq.lhs);
   let out = "";
   if (pred(seq.lhs)) {
     out += emit(seq.lhs);
     out += sep;
-  }
-  if (rhs_prefix) {
-    out += rhs_prefix;
   }
   out += emit(seq.rhs);
   return out;
@@ -125,12 +122,19 @@ function flatten_seq(tree: SyntaxNode): ExpressionNode[] {
   return ast_visit(rules, tree, null);
 };
 
+// A simple predicate to decide whether an expression is worth emitting,
+// given a choice. This is used when emitting sequences to avoid generating
+// worthless code.
+function useful_pred(tree: ExpressionNode): boolean {
+  return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
+}
+
 // Compile a top-level expression for the body of a function. The emitted code
 // returns value of the function. The optional `pred` function can decide
 // whether to emit (non-terminal) expressions.
 function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
-    pred: (_:ExpressionNode) => boolean = (_ => true),
-    sep=";", ret="return "): string
+    ret="return ", sep=";",
+    pred: (_:ExpressionNode) => boolean = useful_pred): string
 {
   let exprs = flatten_seq(tree);
   let statements: string[] = [];

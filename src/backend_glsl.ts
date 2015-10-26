@@ -137,9 +137,7 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_seq(tree: SeqNode, param: void): string {
-      return emit_seq(tree, ",\n", fself,
-        e => e.tag !== "extern" && e.tag !== "lookup"
-      );
+      return emit_seq(tree, ",\n", fself);
     },
 
     visit_let(tree: LetNode, param: void): string {
@@ -311,7 +309,7 @@ function glsl_compile_prog(compile: GLSLCompile,
   }
 
   // Wrap the code in a "main" function.
-  let code = compile(prog.body);
+  let code = emit_body(compile, prog.body, "");
   let main = "void main() {\n" + indent(code, true) + "\n}";
 
   let out = "";
