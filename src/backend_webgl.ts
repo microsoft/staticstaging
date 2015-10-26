@@ -39,6 +39,20 @@ const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT, FLOAT], FLOAT),
   new FunType([FLOAT3, FLOAT3], FLOAT3),
   new FunType([FLOAT4, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+]);
+const _GL_MUL_TYPE = new OverloadedType([
+  new FunType([INT, INT], INT),
+  new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT3, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT4], FLOAT4),
+  new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
+  new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Multiplication gets special type cases for matrix-vector multiply.
+  new FunType([FLOAT3X3, FLOAT3], FLOAT3),
+  new FunType([FLOAT4X4, FLOAT4], FLOAT4),
 ]);
 const GL_INTRINSICS: TypeMap = {
   vtx: new FunType([new CodeType(ANY)], VOID),
@@ -56,7 +70,7 @@ const GL_INTRINSICS: TypeMap = {
   // Binary operators.
   '+': _GL_BINARY_TYPE,
   '-': _GL_BINARY_TYPE,
-  '*': _GL_BINARY_TYPE,
+  '*': _GL_MUL_TYPE,
   '/': _GL_BINARY_TYPE,
 };
 
