@@ -1,1 +1,3 @@
-extern a: Int Array
+extern a: Int Array;
+extern b: Int;
+b = cur a

@@ -9,6 +9,7 @@ const FLOAT3 = new PrimitiveType("Float3");
 const FLOAT4 = new PrimitiveType("Float4");
 const FLOAT3X3 = new PrimitiveType("Float3x3");
 const FLOAT4X4 = new PrimitiveType("Float4x4");
+const ARRAY = new ConstructorType("Array");
 const GL_TYPES: TypeMap = {
   "Float3": FLOAT3,
   "Float4": FLOAT4,
@@ -20,7 +21,7 @@ const GL_TYPES: TypeMap = {
   "Mat4": FLOAT4,
   "INT3": new PrimitiveType("Int3"),
   "INT4": new PrimitiveType("Int4"),
-  "Array": new ConstructorType("Array"),
+  "Array": ARRAY,
 };
 
 

@@ -29,12 +29,14 @@ function get_shader(gl, vertex_source, fragment_source) {
 }
 `.trim();
 
+const _CUR_VAR = new VariableType('T');
 const GL_INTRINSICS: TypeMap = {
   vtx: new FunType([new CodeType(ANY)], VOID),
   frag: new FunType([new CodeType(ANY)], VOID),
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new FunType([FLOAT3, FLOAT], FLOAT4),
+  cur: new FunType([new InstanceType(ARRAY, _CUR_VAR)], _CUR_VAR),
 };
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID

@@ -185,12 +185,32 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_call(tree: CallNode, env: TypeEnv): [Type, TypeEnv] {
-      // Check the type of the thing we're calling. It must be a function.
+      // Check the type of the thing we're calling.
       let [target_type, e] = check(tree.fun, env);
-      let fun_type : FunType;
+
+      // Check each argument type.
+      let arg_types: Type[] = [];
+      let arg_type: Type;
+      for (let arg of tree.args) {
+        [arg_type, e] = check(arg, e);
+        arg_types.push(arg_type);
+      }
+
+      // The target of the call must be a function---or a quantified type that
+      // produces a function type.
+      let fun_type: FunType = null;
       if (target_type instanceof FunType) {
         fun_type = target_type;
-      } else {
+      } else if (target_type instanceof QuantifiedType) {
+        // Poor man's Hindley-Milner. Just try using the first argument type
+        // to complete the type. I can't stress how limited this parametricity
+        // is: it's barely enough to make the `cur` case work.
+        let applied = apply_quantified_type(target_type, arg_types[0]);
+        if (applied instanceof FunType) {
+          fun_type = applied;
+        }
+      }
+      if (fun_type === null) {
         throw "type error: call of non-function";
       }
 
@@ -199,11 +219,8 @@ let gen_check : Gen<TypeCheck> = function(check) {
         throw "type error: mismatched argument length";
       }
       for (let i = 0; i < tree.args.length; ++i) {
-        let arg = tree.args[i];
         let param_type = fun_type.params[i];
-
-        let arg_type : Type;
-        [arg_type, e] = check(arg, e);
+        let arg_type = arg_types[i];
         if (!compatible(param_type, arg_type)) {
           throw "type error: mismatched argument type at index " + i +
             ": expected " + pretty_type(param_type) +
@@ -316,4 +333,65 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
 
 function get_type(ttree: TypeNode, types: TypeMap): Type {
   return type_ast_visit(get_type_rules, ttree, types);
+}
+
+// Fill in a parameterized type.
+let apply_type_rules: TypeVisit<[VariableType, Type], Type> = {
+  // This is the only interesting rule: replace the requested variable with
+  // the argument.
+  visit_variable(type: VariableType, [tvar, targ]: [VariableType, Type]): Type {
+    if (type === tvar) {
+      return targ;
+    } else {
+      return type;
+    }
+  },
+
+  // The remaining rules are just boring boilerplate: `map` for types.
+  visit_primitive(type: PrimitiveType,
+      [tvar, targ]: [VariableType, Type]): Type
+  {
+    return type;
+  },
+  visit_fun(type: FunType, [tvar, targ]: [VariableType, Type]): Type {
+    let params: Type[] = [];
+    for (let param of type.params) {
+      params.push(apply_type(param, tvar, targ));
+    }
+    let ret = apply_type(type.ret, tvar, targ);
+    return new FunType(params, ret);
+  },
+  visit_code(type: CodeType, [tvar, targ]: [VariableType, Type]): Type {
+    return new CodeType(apply_type(type.inner, tvar, targ));
+  },
+  visit_any(type: AnyType, [tvar, targ]: [VariableType, Type]): Type {
+    return type;
+  },
+  visit_void(type: VoidType, [tvar, targ]: [VariableType, Type]): Type {
+    return type;
+  },
+  visit_constructor(type: ConstructorType,
+      [tvar, targ]: [VariableType, Type]): Type
+  {
+    return type;
+  },
+  visit_instance(type: InstanceType,
+      [tvar, targ]: [VariableType, Type]): Type
+  {
+    return new InstanceType(type.cons, apply_type(type.arg, tvar, targ));
+  },
+  visit_quantified(type: QuantifiedType,
+      [tvar, targ]: [VariableType, Type]): Type
+  {
+    return new QuantifiedType(type.variable,
+        apply_type(type.inner, tvar, targ));
+  },
+}
+
+function apply_type(type: Type, tvar: VariableType, targ: Type): Type {
+  return type_visit(apply_type_rules, type, [tvar, targ]);
+}
+
+function apply_quantified_type(type: QuantifiedType, arg: Type): Type {
+  return apply_type(type.inner, type.variable, arg);
 }
