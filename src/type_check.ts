@@ -98,10 +98,10 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let [t1, e1] = check(tree.lhs, env);
       let [t2, e2] = check(tree.rhs, e1);
       if (t1 === INT && t2 === INT) {
-        return [INT, env];
+        return [INT, e2];
       } else if ((t1 === FLOAT || t1 === INT) &&
                  (t2 === FLOAT || t2 === INT)) {
-        return [FLOAT, env];
+        return [FLOAT, e2];
       } else {
         throw "type error: binary operation on non-numbers (" +
           pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";

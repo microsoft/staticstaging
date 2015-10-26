@@ -6,11 +6,15 @@
 /// <reference path="type_check.ts" />
 
 // Special GLSL matrix and vector types.
+// Someday, a more structured notion of generic vector and matrix types would
+// be better. For now, we just support a handful of common types.
 const FLOAT3 = new PrimitiveType("Float3");
 const FLOAT4 = new PrimitiveType("Float4");
 const FLOAT3X3 = new PrimitiveType("Float3x3");
 const FLOAT4X4 = new PrimitiveType("Float4x4");
 const ARRAY = new ConstructorType("Array");
+const INT3 = new PrimitiveType("Int3");
+const INT4 = new PrimitiveType("Int4");
 const GL_TYPES: TypeMap = {
   "Float3": FLOAT3,
   "Float4": FLOAT4,
@@ -20,10 +24,15 @@ const GL_TYPES: TypeMap = {
   "Float4x4": FLOAT4X4,
   "Mat3": FLOAT3,
   "Mat4": FLOAT4,
-  "INT3": new PrimitiveType("Int3"),
-  "INT4": new PrimitiveType("Int4"),
+  "INT3": INT3,
+  "INT4": INT4,
   "Array": ARRAY,
 };
+let NUMERIC_TYPES: Type[] = [
+  FLOAT3, FLOAT4,
+  FLOAT3X3, FLOAT4X4,
+  INT3, INT4,
+];
 
 
 // Checking for our magic `vtx` and `frag` intrinsics, which indicate the
@@ -81,12 +90,31 @@ function gl_type_mixin(fsuper: TypeCheck): TypeCheck {
 
       return fsuper(tree, env);
     },
-
     // TODO Also do the same for ordinary persist-escapes.
+
+    // Allow binary operators on our vector/matrix types. Someday, extensible
+    // and overloadable operators would be nice.
+    visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
+      // These recursive calls use `fself` instead of `fsuper` to get the
+      // *same* behavior in case of nested binary operations.
+      let [t1, e1] = fself(tree.lhs, env);
+      let [t2, e2] = fself(tree.rhs, e1);
+
+      // Check for one of our numeric types.
+      if (t1 === t2 && (NUMERIC_TYPES.indexOf(t1) !== -1)) {
+        return [t1, e2];
+      }
+
+      return fsuper(tree, env);
+    },
   });
-  return function(tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
+
+  // Giving the generator function we return a name lets us access it above
+  // (thanks to JavaScript's function hoisting).
+  function fself(tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
     return ast_visit(type_rules, tree, env);
   };
+  return fself;
 };
 
 
