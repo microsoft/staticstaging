@@ -91,30 +91,11 @@ function gl_type_mixin(fsuper: TypeCheck): TypeCheck {
       return fsuper(tree, env);
     },
     // TODO Also do the same for ordinary persist-escapes.
-
-    // Allow binary operators on our vector/matrix types. Someday, extensible
-    // and overloadable operators would be nice.
-    visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
-      // These recursive calls use `fself` instead of `fsuper` to get the
-      // *same* behavior in case of nested binary operations.
-      let [t1, e1] = fself(tree.lhs, env);
-      let [t2, e2] = fself(tree.rhs, e1);
-
-      // Check for one of our numeric types.
-      if (t1 === t2 && (NUMERIC_TYPES.indexOf(t1) !== -1)) {
-        return [t1, e2];
-      }
-
-      return fsuper(tree, env);
-    },
   });
 
-  // Giving the generator function we return a name lets us access it above
-  // (thanks to JavaScript's function hoisting).
-  function fself(tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
+  return function (tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
     return ast_visit(type_rules, tree, env);
   };
-  return fself;
 };
 
 
