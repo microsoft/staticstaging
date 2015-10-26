@@ -1,0 +1,19 @@
+extern get_perspective: Int -> Mat4;
+extern get_model: Int -> Mat4;
+extern get_view: Int -> Mat4;
+extern bunny_vertices: Vec3 Array;
+extern bunny_normals: Vec3 Array;
+
+var projection = get_perspective 0;
+var model = get_model 0;
+var view = get_view 0;
+
+var position = bunny_vertices;
+var normal = bunny_normals;
+
+vtx s<
+  gl_Position = projection * view * model * (vec4 position 1.0);
+  frag s<
+    gl_FragColor = (vec4 (abs normal) 1.0)
+  >
+>
