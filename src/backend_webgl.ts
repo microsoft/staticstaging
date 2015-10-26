@@ -270,7 +270,7 @@ function webgl_compile(ir: CompilerIR): string {
 
   // Then wrap it in an outer function that includes the setup code.
   let body = setup_code + "return /* render */ " + main + ";"
-  out += emit_js_fun(null, [], [], body, false) + "()";
+  out += emit_js_fun(null, [], [], body) + "()";
 
   return out;
 }

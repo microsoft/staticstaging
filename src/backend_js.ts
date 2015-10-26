@@ -170,10 +170,9 @@ function get_js_compile(ir: CompilerIR): JSCompile {
 }
 
 // Create a JavaScript function definition. `name` can be null, in which case
-// this is an anonymous function expression. If `expr`, `body` is an
-// expression (so we can `return` it).
+// this is an anonymous function expression.
 function emit_js_fun(name: string, argnames: string[], localnames: string[],
-    body: string, expr=true): string {
+    body: string): string {
   let anon = (name === null);
 
   // Emit the definition.
@@ -189,18 +188,18 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
   if (localnames.length) {
     out += "  var " + localnames.join(", ") + ";\n";
   }
-  if (expr) {
-    out += "  return ";
-  }
-  out += indent(body, !expr);
-  if (expr) {
-    out += ";"
-  }
+  out += indent(body, true);
   out += "\n}";
   if (anon) {
     out += ")";
   }
   return out;
+}
+
+// Compile a top-level expression for the body of a function. The function
+// returns value of the function.
+function js_emit_body(compile: JSCompile, tree: SyntaxNode): string {
+  return "return " + compile(tree) + ";";
 }
 
 // Compile a single Proc to a JavaScript function definition. If the Proc is
@@ -235,7 +234,8 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   }
 
   // Function declaration.
-  return emit_js_fun(name, argnames, localnames, compile(proc.body));
+  let body = js_emit_body(compile, proc.body);
+  return emit_js_fun(name, argnames, localnames, body);
 }
 
 // Turn a value into a JavaScript string literal. Mutli-line strings become
@@ -289,7 +289,7 @@ function jscompile_prog(compile: JSCompile, prog: Prog, procs: Proc[]): string {
   }
 
   // Wrap the code in a function to avoid polluting the namespace.
-  let code = compile(prog.body);
+  let code = js_emit_body(compile, prog.body);
   let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
 
   return procs_str + code_wrapped;
