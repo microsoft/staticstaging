@@ -7,6 +7,8 @@ declare function tree_canvas (
   get_children: (_:any) => any[]
 ): (tree_data: any) => void;
 
+declare function start_gl(container: HTMLElement, f: Function): void;
+
 const RUN_DELAY_MS = 200;
 
 let GetChildren : ASTVisit<void, SyntaxNode[]> = {
@@ -114,10 +116,11 @@ function get_name(tree: SyntaxNode): string {
 // - the parse tree
 // - the type
 // - the compiled code (if compiling)
-// - the result of interpretation
+// - the result of interpretation or execution
+// - the WebGL setup function (if in WebGL mode)
 // The mode can be "interp", "compile", or "webgl".
 function atw_run(code: string, mode: string)
-  : [string, SyntaxNode, string, string, string]
+  : [string, SyntaxNode, string, string, string, Function]
 {
   // Configure the driver to store a bunch of results.
   let error: string = null;
@@ -145,6 +148,7 @@ function atw_run(code: string, mode: string)
   let res: string = null;
   let jscode: string = null;
   let ast: SyntaxNode = null;
+  let glfunc: Function = null;
   driver_frontend(config, code, null, function (tree, types) {
     ast = tree;
 
@@ -160,7 +164,7 @@ function atw_run(code: string, mode: string)
         jscode = code;
         driver_execute(config, code, function (r) {
           if (mode === "webgl") {
-            console.log(r);
+            glfunc = r;
           } else {
             res = r;
           }
@@ -169,7 +173,7 @@ function atw_run(code: string, mode: string)
     }
   });
 
-  return [error, ast, type, jscode, res];
+  return [error, ast, type, jscode, res, glfunc];
 }
 
 function show(text: string, el: HTMLElement) {
@@ -216,6 +220,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
   let modeselect = <HTMLSelectElement> document.querySelector('#mode');
+  let glbox = <HTMLElement> document.querySelector('#gl');
 
   let draw_tree = tree_canvas('#tree', get_name, get_children);
 
@@ -228,7 +233,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let mode = modeselect.value;
 
     if (code !== "") {
-      let [err, tree, typ, compiled, res] = atw_run(code, mode);
+      let [err, tree, typ, compiled, res, glfunc] = atw_run(code, mode);
 
       show(err, errbox);
       show(typ, typebox);
@@ -243,6 +248,12 @@ document.addEventListener("DOMContentLoaded", function () {
         draw_tree(tree);
         show(null, compiledbox);
         treebox.style.display = 'block';
+      }
+
+      // Start the WebGL viewer.
+      if (mode === "webgl" && glfunc) {
+        console.log(glfunc);
+        start_gl(glbox, glfunc);
       }
 
       let hash = encode_hash({code: code, mode: mode});

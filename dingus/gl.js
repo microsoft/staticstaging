@@ -34,3 +34,5 @@ function start_gl(container, func) {
 
   render = func(gl);
 }
+
+module.exports = start_gl;

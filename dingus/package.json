@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "browserify gl.js -o gl.bundle.js"
+    "build": "browserify gl.js --standalone start_gl -o gl.bundle.js"
   },
   "dependencies": {
     "bunny": "^1.0.1",
