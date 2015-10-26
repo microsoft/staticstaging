@@ -20,7 +20,6 @@ GENERATED := $(CLI_JS) $(DINGUS_JS)
 
 .PHONY: cli dingus all
 cli: $(CLI_JS)
-dingus: $(DINGUS_JS)
 all: cli dingus
 
 .PHONY: clean
@@ -72,12 +71,18 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 
 # The Web dingus.
 
+dingus: $(DINGUS_JS) dingus/gl.bundle.js
+
 WEB_SRCS := $(SRC_FILES) dingus/atw.ts
 dingus/atw.js: $(TSC) $(WEB_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
 
 dingus/parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 	$(PEGJS) --export-var parser < $(<) > $@
+
+dingus/gl.bundle.js: dingus/gl.js dingus/package.json
+	cd dingus ; npm install
+	cd dingus ; npm run-script build
 
 
 
