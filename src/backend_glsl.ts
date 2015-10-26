@@ -119,7 +119,21 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
 {
   return {
     visit_literal(tree: LiteralNode, param: void): string {
-      return tree.value.toString();
+      let [t, _] = ir.type_table[tree.id];
+      if (t === INT) {
+        return tree.value.toString();
+      } else if (t === FLOAT) {
+        // Make sure that even whole numbers are emitting as floating-point
+        // literals.
+        let out = tree.value.toString();
+        if (out.indexOf(".") === -1) {
+          return out + ".0";
+        } else {
+          return out;
+        }
+      } else {
+        throw "error: unknown literal type";
+      }
     },
 
     visit_seq(tree: SeqNode, param: void): string {
