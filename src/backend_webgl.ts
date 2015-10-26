@@ -36,7 +36,9 @@ const GL_INTRINSICS: TypeMap = {
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new FunType([FLOAT3, FLOAT], FLOAT4),
-  cur: new FunType([new InstanceType(ARRAY, _CUR_VAR)], _CUR_VAR),
+  cur: new QuantifiedType(_CUR_VAR,
+    new FunType([new InstanceType(ARRAY, _CUR_VAR)], _CUR_VAR)
+  ),
 };
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID
