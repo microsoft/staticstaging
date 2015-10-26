@@ -202,13 +202,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       if (target_type instanceof FunType) {
         fun_type = target_type;
       } else if (target_type instanceof QuantifiedType) {
-        // Poor man's Hindley-Milner. Just try using the first argument type
-        // to complete the type. I can't stress how limited this parametricity
-        // is: it's barely enough to make the `cur` case work.
-        let applied = apply_quantified_type(target_type, arg_types[0]);
-        if (applied instanceof FunType) {
-          fun_type = applied;
-        }
+        fun_type = unify_call(target_type, arg_types);
       }
       if (fun_type === null) {
         throw "type error: call of non-function";
@@ -394,4 +388,15 @@ function apply_type(type: Type, tvar: VariableType, targ: Type): Type {
 
 function apply_quantified_type(type: QuantifiedType, arg: Type): Type {
   return apply_type(type.inner, type.variable, arg);
+}
+
+// Poor man's Hindley-Milner.
+// Try to unify a quantified function type with the argument types. Return the
+// resolved function type or `null` if unification wasn't possible.
+function unify_call(quant: QuantifiedType, args: Type[]): FunType {
+  let applied = apply_quantified_type(quant, args[0]);
+  if (applied instanceof FunType) {
+    return applied;
+  }
+  return null;
 }
