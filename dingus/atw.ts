@@ -158,11 +158,13 @@ function atw_run(code: string, mode: string)
       // Compiler.
       driver_compile(config, tree, types, function (code) {
         jscode = code;
-        if (mode !== "webgl") {
-          driver_execute(config, code, function (r) {
+        driver_execute(config, code, function (r) {
+          if (mode === "webgl") {
+            console.log(r);
+          } else {
             res = r;
-          });
-        }
+          }
+        });
       });
     }
   });

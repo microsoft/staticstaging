@@ -145,8 +145,14 @@ function driver_interpret(config: DriverConfig, tree: SyntaxNode,
 }
 
 function driver_execute(config: DriverConfig, jscode: string,
-    executed: (result: string) => void)
+    executed: (result: any) => void)
 {
   let res = scope_eval(_runtime(config) + jscode);
-  executed(pretty_js_value(res));
+  if (config.webgl) {
+    // Pass along the resulting JavaScript function.
+    executed(res);
+  } else {
+    // Pass a formatted value.
+    executed(pretty_js_value(res));
+  }
 }
