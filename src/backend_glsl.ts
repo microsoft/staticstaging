@@ -28,11 +28,23 @@ const GL_TYPES: TypeMap = {
   "INT4": INT4,
   "Array": ARRAY,
 };
-let NUMERIC_TYPES: Type[] = [
+
+const NUMERIC_TYPES: Type[] = [
   FLOAT3, FLOAT4,
   FLOAT3X3, FLOAT4X4,
   INT3, INT4,
 ];
+
+const GLSL_TYPE_NAMES: { [_: string]: string } = {
+  "Int": "int",
+  "Int3": "ivec3",
+  "Int4": "ivec4",
+  "Float": "float",
+  "Float3": "vec3",
+  "Float4": "vec4",
+  "Float3x3": "mat3",
+  "Float4x4": "mat4",
+};
 
 
 // Checking for our magic `vtx` and `frag` intrinsics, which indicate the
@@ -229,10 +241,11 @@ function emit_glsl_decl(qualifier: string, type: string, name: string) {
 
 function emit_glsl_type(type: Type): string {
   if (type instanceof PrimitiveType) {
-    if (type.name === "Int") {
-      return "int";
+    let name = GLSL_TYPE_NAMES[type.name];
+    if (name === undefined) {
+      throw "error: primitive type " + type.name + " unsupported in GLSL";
     } else {
-      throw "error: invalid primitive type " + type.name;
+      return name;
     }
   } else {
     throw "unimplemented type " + type;

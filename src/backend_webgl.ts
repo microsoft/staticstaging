@@ -60,6 +60,17 @@ const GL_INTRINSICS: TypeMap = {
   '/': _GL_BINARY_TYPE,
 };
 
+const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
+  "Int": "uniform1i",
+  "Int3": "uniform3iv",
+  "Int4": "uniform4iv",
+  "Float": "uniform1f",
+  "Float3": "uniform3fv",
+  "Float4": "uniform4fv",
+  "Float3x3": "uniformMatrix3fv",
+  "Float4x4": "uniformMatrix4fv",
+};
+
 // Get a JavaScript variable name for a compiled shader program. Uses the ID
 // of the outermost (vertex) shader Prog.
 function shadersym(progid: number) {
@@ -116,14 +127,18 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
 
     // Primitive types are bound as uniforms.
     if (type instanceof PrimitiveType) {
-      if (type.name === "Int") {
-        out += "gl.uniform1i(" +
-          locsym(esc.id) + ", " + // location
-          paren(value) + // value
-          ")";
-      } else {
-        throw "error: only integer uniforms are supported";
+      let fname = GL_UNIFORM_FUNCTIONS[type.name];
+      if (fname === undefined) {
+        throw "error: unsupported uniform type " + type.name;
       }
+
+      let is_matrix = fname.indexOf("Matrix") !== -1;
+      out += `gl.${fname}(${locsym(esc.id)}`;
+      if (is_matrix) {
+        // Transpose parameter.
+        out += ", false";
+      }
+      out += `, ${paren(value)})`;
 
     // Array types are bound as attributes.
     } else if (type instanceof InstanceType && type.cons === ARRAY) {
@@ -140,7 +155,7 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
       }
 
     } else {
-      throw "error: uniforms must be primitive or array types";
+      throw "error: persisted values must be primitive or array types";
     }
 
     out += ",\n";
