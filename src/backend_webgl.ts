@@ -40,7 +40,12 @@ const GL_INTRINSICS: TypeMap = {
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new FunType([FLOAT3, FLOAT], FLOAT4),
-  abs: new FunType([FLOAT3], FLOAT3),
+  abs: new OverloadedType([
+    new FunType([INT], INT),
+    new FunType([FLOAT], FLOAT),
+    new FunType([FLOAT3], FLOAT3),
+    new FunType([FLOAT4], FLOAT4),
+  ]),
 };
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID

@@ -56,6 +56,12 @@ class VariableType extends Type {
   _brand_VariableType: void;
 }
 
+// Simple overloading.
+class OverloadedType extends Type {
+  constructor(public types: Type[]) { super() };
+  _brand_OverloadedType: void;
+}
+
 
 // Type-related data structures and built-in types.
 

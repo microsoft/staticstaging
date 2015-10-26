@@ -196,30 +196,13 @@ let gen_check : Gen<TypeCheck> = function(check) {
         arg_types.push(arg_type);
       }
 
-      // The target of the call must be a function.
-      let fun_type: FunType;
-      if (target_type instanceof FunType) {
-        fun_type = target_type;
-      } else if (fun_type === null) {
-        throw "type error: call of non-function";
+      // Check the call itself.
+      let ret = check_call(target_type, arg_types);
+      if (ret instanceof Type) {
+        return [ret, e];
+      } else {
+        throw ret;
       }
-
-      // Check that the arguments are the right type.
-      if (tree.args.length != fun_type.params.length) {
-        throw "type error: mismatched argument length";
-      }
-      for (let i = 0; i < tree.args.length; ++i) {
-        let param_type = fun_type.params[i];
-        let arg_type = arg_types[i];
-        if (!compatible(param_type, arg_type)) {
-          throw "type error: mismatched argument type at index " + i +
-            ": expected " + pretty_type(param_type) +
-            ", got " + pretty_type(arg_type);
-        }
-      }
-
-      // Yield the result type.
-      return [fun_type.ret, e];
     },
 
     visit_extern(tree: ExternNode, env: TypeEnv): [Type, TypeEnv] {
@@ -243,6 +226,34 @@ let gen_check : Gen<TypeCheck> = function(check) {
   return function (tree, env) {
     return ast_visit(type_rules, tree, env);
   }
+}
+
+// Check that a function call is well-typed. Return the result type or a
+// string indicating the error.
+function check_call(target: Type, args: Type[]): Type | string {
+  // The target of the call must be a function.
+  let fun: FunType;
+  if (target instanceof FunType) {
+    fun = target;
+  } else if (fun === null) {
+    return "type error: call of non-function";
+  }
+
+  // Check that the arguments are the right type.
+  if (args.length != fun.params.length) {
+    return "type error: mismatched argument length";
+  }
+  for (let i = 0; i < args.length; ++i) {
+    let param = fun.params[i];
+    let arg = args[i];
+    if (!compatible(param, arg)) {
+      return "type error: mismatched argument type at index " + i +
+        ": expected " + pretty_type(param) +
+        ", got " + pretty_type(arg);
+    }
+  }
+
+  return fun.ret;
 }
 
 // Check type compatibility.
@@ -271,6 +282,7 @@ function compatible(ltype: Type, rtype: Type): boolean {
 
   } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
     return compatible(ltype.inner, rtype.inner);
+
   }
 
   return false;
