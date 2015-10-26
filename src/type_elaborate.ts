@@ -72,7 +72,7 @@ function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
 // maps the IDs to type information. You can optionally provide:
 // - An initial type mapping for externs (for implementing intrinsics).
 // - The set of named types.
-function elaborate(tree: SyntaxNode, externs: TypeMap = {},
+function elaborate(tree: SyntaxNode, externs: TypeMap = BUILTIN_TYPES,
   named_types: TypeMap = BUILTIN_TYPES, check: Gen<TypeCheck> = gen_check):
   [SyntaxNode, TypeTable]
 {

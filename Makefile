@@ -10,7 +10,7 @@ TESTS_BASIC := print comment whitespace seq let add quote escape nestedrun \
 TESTS_INTERP := dump splice nesteddump spdump
 TESTS_TYPE := typeerror badsplice topescape floaterror
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
-	gl-array gl-normcolor
+	gl-array gl-overload gl-normcolor
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)

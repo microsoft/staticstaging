@@ -34,6 +34,12 @@ function bind_attribute(gl, location, buffer) {
 }
 `.trim();
 
+const _GL_BINARY_TYPE = new OverloadedType([
+  new FunType([INT, INT], INT),
+  new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT3, FLOAT3], FLOAT3),
+  new FunType([FLOAT4, FLOAT4], FLOAT4),
+]);
 const GL_INTRINSICS: TypeMap = {
   vtx: new FunType([new CodeType(ANY)], VOID),
   frag: new FunType([new CodeType(ANY)], VOID),
@@ -46,6 +52,12 @@ const GL_INTRINSICS: TypeMap = {
     new FunType([FLOAT3], FLOAT3),
     new FunType([FLOAT4], FLOAT4),
   ]),
+
+  // Binary operators.
+  '+': _GL_BINARY_TYPE,
+  '-': _GL_BINARY_TYPE,
+  '*': _GL_BINARY_TYPE,
+  '/': _GL_BINARY_TYPE,
 };
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID

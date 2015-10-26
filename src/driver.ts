@@ -32,7 +32,7 @@ function _intrinsics(config: DriverConfig): TypeMap {
   if (config.webgl) {
     return GL_INTRINSICS;
   } else {
-    return {};
+    return BUILTIN_OPERATORS;
   }
 }
 

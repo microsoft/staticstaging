@@ -15,6 +15,20 @@
 type TypeEnv = [TypeMap[], TypeMap, TypeMap];
 
 
+// The built-in operator types. These can be extended by providing custom
+// intrinsics.
+const _BINARY_TYPE = new OverloadedType([
+  new FunType([INT, INT], INT),
+  new FunType([FLOAT, FLOAT], FLOAT),
+]);
+const BUILTIN_OPERATORS: TypeMap = {
+  '+': _BINARY_TYPE,
+  '-': _BINARY_TYPE,
+  '*': _BINARY_TYPE,
+  '/': _BINARY_TYPE,
+};
+
+
 // The type checker.
 // The checker is written as a "function generator," and we'll later take its
 // fixed point to get an ordinary type checker function (of type `TypeCheck`,
@@ -97,14 +111,19 @@ let gen_check : Gen<TypeCheck> = function(check) {
     visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
       let [t1, e1] = check(tree.lhs, env);
       let [t2, e2] = check(tree.rhs, e1);
-      if (t1 === INT && t2 === INT) {
-        return [INT, e2];
-      } else if ((t1 === FLOAT || t1 === INT) &&
-                 (t2 === FLOAT || t2 === INT)) {
-        return [FLOAT, e2];
+
+      // Binary operators use intrinsic functions whose names match the
+      // operator. Currently, these can *only* be defined as externs; for more
+      // flexible operator overloading, we could eventually also look at
+      // ordinary variable.
+      let [_, externs, __] = env;
+      let fun = externs[tree.op];
+      let ret = check_call(fun, [t1, t2]);
+      if (ret instanceof Type) {
+        return [ret, e2];
       } else {
-        throw "type error: binary operation on non-numbers (" +
-          pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
+        throw "type error: invalid binary operation (" +
+            pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
       }
     },
 
