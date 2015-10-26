@@ -196,15 +196,11 @@ let gen_check : Gen<TypeCheck> = function(check) {
         arg_types.push(arg_type);
       }
 
-      // The target of the call must be a function---or a quantified type that
-      // produces a function type.
-      let fun_type: FunType = null;
+      // The target of the call must be a function.
+      let fun_type: FunType;
       if (target_type instanceof FunType) {
         fun_type = target_type;
-      } else if (target_type instanceof QuantifiedType) {
-        fun_type = unify_call(target_type, arg_types);
-      }
-      if (fun_type === null) {
+      } else if (fun_type === null) {
         throw "type error: call of non-function";
       }
 
@@ -388,15 +384,4 @@ function apply_type(type: Type, tvar: VariableType, targ: Type): Type {
 
 function apply_quantified_type(type: QuantifiedType, arg: Type): Type {
   return apply_type(type.inner, type.variable, arg);
-}
-
-// Poor man's Hindley-Milner.
-// Try to unify a quantified function type with the argument types. Return the
-// resolved function type or `null` if unification wasn't possible.
-function unify_call(quant: QuantifiedType, args: Type[]): FunType {
-  let applied = apply_quantified_type(quant, args[0]);
-  if (applied instanceof FunType) {
-    return applied;
-  }
-  return null;
 }
