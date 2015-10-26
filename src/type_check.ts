@@ -231,29 +231,37 @@ let gen_check : Gen<TypeCheck> = function(check) {
 // Check that a function call is well-typed. Return the result type or a
 // string indicating the error.
 function check_call(target: Type, args: Type[]): Type | string {
-  // The target of the call must be a function.
-  let fun: FunType;
+  // The target is an ordinary function.
   if (target instanceof FunType) {
-    fun = target;
-  } else if (fun === null) {
+    // Check that the arguments are the right type.
+    if (args.length != target.params.length) {
+      return "type error: mismatched argument length";
+    }
+    for (let i = 0; i < args.length; ++i) {
+      let param = target.params[i];
+      let arg = args[i];
+      if (!compatible(param, arg)) {
+        return "type error: mismatched argument type at index " + i +
+          ": expected " + pretty_type(param) +
+          ", got " + pretty_type(arg);
+      }
+    }
+
+    return target.ret;
+
+  // An overloaded type. Try each component type.
+  } else if (target instanceof OverloadedType) {
+    for (let sub of target.types) {
+      let ret = check_call(sub, args);
+      if (ret instanceof Type) {
+        return ret;
+      }
+    }
+    return "type error: no overloaded type applies";
+
+  } else {
     return "type error: call of non-function";
   }
-
-  // Check that the arguments are the right type.
-  if (args.length != fun.params.length) {
-    return "type error: mismatched argument length";
-  }
-  for (let i = 0; i < args.length; ++i) {
-    let param = fun.params[i];
-    let arg = args[i];
-    if (!compatible(param, arg)) {
-      return "type error: mismatched argument type at index " + i +
-        ": expected " + pretty_type(param) +
-        ", got " + pretty_type(arg);
-    }
-  }
-
-  return fun.ret;
 }
 
 // Check type compatibility.
