@@ -124,3 +124,21 @@ function flatten_seq(tree: SyntaxNode): ExpressionNode[] {
   });
   return ast_visit(rules, tree, null);
 };
+
+// Compile a top-level expression for the body of a function. The emitted code
+// returns value of the function.
+function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
+    sep=";", ret="return "): string
+{
+  let exprs = flatten_seq(tree);
+  let statements: string[] = [];
+  for (let i = 0; i < exprs.length; ++i) {
+    let line = "";
+    if (i === exprs.length - 1) {
+      line += ret;
+    }
+    line += emit(exprs[i]);
+    statements.push(line);
+  }
+  return statements.join(sep + "\n") + sep;
+}

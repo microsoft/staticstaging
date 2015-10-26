@@ -196,22 +196,6 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
   return out;
 }
 
-// Compile a top-level expression for the body of a function. The function
-// returns value of the function.
-function js_emit_body(compile: JSCompile, tree: SyntaxNode, sep=";"): string {
-  let exprs = flatten_seq(tree);
-  let statements: string[] = [];
-  for (let i = 0; i < exprs.length; ++i) {
-    let line = "";
-    if (i === exprs.length - 1) {
-      line += "return ";
-    }
-    line += compile(exprs[i]);
-    statements.push(line);
-  }
-  return statements.join(sep + "\n") + sep;
-}
-
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
@@ -244,7 +228,7 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   }
 
   // Function declaration.
-  let body = js_emit_body(compile, proc.body);
+  let body = emit_body(compile, proc.body);
   return emit_js_fun(name, argnames, localnames, body);
 }
 
@@ -299,7 +283,7 @@ function jscompile_prog(compile: JSCompile, prog: Prog, procs: Proc[]): string {
   }
 
   // Wrap the code in a function to avoid polluting the namespace.
-  let code = js_emit_body(compile, prog.body);
+  let code = emit_body(compile, prog.body);
   let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
 
   return procs_str + code_wrapped;
