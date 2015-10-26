@@ -22,8 +22,8 @@ const GL_TYPES: TypeMap = {
   "Vec4": FLOAT4,
   "Float3x3": FLOAT3X3,
   "Float4x4": FLOAT4X4,
-  "Mat3": FLOAT3,
-  "Mat4": FLOAT4,
+  "Mat3": FLOAT3X3,
+  "Mat4": FLOAT4X4,
   "INT3": INT3,
   "INT4": INT4,
   "Array": ARRAY,
@@ -248,7 +248,7 @@ function emit_glsl_type(type: Type): string {
       return name;
     }
   } else {
-    throw "unimplemented type " + type;
+    throw "error: type unsupported in GLSL: " + type;
   }
 }
 
