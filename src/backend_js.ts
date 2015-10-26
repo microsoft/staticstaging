@@ -198,8 +198,18 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
 
 // Compile a top-level expression for the body of a function. The function
 // returns value of the function.
-function js_emit_body(compile: JSCompile, tree: SyntaxNode): string {
-  return "return " + compile(tree) + ";";
+function js_emit_body(compile: JSCompile, tree: SyntaxNode, sep=";"): string {
+  let exprs = flatten_seq(tree);
+  let statements: string[] = [];
+  for (let i = 0; i < exprs.length; ++i) {
+    let line = "";
+    if (i === exprs.length - 1) {
+      line += "return ";
+    }
+    line += compile(exprs[i]);
+    statements.push(line);
+  }
+  return statements.join(sep + "\n") + sep;
 }
 
 // Compile a single Proc to a JavaScript function definition. If the Proc is
