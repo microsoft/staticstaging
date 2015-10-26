@@ -3,6 +3,7 @@
 /// <reference path="compile.ts" />
 /// <reference path="backends.ts" />
 /// <reference path="type.ts" />
+/// <reference path="type_check.ts" />
 
 // Special GLSL matrix and vector types.
 const FLOAT3 = new PrimitiveType("Float3");
@@ -56,6 +57,37 @@ function frag_expr(tree: ExpressionNode) {
 function glsl_emit_extern(name: string, type: Type): string {
   return name;
 }
+
+
+// Type checking for uniforms, which are automatically demoted from arrays to
+// individual values when they persist.
+
+function gl_type_mixin(fsuper: TypeCheck): TypeCheck {
+  let type_rules = complete_visit(fsuper, {
+    // The goal here is to take lookups into prior stages of type `X Array`
+    // and turn them into type `X`.
+    visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
+      // Look up the type and stage of a variable.
+      let [stack, _, __] = env;
+      let [t, pos] = stack_lookup(stack, tree.ident);
+      if (t !== undefined && pos > 0) {
+        if (t instanceof InstanceType) {
+          if (t.cons === ARRAY) {
+            // Return the inner type (the array element type).
+            return [t.arg, env];
+          }
+        }
+      }
+
+      return fsuper(tree, env);
+    },
+
+    // TODO Also do the same for ordinary persist-escapes.
+  });
+  return function(tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
+    return ast_visit(type_rules, tree, env);
+  };
+};
 
 
 // The core compiler rules for emitting GLSL code.

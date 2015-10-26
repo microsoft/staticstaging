@@ -52,6 +52,14 @@ function _types(config: DriverConfig): TypeMap {
   }
 }
 
+function _check(config: DriverConfig): Gen<TypeCheck> {
+  let check = gen_check;
+  if (config.webgl) {
+    check = compose(gl_type_mixin, check);
+  }
+  return check;
+}
+
 function driver_frontend(config: DriverConfig, source: string,
     filename: string,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
@@ -80,8 +88,8 @@ function driver_frontend(config: DriverConfig, source: string,
   let elaborated: SyntaxNode;
   let type_table: TypeTable;
   try {
-    [elaborated, type_table] = elaborate(tree, _intrinsics(config),
-                                         _types(config));
+    [elaborated, type_table] =
+      elaborate(tree, _intrinsics(config), _types(config), _check(config));
     let [type, _] = type_table[elaborated.id];
     config.typed(pretty_type(type));
   } catch (e) {

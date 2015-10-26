@@ -49,15 +49,21 @@ function stamp <T> (o: T, start: number = 0): T & { id: number } {
   return helper(o);
 }
 
+// Get a recursive check-and-elaborate function. By default, this uses the
+// ordinary `gen_check` rules, but clients can compose it with their own type
+// for custom behavior.
+function get_elaborate(type_table: TypeTable, f: Gen<TypeCheck> = gen_check) {
+  return fix(compose(elaborate_mixin(type_table), f));
+}
+
 // A helper for elaboration that works on subtrees. You can start with an
 // initial environment and a type table for other nodes; this will assign
 // fresh IDs to the subtree and *append* to the type table.
 function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
-  type_table: TypeTable): SyntaxNode
+  type_table: TypeTable, check: Gen<TypeCheck> = gen_check): SyntaxNode
 {
   let stamped_tree = stamp(tree, type_table.length);
-  let _elaborate : TypeCheck = fix(compose(elaborate_mixin(type_table),
-                                           gen_check));
+  let _elaborate = get_elaborate(type_table, check);
   _elaborate(stamped_tree, initial_env);
   return stamped_tree;
 }
@@ -67,10 +73,11 @@ function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
 // - An initial type mapping for externs (for implementing intrinsics).
 // - The set of named types.
 function elaborate(tree: SyntaxNode, externs: TypeMap = {},
-  named_types: TypeMap = BUILTIN_TYPES): [SyntaxNode, TypeTable]
+  named_types: TypeMap = BUILTIN_TYPES, check: Gen<TypeCheck> = gen_check):
+  [SyntaxNode, TypeTable]
 {
   let table : TypeTable = [];
   let env: TypeEnv = [[{}], externs, named_types];
-  let elaborated = elaborate_subtree(tree, env, table);
+  let elaborated = elaborate_subtree(tree, env, table, check);
   return [elaborated, table];
 }
