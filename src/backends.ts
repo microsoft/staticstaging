@@ -126,19 +126,21 @@ function flatten_seq(tree: SyntaxNode): ExpressionNode[] {
 };
 
 // Compile a top-level expression for the body of a function. The emitted code
-// returns value of the function.
+// returns value of the function. The optional `pred` function can decide
+// whether to emit (non-terminal) expressions.
 function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
+    pred: (_:ExpressionNode) => boolean = (_ => true),
     sep=";", ret="return "): string
 {
   let exprs = flatten_seq(tree);
   let statements: string[] = [];
   for (let i = 0; i < exprs.length; ++i) {
-    let line = "";
+    let expr = exprs[i];
     if (i === exprs.length - 1) {
-      line += ret;
+      statements.push(ret + emit(expr));
+    } else if (pred(expr)) {
+      statements.push(emit(expr));
     }
-    line += emit(exprs[i]);
-    statements.push(line);
   }
   return statements.join(sep + "\n") + sep;
 }

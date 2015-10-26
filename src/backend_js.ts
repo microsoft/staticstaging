@@ -32,6 +32,13 @@ function js_emit_extern(name: string, type: Type) {
   }
 }
 
+// A simple predicate to decide whether an expression is worth emitting,
+// given a choice. This is used when emitting sequences to avoid generating
+// worthless code.
+function js_useful_pred(tree: ExpressionNode): boolean {
+  return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
+}
+
 
 // The core recursive compiler rules. Takes an elaborated, desugared,
 // lambda-lifted AST with its corresponding def/use table. Works on a single
@@ -46,9 +53,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_seq(tree: SeqNode, param: void): string {
-      return emit_seq(tree, ",\n", fself,
-        e => e.tag !== "extern" && e.tag !== "lookup"
-      );
+      return emit_seq(tree, ",\n", fself, js_useful_pred);
     },
 
     visit_let(tree: LetNode, param: void): string {
@@ -228,7 +233,7 @@ function jscompile_proc(compile: JSCompile, proc: Proc): string {
   }
 
   // Function declaration.
-  let body = emit_body(compile, proc.body);
+  let body = emit_body(compile, proc.body, js_useful_pred);
   return emit_js_fun(name, argnames, localnames, body);
 }
 
@@ -283,7 +288,7 @@ function jscompile_prog(compile: JSCompile, prog: Prog, procs: Proc[]): string {
   }
 
   // Wrap the code in a function to avoid polluting the namespace.
-  let code = emit_body(compile, prog.body);
+  let code = emit_body(compile, prog.body, js_useful_pred);
   let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
 
   return procs_str + code_wrapped;
