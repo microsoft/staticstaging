@@ -26,12 +26,6 @@ all: cli dingus
 clean:
 	rm -rf $(GENERATED) node_modules typings
 
-.PHONY: deploy
-RSYNCARGS := --compress --recursive --checksum --delete -e ssh
-DEST := dh:domains/adriansampson.net/atw
-deploy: dingus
-	rsync $(RSYNCARGS) dingus/ $(DEST)
-
 
 # Tools and dependencies from npm.
 
@@ -84,6 +78,11 @@ dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 	cd dingus ; npm install
 	cd dingus ; npm run-script build
 
+.PHONY: deploy
+RSYNCARGS := --compress --recursive --checksum --delete -e ssh
+DEST := dh:domains/adriansampson.net/atw
+deploy: dingus
+	rsync $(RSYNCARGS) dingus/ $(DEST)
 
 
 # Running tests.
