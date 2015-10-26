@@ -1,6 +1,8 @@
 extern a: Int Array;
 extern b: Int;
 var c = a;
-s<
-  b = c
+vtx s<
+  frag s<
+    b = c
+  >
 >

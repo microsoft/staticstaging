@@ -27,6 +27,11 @@ function get_shader(gl, vertex_source, fragment_source) {
   }
   return program;
 }
+function bind_attribute(gl, location, buffer) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(location);
+}
 `.trim();
 
 const GL_INTRINSICS: TypeMap = {
@@ -91,7 +96,7 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
     let value = emit(esc.body);
     let [type, _] = ir.type_table[esc.body.id];
 
-    // The WebGL call we use to bind the uniform depends on the value's type.
+    // Primitive types are bound as uniforms.
     if (type instanceof PrimitiveType) {
       if (type.name === "Int") {
         out += "gl.uniform1i(" +
@@ -101,8 +106,23 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
       } else {
         throw "error: only integer uniforms are supported";
       }
+
+    // Array types are bound as attributes.
+    } else if (type instanceof InstanceType && type.cons === ARRAY) {
+      let t = type.arg;
+      if (t instanceof PrimitiveType) {
+        // Call our runtime function to bind the attribute. The parameters are
+        // the WebGL context, the attribute location, and the buffer.
+        out += "bind_attribute(gl, " +
+          locsym(esc.id) + ", " +
+          paren(value) + ")";
+        // TODO Actually use the type.
+      } else {
+        throw "error: attributes must be primitive types";
+      }
+
     } else {
-      throw "error: uniforms must be primitive types";
+      throw "error: uniforms must be primitive or array types";
     }
 
     out += ",\n";
