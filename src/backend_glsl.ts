@@ -234,7 +234,18 @@ function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
     out: boolean): string {
   let qual = out ? "out" : "in";
   let [type, _] = ir.type_table[esc.body.id];
-  return emit_glsl_decl(qual, emit_glsl_type(type), persistsym(esc.id));
+
+  // Array types indicate an attribute. Use the element type. Attributes get
+  // no special qualifier distinction from uniforms; they both just get marked
+  // as `in` variables.
+  let decl_type = type;
+  if (type instanceof InstanceType) {
+    if (type.cons === ARRAY) {
+      decl_type = type.arg;
+    }
+  }
+
+  return emit_glsl_decl(qual, emit_glsl_type(decl_type), persistsym(esc.id));
 }
 
 function glsl_compile_prog(compile: GLSLCompile,
