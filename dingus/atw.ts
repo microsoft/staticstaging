@@ -253,9 +253,11 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(glfunc);
         outbox.textContent = '';
         outbox.style.display = 'block';
+        outbox.style.height = '200px';
         start_gl(outbox, glfunc);
       } else {
         // Just show the output value.
+        outbox.style.height = 'auto';
         show(res, outbox);
       }
 
