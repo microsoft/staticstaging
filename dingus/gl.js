@@ -72,9 +72,9 @@ function start_gl(container, func) {
   // Create the base matrices to be used
   // when rendering the bunny. Alternatively, can
   // be created using `new Float32Array(16)`
-  var bunny_projection = mat4.create();
-  var bunny_model = mat4.create();
-  var bunny_view = mat4.create();
+  var projection = mat4.create();
+  var model = mat4.create();
+  var view = mat4.create();
 
   var shfl_func = func(gl);
   // TODO Move as much of the following as possible to SHFL land.
@@ -84,11 +84,11 @@ function start_gl(container, func) {
     var height = gl.drawingBufferHeight;
 
     // Handle user input and update the resulting camera view matrix.
-    camera.view(bunny_view);
+    camera.view(view);
     camera.tick();
 
     // Update the projection matrix for translating to 2D screen space.
-    projection_matrix(bunny_projection, width, height);
+    projection_matrix(projection, width, height);
 
     // Draw on the whole canvas.
     gl.viewport(0, 0, width, height);
@@ -100,11 +100,12 @@ function start_gl(container, func) {
     // Invoke the compiled SHFL code.
     // TODO It would sure be nice to get rid of this communication through
     // globals!
-    window.bunny_projection = bunny_projection;
-    window.bunny_model = bunny_model;
-    window.bunny_view = bunny_view;
-    window.bunny_vertices = bunny_buffers.positions;
-    window.bunny_normals = bunny_buffers.normals;
+    window.dingus = {
+      projection: projection,
+      model: model,
+      view: view,
+    };
+    window.bunny = bunny_buffers;
     shfl_func();
 
     // And the element array.

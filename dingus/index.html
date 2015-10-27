@@ -134,13 +134,11 @@ Math.pow 7 2</pre>
 
         <p>The WebGL compiler is experimental:</p>
         <pre class="example"
-            data-mode="webgl">var projection = bunny_projection;
-var model = bunny_model;
-var view = bunny_view;
-
-var position = bunny_vertices;
-var normal = bunny_normals;
-
+            data-mode="webgl">var projection = dingus.projection;
+var model = dingus.model;
+var view = dingus.view;
+var position = bunny.positions;
+var normal = bunny.normals;
 vtx s&lt;
   gl_Position = projection * view * model * (vec4 position 1.0);
   frag s&lt;

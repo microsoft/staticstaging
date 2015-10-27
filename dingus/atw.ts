@@ -112,11 +112,11 @@ function get_name(tree: SyntaxNode): string {
 };
 
 const GL_PREAMBLE = `
-extern bunny_projection: Mat4;
-extern bunny_model: Mat4;
-extern bunny_view: Mat4;
-extern bunny_vertices: Vec3 Array;
-extern bunny_normals: Vec3 Array;
+extern dingus.projection: Mat4;
+extern dingus.model: Mat4;
+extern dingus.view: Mat4;
+extern bunny.positions: Vec3 Array;
+extern bunny.normals: Vec3 Array;
 `;
 
 // Run code and return:
