@@ -1,15 +1,16 @@
-extern get_perspective: Int -> Mat4;
-extern get_model: Int -> Mat4;
-extern get_view: Int -> Mat4;
-extern bunny_vertices: Vec3 Array;
-extern bunny_normals: Vec3 Array;
+# Dingus preamble.
+extern dingus.projection: Mat4;
+extern dingus.model: Mat4;
+extern dingus.view: Mat4;
+extern bunny.positions: Vec3 Array;
+extern bunny.normals: Vec3 Array;
 
-var projection = get_perspective 0;
-var model = get_model 0;
-var view = get_view 0;
-
-var position = bunny_vertices;
-var normal = bunny_normals;
+# Our variables.
+var projection = dingus.projection;
+var model = dingus.model;
+var view = dingus.view;
+var position = bunny.positions;
+var normal = bunny.normals;
 
 vtx s<
   gl_Position = projection * view * model * (vec4 position 1.0);
