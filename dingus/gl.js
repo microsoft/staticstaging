@@ -48,7 +48,6 @@ function start_gl(container, func) {
   var camera = canvasOrbitCamera(canvas);
 
   // Initialize the OpenGL context with our rendering function.
-  var render;
   var gl = glContext(canvas, render);
 
   // Load the shape data into buffers.
@@ -61,7 +60,10 @@ function start_gl(container, func) {
   var model      = mat4.create();
   var view       = mat4.create();
 
-  render = func(gl);
+  var render_func = func(gl);
+  function render() {
+      render_func();
+  };
 }
 
 module.exports = start_gl;
