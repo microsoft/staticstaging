@@ -121,7 +121,16 @@ function emit_shader_setup(ir: CompilerIR, progid: number) {
 
   // Get the variable locations.
   for (let esc of vertex_prog.persist) {
-    out += "var " + locsym(esc.id) + " = gl.getUniformLocation(" +
+    let [type, _] = ir.type_table[esc.body.id];
+    let element_type = _unwrap_array(type);
+    let attribute = false;  // As opposed to uniform.
+    if (element_type != type) {
+      // An array type indicates an attribute.
+      attribute = true;
+    }
+
+    let func = attribute ? "getAttribLocation" : "getUniformLocation";
+    out += "var " + locsym(esc.id) + " = gl." + func + "(" +
       shadersym(vertex_prog.id) + ", " +
       emit_js_string(persistsym(esc.id)) + ");\n";
   }

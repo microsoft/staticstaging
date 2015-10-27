@@ -296,13 +296,9 @@ function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
   // no special qualifier distinction from uniforms; they both just get marked
   // as `in` variables.
   let decl_type = type;
-  let attribute = false;  // As opposed to uniform.
-  if (type instanceof InstanceType) {
-    if (type.cons === ARRAY) {
-      decl_type = type.arg;
-      attribute = true;
-    }
-  }
+  let element_type = _unwrap_array(decl_type);
+  let attribute = element_type != decl_type;  // As opposed to uniform.
+  decl_type = element_type;
 
   // Determine the type qualifier. In WebGL 2, this will be as simple as:
   // let qual = out ? "out" : "in";
