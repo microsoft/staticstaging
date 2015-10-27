@@ -97,6 +97,14 @@ function start_gl(container, func) {
     gl.enable(gl.DEPTH_TEST);  // Prevent triangle overlap.
     gl.enable(gl.CULL_FACE);  // Triangles not visible from behind.
 
+    // Invoke the compiled SHFL code.
+    // TODO It would sure be nice to get rid of this communication through
+    // globals!
+    window.bunny_projection = bunny_projection;
+    window.bunny_model = bunny_model;
+    window.bunny_view = bunny_view;
+    window.bunny_vertices = bunny_buffers.vertices;
+    window.bunny_normals = bunny_buffers.normals;
     shfl_func();
 
     // And the element array.
