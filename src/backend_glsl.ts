@@ -370,7 +370,10 @@ function glsl_compile_prog(compile: GLSLCompile,
   let code = emit_body(compile, prog.body, "");
   let main = "void main() {\n" + indent(code, true) + "\n}";
 
-  let out = "";
+  // This version of GLSL requires a precision declaration.
+  let out = "precision mediump float;\n";
+
+  // Concatenate the declarations and the main function.
   if (decls.length) {
     out += decls.join("\n") + "\n";
   }
