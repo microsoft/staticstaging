@@ -13,7 +13,7 @@ Program
 // Expression syntax.
 
 Expr "expression"
-  = Var / Extern / Fun / Binary / Assign / Call / TermExpr
+  = Var / Extern / Fun / Binary / Assign / CCall / Call / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -78,6 +78,16 @@ Call "call"
   { return {tag: "call", fun: i, args: as}; }
 Arg
   = e:TermExpr _
+  { return e; }
+
+CCall "C-style call"
+  = i:TermExpr _ paren_open _ as:CArgList? _ paren_close
+  { return {tag: "call", fun: i, args: as || []}; }
+CArgList
+  = first:Expr rest:CArgMore*
+  { return [first].concat(rest); }
+CArgMore
+  = _ comma _ e:Expr
   { return e; }
 
 Extern "extern declaration"

@@ -9,7 +9,7 @@ TESTS_BASIC := print seq let add quote escape nestedrun \
 	extern externfunc mutate externmutate externmutateuse float
 TESTS_INTERP := dump splice nesteddump spdump
 TESTS_STATIC := trailingsemi comment whitespace \
-	typeerror badsplice topescape floaterror
+	typeerror badsplice topescape floaterror ccall
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
 	gl-array gl-overload gl-normcolor
 TSCARGS := --noImplicitAny
