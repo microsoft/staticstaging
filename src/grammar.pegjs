@@ -16,7 +16,7 @@ Expr "expression"
   = Var / Extern / Fun / Binary / Assign / Call / TermExpr
 
 SeqExpr
-  = Seq / Expr
+  = Seq / HalfSeq / Expr
 
 TermExpr
   = Quote / FloatLiteral / IntLiteral / Lookup / Splice / Persist / Run / Paren
@@ -24,6 +24,11 @@ TermExpr
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
   { return {tag: "seq", lhs: lhs, rhs: rhs}; }
+
+// Allow (and ignore) a trailing semicolon.
+HalfSeq
+  = lhs:Expr _ seq
+  { return lhs; }
 
 IntLiteral "literal"
   = n:int

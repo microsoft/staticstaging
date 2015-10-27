@@ -3,12 +3,13 @@ SOURCES := interp.ts ast.ts visit.ts pretty.ts util.ts driver.ts \
 	type.ts type_check.ts type_elaborate.ts \
 	sugar.ts compile.ts \
 	backends.ts backend_js.ts backend_glsl.ts backend_webgl.ts
-TESTS_BASIC := print comment whitespace seq let add quote escape nestedrun \
+TESTS_BASIC := print seq let add quote escape nestedrun \
 	nested func call quotefunc closure persist nestedpersist share sharemulti \
 	quotelet splicepersist paren parentype higherorder codearg \
 	extern externfunc mutate externmutate externmutateuse float
 TESTS_INTERP := dump splice nesteddump spdump
-TESTS_TYPE := typeerror badsplice topescape floaterror
+TESTS_STATIC := trailingsemi comment whitespace \
+	typeerror badsplice topescape floaterror
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
 	gl-array gl-overload gl-normcolor
 TSCARGS := --noImplicitAny
@@ -97,7 +98,7 @@ done
 endef
 
 TEST_COMPILE := $(call run_tests,$(TESTS_BASIC),-cx)
-TEST_INTERP := $(call run_tests,$(TESTS_BASIC) $(TESTS_TYPE) $(TESTS_INTERP),)
+TEST_INTERP := $(call run_tests,$(TESTS_BASIC) $(TESTS_STATIC) $(TESTS_INTERP),)
 TEST_FAIL := [ ! $$failed ]
 
 .PHONY: test-compile
