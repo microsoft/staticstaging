@@ -45,6 +45,11 @@ function main() {
       for (let m of msg) {
         if (typeof(m) === "string") {
           out.push(m);
+        } else if (m instanceof Array) {
+          for (let i = 0; i < m.length; ++i) {
+            out.push("\n" + i + ": " +
+                util.inspect(m[i], { depth: 1, colors: true }));
+          }
         } else {
           out.push(util.inspect(m, { depth: null, colors: true }));
         }
