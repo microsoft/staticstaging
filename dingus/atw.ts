@@ -111,6 +111,14 @@ function get_name(tree: SyntaxNode): string {
   return ast_visit(GetName, tree, null);
 };
 
+const GL_PREAMBLE = `
+extern bunny_projection: Mat4;
+extern bunny_model: Mat4;
+extern bunny_view: Mat4;
+extern bunny_vertices: Vec3 Array;
+extern bunny_normals: Vec3 Array;
+`;
+
 // Run code and return:
 // - an error, if any
 // - the parse tree
@@ -143,6 +151,11 @@ function atw_run(code: string, mode: string)
       type = t;
     },
   };
+
+  // Add the preamble, if this is WebGL mode.
+  if (mode === "webgl") {
+    code = GL_PREAMBLE + code;
+  }
 
   // Run the driver.
   let res: string = null;
