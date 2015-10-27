@@ -220,7 +220,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
   let modeselect = <HTMLSelectElement> document.querySelector('#mode');
-  let glbox = <HTMLElement> document.querySelector('#gl');
 
   let draw_tree = tree_canvas('#tree', get_name, get_children);
 
@@ -237,7 +236,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
       show(err, errbox);
       show(typ, typebox);
-      show(res, outbox);
 
       if (mode !== "interp") {
         // Show the compiled code.
@@ -250,10 +248,15 @@ document.addEventListener("DOMContentLoaded", function () {
         treebox.style.display = 'block';
       }
 
-      // Start the WebGL viewer.
       if (mode === "webgl" && glfunc) {
+        // Start the WebGL viewer.
         console.log(glfunc);
-        start_gl(glbox, glfunc);
+        outbox.textContent = '';
+        outbox.style.display = 'block';
+        start_gl(outbox, glfunc);
+      } else {
+        // Just show the output value.
+        show(res, outbox);
       }
 
       let hash = encode_hash({code: code, mode: mode});
