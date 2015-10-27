@@ -37,6 +37,22 @@ function mesh_buffers(gl, obj) {
   }
 }
 
+// Set a buffer as the element array.
+function bind_element_buffer(gl, buffer) {
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+}
+
+// Compute a project matrix (placed in the `out` matrix allocation) given the
+// width and height of a viewport.
+function projection_matrix(out, width, height) {
+  var aspectRatio = width / height;
+  var fieldOfView = Math.PI / 4;
+  var near = 0.01;
+  var far  = 100;
+
+  mat4.perspective(out, fieldOfView, aspectRatio, near, far)
+}
+
 function start_gl(container, func) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -56,13 +72,39 @@ function start_gl(container, func) {
   // Create the base matrices to be used
   // when rendering the bunny. Alternatively, can
   // be created using `new Float32Array(16)`
-  var projection = mat4.create();
-  var model      = mat4.create();
-  var view       = mat4.create();
+  var bunny_projection = mat4.create();
+  var bunny_model = mat4.create();
+  var bunny_view = mat4.create();
 
-  var render_func = func(gl);
+  var shfl_func = func(gl);
+  // TODO Move as much of the following as possible to SHFL land.
   function render() {
-      render_func();
+    // Get the current size of the canvas.
+    var width = gl.drawingBufferWidth;
+    var height = gl.drawingBufferHeight;
+
+    // Handle user input and update the resulting camera view matrix.
+    camera.view(bunny_view);
+    camera.tick();
+
+    // Update the projection matrix for translating to 2D screen space.
+    projection_matrix(bunny_projection, width, height);
+
+    // Draw on the whole canvas.
+    gl.viewport(0, 0, width, height);
+
+    // Rendering flags.
+    gl.enable(gl.DEPTH_TEST);  // Prevent triangle overlap.
+    gl.enable(gl.CULL_FACE);  // Triangles not visible from behind.
+
+    shfl_func();
+
+    // And the element array.
+    bind_element_buffer(gl, bunny_buffers.cells);
+
+    // Draw it!
+    var count = bunny.cells.length * bunny.cells[0].length;
+    gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
   };
 }
 

@@ -134,15 +134,15 @@ Math.pow 7 2</pre>
 
         <p>The WebGL compiler is experimental:</p>
         <pre class="example"
-            data-mode="webgl">extern get_perspective: Int -&gt; Mat4;
-extern get_model: Int -&gt; Mat4;
-extern get_view: Int -&gt; Mat4;
+            data-mode="webgl">extern bunny_projection: Mat4;
+extern bunny_model: Mat4;
+extern bunny_view: Mat4;
 extern bunny_vertices: Vec3 Array;
 extern bunny_normals: Vec3 Array;
 
-var projection = get_perspective 0;
-var model = get_model 0;
-var view = get_view 0;
+var projection = bunny_projection;
+var model = bunny_model;
+var view = bunny_view;
 
 var position = bunny_vertices;
 var normal = bunny_normals;
