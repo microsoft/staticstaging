@@ -11,7 +11,7 @@ let parser = require('./parser.js');
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
     if (err) {
-      console.log(err);
+      console.error(err);
       process.exit(1);
     }
     f(data.toString());
@@ -37,12 +37,32 @@ function main() {
     process.exit(1);
   }
 
+  // Log stuff, if in verbose mode.
+  let log: (...msg: any[]) => void;
+  if (verbose) {
+    log = function (...msg: any[]) {
+      let out: string[] = [];
+      for (let m of msg) {
+        if (typeof(m) === "string") {
+          out.push(m);
+        } else {
+          out.push(util.inspect(m, { depth: null, colors: true }));
+        }
+      }
+      // Work around a TypeScript limitation:
+      // https://github.com/Microsoft/TypeScript/issues/4755
+      console.log(out[0], ...out.slice(1));
+    }
+  } else {
+    log = (_ => void 0);
+  }
+
   // Configure the driver.
   let config: DriverConfig = {
     parser: parser,
     webgl: webgl,
 
-    log: (verbose ? console.log : (_ => void 0)),
+    log: log,
     error (e: string) {
       console.error(e);
       process.exit(1);
