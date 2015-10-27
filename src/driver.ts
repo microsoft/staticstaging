@@ -98,7 +98,7 @@ function driver_frontend(config: DriverConfig, source: string,
   }
 
   // Remove syntactic sugar.
-  let sugarfree = desugar(elaborated, type_table);
+  let sugarfree = desugar(elaborated, type_table, _check(config));
   config.log('sugar-free', sugarfree);
   config.log('type table', type_table);
 
