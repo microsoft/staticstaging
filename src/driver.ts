@@ -126,7 +126,7 @@ function driver_compile(config: DriverConfig, tree: SyntaxNode,
       jscode = jscompile(ir);
     }
   } catch (e) {
-    if (e === "unimplemented") {
+    if (typeof(e) === "string") {
       config.error(e);
       return;
     } else {
