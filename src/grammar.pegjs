@@ -12,7 +12,7 @@ Program
 
 // Expression syntax.
 
-Expr
+Expr "expression"
   = Var / Extern / Fun / Binary / Assign / Call / TermExpr
 
 SeqExpr
