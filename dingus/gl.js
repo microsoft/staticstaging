@@ -8,6 +8,35 @@ var canvasOrbitCamera = require('canvas-orbit-camera');
 var glContext = require('gl-context');
 var pack = require('array-pack-2d');
 
+function make_buffer(gl, data, type, mode) {
+  // Initialize a buffer.
+  var buf = gl.createBuffer();
+
+  // Flatten the data to a packed array.
+  var arr = pack(data, type);
+
+  // Insert the data into the buffer.
+  gl.bindBuffer(mode, buf);
+  gl.bufferData(mode, arr, gl.STATIC_DRAW);
+
+  return buf;
+}
+
+// Given a mesh, with the fields `positions` and `cells`, create three buffers
+// for drawing the thing. Return an object with the fields:
+// - `cells`, a 3-dimensional uint16 element array buffer
+// - `positions`, a 3-dimensional float32 array buffer
+// - `normals`, ditto
+function mesh_buffers(gl, obj) {
+  var norm = normals.vertexNormals(bunny.cells, bunny.positions);
+
+  return {
+    cells: make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER),
+    positions: make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER),
+    normals: make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER),
+  }
+}
+
 function start_gl(container, func) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
