@@ -264,18 +264,55 @@ function emit_glsl_type(type: Type): string {
   }
 }
 
+// Emit a declaration for a variable going into or out of the current shader
+// program. The variable reflects an escape in this program or a subprogram.
+// The flags:
+// - `vertex`, indicating that this is an vertex (outer) shader program, as
+//   opposed to a fragment shader
+// - `out`, indicating whether the variable is going into or out of the stage
 function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
-    out: boolean): string {
-  let qual = out ? "out" : "in";
+    vertex: boolean, out: boolean): string {
   let [type, _] = ir.type_table[esc.body.id];
 
   // Array types indicate an attribute. Use the element type. Attributes get
   // no special qualifier distinction from uniforms; they both just get marked
   // as `in` variables.
   let decl_type = type;
+  let attribute = false;  // As opposed to uniform.
   if (type instanceof InstanceType) {
     if (type.cons === ARRAY) {
       decl_type = type.arg;
+      attribute = true;
+    }
+  }
+
+  // Determine the type qualifier. In WebGL 2, this will be as simple as:
+  // let qual = out ? "out" : "in";
+  // Sadly, in WebGL 1, we need more complex qualifiers.
+  let qual: string;
+  if (vertex) {
+    if (out) {
+      if (attribute) {
+        throw "error: vertex-to-fragment arrays not allowed";
+      } else {
+        qual = "varying";
+      }
+    } else {  // in
+      if (attribute) {
+        qual = "attribute";
+      } else {
+        qual = "uniform";
+      }
+    }
+  } else {  // fragment
+    if (out) {
+      throw "error: fragment outputs not allowed";
+    } else {
+      if (attribute) {
+        throw "error: fragment attributes not allowed";
+      } else {
+        qual = "varying";
+      }
     }
   }
 
@@ -289,10 +326,13 @@ function glsl_compile_prog(compile: GLSLCompile,
 
   let prog = ir.progs[progid];
 
+  // Check whether this is a vertex or fragment shader.
+  let vertex = ir.containing_progs[progid] === undefined;
+
   // Declare `in` variables for the persists.
   let decls: string[] = [];
   for (let esc of prog.persist) {
-    decls.push(glsl_persist_decl(ir, esc, false));
+    decls.push(glsl_persist_decl(ir, esc, vertex, false));
   }
 
   // Declare `out` variables for the persists in the subprogram. There can be
@@ -303,7 +343,7 @@ function glsl_compile_prog(compile: GLSLCompile,
     let subprog = ir.progs[prog.subprograms[0]];
     for (let esc of subprog.persist) {
       if (esc !== undefined) {
-        decls.push(glsl_persist_decl(ir, esc, true));
+        decls.push(glsl_persist_decl(ir, esc, vertex, true));
       }
     }
   }
