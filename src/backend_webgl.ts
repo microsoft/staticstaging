@@ -28,6 +28,9 @@ function get_shader(gl, vertex_source, fragment_source) {
   return program;
 }
 function bind_attribute(gl, location, buffer) {
+  if (!buffer) {
+    throw "no buffer";
+  }
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(location);
@@ -142,9 +145,13 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
+  // Bind the shader program.
+  let out = "gl.useProgram(" + shadersym(vertex_prog.id) + ")";
+
   // Emit and bind the uniforms.
-  let out = "";
   for (let esc of vertex_prog.persist) {
+    out += ",\n";
+
     let value = emit(esc.body);
     let [type, _] = ir.type_table[esc.body.id];
 
@@ -180,14 +187,7 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
     } else {
       throw "error: persisted values must be primitive or array types";
     }
-
-    out += ",\n";
   }
-
-  // TODO varying/attributes!
-
-  // Bind the shader program.
-  out += "gl.useProgram(" + shadersym(vertex_prog.id) + ")";
 
   return out;
 }

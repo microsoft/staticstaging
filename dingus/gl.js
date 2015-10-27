@@ -103,7 +103,7 @@ function start_gl(container, func) {
     window.bunny_projection = bunny_projection;
     window.bunny_model = bunny_model;
     window.bunny_view = bunny_view;
-    window.bunny_vertices = bunny_buffers.vertices;
+    window.bunny_vertices = bunny_buffers.positions;
     window.bunny_normals = bunny_buffers.normals;
     shfl_func();
 
