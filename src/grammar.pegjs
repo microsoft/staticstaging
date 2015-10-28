@@ -91,7 +91,7 @@ Arg
   { return e; }
 
 CCall "C-style call"
-  = i:TermExpr _ paren_open _ as:CArgList? _ paren_close
+  = i:Lookup paren_open _ as:CArgList? _ paren_close
   { return {tag: "call", fun: i, args: as || []}; }
 CArgList
   = first:Expr rest:CArgMore*
