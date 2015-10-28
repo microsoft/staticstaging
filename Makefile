@@ -61,7 +61,7 @@ atw.js: $(TSC) $(CLI_SRCS) $(MINIMIST)
 	$(TSC) $(TSCARGS) --out $@ $(CLI_SRCS)
 
 parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
-	$(PEGJS) < $(<) > $@
+	$(PEGJS) --cache < $(<) > $@
 
 
 # The Web dingus.
