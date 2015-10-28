@@ -201,6 +201,40 @@ function render_expr(tree: ExpressionNode) {
   return is_intrinsic_call(tree, "render");
 }
 
+// Determine the stage kind of a Prog: render, vertex, or fragment. Uses these
+// definitions, which are based on containment and annotations:
+// - A fragment program is a shader program contained in another shader
+//   program.
+// - A vertex program is a shader program that is either not nested in any
+//   other program or whose containing program is a function program.
+// - A render program is any function program.
+// - Anything else is an ordinary program.
+enum ProgKind {
+  ordinary,
+  render,
+  vertex,
+  fragment,
+}
+function prog_kind(ir: CompilerIR, progid: number): ProgKind {
+  let prog = ir.progs[progid];
+  if (prog.annotation === "f") {
+    return ProgKind.render;
+  } else if (prog.annotation === "s") {
+    let parentid = ir.containing_progs[progid];
+    if (parentid === undefined) {
+      return ProgKind.vertex;
+    }
+    let parprog = ir.progs[parentid];
+    if (parprog.annotation === "f") {
+      return ProgKind.fragment;
+    } else {
+      return ProgKind.vertex;
+    }
+  } else {
+    return ProgKind.ordinary;
+  }
+}
+
 // Extend the JavaScript compiler with some WebGL specifics.
 function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
   ASTVisit<void, string>
