@@ -13,7 +13,7 @@ Program
 // Expression syntax.
 
 Expr "expression"
-  = Var / Extern / Fun / Binary / Assign / CCall / Call / TermExpr
+  = Var / Extern / Fun / CDef / Binary / Assign / CCall / Call / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -72,6 +72,16 @@ Fun "lambda"
 Param "parameter"
   = i:ident _ typed _ t:TermType _
   { return {tag: "param", name: i, type: t}; }
+
+CDef "C-style function definition"
+  = def _ i:ident _ paren_open _ ps:CParamList _ paren_close _ e:Expr
+  { return {tag: "let", ident: i, expr: {tag: "fun", params: ps, body: e} }; }
+CParamList
+  = first:Param rest:CParamMore*
+  { return [first].concat(rest); }
+CParamMore
+  = comma _ p:Param
+  { return p; }
 
 Call "call"
   = i:TermExpr _ as:Arg+
@@ -205,6 +215,9 @@ paren_close
 
 extern
   = "extern"
+
+def
+  = "def"
 
 
 // Empty space.
