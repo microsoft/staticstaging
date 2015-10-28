@@ -67,10 +67,6 @@ function is_intrinsic_call(tree: ExpressionNode, name: string) {
   return false;
 }
 
-function vtx_expr(tree: ExpressionNode) {
-  return is_intrinsic_call(tree, "vtx");
-}
-
 function frag_expr(tree: ExpressionNode) {
   return is_intrinsic_call(tree, "frag");
 }

@@ -58,6 +58,7 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
 ]);
 const GL_INTRINSICS: TypeMap = {
+  render: new FunType([new FunType([], ANY)], VOID),
   vtx: new FunType([new CodeType(ANY)], VOID),
   frag: new FunType([new CodeType(ANY)], VOID),
   gl_Position: FLOAT4,
@@ -192,6 +193,14 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
   return out;
 }
 
+// Check for our intrinsics.
+function vtx_expr(tree: ExpressionNode) {
+  return is_intrinsic_call(tree, "vtx");
+}
+function render_expr(tree: ExpressionNode) {
+  return is_intrinsic_call(tree, "render");
+}
+
 // Extend the JavaScript compiler with some WebGL specifics.
 function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
   ASTVisit<void, string>
@@ -209,6 +218,16 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
           return emit_shader_binding(fself, ir, quote.id);
         } else {
           throw "dynamic `vtx` calls unimplemented";
+        }
+
+      // And our intrinsic for indicating the rendering stage.
+      } else if (render_expr(tree)) {
+        if (tree.args[0].tag === "fun") {
+          // Just emit the proc (the JavaScript function reference).
+          let procid = tree.args[0].id;
+          return procsym(procid);
+        } else {
+          throw "render body must be a function";
         }
       }
 
