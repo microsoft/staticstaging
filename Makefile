@@ -66,7 +66,7 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 
 # The Web dingus.
 
-dingus: $(DINGUS_JS) dingus/gl.bundle.js
+dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/bootstrap.css
 
 WEB_SRCS := $(SRC_FILES) dingus/atw.ts
 dingus/atw.js: $(TSC) $(WEB_SRCS)
@@ -79,10 +79,17 @@ dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 	cd dingus ; npm install
 	cd dingus ; npm run-script build
 
+BOOTSTRAP := dingus/bower_components/bootstrap/dist/css/bootstrap.min.css
+$(BOOTSTRAP):
+	cd dingus ; bower install bootstrap\#4.0.0-alpha
+
+dingus/bootstrap.css: $(BOOTSTRAP)
+	cp $< $@
+
 .PHONY: deploy
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh \
 	--exclude node_modules --exclude package.json --exclude gl.js \
-	--exclude atw.ts
+	--exclude atw.ts --exclude bower_components
 DEST := dh:domains/adriansampson.net/atw
 deploy: dingus
 	rsync $(RSYNCARGS) dingus/ $(DEST)
