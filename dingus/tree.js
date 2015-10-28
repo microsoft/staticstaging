@@ -1,10 +1,10 @@
 // Adapted from the D3 example at:
 // http://www.d3noob.org/2014/01/tree-diagrams-in-d3js_11.html
 
-var diagonal = d3.svg.diagonal()
- .projection(function(d) { return [d.y, d.x]; });
-
 function tree_canvas(where, get_name, get_children) {
+  var diagonal = d3.svg.diagonal()
+   .projection(function(d) { return [d.y, d.x]; });
+
   var container = d3.select(where);
 
   // Set our size based on the size of the container.

@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let examples = document.querySelectorAll('.example');
   let modeselect = <HTMLSelectElement> document.querySelector('#mode');
 
-  let draw_tree = tree_canvas('#tree', get_name, get_children);
+  let draw_tree: (tree_data: any) => void;
 
   function code_value() {
     return codebox.value.trim();
@@ -256,6 +256,11 @@ document.addEventListener("DOMContentLoaded", function () {
         treebox.style.display = 'none';
       } else {
         // Draw the syntax tree.
+        if (!draw_tree) {
+          // Lazily initialize the drawing code to avoid D3 invocations when
+          // we don't need them.
+          draw_tree = tree_canvas('#tree', get_name, get_children);
+        }
         draw_tree(tree);
         show(null, compiledbox);
         treebox.style.display = 'block';
