@@ -140,9 +140,9 @@ var view = dingus.view;
 var position = bunny.positions;
 var normal = bunny.normals;
 vtx s&lt;
-  gl_Position = projection * view * model * (vec4 position 1.0);
+  gl_Position = projection * view * model * vec4(position, 1.0);
   frag s&lt;
-    gl_FragColor = (vec4 (abs normal) 1.0)
+    gl_FragColor = vec4(abs(normal), 1.0);
   &gt;
 &gt;</pre>
 
