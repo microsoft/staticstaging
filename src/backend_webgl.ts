@@ -58,7 +58,7 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
 ]);
 const GL_INTRINSICS: TypeMap = {
-  render: new FunType([new FunType([], ANY)], VOID),
+  render: new FunType([new CodeType(ANY)], VOID),
   vtx: new FunType([new CodeType(ANY)], VOID),
   frag: new FunType([new CodeType(ANY)], VOID),
   gl_Position: FLOAT4,
@@ -222,13 +222,9 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
 
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
-        if (tree.args[0].tag === "fun") {
-          // Just emit the proc (the JavaScript function reference).
-          let procid = tree.args[0].id;
-          return procsym(procid);
-        } else {
-          throw "render body must be a function";
-        }
+        // Just emit the prog (code reference).
+        let progid = tree.args[0].id;
+        return progsym(progid);
       }
 
       // An ordinary function call.
