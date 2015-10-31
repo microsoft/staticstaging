@@ -223,7 +223,7 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
         // Invoke the render function with its persists as arguments.
-        return webgl_emit_render_call(fself, ir, tree.args[0].id);
+        return webgl_emit_render(fself, ir.progs[tree.args[0].id]);
       }
 
       // An ordinary function call.
@@ -256,20 +256,15 @@ function webgl_compile(ir: CompilerIR): string {
         procs.push(ir.procs[id]);
       }
 
-      if (prog.annotation === "r") {
-        // A function quotation for the render stage.
-        out += webgl_emit_render_func(_jscompile, prog) + "\n";
+      let code: string;
+      if (prog.annotation === "s") {
+        // A shader program.
+        code = glsl_compile_prog(_glslcompile, ir, prog.id);
       } else {
-        let code: string;
-        if (prog.annotation === "s") {
-          // A shader program.
-          code = glsl_compile_prog(_glslcompile, ir, prog.id);
-        } else {
-          // Ordinary JavaScript quotation.
-          code = jscompile_prog(_jscompile, prog, procs);
-        }
-        out += emit_js_var(progsym(prog.id), code, true) + "\n";
+        // Ordinary JavaScript quotation.
+        code = jscompile_prog(_jscompile, prog, procs);
       }
+      out += emit_js_var(progsym(prog.id), code, true) + "\n";
     }
   }
 
@@ -298,10 +293,10 @@ function webgl_compile(ir: CompilerIR): string {
   return out;
 }
 
-// An experimental alternative that emits a program as a JavaScript function
+// Emit the *render* stage as an anonymous JavaScript function expression
 // rather than as a string that must be eval'ed. The program may not have any
 // splice escapes.
-function webgl_emit_render_func(compile: JSCompile, prog: Prog): string {
+function webgl_emit_render(compile: JSCompile, prog: Prog): string {
   // TODO Emit functions in the quote. These become global functions.
 
   // Get the quote's local (bound) variables.
@@ -311,8 +306,7 @@ function webgl_emit_render_func(compile: JSCompile, prog: Prog): string {
   }
 
   // Get the quote's persists. These manifest as parameters to the function.
-  // Also, there's a `gl` argument for the rendering context.
-  let argnames: string[] = ['gl'];
+  let argnames: string[] = [];
   for (let esc of prog.persist) {
     argnames.push(persistsym(esc.id));
   }
@@ -324,35 +318,22 @@ function webgl_emit_render_func(compile: JSCompile, prog: Prog): string {
 
   // Emit the main function body.
   let code = emit_body(compile, prog.body);
-  // Then, wrap it in a function that takes the `gl` context. This is the
+  // Then, wrap it in a function that takes no parameters. This is the
   // rendering function that will be called on every frame.
   let render_func = emit_js_fun(null, [], localnames, code);
-  // Finally, wrap this in an outer function that takes the rest of the
-  // parameters. They will be bound at the end of setup.
-  let wrapper_func = emit_js_fun(progsym(prog.id), argnames, [],
+  // Finally, wrap this in an outer function that takes the parameters to
+  // bind (i.e., the persists).
+  let wrapper_func = emit_js_fun(null, argnames, [],
                                  `return ${render_func};`);
 
-  return wrapper_func;
-}
-
-// Emit an *invocation* of the render function. This calls the outer function
-// to produce the inner, per-frame JavaScript closure value.
-function webgl_emit_render_call(compile: JSCompile, ir: CompilerIR,
-    progid: number): string
-{
-  // The first argument is the `gl` context.
-  let args = ['gl'];
-
-  // The rest are the persist values.
-  for (let esc of ir.progs[progid].persist) {
+  // Finally, *invoke* the resulting function to pass it the persist values.
+  let args: string[] = [];
+  for (let esc of prog.persist) {
     if (esc !== undefined) {
       args.push(paren(compile(esc.body)));
     }
   }
 
-  // The function name is the symbol for the quote.
-  let name = progsym(progid);
-
   let arglist = args.join(', ');
-  return `${name}(${arglist})`;
+  return `${wrapper_func}(${arglist})`;
 }
