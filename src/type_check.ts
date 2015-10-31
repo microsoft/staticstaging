@@ -154,7 +154,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // Pop the current (quotation) environment off of the environment stack
       // before checking the escape.
       let [stack, anns, externs, named] = env;
-      let inner_env: TypeEnv = [tl(stack), anns, externs, named];
+      let inner_env: TypeEnv = [tl(stack), tl(anns), externs, named];
       let [t, e] = check(tree.expr, inner_env);
 
       if (tree.kind === "splice") {

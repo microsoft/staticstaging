@@ -150,6 +150,10 @@ function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
   let out = "gl.useProgram(" + shadersym(vertex_prog.id) + ")";
 
   // Emit and bind the uniforms.
+  // Because of our desugaring approach, all uniforms and attributes will
+  // appear as escapes in the vertex quote. If we ever make it possible to
+  // jump directly from the fragment stage to the host, we'll need to do some
+  // more work here.
   for (let esc of vertex_prog.persist) {
     out += ",\n";
 
