@@ -284,8 +284,7 @@ function webgl_compile(ir: CompilerIR): string {
   let setup_parts: string[] = [];
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      if (prog.annotation === "s" &&
-          ir.containing_progs[prog.id] == undefined) {
+      if (prog_kind(ir, prog.id) === ProgKind.vertex) {
         setup_parts.push(emit_shader_setup(ir, prog.id));
       }
     }
@@ -293,7 +292,7 @@ function webgl_compile(ir: CompilerIR): string {
   let setup_code = setup_parts.join("");
 
   // Compile the main function. It takes a `gl` context parameter.
-  let main = jscompile_proc(_jscompile, ir.main, ['gl']);
+  let main = jscompile_proc(_jscompile, ir.main, setup_code, ['gl']);
   out += main;
 
   return out;

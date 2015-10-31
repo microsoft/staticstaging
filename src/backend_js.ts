@@ -198,7 +198,7 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
 function jscompile_proc(compile: JSCompile, proc: Proc,
-    extra_args: string[] = []): string
+    extra_code: string = "", extra_args: string[] = []): string
 {
   // The arguments consist of the actual parameters and the closure
   // environment (free variables).
@@ -229,6 +229,9 @@ function jscompile_proc(compile: JSCompile, proc: Proc,
 
   // Function declaration.
   let body = emit_body(compile, proc.body);
+  if (extra_code) {
+    body = extra_code + body;
+  }
   return emit_js_fun(name, argnames, localnames, body);
 }
 
