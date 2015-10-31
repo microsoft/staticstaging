@@ -76,7 +76,17 @@ function start_gl(container, func) {
   var model = mat4.create();
   var view = mat4.create();
 
+  // Invoke the setup stage to get a function for the render stage.
+  // TODO It would sure be nice to get rid of this communication through
+  // globals!
+  window.dingus = {
+    projection: projection,
+    model: model,
+    view: view,
+  };
+  window.bunny = bunny_buffers;
   var shfl_func = func(gl);
+
   // TODO Move as much of the following as possible to SHFL land.
   function render() {
     // Get the current size of the canvas.
@@ -98,14 +108,6 @@ function start_gl(container, func) {
     gl.enable(gl.CULL_FACE);  // Triangles not visible from behind.
 
     // Invoke the compiled SHFL code.
-    // TODO It would sure be nice to get rid of this communication through
-    // globals!
-    window.dingus = {
-      projection: projection,
-      model: model,
-      view: view,
-    };
-    window.bunny = bunny_buffers;
     shfl_func();
 
     // And the element array.
