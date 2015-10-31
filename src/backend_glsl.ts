@@ -394,7 +394,7 @@ enum ProgKind {
 }
 function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   let prog = ir.progs[progid];
-  if (prog.annotation === "f") {
+  if (prog.annotation === "r") {
     return ProgKind.render;
   } else if (prog.annotation === "s") {
     let parentid = ir.containing_progs[progid];
@@ -402,10 +402,10 @@ function prog_kind(ir: CompilerIR, progid: number): ProgKind {
       return ProgKind.vertex;
     }
     let parprog = ir.progs[parentid];
-    if (parprog.annotation === "f") {
-      return ProgKind.fragment;
-    } else {
+    if (parprog.annotation === "r") {
       return ProgKind.vertex;
+    } else {
+      return ProgKind.fragment;
     }
   } else {
     return ProgKind.ordinary;
