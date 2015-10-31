@@ -222,9 +222,8 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
 
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
-        // Just emit the prog (code reference).
-        let progid = tree.args[0].id;
-        return progsym(progid);
+        // Invoke the render function with its persists as arguments.
+        return webgl_emit_render_call(fself, ir, tree.args[0].id);
       }
 
       // An ordinary function call.
@@ -259,7 +258,7 @@ function webgl_compile(ir: CompilerIR): string {
 
       if (prog.annotation === "r") {
         // A function quotation for the render stage.
-        out += glsl_emit_render_func(_jscompile, prog) + "\n";
+        out += webgl_emit_render_func(_jscompile, prog) + "\n";
       } else {
         let code: string;
         if (prog.annotation === "s") {
@@ -306,7 +305,7 @@ function webgl_compile(ir: CompilerIR): string {
 // An experimental alternative that emits a program as a JavaScript function
 // rather than as a string that must be eval'ed. The program may not have any
 // splice escapes.
-function glsl_emit_render_func(compile: JSCompile, prog: Prog): string {
+function webgl_emit_render_func(compile: JSCompile, prog: Prog): string {
   // TODO Emit functions in the quote. These become global functions.
 
   // Get the quote's local (bound) variables.
@@ -316,7 +315,8 @@ function glsl_emit_render_func(compile: JSCompile, prog: Prog): string {
   }
 
   // Get the quote's persists. These manifest as parameters to the function.
-  let argnames: string[] = [];
+  // Also, there's a `gl` argument for the rendering context.
+  let argnames: string[] = ['gl'];
   for (let esc of prog.persist) {
     argnames.push(persistsym(esc.id));
   }
@@ -330,11 +330,33 @@ function glsl_emit_render_func(compile: JSCompile, prog: Prog): string {
   let code = emit_body(compile, prog.body);
   // Then, wrap it in a function that takes the `gl` context. This is the
   // rendering function that will be called on every frame.
-  let render_func = emit_js_fun(null, ['gl'], localnames, code);
+  let render_func = emit_js_fun(null, [], localnames, code);
   // Finally, wrap this in an outer function that takes the rest of the
   // parameters. They will be bound at the end of setup.
   let wrapper_func = emit_js_fun(progsym(prog.id), argnames, [],
                                  `return ${render_func};`);
 
   return wrapper_func;
+}
+
+// Emit an *invocation* of the render function. This calls the outer function
+// to produce the inner, per-frame JavaScript closure value.
+function webgl_emit_render_call(compile: JSCompile, ir: CompilerIR,
+    progid: number): string
+{
+  // The first argument is the `gl` context.
+  let args = ['gl'];
+
+  // The rest are the persist values.
+  for (let esc of ir.progs[progid].persist) {
+    if (esc !== undefined) {
+      args.push(paren(compile(esc.body)));
+    }
+  }
+
+  // The function name is the symbol for the quote.
+  let name = progsym(progid);
+
+  let arglist = args.join(', ');
+  return `${name}(${arglist})`;
 }
