@@ -11,7 +11,7 @@ TESTS_INTERP := dump splice nesteddump spdump
 TESTS_STATIC := trailingsemi comment whitespace \
 	typeerror badsplice topescape floaterror ccall cdef
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
-	gl-array gl-overload gl-normcolor
+	gl-array gl-overload gl-typeadapt gl-normcolor
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
