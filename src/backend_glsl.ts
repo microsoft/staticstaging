@@ -281,11 +281,11 @@ function emit_glsl_type(type: Type): string {
 // Emit a declaration for a variable going into or out of the current shader
 // program. The variable reflects an escape in this program or a subprogram.
 // The flags:
-// - `vertex`, indicating that this is an vertex (outer) shader program, as
-//   opposed to a fragment shader
+// - `kind`, indicating whether this is an vertex (outer) shader program or a
+//   fragment (inner) shader
 // - `out`, indicating whether the variable is going into or out of the stage
 function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
-    vertex: boolean, out: boolean): string {
+    kind: ProgKind, out: boolean): string {
   let [type, _] = ir.type_table[esc.body.id];
 
   // Array types indicate an attribute. Use the element type. Attributes get
@@ -300,7 +300,7 @@ function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
   // let qual = out ? "out" : "in";
   // Sadly, in WebGL 1, we need more complex qualifiers.
   let qual: string;
-  if (vertex) {
+  if (kind === ProgKind.vertex) {
     if (out) {
       if (attribute) {
         throw "error: vertex-to-fragment arrays not allowed";
@@ -314,7 +314,7 @@ function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
         qual = "uniform";
       }
     }
-  } else {  // fragment
+  } else if (kind === ProgKind.fragment) {
     if (out) {
       throw "error: fragment outputs not allowed";
     } else {
@@ -324,6 +324,8 @@ function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
         qual = "varying";
       }
     }
+  } else {
+    throw "error: unknown shader kind";
   }
 
   return emit_glsl_decl(qual, emit_glsl_type(decl_type), persistsym(esc.id));
@@ -337,12 +339,15 @@ function glsl_compile_prog(compile: GLSLCompile,
   let prog = ir.progs[progid];
 
   // Check whether this is a vertex or fragment shader.
-  let vertex = ir.containing_progs[progid] === undefined;
+  let kind = prog_kind(ir, progid);
+  if (kind !== ProgKind.vertex && kind !== ProgKind.fragment) {
+    throw "error: unexpected program kind";
+  }
 
   // Declare `in` variables for the persists.
   let decls: string[] = [];
   for (let esc of prog.persist) {
-    decls.push(glsl_persist_decl(ir, esc, vertex, false));
+    decls.push(glsl_persist_decl(ir, esc, kind, false));
   }
 
   // Declare `out` variables for the persists in the subprogram. There can be
@@ -353,7 +358,7 @@ function glsl_compile_prog(compile: GLSLCompile,
     let subprog = ir.progs[prog.subprograms[0]];
     for (let esc of subprog.persist) {
       if (esc !== undefined) {
-        decls.push(glsl_persist_decl(ir, esc, vertex, true));
+        decls.push(glsl_persist_decl(ir, esc, kind, true));
       }
     }
   }
@@ -371,4 +376,38 @@ function glsl_compile_prog(compile: GLSLCompile,
   }
   out += main;
   return out;
+}
+
+// Determine the stage kind of a Prog: render, vertex, or fragment. Uses these
+// definitions, which are based on containment and annotations:
+// - A fragment program is a shader program contained in another shader
+//   program.
+// - A vertex program is a shader program that is either not nested in any
+//   other program or whose containing program is a function program.
+// - A render program is any function program.
+// - Anything else is an ordinary program.
+enum ProgKind {
+  ordinary,
+  render,
+  vertex,
+  fragment,
+}
+function prog_kind(ir: CompilerIR, progid: number): ProgKind {
+  let prog = ir.progs[progid];
+  if (prog.annotation === "f") {
+    return ProgKind.render;
+  } else if (prog.annotation === "s") {
+    let parentid = ir.containing_progs[progid];
+    if (parentid === undefined) {
+      return ProgKind.vertex;
+    }
+    let parprog = ir.progs[parentid];
+    if (parprog.annotation === "f") {
+      return ProgKind.fragment;
+    } else {
+      return ProgKind.vertex;
+    }
+  } else {
+    return ProgKind.ordinary;
+  }
 }
