@@ -292,12 +292,9 @@ function webgl_compile(ir: CompilerIR): string {
   }
   let setup_code = setup_parts.join("");
 
-  // Compile the main function.
-  let main = jscompile_proc(_jscompile, ir.main);
-
-  // Then wrap it in an outer function that includes the setup code.
-  let body = setup_code + "return /* render */ " + main + ";"
-  out += emit_js_fun(null, ['gl'], [], body) + "";
+  // Compile the main function. It takes a `gl` context parameter.
+  let main = jscompile_proc(_jscompile, ir.main, ['gl']);
+  out += main;
 
   return out;
 }

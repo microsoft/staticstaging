@@ -197,10 +197,12 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
-function jscompile_proc(compile: JSCompile, proc: Proc): string {
+function jscompile_proc(compile: JSCompile, proc: Proc,
+    extra_args: string[] = []): string
+{
   // The arguments consist of the actual parameters and the closure
   // environment (free variables).
-  let argnames: string[] = [];
+  let argnames: string[] = extra_args.slice(0);
   for (let param of proc.params) {
     argnames.push(varsym(param));
   }
