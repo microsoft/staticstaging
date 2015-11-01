@@ -123,6 +123,10 @@ extern dingus.model: Mat4;
 extern dingus.view: Mat4;
 extern bunny.positions: Vec3 Array;
 extern bunny.normals: Vec3 Array;
+
+extern Date.now: -> Float;
+extern Math.sin: Float -> Float;
+extern Math.cos: Float -> Float;
 `;
 
 // Run code and return:

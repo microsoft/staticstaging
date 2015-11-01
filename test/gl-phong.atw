@@ -4,6 +4,9 @@ extern dingus.model: Mat4;
 extern dingus.view: Mat4;
 extern bunny.positions: Vec3 Array;
 extern bunny.normals: Vec3 Array;
+extern Date.now: -> Float;
+extern Math.sin: Float -> Float;
+extern Math.cos: Float -> Float;
 
 # Our variables.
 var projection = dingus.projection;
@@ -15,8 +18,12 @@ var normal = bunny.normals;
 var shininess = 0.5;
 
 render r<
+  var t = Date.now();
+  var lx = Math.sin(t / 200);
+  var ly = Math.sin(t / 100);
+  var lz = Math.sin(t / 300);
   vtx s<
-    var light_position = vec3(1.0, 1.0, 1.0); # TODO
+    var light_position = vec3(lx-1.0, ly, lz);
 
     var view_model = view * model;
     var view_model_position = view_model * vec4(position, 1.0);
