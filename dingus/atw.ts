@@ -27,6 +27,9 @@ let GetChildren : ASTVisit<void, SyntaxNode[]> = {
   visit_lookup(tree: LookupNode, _: void): SyntaxNode[] {
     return [];
   },
+  visit_unary(tree: UnaryNode, _: void): SyntaxNode[] {
+    return [tree.expr];
+  },
   visit_binary(tree: BinaryNode, _: void): SyntaxNode[] {
     return [tree.lhs, tree.rhs];
   },
@@ -72,6 +75,9 @@ let GetName : ASTVisit<void, string> = {
   },
   visit_lookup(tree: LookupNode, _: void): string {
     return tree.ident;
+  },
+  visit_unary(tree: UnaryNode, _: void): string {
+    return tree.op;
   },
   visit_binary(tree: BinaryNode, _: void): string {
     return tree.op;
