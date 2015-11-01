@@ -13,11 +13,12 @@ var position = bunny.positions;
 var normal = bunny.normals;
 
 var shininess = 0.5;
-var camera_position = vec3(1.0, 1.0, 1.0); # TODO
-var light_position = vec3(1.0, 1.0, 1.0); # TODO
 
 render r<
   vtx s<
+    var camera_position = vec3(1.0, 1.0, 1.0); # TODO
+    var light_position = vec3(1.0, 1.0, 1.0); # TODO
+
     gl_Position = projection * view * model * vec4(position, 1.0);
 
     # Convert to world space.
