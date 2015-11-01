@@ -3,7 +3,7 @@ SOURCES := interp.ts ast.ts visit.ts pretty.ts util.ts driver.ts \
 	type.ts type_check.ts type_elaborate.ts \
 	sugar.ts compile.ts \
 	backends.ts backend_js.ts backend_glsl.ts backend_webgl.ts
-TESTS_BASIC := print seq let add quote escape nestedrun \
+TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	nested func call quotefunc closure persist nestedpersist share sharemulti \
 	quotelet splicepersist paren parentype higherorder codearg \
 	extern externfunc mutate externmutate externmutateuse float

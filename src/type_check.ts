@@ -19,13 +19,20 @@ type TypeEnv = [TypeMap[], string[], TypeMap, TypeMap];
 
 // The built-in operator types. These can be extended by providing custom
 // intrinsics.
+const _UNARY_TYPE = new OverloadedType([
+  new FunType([INT], INT),
+  new FunType([FLOAT], FLOAT),
+]);
 const _BINARY_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
 ]);
+const _UNARY_BINARY_TYPE = new OverloadedType(
+  _UNARY_TYPE.types.concat(_BINARY_TYPE.types)
+);
 const BUILTIN_OPERATORS: TypeMap = {
-  '+': _BINARY_TYPE,
-  '-': _BINARY_TYPE,
+  '+': _UNARY_BINARY_TYPE,
+  '-': _UNARY_BINARY_TYPE,
   '*': _BINARY_TYPE,
   '/': _BINARY_TYPE,
 };
@@ -110,14 +117,29 @@ let gen_check : Gen<TypeCheck> = function(check) {
       throw "type error: undefined variable " + tree.ident;
     },
 
+    visit_unary(tree: UnaryNode, env: TypeEnv): [Type, TypeEnv] {
+      let [t, e] = check(tree.expr, env);
+
+      // Unary and binary operators use intrinsic functions whose names match
+      // the operator. Currently, these can *only* be defined as externs; for
+      // more flexible operator overloading, we could eventually also look at
+      // ordinary variable.
+      let [_, __, externs, ___] = env;
+      let fun = externs[tree.op];
+      let ret = check_call(fun, [t]);
+      if (ret instanceof Type) {
+        return [ret, e];
+      } else {
+        throw "type error: invalid unary operation (" +
+            tree.op + " " + pretty_type(t) + ")";
+      }
+    },
+
     visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
       let [t1, e1] = check(tree.lhs, env);
       let [t2, e2] = check(tree.rhs, e1);
 
-      // Binary operators use intrinsic functions whose names match the
-      // operator. Currently, these can *only* be defined as externs; for more
-      // flexible operator overloading, we could eventually also look at
-      // ordinary variable.
+      // Use extern functions, as with unary operators.
       let [_, __, externs, ___] = env;
       let fun = externs[tree.op];
       let ret = check_call(fun, [t1, t2]);

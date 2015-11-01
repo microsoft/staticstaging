@@ -8,6 +8,7 @@ interface ASTVisit<P, R> {
   visit_let(tree: LetNode, param: P): R;
   visit_assign(tree: AssignNode, param: P): R;
   visit_lookup(tree: LookupNode, param: P): R;
+  visit_unary(tree: UnaryNode, param: P): R;
   visit_binary(tree: BinaryNode, param: P): R;
   visit_quote(tree: QuoteNode, param: P): R;
   visit_escape(tree: EscapeNode, param: P): R;
@@ -33,6 +34,8 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_assign(<AssignNode> tree, param);
     case "lookup":
       return visitor.visit_lookup(<LookupNode> tree, param);
+    case "unary":
+      return visitor.visit_unary(<UnaryNode> tree, param);
     case "binary":
       return visitor.visit_binary(<BinaryNode> tree, param);
     case "quote":
@@ -63,6 +66,7 @@ interface PartialASTVisit<P, R> {
   visit_let? (tree: LetNode, param: P): R;
   visit_assign? (tree: AssignNode, param: P): R;
   visit_lookup? (tree: LookupNode, param: P): R;
+  visit_unary? (tree: UnaryNode, param: P): R;
   visit_binary? (tree: BinaryNode, param: P): R;
   visit_quote? (tree: QuoteNode, param: P): R;
   visit_escape? (tree: EscapeNode, param: P): R;
@@ -73,8 +77,9 @@ interface PartialASTVisit<P, R> {
   visit_persist? (tree: PersistNode, param: P): R;
 }
 
-let AST_TYPES = ["literal", "seq", "let", "assign", "lookup", "binary", "quote",
-                 "escape", "run", "fun", "call", "extern", "persist"];
+let AST_TYPES = ["literal", "seq", "let", "assign", "lookup", "unary",
+                 "binary", "quote", "escape", "run", "fun", "call", "extern",
+                 "persist"];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
 // is some messy run-time metaprogramming!
@@ -133,6 +138,12 @@ function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, SyntaxNode> {
 
     visit_lookup(tree: LookupNode, param: void): SyntaxNode {
       return merge(tree);
+    },
+
+    visit_unary(tree: UnaryNode, param: void): SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
     },
 
     visit_binary(tree: BinaryNode, param: void): SyntaxNode {
@@ -244,6 +255,10 @@ function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
 
     visit_lookup(tree: LookupNode, p: T): T {
       return p;
+    },
+
+    visit_unary(tree: UnaryNode, p: T): T {
+      return fself(tree.expr, p);
     },
 
     visit_binary(tree: BinaryNode, p: T): T {

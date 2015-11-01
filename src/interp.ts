@@ -121,6 +121,25 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     }
   },
 
+  visit_unary(tree: UnaryNode, [env, pers]: [Env, Pers]): [Value, Env] {
+    let [v, e] = interp(tree.expr, env, pers);
+    v = unwrap_extern(v);
+    if (typeof v === 'number') {
+      let v: Value;
+      switch (tree.op) {
+        case "+":
+          v = +v; break;
+        case "-":
+          v = -v; break;
+        default:
+          throw "error: unknown unary operator " + tree.op;
+      }
+      return [v, e];
+    } else {
+      throw "error: non-numeric operand to unary operator";
+    }
+  },
+
   visit_binary(tree: BinaryNode, [env, pers]: [Env, Pers]): [Value, Env] {
     let [v1, e1] = interp(tree.lhs, env, pers);
     let [v2, e2] = interp(tree.rhs, e1, pers);
@@ -142,7 +161,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
       }
       return [v, e2];
     } else {
-      throw "error: non-numeric operands to operator";
+      throw "error: non-numeric operands to binary operator";
     }
   },
 
@@ -346,6 +365,13 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
       [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
     return [merge(tree), env, pers];
+  },
+
+  visit_unary(tree: UnaryNode,
+      [stage, env, pers, opers]: [number, Env, Pers, Pers]):
+      [SyntaxNode, Env, Pers] {
+    let [t, e, p] = quote_interp(tree.expr, stage, env, pers, opers);
+    return [merge(tree, { expr: t }), e, p];
   },
 
   visit_binary(tree: BinaryNode,

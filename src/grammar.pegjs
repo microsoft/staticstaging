@@ -13,7 +13,8 @@ Program
 // Expression syntax.
 
 Expr "expression"
-  = Var / Extern / Fun / CDef / Binary / Assign / CCall / Call / TermExpr
+  = Var / Extern / Fun / CDef / Unary / Binary / Assign / CCall / Call /
+  TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -45,6 +46,10 @@ Lookup "variable reference"
 Var "definition"
   = var _ i:ident _ eq _ e:Expr
   { return {tag: "let", ident: i, expr: e}; }
+
+Unary "unary operation"
+  = op:unop _ e:TermExpr
+  { return {tag: "unary", expr: e, op: op}; }
 
 Binary "binary operation"
   = lhs:TermExpr _ op:binop _ rhs:Expr
@@ -173,6 +178,9 @@ binop "binary operator"
   = [+\-*/]
   // If we could use TypeScript here, it would be nice to use a static enum
   // for the operator.
+
+unop "unary operator"
+  = [+\-]
 
 quote_open "quote start"
   = "<"

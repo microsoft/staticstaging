@@ -172,6 +172,11 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
       return emit_lookup(ir, fself, glsl_emit_extern, tree);
     },
 
+    visit_unary(tree: UnaryNode, param: void): string {
+      let p = fself(tree.expr);
+      return tree.op + paren(p);
+    },
+
     visit_binary(tree: BinaryNode, param: void): string {
       return paren(fself(tree.lhs)) + " " +
              tree.op + " " +

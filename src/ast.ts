@@ -30,6 +30,11 @@ interface LookupNode extends ExpressionNode {
   ident: string;
 }
 
+interface UnaryNode extends ExpressionNode {
+  op: string;
+  expr: ExpressionNode;
+}
+
 interface BinaryNode extends ExpressionNode {
   op: string;
   lhs: ExpressionNode;

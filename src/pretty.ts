@@ -23,6 +23,10 @@ let Pretty : ASTVisit<void, string> = {
     return tree.ident;
   },
 
+  visit_unary(tree: UnaryNode, _: void): string {
+    return tree.op + pretty(tree.expr);
+  },
+
   visit_binary(tree: BinaryNode, _: void): string {
     return pretty(tree.lhs) + " " + tree.op + " " + pretty(tree.rhs);
   },
