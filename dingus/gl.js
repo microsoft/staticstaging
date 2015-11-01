@@ -29,7 +29,7 @@ function make_buffer(gl, data, type, mode) {
 // - `positions`, a 3-dimensional float32 array buffer
 // - `normals`, ditto
 function mesh_buffers(gl, obj) {
-  var norm = normals.vertexNormals(bunny.cells, bunny.positions);
+  var norm = normals.vertexNormals(obj.cells, obj.positions);
 
   return {
     cells: make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER),
