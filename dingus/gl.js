@@ -54,6 +54,15 @@ function projection_matrix(out, width, height) {
   mat4.perspective(out, fieldOfView, aspectRatio, near, far)
 }
 
+// A convenience wrapper for binding elements and drawing them. Takes a cells
+// buffer as its argument.
+function draw_mesh(gl, obj, cells) {
+  bind_element_buffer(gl, cells);
+
+  var count = obj.cells.length * obj.cells[0].length;
+  gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+}
+
 function start_gl(container, func) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -113,12 +122,8 @@ function start_gl(container, func) {
     // Invoke the compiled SHFL code.
     shfl_func();
 
-    // And the element array.
-    bind_element_buffer(gl, bunny_buffers.cells);
-
-    // Draw it!
-    var count = bunny.cells.length * bunny.cells[0].length;
-    gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+    // Draw the model!
+    draw_mesh(gl, bunny, bunny_buffers.cells);
   };
 }
 
