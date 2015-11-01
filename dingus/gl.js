@@ -4,6 +4,7 @@ var fit = require('canvas-fit');
 var mat4 = require('gl-mat4');
 var normals = require('normals');
 var bunny = require('bunny');
+var teapot = require('teapot');
 var canvasOrbitCamera = require('canvas-orbit-camera');
 var glContext = require('gl-context');
 var pack = require('array-pack-2d');
@@ -68,6 +69,7 @@ function start_gl(container, func) {
 
   // Load the shape data into buffers.
   var bunny_buffers = mesh_buffers(gl, bunny);
+  var teapot_buffers = mesh_buffers(gl, teapot);
 
   // Create the base matrices to be used
   // when rendering the bunny. Alternatively, can
@@ -85,6 +87,7 @@ function start_gl(container, func) {
     view: view,
   };
   window.bunny = bunny_buffers;
+  window.teapot = teapot_buffers;
   var shfl_func = func(gl);
 
   // TODO Move as much of the following as possible to SHFL land.
