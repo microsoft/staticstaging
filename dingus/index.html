@@ -13,8 +13,14 @@ textarea {
     height: 30ex;
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
+@media (min-width: 48em) {  /* medium */
+    textarea {
+        height: 50ex;
+    }
+}
 #error, #result {
     display: none;
+    clear: both;
 }
 #tools {
     height: 2em;
@@ -49,7 +55,7 @@ textarea {
 <h1>atw dingus</h1>
 
 <div class="row">
-    <div class="col-sm-6">
+    <div class="col-md-6">
         <textarea id="code"></textarea>
         <div id="tools">
             <button type="button" class="btn btn-secondary btn-sm" id="clear">
@@ -73,7 +79,7 @@ textarea {
         </div>
     </div>
 
-    <div class="col-sm-6">
+    <div class="col-md-6">
         <div id="error" class="alert alert-danger"></div>
         <pre id="result"></pre>
         <div id="tree" class="hidden-sm-down"></div>
