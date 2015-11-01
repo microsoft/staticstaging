@@ -16,10 +16,14 @@ var shininess = 0.5;
 
 render r<
   vtx s<
-    var camera_position = vec3(1.0, 1.0, 1.0); # TODO
     var light_position = vec3(1.0, 1.0, 1.0); # TODO
 
-    gl_Position = projection * view * model * vec4(position, 1.0);
+    var view_model = view * model;
+    var view_model_position = view_model * vec4(position, 1.0);
+
+    var camera_position = vec3(view_model_position);
+
+    gl_Position = projection * view_model_position;
 
     # Convert to world space.
     var position_world = vec3(model * vec4(position, 1.0));
