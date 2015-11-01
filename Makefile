@@ -68,7 +68,7 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 
 dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/bootstrap.css dingus/d3.js
 
-WEB_SRCS := $(SRC_FILES) dingus/atw.ts
+WEB_SRCS := $(SRC_FILES) dingus/atw.ts dingus/examples.ts
 dingus/atw.js: $(TSC) $(WEB_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
 

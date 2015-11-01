@@ -1,4 +1,5 @@
 /// <reference path="../src/driver.ts" />
+/// <reference path="examples.ts" />
 
 declare var parser : any;
 declare function tree_canvas (
@@ -245,6 +246,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let clearbtn = <HTMLElement> document.querySelector('#clear');
   let examples = document.querySelectorAll('.example');
   let modeselect = <HTMLSelectElement> document.querySelector('#mode');
+  let exampleselect = <HTMLSelectElement> document.querySelector('#example');
 
   let draw_tree: (tree_data: any) => void;
 
@@ -339,6 +341,26 @@ document.addEventListener("DOMContentLoaded", function () {
   // Also run the code when toggling the compile checkbox.
   modeselect.addEventListener('change', function () {
     run_code();
+  });
+
+  // Populate the example popup.
+  for (let i = 0; i < ATW_EXAMPLES.length; ++i) {
+    let example = ATW_EXAMPLES[i];
+    let option = document.createElement("option");
+    option.value = i.toString();
+    option.text = example.name;
+    exampleselect.appendChild(option);
+  }
+
+  // Handle example choices.
+  exampleselect.addEventListener('change', function () {
+    // Load the example.
+    let index = parseInt(exampleselect.value);
+    let example = ATW_EXAMPLES[index];
+    link_to_code(example.code.trim(), example.mode);
+
+    // Switch back to the "choose an example" item.
+    exampleselect.value = 'choose';
   });
 
   // Example clicks load code.
