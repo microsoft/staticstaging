@@ -280,15 +280,17 @@ function webgl_compile(ir: CompilerIR): string {
         procs.push(ir.procs[id]);
       }
 
-      let code: string;
-      if (prog.annotation === "s") {
-        // A shader program.
-        code = glsl_compile_prog(_glslcompile, ir, prog.id);
-      } else {
-        // Ordinary JavaScript quotation.
-        code = jscompile_prog(_jscompile, prog, procs);
+      if (prog.annotation != "r") {  // Render program compiled elsewhere.
+        let code: string;
+        if (prog.annotation === "s") {
+          // A shader program.
+          code = glsl_compile_prog(_glslcompile, ir, prog.id);
+        } else {
+          // Ordinary JavaScript quotation.
+          code = jscompile_prog(_jscompile, prog, procs);
+        }
+        out += emit_js_var(progsym(prog.id), code, true) + "\n";
       }
-      out += emit_js_var(progsym(prog.id), code, true) + "\n";
     }
   }
 
