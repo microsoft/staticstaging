@@ -25,7 +25,7 @@ render r<
       var norm = normalize(normal);
 
       # Phong power.
-      var r = 0.0-reflect(light_direction, norm);
+      var r = -(reflect(light_direction, norm));
       var power = pow(max(0.0, dot(view_direction, r)), shininess);
 
       gl_FragColor = vec4(power, power, power, 1.0);
