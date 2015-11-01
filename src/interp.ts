@@ -125,16 +125,16 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     let [v, e] = interp(tree.expr, env, pers);
     v = unwrap_extern(v);
     if (typeof v === 'number') {
-      let v: Value;
+      let out: Value;
       switch (tree.op) {
         case "+":
-          v = +v; break;
+          out = +v; break;
         case "-":
-          v = -v; break;
+          out = -v; break;
         default:
           throw "error: unknown unary operator " + tree.op;
       }
-      return [v, e];
+      return [out, e];
     } else {
       throw "error: non-numeric operand to unary operator";
     }
