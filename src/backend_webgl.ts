@@ -51,6 +51,9 @@ const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
   new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
 ]);
+const _GL_UNARY_BINARY_TYPE = new OverloadedType(
+  _GL_UNARY_TYPE.types.concat(_GL_BINARY_TYPE.types)
+);
 const _GL_MUL_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
@@ -69,7 +72,13 @@ const GL_INTRINSICS: TypeMap = {
   frag: new FunType([new CodeType(ANY)], VOID),
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
-  vec4: new FunType([FLOAT3, FLOAT], FLOAT4),
+  vec4: new OverloadedType([
+    new FunType([FLOAT3, FLOAT], FLOAT4),
+    new FunType([FLOAT, FLOAT, FLOAT, FLOAT], FLOAT4),
+  ]),
+  vec3: new OverloadedType([
+    new FunType([FLOAT, FLOAT, FLOAT], FLOAT3),
+  ]),
   abs: _GL_UNARY_TYPE,
   normalize: _GL_UNARY_TYPE,
   pow: _GL_BINARY_TYPE,
@@ -78,10 +87,12 @@ const GL_INTRINSICS: TypeMap = {
     new FunType([FLOAT3, FLOAT3], FLOAT),
     new FunType([FLOAT4, FLOAT4], FLOAT),
   ]),
+  min: _GL_BINARY_TYPE,
+  max: _GL_BINARY_TYPE,
 
   // Binary operators.
-  '+': _GL_BINARY_TYPE,
-  '-': _GL_BINARY_TYPE,
+  '+': _GL_UNARY_BINARY_TYPE,
+  '-': _GL_UNARY_BINARY_TYPE,
   '*': _GL_MUL_TYPE,
   '/': _GL_BINARY_TYPE,
 };

@@ -13,15 +13,15 @@ var position = bunny.positions;
 var normal = bunny.normals;
 
 var shininess = 0.5;
-var eye_position = 1.0; # TODO
-var light_position = 1.0; # TODO
+var eye_position = vec3(1.0, 1.0, 1.0); # TODO
+var light_position = vec3(1.0, 1.0, 1.0); # TODO
 
 render r<
   vtx s<
     gl_Position = projection * view * model * vec4(position, 1.0);
     frag s<
       var eye_direction = normalize(eye_position - position);
-      var light_direction = normalize(light_position - surface_position);
+      var light_direction = normalize(light_position - position);
       var norm = normalize(normal);
 
       # Phong power.
