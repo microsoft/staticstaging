@@ -1,0 +1,34 @@
+# Dingus preamble.
+extern dingus.projection: Mat4;
+extern dingus.model: Mat4;
+extern dingus.view: Mat4;
+extern bunny.positions: Vec3 Array;
+extern bunny.normals: Vec3 Array;
+
+# Our variables.
+var projection = dingus.projection;
+var model = dingus.model;
+var view = dingus.view;
+var position = bunny.positions;
+var normal = bunny.normals;
+
+var shininess = 0.5;
+var eye_position = 1.0; # TODO
+var light_position = 1.0; # TODO
+
+render r<
+  vtx s<
+    gl_Position = projection * view * model * vec4(position, 1.0);
+    frag s<
+      var eye_direction = normalize(eye_position - position);
+      var light_direction = normalize(light_position - surface_position);
+      var norm = normalize(normal);
+
+      # Phong power.
+      var r = 0.0-reflect(light_direction, norm);
+      var power = pow(max(0.0, dot(view_direction, r)), shininess);
+
+      gl_FragColor = vec4(power, power, power, 1.0);
+    >
+  >
+>

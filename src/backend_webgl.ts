@@ -37,6 +37,12 @@ function bind_attribute(gl, location, buffer) {
 }
 `.trim();
 
+const _GL_UNARY_TYPE = new OverloadedType([
+  new FunType([INT], INT),
+  new FunType([FLOAT], FLOAT),
+  new FunType([FLOAT3], FLOAT3),
+  new FunType([FLOAT4], FLOAT4),
+]);
 const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
@@ -64,11 +70,13 @@ const GL_INTRINSICS: TypeMap = {
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new FunType([FLOAT3, FLOAT], FLOAT4),
-  abs: new OverloadedType([
-    new FunType([INT], INT),
-    new FunType([FLOAT], FLOAT),
-    new FunType([FLOAT3], FLOAT3),
-    new FunType([FLOAT4], FLOAT4),
+  abs: _GL_UNARY_TYPE,
+  normalize: _GL_UNARY_TYPE,
+  pow: _GL_BINARY_TYPE,
+  reflect: _GL_BINARY_TYPE,
+  dot: new OverloadedType([
+    new FunType([FLOAT3, FLOAT3], FLOAT),
+    new FunType([FLOAT4, FLOAT4], FLOAT),
   ]),
 
   // Binary operators.
