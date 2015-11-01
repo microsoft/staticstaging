@@ -23,23 +23,8 @@ textarea {
     float: left;
     margin-right: 1em;
 }
-#help {
-    clear: both;
-    margin-top: 1em;
-}
 #tree {
     height: 30ex;
-}
-
-.example:hover {
-    background: rgba(0, 0, 0, 0.2);
-}
-#help p {
-    margin-bottom: 0;
-    color: #666;
-}
-#help pre {
-    font-weight: bold;
 }
 
 /* For the tree diagram. */
@@ -91,69 +76,6 @@ textarea {
         <pre id="result"></pre>
         <div id="tree" class="hidden-sm-down"></div>
         <pre id="compiled"></pre>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-sm-12" id="help">
-        <p>You can use arithmetic and variables:</p>
-        <pre class="example"><code>var x = 7;
-x * 3</code></pre>
-
-        <p>And define functions:</p>
-        <pre class="example"><code>var double = fun x:Int -&gt; x * 2;
-double 21</code></pre>
-
-        <p>Use angle brackets to defer code:</p>
-        <pre class="example"><code>&lt; 45 - 3 &gt;</code></pre>
-
-        <p>And bang to execute it:</p>
-        <pre class="example"><code>!&lt; 45 - 3 &gt;</code></pre>
-
-        <p>Use square brackets to escape and splice code:</p>
-        <pre class="example"><code>var x = &lt;5&gt;;
-!&lt; 37 + [x] &gt;</code></pre>
-
-        <p>The type checker will catch you if you mix up your stages:</p>
-        <pre class="example"><code>var x = &lt;5&gt;;
-37 + x</code></pre>
-
-        <p>There's also another kind of escape that <em>persists</em>
-        outer-stage values:</p>
-        <pre class="example"><code>var x = 5;
-!&lt; 37 + %[x] &gt;</code></pre>
-
-        <p>In line with other staged languages, you can also get
-        cross-stage persistence transparently by just referring to
-        variables from a different stage. This works by desugaring
-        cross-stage references to persist escapes:</p>
-        <pre class="example" data-mode="compile"><code>var x = 5;
-!&lt;
-  var y = 10;
-  !&lt; x + y &gt;
-&gt;</code></pre>
-
-        <p>To interoperate with JavaScript, use <code>extern</code>:</p>
-        <pre class="example">extern Math.pow: Int Int -&gt; Int;
-Math.pow 7 2</pre>
-
-        <p>The WebGL compiler is experimental:</p>
-        <pre class="example"
-            data-mode="webgl">var projection = dingus.projection;
-var model = dingus.model;
-var view = dingus.view;
-var position = bunny.positions;
-var normal = bunny.normals;
-render r&lt;
-  vtx s&lt;
-    gl_Position = projection * view * model * vec4(position, 1.0);
-    frag s&lt;
-      gl_FragColor = vec4(abs(normal), 1.0);
-    &gt;
-  &gt;
-&gt;</pre>
-
-        <p>Click on an example above to run it.</p>
     </div>
 </div>
 
