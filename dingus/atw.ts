@@ -356,11 +356,13 @@ document.addEventListener("DOMContentLoaded", function () {
   exampleselect.addEventListener('change', function () {
     // Load the example.
     let index = parseInt(exampleselect.value);
-    let example = ATW_EXAMPLES[index];
-    link_to_code(example.code.trim(), example.mode);
+    if (!isNaN(index)) {
+      let example = ATW_EXAMPLES[index];
+      link_to_code(example.code.trim(), example.mode);
 
-    // Switch back to the "choose an example" item.
-    exampleselect.value = 'choose';
+      // Switch back to the "choose an example" item.
+      exampleselect.value = 'choose';
+    }
   });
 
   // Example clicks load code.
