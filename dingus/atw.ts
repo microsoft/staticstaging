@@ -127,11 +127,11 @@ extern bunny.normals: Vec3 Array;
 extern teapot.positions: Vec3 Array;
 extern teapot.normals: Vec3 Array;
 
-extern mesh_indices: Mesh -> Int Array "mesh_indices(gl)";
-extern mesh_positions: Mesh -> Float Array "mesh_positions(gl)";
-extern mesh_normals: Mesh -> Float Array "mesh_normals(gl)";
-extern mesh_size: Mesh -> Int "mesh_size(gl)";
-extern draw_mesh: (Float Array) Int -> Void "draw_mesh(gl)";
+extern mesh_indices: Mesh -> Int Array = "mesh_indices(gl)";
+extern mesh_positions: Mesh -> Float Array = "mesh_positions(gl)";
+extern mesh_normals: Mesh -> Float Array = "mesh_normals(gl)";
+extern mesh_size: Mesh -> Int = "mesh_size(gl)";
+extern draw_mesh: (Float Array) Int -> Void = "draw_mesh(gl)";
 
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
