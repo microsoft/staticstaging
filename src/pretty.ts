@@ -60,7 +60,11 @@ let Pretty : ASTVisit<void, string> = {
   },
 
   visit_extern(tree: ExternNode, _: void): string {
-    return "extern " + tree.name + " : " + tree.type;
+    let out = "extern " + tree.name + " : " + tree.type;
+    if (tree.expansion) {
+      out += ' "' + tree.expansion + '"';
+    }
+    return out;
   },
 
   visit_persist(tree: PersistNode, _: void): string {

@@ -73,6 +73,7 @@ interface CallNode extends ExpressionNode {
 interface ExternNode extends ExpressionNode {
   name: string;
   type: TypeNode;
+  expansion: string;  // Or null, if it should expand to the name itself.
 }
 
 interface TypeNode extends SyntaxNode {

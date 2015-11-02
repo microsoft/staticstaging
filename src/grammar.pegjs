@@ -106,8 +106,11 @@ CArgMore
   { return e; }
 
 Extern "extern declaration"
-  = extern _ i:ident _ typed _ t:Type
-  { return {tag: "extern", name: i, type: t}; }
+  = extern _ i:ident _ typed _ t:Type e:ExternExpansion?
+  { return {tag: "extern", name: i, type: t, expansion: e}; }
+ExternExpansion
+  = _ eq _ s:string
+  { return s; }
 
 Paren "parentheses"
   = paren_open _ e:Expr _ paren_close
@@ -164,6 +167,10 @@ float "float"
 ident "identifier"
   = (ALPHA / [_]) (ALPHA / DIGIT / [_.])*
   { return text(); }
+
+string "string"
+  = ["] [^"]* ["]
+  { return text().slice(1, -1); }
 
 var
   = "var"
@@ -227,6 +234,8 @@ extern
 def
   = "def"
 
+quote
+  = ["]
 
 // Empty space.
 

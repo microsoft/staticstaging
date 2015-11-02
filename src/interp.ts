@@ -225,7 +225,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     // Add the placeholder value to the environment. It may seem a little
     // messy to mix together normal variables and externs, but the type system
     // keeps them straight so we don't have to.
-    let extern = new Extern(tree.name);
+    let extern = new Extern(tree.expansion || tree.name);
     let e = overlay(env);
     e[tree.name] = extern;
 

@@ -522,7 +522,7 @@ function gen_find_externs(fself: FindExterns): FindExterns {
   let rules = compose_visit(fold_rules, {
     visit_extern(tree: ExternNode, externs: string[]): string[] {
       let e = externs.slice(0);
-      e[tree.id] = tree.name;
+      e[tree.id] = tree.expansion || tree.name;
       return e;
     }
   });
