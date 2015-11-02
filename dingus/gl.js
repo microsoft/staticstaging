@@ -23,6 +23,7 @@ function make_buffer(gl, data, type, mode) {
   return buf;
 }
 
+// TODO Remove this.
 // Given a mesh, with the fields `positions` and `cells`, create three buffers
 // for drawing the thing. Return an object with the fields:
 // - `cells`, a 3-dimensional uint16 element array buffer
@@ -35,6 +36,40 @@ function mesh_buffers(gl, obj) {
     cells: make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER),
     positions: make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER),
     normals: make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER),
+  }
+}
+
+// Operations exposed to the language for getting data for meshes. These are
+// curried so that the compiler can pass the `gl` parameter without exposing it
+// to the program.
+function mesh_indices(gl) {
+  return function(obj) {
+    return make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER);
+  }
+}
+function mesh_positions(gl) {
+  return function(obj) {
+    return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
+  }
+}
+function mesh_normals(gl) {
+  return function(obj) {
+    var norm = normals.vertexNormals(obj.cells, obj.positions);
+    return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
+  }
+}
+function mesh_size(gl) {
+  return function(obj) {
+    return obj.cells.length * obj.cells[0].length;
+  }
+}
+
+// And, similarly, a function for actually drawing a mesh. This takes the
+// indices buffer for the mesh and its size (in numbers).
+function draw_mesh(gl) {
+  return function(indices, size) {
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
+    gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
   }
 }
 

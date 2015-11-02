@@ -27,6 +27,11 @@ const GL_TYPES: TypeMap = {
   "INT3": INT3,
   "INT4": INT4,
   "Array": ARRAY,
+
+  // TODO This Mesh type is used by the dingus. It is an opaque type. It would
+  // be nice if the dingus could declare the Mesh type itself rather than
+  // needing to bake it in here.
+  "Mesh": new PrimitiveType("Mesh"),
 };
 
 const NUMERIC_TYPES: Type[] = [
