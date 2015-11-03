@@ -133,7 +133,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
 
       // Assemble the pair.
       let out = "{ proc: " + procsym(tree.id) + ", ";
-      out += "env: [" + captures.join(', ') + "]}";
+      out += "env: [" + captures.join(', ') + "] }";
       return out;
     },
 

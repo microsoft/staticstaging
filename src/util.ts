@@ -97,6 +97,28 @@ function set_add <T> (a: T[], v: T): T[] {
   return cons(v, a);
 }
 
+// Check whether a set (implemented as a list) contains a value.
+function set_in <T> (a: T[], v: T): boolean {
+  for (let x of a) {
+    if (x === v) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Difference (relative complement) for sets. A naive/inefficient
+// implementation.
+function set_diff <T> (a: T[], b: T[]): T[] {
+  let out: T[] = [];
+  for (let x of a) {
+    if (!set_in(b, x)) {
+      out.push(x);
+    }
+  }
+  return out;
+}
+
 // Eval inside a scope.
 function scope_eval(code: string): any {
   return (function () {

@@ -211,13 +211,14 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
         [free, bound, qid, procs]: [number[], number[], number[], Proc[]]):
         [number[], number[], number[], Proc[]]
       {
-        let [f, b, _, p] = fold_rules.visit_fun(tree, [free, [], qid, procs]);
-
-        // Accumulate the parameter IDs.
-        let param_ids: number[] = [];
+        // Accumulate the parameter IDs. They are considered bound variables
+        // for the purpose of recursion into the body.
+        let params: number[] = [];
         for (let param of tree.params) {
-          param_ids.push(param.id);
+          params.push(param.id);
         }
+
+        let [f, b, _, p] = fold_rules.visit_fun(tree, [[], params, qid, procs]);
 
         // Get the top quote ID, or null for the outermost stage.
         let q: number;
@@ -232,15 +233,20 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
         let proc: Proc = {
           id: tree.id,
           body: tree.body,
-          params: param_ids,
+          params: params,
           free: f,
-          bound: b,
+          bound: set_diff(b, params),  // Do not double-count params.
           quote: q,
         };
         let p2 = p.slice(0);
         p2[tree.id] = proc;
 
-        return [free, bound, qid, p2];
+        // Free variables in the child that are not bound here get passed back
+        // up to the parent.
+        let sub_free = set_diff(f, bound);
+        let parent_free = free.concat(sub_free);
+
+        return [parent_free, bound, qid, p2];
       },
 
       // Add free variables to the free set.
