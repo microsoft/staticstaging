@@ -15,7 +15,8 @@ textarea {
 }
 @media (min-width: 48em) {  /* medium */
     textarea {
-        height: 50ex;
+        /* Take up the whole screen height. */
+        height: calc(100vh - 130px);
     }
 }
 #error, #result {
