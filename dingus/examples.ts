@@ -50,15 +50,21 @@ code: `
 var projection = dingus.projection;
 var model = dingus.model;
 var view = dingus.view;
+
+# Load buffers and parameters for the model.
 var position = mesh_positions(bunny);
 var normal = mesh_normals(bunny);
+var indices = mesh_indices(bunny);
+var size = mesh_size(bunny);
+
 render r<
   vtx s<
     gl_Position = projection * view * model * vec4(position, 1.0);
     frag s<
       gl_FragColor = vec4(abs(normal), 1.0);
     >
-  >
+  >;
+  draw_mesh(indices, size);
 >
 `,
 },
@@ -69,8 +75,12 @@ code: `
 var projection = dingus.projection;
 var model = dingus.model;
 var view = dingus.view;
+
+# Load buffers and parameters for the model.
 var position = mesh_positions(bunny);
 var normal = mesh_normals(bunny);
+var indices = mesh_indices(bunny);
+var size = mesh_size(bunny);
 
 var shininess = 0.5;
 
@@ -105,7 +115,8 @@ render r<
 
       gl_FragColor = vec4(power, power, power, 1.0);
     >
-  >
+  >;
+  draw_mesh(indices, size);
 >
 `,
 }

@@ -65,11 +65,11 @@ function mesh_size(gl) {
 }
 
 // And, similarly, a function for actually drawing a mesh. This takes the
-// indices buffer for the mesh and its size (in numbers).
+// indices buffer for the mesh and its size (in the number of scalars).
 function draw_mesh(gl) {
   return function(indices, size) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
-    gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
   }
 }
 
@@ -87,15 +87,6 @@ function projection_matrix(out, width, height) {
   var far  = 100;
 
   mat4.perspective(out, fieldOfView, aspectRatio, near, far)
-}
-
-// A convenience wrapper for binding elements and drawing them. Takes a cells
-// buffer as its argument.
-function draw_mesh(gl, obj, cells) {
-  bind_element_buffer(gl, cells);
-
-  var count = obj.cells.length * obj.cells[0].length;
-  gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
 }
 
 function start_gl(container, func) {
@@ -135,6 +126,7 @@ function start_gl(container, func) {
   window.mesh_indices = mesh_indices;
   window.mesh_positions = mesh_positions;
   window.mesh_normals = mesh_normals;
+  window.mesh_size = mesh_size;
   window.draw_mesh = draw_mesh;
   var shfl_func = func(gl);
 
@@ -160,9 +152,6 @@ function start_gl(container, func) {
 
     // Invoke the compiled SHFL code.
     shfl_func();
-
-    // Draw the model!
-    draw_mesh(gl, bunny, bunny_buffers.cells);
   };
 }
 

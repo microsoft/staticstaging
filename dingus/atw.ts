@@ -128,11 +128,11 @@ extern bunny: Mesh;
 extern teapot: Mesh;
 
 # Mesh asset wrangling.
-extern mesh_indices: Mesh -> (Int Array) = "mesh_indices(gl)";
+extern mesh_indices: Mesh -> (Int3 Array) = "mesh_indices(gl)";
 extern mesh_positions: Mesh -> (Float3 Array) = "mesh_positions(gl)";
 extern mesh_normals: Mesh -> (Float3 Array) = "mesh_normals(gl)";
 extern mesh_size: Mesh -> Int = "mesh_size(gl)";
-extern draw_mesh: (Float Array) Int -> Int = "draw_mesh(gl)";
+extern draw_mesh: (Int3 Array) Int -> Int = "draw_mesh(gl)";
 
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
