@@ -313,7 +313,7 @@ function webgl_compile(ir: CompilerIR): string {
   let setup_code = setup_parts.join("");
 
   // Compile the main function. It takes a `gl` context parameter.
-  let main = jscompile_proc(_jscompile, ir.main, setup_code, ['gl']);
+  let main = jscompile_proc(_jscompile, ir.main, setup_code);
   out += main;
 
   return out;

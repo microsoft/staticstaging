@@ -8,7 +8,7 @@ declare function tree_canvas (
   get_children: (_:any) => any[]
 ): (tree_data: any) => void;
 
-declare function start_gl(container: HTMLElement, f: Function): void;
+declare function start_gl(container: HTMLElement, code: string): void;
 
 const RUN_DELAY_MS = 200;
 
@@ -145,10 +145,10 @@ extern Math.cos: Float -> Float;
 // - the type
 // - the compiled code (if compiling)
 // - the result of interpretation or execution
-// - the WebGL setup function (if in WebGL mode)
+// - the complete WebGL code (if in WebGL mode)
 // The mode can be "interp", "compile", or "webgl".
 function atw_run(code: string, mode: string)
-  : [string, SyntaxNode, string, string, string, Function]
+  : [string, SyntaxNode, string, string, string, string]
 {
   // Configure the driver to store a bunch of results.
   let error: string = null;
@@ -181,7 +181,7 @@ function atw_run(code: string, mode: string)
   let res: string = null;
   let jscode: string = null;
   let ast: SyntaxNode = null;
-  let glfunc: Function = null;
+  let glcode: string = null;
   driver_frontend(config, code, null, function (tree, types) {
     ast = tree;
 
@@ -195,18 +195,18 @@ function atw_run(code: string, mode: string)
       // Compiler.
       driver_compile(config, tree, types, function (code) {
         jscode = code;
-        driver_execute(config, code, function (r) {
-          if (mode === "webgl") {
-            glfunc = r;
-          } else {
+        if (mode === "webgl") {
+          glcode = driver_full_code(config, jscode);
+        } else {
+          driver_execute(config, code, function (r) {
             res = r;
-          }
-        });
+          });
+        }
       });
     }
   });
 
-  return [error, ast, type, jscode, res, glfunc];
+  return [error, ast, type, jscode, res, glcode];
 }
 
 function show(text: string, el: HTMLElement) {
@@ -266,7 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let mode = modeselect.value;
 
     if (code !== "") {
-      let [err, tree, typ, compiled, res, glfunc] = atw_run(code, mode);
+      let [err, tree, typ, compiled, res, glcode] = atw_run(code, mode);
 
       show(err, errbox);
       show(typ, typebox);
@@ -287,13 +287,13 @@ document.addEventListener("DOMContentLoaded", function () {
         treebox.style.display = 'block';
       }
 
-      if (mode === "webgl" && glfunc) {
+      if (mode === "webgl" && glcode) {
         // Start the WebGL viewer.
-        console.log(glfunc);
+        console.log(glcode);
         outbox.textContent = '';
         outbox.style.display = 'block';
         outbox.classList.add("visual");
-        start_gl(outbox, glfunc);
+        start_gl(outbox, glcode);
       } else {
         // Just show the output value.
         outbox.classList.remove("visual");

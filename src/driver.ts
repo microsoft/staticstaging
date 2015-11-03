@@ -144,15 +144,20 @@ function driver_interpret(config: DriverConfig, tree: SyntaxNode,
   executed(pretty_value(val));
 }
 
+// Get the complete, `eval`-able JavaScript program, including the runtime
+// code.
+function driver_full_code(config: DriverConfig, jscode: string): string {
+  return _runtime(config) + jscode;
+}
+
 function driver_execute(config: DriverConfig, jscode: string,
-    executed: (result: any) => void)
+    executed: (result: string) => void)
 {
-  let res = scope_eval(_runtime(config) + jscode);
+  let res = scope_eval(driver_full_code(config, jscode));
   if (config.webgl) {
-    // Pass along the resulting JavaScript function.
-    executed(res);
-  } else {
-    // Pass a formatted value.
-    executed(pretty_js_value(res));
+    throw "error: driver can't execute WebGL programs";
   }
+
+  // Pass a formatted value.
+  executed(pretty_js_value(res));
 }
