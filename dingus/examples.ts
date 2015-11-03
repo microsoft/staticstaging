@@ -191,20 +191,10 @@ def simple_shader(pos: (Float3 Array), norm: (Float3 Array)) (
 );
 
 render r<
-  vtx s<
-    gl_Position = projection * view * model * vec4(b_position, 1.0);
-    frag s<
-      gl_FragColor = vec4(abs(b_normal), 1.0);
-    >
-  >;
+  simple_shader(b_position, b_normal);
   draw_mesh(b_indices, b_size);
 
-  vtx s<
-    gl_Position = projection * view * model * vec4(t_position, 1.0);
-    frag s<
-      gl_FragColor = vec4(abs(t_normal), 1.0);
-    >
-  >;
+  simple_shader(t_position, t_normal);
   draw_mesh(t_indices, t_size);
 >
 `,
