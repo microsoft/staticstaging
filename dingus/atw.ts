@@ -292,11 +292,11 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(glfunc);
         outbox.textContent = '';
         outbox.style.display = 'block';
-        outbox.style.height = '200px';
+        outbox.classList.add("visual");
         start_gl(outbox, glfunc);
       } else {
         // Just show the output value.
-        outbox.style.height = 'auto';
+        outbox.classList.remove("visual");
         show(res, outbox);
       }
 

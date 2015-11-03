@@ -18,10 +18,17 @@ textarea {
         /* Take up the whole screen height. */
         height: calc(100vh - 130px);
     }
+    #compiled {
+        height: calc(100vh - 450px);
+        overflow: auto;
+    }
 }
 #error, #result {
     display: none;
     clear: both;
+}
+#result.visual {
+    height: 300px;
 }
 #tools {
     height: 2em;
