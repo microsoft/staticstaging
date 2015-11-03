@@ -24,8 +24,8 @@ const GL_TYPES: TypeMap = {
   "Float4x4": FLOAT4X4,
   "Mat3": FLOAT3X3,
   "Mat4": FLOAT4X4,
-  "INT3": INT3,
-  "INT4": INT4,
+  "Int3": INT3,
+  "Int4": INT4,
   "Array": ARRAY,
 
   // TODO This Mesh type is used by the dingus. It is an opaque type. It would

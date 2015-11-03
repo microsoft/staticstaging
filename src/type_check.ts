@@ -334,6 +334,13 @@ function compatible(ltype: Type, rtype: Type): boolean {
     }
     return compatible(ltype.ret, rtype.ret);  // Covariant.
 
+  } else if (ltype instanceof InstanceType && rtype instanceof InstanceType) {
+    if (ltype.cons === rtype.cons) {
+      // Invariant.
+      return compatible(ltype.arg, rtype.arg) &&
+        compatible(rtype.arg, ltype.arg);
+    }
+
   } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
     return compatible(ltype.inner, rtype.inner);
 
