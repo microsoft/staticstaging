@@ -52,10 +52,11 @@ var model = dingus.model;
 var view = dingus.view;
 
 # Load buffers and parameters for the model.
-var position = mesh_positions(bunny);
-var normal = mesh_normals(bunny);
-var indices = mesh_indices(bunny);
-var size = mesh_size(bunny);
+var mesh = bunny;
+var position = mesh_positions(mesh);
+var normal = mesh_normals(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
 
 render r<
   vtx s<
@@ -77,10 +78,11 @@ var model = dingus.model;
 var view = dingus.view;
 
 # Load buffers and parameters for the model.
-var position = mesh_positions(bunny);
-var normal = mesh_normals(bunny);
-var indices = mesh_indices(bunny);
-var size = mesh_size(bunny);
+var mesh = teapot;
+var position = mesh_positions(mesh);
+var normal = mesh_normals(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
 
 var shininess = 0.5;
 
