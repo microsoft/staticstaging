@@ -113,7 +113,7 @@ ExternExpansion
   { return s; }
 
 Paren "parentheses"
-  = paren_open _ e:Expr _ paren_close
+  = paren_open _ e:SeqExpr _ paren_close
   { return e; }
 
 Assign "assignment"
