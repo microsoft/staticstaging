@@ -33,38 +33,26 @@ function shfl_eval(code, gl, projection, model, view) {
     view: view,
   };
 
-  // Operations exposed to the language for getting data for meshes. These are
-  // curried so that the compiler can pass the `gl` parameter without exposing it
-  // to the program.
-  function mesh_indices(gl) {
-    return function(obj) {
-      return make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER);
-    }
+  // Operations exposed to the language for getting data for meshes.
+  function mesh_indices(obj) {
+    return make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER);
   }
-  function mesh_positions(gl) {
-    return function(obj) {
-      return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
-    }
+  function mesh_positions(obj) {
+    return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
   }
-  function mesh_normals(gl) {
-    return function(obj) {
-      var norm = normals.vertexNormals(obj.cells, obj.positions);
-      return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
-    }
+  function mesh_normals(obj) {
+    var norm = normals.vertexNormals(obj.cells, obj.positions);
+    return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
   }
-  function mesh_size(gl) {
-    return function(obj) {
-      return obj.cells.length * obj.cells[0].length;
-    }
+  function mesh_size(obj) {
+    return obj.cells.length * obj.cells[0].length;
   }
 
   // And, similarly, a function for actually drawing a mesh. This takes the
   // indices buffer for the mesh and its size (in the number of scalars).
-  function draw_mesh(gl) {
-    return function(indices, size) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
-      gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
-    }
+  function draw_mesh(indices, size) {
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
+    gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
   }
 
   // Evaluate the code, but wrap it in a function to avoid scope pollution.
