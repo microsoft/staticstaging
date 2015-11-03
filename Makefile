@@ -6,7 +6,8 @@ SOURCES := interp.ts ast.ts visit.ts pretty.ts util.ts driver.ts \
 TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	nested func call quotefunc closure persist nestedpersist share sharemulti \
 	quotelet splicepersist paren parentype higherorder codearg \
-	extern externfunc mutate externmutate externmutateuse externnamed float
+	extern externfunc mutate externmutate externmutateuse externnamed float \
+	bug-nestedcapture bug-nestedcapture2 bug-externcapture
 TESTS_INTERP := dump splice nesteddump spdump
 TESTS_STATIC := trailingsemi comment whitespace \
 	typeerror badsplice topescape floaterror ccall cdef

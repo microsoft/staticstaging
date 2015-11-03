@@ -202,7 +202,9 @@ interface Proc {
 // - A stack indicating the current quote ID.
 // - The output list of Procs.
 type LambdaLift = ASTFold<[number[], number[], number[], Proc[]]>;
-function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
+function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
+  Gen<LambdaLift>
+{
   return function (fself: LambdaLift): LambdaLift {
     let fold_rules = ast_fold_rules(fself);
     let rules = compose_visit(fold_rules, {
@@ -255,9 +257,10 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
         [number[], number[], number[], Proc[]]
       {
         let [defid, is_bound] = defuse[tree.id];
+        let is_extern = externs[defid] !== undefined;
 
         let f: number[];
-        if (!is_bound) {
+        if (!is_bound && !is_extern) {
           f = set_add(free, defid);
         } else {
           f = free;
@@ -308,8 +311,10 @@ function gen_lambda_lift(defuse: DefUseTable): Gen<LambdaLift> {
 
 // A wrapper for lambda lifting also includes the "main" function as a Proc
 // with no free variables.
-function lambda_lift(tree: SyntaxNode, table: DefUseTable): [Proc[], Proc] {
-  let _lambda_lift = fix(gen_lambda_lift(table));
+function lambda_lift(tree: SyntaxNode, table: DefUseTable, externs: string[]):
+  [Proc[], Proc]
+{
+  let _lambda_lift = fix(gen_lambda_lift(table, externs));
   let [_, bound, __, procs] = _lambda_lift(tree, [[], [], [], []]);
   let main: Proc = {
     id: null,
@@ -579,16 +584,10 @@ function semantically_analyze(tree: SyntaxNode,
     intrinsics_map[name] = id;
   }
 
+  // Use the current intrinsics to build the def/use table.
+  // TODO It would be nicer if the def/use pass could just ignore the externs
+  // since we find them separately, below.
   let table = find_def_use(tree, intrinsics_map);
-
-  // Lambda lifting and quote lifting.
-  let [procs, main] = lambda_lift(tree, table);
-  let progs = quote_lift(tree);
-
-  // Prog-to-Proc mapping.
-  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs);
-  // Prog-to-Prog mapping.
-  let containing_progs = get_containing_progs(progs);
 
   // Find the "real" externs in the program, and add the intrinsics to the
   // map.
@@ -597,6 +596,15 @@ function semantically_analyze(tree: SyntaxNode,
     let id = intrinsics_map[name];
     externs[id] = name;
   }
+
+  // Lambda lifting and quote lifting.
+  let [procs, main] = lambda_lift(tree, table, externs);
+  let progs = quote_lift(tree);
+
+  // Prog-to-Proc mapping.
+  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs);
+  // Prog-to-Prog mapping.
+  let containing_progs = get_containing_progs(progs);
 
   return {
     defuse: table,
