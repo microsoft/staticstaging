@@ -50,8 +50,8 @@ code: `
 var projection = dingus.projection;
 var model = dingus.model;
 var view = dingus.view;
-var position = bunny.positions;
-var normal = bunny.normals;
+var position = mesh_positions(bunny);
+var normal = mesh_normals(bunny);
 render r<
   vtx s<
     gl_Position = projection * view * model * vec4(position, 1.0);
@@ -69,8 +69,8 @@ code: `
 var projection = dingus.projection;
 var model = dingus.model;
 var view = dingus.view;
-var position = bunny.positions;
-var normal = bunny.normals;
+var position = mesh_positions(bunny);
+var normal = mesh_normals(bunny);
 
 var shininess = 0.5;
 

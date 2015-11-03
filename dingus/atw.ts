@@ -122,14 +122,15 @@ const GL_PREAMBLE = `
 extern dingus.projection: Mat4;
 extern dingus.model: Mat4;
 extern dingus.view: Mat4;
-extern bunny.positions: Vec3 Array;
-extern bunny.normals: Vec3 Array;
-extern teapot.positions: Vec3 Array;
-extern teapot.normals: Vec3 Array;
 
+# Sample assets to play with.
+extern bunny: Mesh;
+extern teapot: Mesh;
+
+# Mesh asset wrangling.
 extern mesh_indices: Mesh -> (Int Array) = "mesh_indices(gl)";
-extern mesh_positions: Mesh -> (Float Array) = "mesh_positions(gl)";
-extern mesh_normals: Mesh -> (Float Array) = "mesh_normals(gl)";
+extern mesh_positions: Mesh -> (Float3 Array) = "mesh_positions(gl)";
+extern mesh_normals: Mesh -> (Float3 Array) = "mesh_normals(gl)";
 extern mesh_size: Mesh -> Int = "mesh_size(gl)";
 extern draw_mesh: (Float Array) Int -> Int = "draw_mesh(gl)";
 

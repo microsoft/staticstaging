@@ -130,8 +130,12 @@ function start_gl(container, func) {
     model: model,
     view: view,
   };
-  window.bunny = bunny_buffers;
-  window.teapot = teapot_buffers;
+  window.bunny = bunny;
+  window.teapot = teapot;
+  window.mesh_indices = mesh_indices;
+  window.mesh_positions = mesh_positions;
+  window.mesh_normals = mesh_normals;
+  window.draw_mesh = draw_mesh;
   var shfl_func = func(gl);
 
   // TODO Move as much of the following as possible to SHFL land.
