@@ -381,13 +381,13 @@ function glsl_compile_prog(compile: GLSLCompile,
   let local_decls: string[] = [];
   for (let id of prog.bound) {
     let [t, _] = ir.type_table[id];
-    local_decls.push(`${emit_glsl_type(t)} ${varsym(id)};`);
+    local_decls.push(`${emit_glsl_type(t)} ${varsym(id)};\n`);
   }
-  let local_decls_s = local_decls.join("\n");
+  let local_decls_s = local_decls.join("");
 
   // Wrap the code in a "main" function.
   let code = emit_body(compile, prog.body, "");
-  code = local_decls_s + "\n" + code;
+  code = local_decls_s + code;
   let main = "void main() {\n" + indent(code, true) + "\n}";
 
   // This version of GLSL requires a precision declaration.
