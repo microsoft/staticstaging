@@ -123,46 +123,7 @@ render r<
 `,
 },
 {
-name: "two models",
-mode: "webgl",
-code: `
-var projection = dingus.projection;
-var model = dingus.model;
-var view = dingus.view;
-
-# Bunny model.
-var b_position = mesh_positions(bunny);
-var b_normal = mesh_normals(bunny);
-var b_indices = mesh_indices(bunny);
-var b_size = mesh_size(bunny);
-
-# Teapot model.
-var t_position = mesh_positions(teapot);
-var t_normal = mesh_normals(teapot);
-var t_indices = mesh_indices(teapot);
-var t_size = mesh_size(teapot);
-
-render r<
-  vtx s<
-    gl_Position = projection * view * model * vec4(b_position, 1.0);
-    frag s<
-      gl_FragColor = vec4(abs(b_normal), 1.0);
-    >
-  >;
-  draw_mesh(b_indices, b_size);
-
-  vtx s<
-    gl_Position = projection * view * model * vec4(t_position, 1.0);
-    frag s<
-      gl_FragColor = vec4(abs(t_normal), 1.0);
-    >
-  >;
-  draw_mesh(t_indices, t_size);
->
-`,
-},
-{
-name: "(experimental)",
+name: "two objects",
 mode: "webgl",
 code: `
 var projection = dingus.projection;
