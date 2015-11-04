@@ -77,6 +77,7 @@ const FLOAT = new PrimitiveType("Float");
 const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
+  "Void": VOID,
 };
 
 
