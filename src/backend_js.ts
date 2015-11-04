@@ -344,3 +344,55 @@ function jscompile(ir: CompilerIR): string {
 
   return out;
 }
+
+// Emit a program as a JavaScript function declaration. This works when the
+// program has no splices, and it avoids the overhead of `eval`.
+function js_emit_progfunc(compile: JSCompile, ir: CompilerIR, progid: number): string {
+  let prog = ir.progs[progid];
+
+  // TODO Emit functions in the quote. These become global functions.
+
+  // Get the quote's local (bound) variables.
+  let localnames: string[] = [];
+  for (let bv of prog.bound) {
+    localnames.push(varsym(bv));
+  }
+
+  // Get the quote's persists. These manifest as parameters to the function.
+  let argnames: string[] = [];
+  for (let esc of prog.persist) {
+    argnames.push(persistsym(esc.id));
+  }
+
+  // The must be no splices.
+  if (prog.splice.length) {
+    throw "error: splices not allowed in a program quote";
+  }
+
+  // Emit the main function body.
+  let code = emit_body(compile, prog.body);
+  // Then, wrap it in a function that takes no parameters. This is the
+  // rendering function that will be called on every frame.
+  let render_func = emit_js_fun(null, [], localnames, code);
+  // Finally, wrap this in an outer function that takes the parameters to
+  // bind (i.e., the persists).
+  let wrapper_func = emit_js_fun(progsym(prog.id), argnames, [],
+                                 `return ${render_func};`);
+
+  return wrapper_func;
+}
+
+// Emit an invocation of a quote that has been declared as a JavaScript
+// function.
+function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR, progid: number): string {
+  // The arguments to a function stage are its persists.
+  let args: string[] = [];
+  for (let esc of ir.progs[progid].persist) {
+    if (esc !== undefined) {
+      args.push(paren(compile(esc.body)));
+    }
+  }
+
+  let arglist = args.join(', ');
+  return `${progsym(progid)}(${arglist})`;
+}
