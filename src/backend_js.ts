@@ -21,8 +21,18 @@ function call(closure, args) {
 }
 `.trim();
 
-function js_emit_extern(name: string, type: Type) {
+function _is_fun_type(type: Type): boolean {
   if (type instanceof FunType) {
+    return true;
+  } else if (type instanceof OverloadedType) {
+    return _is_fun_type(type.types[0]);
+  } else {
+    return false;
+  }
+}
+
+function js_emit_extern(name: string, type: Type) {
+  if (_is_fun_type(type)) {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
     return "{ proc: " + name + ", env: [] }";

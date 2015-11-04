@@ -4,6 +4,7 @@
 /// <reference path="backend_glsl.ts" />
 
 const WEBGL_RUNTIME = `
+// Shader management.
 function compile_glsl(gl, type, src) {
   var shader = gl.createShader(type);
   gl.shaderSource(shader, src);
@@ -34,6 +35,15 @@ function bind_attribute(gl, location, buffer) {
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(location);
+}
+
+// WebGL equivalents of GLSL functions.
+function vec3(x, y, z) {
+  var out = new Float32Array(3);
+  out[0] = x || 0.0;
+  out[1] = y || 0.0;
+  out[2] = z || 0.0;
+  return out;
 }
 `.trim();
 

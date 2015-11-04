@@ -84,12 +84,12 @@ var shininess = 0.5;
 
 render r<
   var t = Date.now();
-  var lx = Math.sin(t / 200);
-  var ly = Math.sin(t / 100);
-  var lz = Math.sin(t / 300);
+  var light_position = vec3(
+    Math.sin(t / 200),
+    Math.sin(t / 100),
+    Math.sin(t / 300)
+  );
   vtx s<
-    var light_position = vec3(lx, ly, lz);
-
     var view_model = view * model;
     var view_model_position = view_model * vec4(position, 1.0);
 
