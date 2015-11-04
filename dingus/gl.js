@@ -26,10 +26,9 @@ function make_buffer(gl, data, type, mode) {
 // Evaluate the compiled SHFL code in the context of the globals we provide as
 // externs. Return a setup function that takes no arguments and returns a
 // per-frame function.
-function shfl_eval(code, gl, projection, model, view) {
+function shfl_eval(code, gl, projection, view) {
   var dingus = {
     projection: projection,
-    model: model,
     view: view,
   };
 
@@ -89,11 +88,10 @@ function start_gl(container, shfl_code) {
   // when rendering the bunny. Alternatively, can
   // be created using `new Float32Array(16)`
   var projection = mat4.create();
-  var model = mat4.create();
   var view = mat4.create();
 
   // Execute the compiled SHFL code in context.
-  var shfl_program = shfl_eval(shfl_code, gl, projection, model, view);
+  var shfl_program = shfl_eval(shfl_code, gl, projection, view);
 
   // Invoke the setup stage.
   var shfl_func = shfl_program();

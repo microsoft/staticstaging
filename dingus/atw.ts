@@ -120,7 +120,6 @@ function get_name(tree: SyntaxNode): string {
 
 const GL_PREAMBLE = `
 extern dingus.projection: Mat4;
-extern dingus.model: Mat4;
 extern dingus.view: Mat4;
 
 # Sample assets to play with.
@@ -133,6 +132,9 @@ extern mesh_positions: Mesh -> (Float3 Array);
 extern mesh_normals: Mesh -> (Float3 Array);
 extern mesh_size: Mesh -> Int;
 extern draw_mesh: (Int3 Array) Int -> Int;
+
+# Matrix manipulation library.
+extern mat4.create: -> Mat4;
 
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;

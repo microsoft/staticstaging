@@ -48,7 +48,7 @@ name: "basic shader",
 mode: "webgl",
 code: `
 var projection = dingus.projection;
-var model = dingus.model;
+var model = mat4.create();
 var view = dingus.view;
 
 # Load buffers and parameters for the model.
@@ -74,7 +74,7 @@ name: "phong lighting shader",
 mode: "webgl",
 code: `
 var projection = dingus.projection;
-var model = dingus.model;
+var model = mat4.create();
 var view = dingus.view;
 
 # Load buffers and parameters for the model.
@@ -127,7 +127,7 @@ name: "two objects",
 mode: "webgl",
 code: `
 var projection = dingus.projection;
-var model = dingus.model;
+var model = mat4.create();
 var view = dingus.view;
 
 # Bunny model.
