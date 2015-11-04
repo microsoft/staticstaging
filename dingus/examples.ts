@@ -86,6 +86,9 @@ var b_indices = mesh_indices(bunny);
 var b_size = mesh_size(bunny);
 var b_model = mat4.create();
 
+# An identity matrix, which we'll use on the fly.
+var id = mat4.create();
+
 # The material parameter for the Phong shader.
 var shininess = 0.9;
 
@@ -141,8 +144,8 @@ render r<
 
   # Place the bunny at the light source,
   # for illustrative purposes.
-  mat4.translate(b_model, model, light_position);
-
+  mat4.translate(b_model, id, light_position);
+  mat4.scale(b_model, b_model, vec3(0.1, 0.1, 0.1));
   solid(b_position, b_model);
   draw_mesh(b_indices, b_size);
 >
