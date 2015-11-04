@@ -119,8 +119,13 @@ function get_name(tree: SyntaxNode): string {
 };
 
 const GL_PREAMBLE = `
+# Externs for the dingus parameter matrices.
 extern dingus.projection: Mat4;
 extern dingus.view: Mat4;
+
+# And local bindings, to make them non-pervasive.
+var projection = dingus.projection;
+var view = dingus.view;
 
 # Sample assets to play with.
 extern bunny: Mesh;

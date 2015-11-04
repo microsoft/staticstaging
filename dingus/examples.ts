@@ -47,9 +47,7 @@ Math.pow 7 2;
 name: "basic shader",
 mode: "webgl",
 code: `
-var projection = dingus.projection;
 var model = mat4.create();
-var view = dingus.view;
 
 # Load buffers and parameters for the model.
 var mesh = bunny;
@@ -73,9 +71,7 @@ render r<
 name: "phong lighting shader",
 mode: "webgl",
 code: `
-var projection = dingus.projection;
 var model = mat4.create();
-var view = dingus.view;
 
 # Load buffers and parameters for the model.
 var mesh = teapot;
@@ -126,9 +122,7 @@ render r<
 name: "two objects",
 mode: "webgl",
 code: `
-var projection = dingus.projection;
 var model = mat4.create();
-var view = dingus.view;
 
 # Bunny model.
 var b_position = mesh_positions(bunny);
