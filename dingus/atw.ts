@@ -140,6 +140,12 @@ extern draw_mesh: (Int3 Array) Int -> Int;
 
 # Matrix manipulation library.
 extern mat4.create: -> Mat4;
+extern mat4.rotate: Mat4 Mat4 Float Vec3 -> Int;
+extern mat4.rotateX: Mat4 Mat4 Float -> Int;
+extern mat4.rotateY: Mat4 Mat4 Float -> Int;
+extern mat4.rotateZ: Mat4 Mat4 Float -> Int;
+extern mat4.scale: Mat4 Mat4 Vec3 -> Int;
+extern mat4.translate: Mat4 Mat4 Vec3 -> Int;
 
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
