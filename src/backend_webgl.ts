@@ -247,7 +247,7 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
         // Invoke the render function with its persists as arguments.
-        return webgl_emit_render_call(fself, ir.progs[tree.args[0].id]);
+        return js_emit_progfunc_call(fself, ir, tree.args[0].id);
       }
 
       // An ordinary function call.
@@ -283,7 +283,7 @@ function webgl_compile(ir: CompilerIR): string {
 
       if (prog.annotation == "r") {
         // Render quote. Compiled as a function.
-        proc_decls += webgl_emit_render(_jscompile, prog) + "\n";
+        proc_decls += js_emit_progfunc(_jscompile, ir, prog.id) + "\n";
 
       } else {
         // Other quote. Compiled normally.
@@ -330,7 +330,9 @@ function webgl_compile(ir: CompilerIR): string {
 // Emit the *render* stage as an anonymous JavaScript function expression
 // rather than as a string that must be eval'ed. The program may not have any
 // splice escapes.
-function webgl_emit_render(compile: JSCompile, prog: Prog): string {
+function js_emit_progfunc(compile: JSCompile, ir: CompilerIR, progid: number): string {
+  let prog = ir.progs[progid];
+
   // TODO Emit functions in the quote. These become global functions.
 
   // Get the quote's local (bound) variables.
@@ -358,20 +360,20 @@ function webgl_emit_render(compile: JSCompile, prog: Prog): string {
   // Finally, wrap this in an outer function that takes the parameters to
   // bind (i.e., the persists).
   let wrapper_func = emit_js_fun(progsym(prog.id), argnames, [],
-                                 `return /* render */ ${render_func};`);
+                                 `return ${render_func};`);
 
   return wrapper_func;
 }
 
-function webgl_emit_render_call(compile: JSCompile, prog: Prog): string {
-  // Finally, *invoke* the resulting function to pass it the persist values.
+function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR, progid: number): string {
+  // The arguments to a function stage are its persists.
   let args: string[] = [];
-  for (let esc of prog.persist) {
+  for (let esc of ir.progs[progid].persist) {
     if (esc !== undefined) {
       args.push(paren(compile(esc.body)));
     }
   }
 
   let arglist = args.join(', ');
-  return `${progsym(prog.id)}(${arglist})`;
+  return `${progsym(progid)}(${arglist})`;
 }
