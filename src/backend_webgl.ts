@@ -247,7 +247,7 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
         // Invoke the render function with its persists as arguments.
-        return webgl_emit_render(fself, ir.progs[tree.args[0].id]);
+        return webgl_emit_render_call(fself, ir.progs[tree.args[0].id]);
       }
 
       // An ordinary function call.
@@ -272,6 +272,7 @@ function webgl_compile(ir: CompilerIR): string {
 
   // Compile each program to a string.
   let prog_decls = "";
+  let proc_decls = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       // Get the procs to compile.
@@ -280,7 +281,12 @@ function webgl_compile(ir: CompilerIR): string {
         procs.push(ir.procs[id]);
       }
 
-      if (prog.annotation != "r") {  // Render program compiled elsewhere.
+      if (prog.annotation == "r") {
+        // Render quote. Compiled as a function.
+        proc_decls += webgl_emit_render(_jscompile, prog) + "\n";
+
+      } else {
+        // Other quote. Compiled normally.
         let code: string;
         if (prog.annotation === "s") {
           // A shader program.
@@ -296,7 +302,6 @@ function webgl_compile(ir: CompilerIR): string {
 
   // Compile each *top-level* proc, including the main function, to a
   // JavaScript function.
-  let proc_decls = "";
   for (let id of ir.toplevel_procs) {
     proc_decls += jscompile_proc(_jscompile, ir.procs[id]);
     proc_decls += "\n";
@@ -352,9 +357,13 @@ function webgl_emit_render(compile: JSCompile, prog: Prog): string {
   let render_func = emit_js_fun(null, [], localnames, code);
   // Finally, wrap this in an outer function that takes the parameters to
   // bind (i.e., the persists).
-  let wrapper_func = emit_js_fun(null, argnames, [],
+  let wrapper_func = emit_js_fun(progsym(prog.id), argnames, [],
                                  `return /* render */ ${render_func};`);
 
+  return wrapper_func;
+}
+
+function webgl_emit_render_call(compile: JSCompile, prog: Prog): string {
   // Finally, *invoke* the resulting function to pass it the persist values.
   let args: string[] = [];
   for (let esc of prog.persist) {
@@ -364,5 +373,5 @@ function webgl_emit_render(compile: JSCompile, prog: Prog): string {
   }
 
   let arglist = args.join(', ');
-  return `${wrapper_func}(${arglist})`;
+  return `${progsym(prog.id)}(${arglist})`;
 }
