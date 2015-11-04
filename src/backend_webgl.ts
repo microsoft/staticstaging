@@ -271,7 +271,7 @@ function webgl_compile(ir: CompilerIR): string {
   let _glslcompile = get_glsl_compile(ir);
 
   // Compile each program to a string.
-  let out = "";
+  let prog_decls = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       // Get the procs to compile.
@@ -289,16 +289,20 @@ function webgl_compile(ir: CompilerIR): string {
           // Ordinary JavaScript quotation.
           code = jscompile_prog(_jscompile, prog, procs);
         }
-        out += emit_js_var(progsym(prog.id), code, true) + "\n";
+        prog_decls += emit_js_var(progsym(prog.id), code, true) + "\n";
       }
     }
   }
 
-  // Compile each *top-level* proc to a JavaScript function.
+  // Compile each *top-level* proc, including the main function, to a
+  // JavaScript function.
+  let proc_decls = "";
   for (let id of ir.toplevel_procs) {
-    out += jscompile_proc(_jscompile, ir.procs[id]);
-    out += "\n";
+    proc_decls += jscompile_proc(_jscompile, ir.procs[id]);
+    proc_decls += "\n";
   }
+  // The result of the wrapper is the main function.
+  proc_decls += 'return /* main */ ' + jscompile_proc(_jscompile, ir.main);
 
   // For each *shader* quotation (i.e., top-level shader quote), generate the
   // setup code.
@@ -312,11 +316,10 @@ function webgl_compile(ir: CompilerIR): string {
   }
   let setup_code = setup_parts.join("");
 
-  // Compile the main function. It takes a `gl` context parameter.
-  let main = jscompile_proc(_jscompile, ir.main, setup_code);
-  out += main;
+  // Wrap the shader setup code and the main code together in a function.
+  let wrapper = emit_js_fun(null, [], [], setup_code + proc_decls) + '()';
 
-  return out;
+  return prog_decls + wrapper;
 }
 
 // Emit the *render* stage as an anonymous JavaScript function expression
@@ -350,7 +353,7 @@ function webgl_emit_render(compile: JSCompile, prog: Prog): string {
   // Finally, wrap this in an outer function that takes the parameters to
   // bind (i.e., the persists).
   let wrapper_func = emit_js_fun(null, argnames, [],
-                                 `return ${render_func};`);
+                                 `return /* render */ ${render_func};`);
 
   // Finally, *invoke* the resulting function to pass it the persist values.
   let args: string[] = [];
