@@ -86,36 +86,27 @@ var b_indices = mesh_indices(bunny);
 var b_size = mesh_size(bunny);
 var b_model = mat4.create();
 
+# The material parameter for the Phong shader.
 var shininess = 0.9;
 
-render r<
-  var t = Date.now();
-  var light_position = vec3(
-    (Math.cos(t / 200)) * 20.0,
-    0.0,
-    (Math.sin(t / 200)) * 20.0
-  );
-
-  # Place the bunny at the light source,
-  # for illustrative purposes.
-  mat4.translate(b_model, model, light_position);
-
+# Phong shader.
+def phong(pos: (Float3 Array), norm: (Float3 Array), model: Mat4, lightpos: Vec3) (
   vtx s<
     var view_model = view * model;
-    var view_model_position = view_model * vec4(position, 1.0);
+    var view_model_position = view_model * vec4(pos, 1.0);
 
     var camera_position = vec3(view_model_position);
 
     gl_Position = projection * view_model_position;
 
     # Convert to world space.
-    var position_world = vec3(model * vec4(position, 1.0));
-    var normal_world = normalize(vec3(model * vec4(position, 0.0)));
+    var position_world = vec3(model * vec4(pos, 1.0));
+    var normal_world = normalize(vec3(model * vec4(pos, 0.0)));
     var view_direction = normalize(camera_position - position_world);
 
-    var light_direction = normalize(light_position - position_world);
+    var light_direction = normalize(lightpos - position_world);
 
-    var norm_norm = normalize(normal);
+    var norm_norm = normalize(norm);
 
     frag s<
       # Phong power.
@@ -125,14 +116,34 @@ render r<
       gl_FragColor = vec4(power, power, power, 1.0);
     >
   >;
-  draw_mesh(indices, size);
+);
 
+# Simple, solid-color shader.
+def solid(pos: (Float3 Array), model: Mat4) (
   vtx s<
-    gl_Position = projection * view * b_model * vec4(b_position, 1.0);
+    gl_Position = projection * view * model * vec4(b_position, 1.0);
     frag s<
       gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     >
   >;
+);
+
+render r<
+  var t = Date.now();
+  var light_position = vec3(
+    (Math.cos(t / 200)) * 20.0,
+    0.0,
+    (Math.sin(t / 200)) * 20.0
+  );
+
+  phong(position, normal, model, light_position);
+  draw_mesh(indices, size);
+
+  # Place the bunny at the light source,
+  # for illustrative purposes.
+  mat4.translate(b_model, model, light_position);
+
+  solid(b_position, b_model);
   draw_mesh(b_indices, b_size);
 >
 `,
