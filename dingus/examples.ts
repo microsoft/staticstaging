@@ -71,24 +71,35 @@ render r<
 name: "phong lighting shader",
 mode: "webgl",
 code: `
-var model = mat4.create();
-
-# Load buffers and parameters for the model.
+# Load buffers and parameters for the main model.
 var mesh = teapot;
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
+var model = mat4.create();
 
-var shininess = 0.5;
+# Light-source marker model.
+var b_position = mesh_positions(bunny);
+var b_normal = mesh_normals(bunny);
+var b_indices = mesh_indices(bunny);
+var b_size = mesh_size(bunny);
+var b_model = mat4.create();
+
+var shininess = 0.9;
 
 render r<
   var t = Date.now();
   var light_position = vec3(
-    Math.sin(t / 200),
-    Math.sin(t / 100),
-    Math.sin(t / 300)
+    (Math.cos(t / 200)) * 20.0,
+    0.0,
+    (Math.sin(t / 200)) * 20.0
   );
+
+  # Place the bunny at the light source,
+  # for illustrative purposes.
+  mat4.translate(b_model, model, light_position);
+
   vtx s<
     var view_model = view * model;
     var view_model_position = view_model * vec4(position, 1.0);
@@ -115,6 +126,14 @@ render r<
     >
   >;
   draw_mesh(indices, size);
+
+  vtx s<
+    gl_Position = projection * view * b_model * vec4(b_position, 1.0);
+    frag s<
+      gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    >
+  >;
+  draw_mesh(b_indices, b_size);
 >
 `,
 },
