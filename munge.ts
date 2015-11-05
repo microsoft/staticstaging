@@ -1,6 +1,7 @@
 /// <reference path="typings/node/node.d.ts" />
 
 let fs = require('fs');
+let path = require('path');
 
 const FRONT_MATTER_MARKER = /---\n/;
 const KEY_VALUE_PAIR = /(\w+): (.*)$/;
@@ -45,7 +46,7 @@ function main() {
     let [front, back] = split_front_matter(s);
     let values = parse_front_matter(front);
     values['body'] = back;
-    values['filename'] = fn;
+    values['name'] = path.basename(fn).split('.')[0];
     out.push(values);
   }
 

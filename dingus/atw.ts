@@ -336,12 +336,12 @@ document.addEventListener("DOMContentLoaded", function () {
     let values = decode_hash(location.hash);
 
     // Handle examples.
-    let example_filename: string = values['example'];
+    let example_name: string = values['example'];
     let code: string = null;
     let mode: string = null;
-    if (example_filename) {
+    if (example_name) {
       for (let example of ATW_EXAMPLES) {
-        if (example['filename'] === example_filename) {
+        if (example['name'] === example_name) {
           code = example['body'];
           mode = example['mode'];
           break;
@@ -378,8 +378,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Similarly, link to an example with a shorter name.
-  function link_to_example(filename: string) {
-    let hash = encode_hash({example: filename});
+  function link_to_example(name: string) {
+    let hash = encode_hash({example: name});
     history.pushState(null, null, hash);
     handle_hash();
   }
@@ -399,25 +399,20 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Populate the example popup.
-  for (let i = 0; i < ATW_EXAMPLES.length; ++i) {
-    let example = ATW_EXAMPLES[i];
+  for (let example of ATW_EXAMPLES) {
     let option = document.createElement("option");
-    option.value = i.toString();
-    option.text = example['name'];
+    option.value = example['name'];
+    option.text = example['title'];
     exampleselect.appendChild(option);
   }
 
   // Handle example choices.
   exampleselect.addEventListener('change', function () {
     // Load the example.
-    let index = parseInt(exampleselect.value);
-    if (!isNaN(index)) {
-      let example = ATW_EXAMPLES[index];
-      link_to_example(example['filename']);
+    link_to_example(exampleselect.value);
 
-      // Switch back to the "choose an example" item.
-      exampleselect.value = 'choose';
-    }
+    // Switch back to the "choose an example" item.
+    exampleselect.value = 'choose';
   });
 
   // Example clicks load code.
