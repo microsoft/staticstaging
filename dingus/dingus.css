@@ -8,6 +8,9 @@ pre, textarea {
 
 /* Columns on wide, stacked on narrow. At an intermediate width, they're
    50/50; otherwise, make sure the code is wide enough. */
+#input, #output {
+    width: 100%;
+}
 @media (min-width: 900px) {
     #input, #output {
         float: left;
@@ -40,7 +43,6 @@ textarea {
     }
     #compiled {
         height: calc(100vh - 300px - 8em);
-        overflow: auto;
     }
 }
 
@@ -62,6 +64,7 @@ textarea {
 /* Tiny output code. */
 #compiled {
   font-size: 60%;
+  overflow: auto;
 }
 
 /* When the output is a WebGL canvas, make it big. */
