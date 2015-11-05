@@ -1,0 +1,47 @@
+textarea {
+    width: 100%;
+    height: 30ex;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+@media (min-width: 48em) {  /* medium */
+    textarea {
+        /* Take up the whole screen height. */
+        height: calc(100vh - 130px);
+    }
+    #compiled {
+        height: calc(100vh - 450px);
+        overflow: auto;
+    }
+}
+#error, #result {
+    display: none;
+    clear: both;
+}
+#result.visual {
+    height: 300px;
+}
+#tools {
+    height: 2em;
+}
+#tools > * {
+    float: left;
+    margin-right: 1em;
+}
+#tree {
+    height: 30ex;
+}
+
+/* For the tree diagram. */
+#tree .node text {
+  font-size: 80%;
+}
+
+#tree .link {
+  fill: none;
+  stroke: #ddd;
+  stroke-width: 2px;
+}
+
+#compiled {
+  font-size: 60%;
+}
