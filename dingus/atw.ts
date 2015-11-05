@@ -276,7 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return codebox.value.trim();
   }
 
-  function run_code() {
+  function run_code(navigate=true) {
     let code = code_value();
     let mode = modeselect.value;
 
@@ -315,8 +315,10 @@ document.addEventListener("DOMContentLoaded", function () {
         show(res, outbox);
       }
 
-      let hash = encode_hash({code: code, mode: mode});
-      history.replaceState(null, null, hash);
+      if (navigate) {
+        let hash = encode_hash({code: code, mode: mode});
+        history.replaceState(null, null, hash);
+      }
     } else {
       show(null, errbox);
       show(null, typebox);
@@ -324,29 +326,60 @@ document.addEventListener("DOMContentLoaded", function () {
       treebox.style.display = 'none';
       show(null, compiledbox);
 
-      history.replaceState(null, null, '#');
+      if (navigate) {
+        history.replaceState(null, null, '#');
+      }
     }
   }
 
   function handle_hash() {
     let values = decode_hash(location.hash);
 
+    // Handle examples.
+    let example_filename: string = values['example'];
+    let code: string = null;
+    let mode: string = null;
+    if (example_filename) {
+      for (let example of ATW_EXAMPLES) {
+        if (example['filename'] === example_filename) {
+          code = example['body'];
+          mode = example['mode'];
+          break;
+        }
+      }
+    }
+
+    // Handle ordinary inline data.
     if (values['code'] !== undefined) {
-      codebox.value = values['code'];
+      code = values['code'];
+    }
+    if (values['mode'] !== undefined) {
+      mode = values['mode'];
+    }
+
+    if (code) {
+      codebox.value = code;
     } else {
       codebox.value = '';
     }
 
-    if (values['mode'] !== undefined) {
-      modeselect.value = values['mode'];
+    if (mode) {
+      modeselect.value = mode;
     }
 
-    run_code();
+    run_code(false);
   }
 
   // Execute code by linking to it (pushing onto the history).
   function link_to_code(code: string, mode: string = null) {
     let hash = encode_hash({code: code, mode: mode});
+    history.pushState(null, null, hash);
+    handle_hash();
+  }
+
+  // Similarly, link to an example with a shorter name.
+  function link_to_example(filename: string) {
+    let hash = encode_hash({example: filename});
     history.pushState(null, null, hash);
     handle_hash();
   }
@@ -380,7 +413,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let index = parseInt(exampleselect.value);
     if (!isNaN(index)) {
       let example = ATW_EXAMPLES[index];
-      link_to_code(example['body'].trim(), example['mode']);
+      link_to_example(example['filename']);
 
       // Switch back to the "choose an example" item.
       exampleselect.value = 'choose';
