@@ -1,5 +1,5 @@
-# name = "two objects"
-# mode = "webgl"
+# name: two objects
+# mode: webgl
 # ---
 
 var id = mat4.create();

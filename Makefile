@@ -67,9 +67,10 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 
 # The Web dingus.
 
-dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/bootstrap.css dingus/d3.js
+dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/bootstrap.css dingus/d3.js \
+	dingus/examples.js
 
-WEB_SRCS := $(SRC_FILES) dingus/atw.ts dingus/examples.ts
+WEB_SRCS := $(SRC_FILES) dingus/atw.ts
 dingus/atw.js: $(TSC) $(WEB_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
 
@@ -96,7 +97,8 @@ dingus/d3.js: $(D3)
 DINGUS_EXAMPLES := basics splice persist extern normcolor objects phong
 DINGUS_EXAMPLE_FILES := $(DINGUS_EXAMPLES:%=dingus/examples/%.atw)
 dingus/examples.js: munge.js $(DINGUS_EXAMPLE_FILES)
-	node $< $(DINGUS_EXAMPLE_FILES) > $@
+	printf "ATW_EXAMPLES = " > $@
+	node $< $(DINGUS_EXAMPLE_FILES) >> $@
 
 .PHONY: deploy
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh \

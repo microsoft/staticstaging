@@ -1,4 +1,4 @@
-# name = "persist"
+# name: persist
 # ---
 
 # Cross-stage persistence works either via

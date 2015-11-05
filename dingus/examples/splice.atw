@@ -1,4 +1,4 @@
-# name = "quote and splice"
+# name: quote and splice
 # ---
 
 # Use <> to defer code, ! to execute it, and [] to splice.

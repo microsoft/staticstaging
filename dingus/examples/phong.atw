@@ -1,5 +1,5 @@
-# name = "phong lighting"
-# mode = "webgl"
+# name: phong lighting
+# mode: webgl
 # ---
 
 # Load buffers and parameters for the main model.

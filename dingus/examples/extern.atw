@@ -1,4 +1,4 @@
-# name = "externs"
+# name: externs
 # ---
 
 # You can interoperate with JavaScript using extern declarations.

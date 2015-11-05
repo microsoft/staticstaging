@@ -1,5 +1,4 @@
 /// <reference path="../src/driver.ts" />
-/// <reference path="examples.ts" />
 
 declare var parser : any;
 declare function tree_canvas (
@@ -9,6 +8,7 @@ declare function tree_canvas (
 ): (tree_data: any) => void;
 
 declare function start_gl(container: HTMLElement, code: string): void;
+declare const ATW_EXAMPLES: { [key: string]: string }[];
 
 const RUN_DELAY_MS = 200;
 
@@ -370,7 +370,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let example = ATW_EXAMPLES[i];
     let option = document.createElement("option");
     option.value = i.toString();
-    option.text = example.name;
+    option.text = example['name'];
     exampleselect.appendChild(option);
   }
 
@@ -380,7 +380,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let index = parseInt(exampleselect.value);
     if (!isNaN(index)) {
       let example = ATW_EXAMPLES[index];
-      link_to_code(example.code.trim(), example.mode);
+      link_to_code(example['body'].trim(), example['mode']);
 
       // Switch back to the "choose an example" item.
       exampleselect.value = 'choose';
