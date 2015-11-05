@@ -1,3 +1,11 @@
+/* Fonts! */
+body {
+    font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, sans-serif;
+}
+pre, textarea {
+    font-family: 'Anonymous Pro', Inconsolata, Consolas, 'Source Code Pro', Menlo, Monaco, monospace;
+}
+
 /* Columns on wide, stacked on narrow. At an intermediate width, they're
    50/50; otherwise, make sure the code is wide enough. */
 @media (min-width: 900px) {
@@ -21,8 +29,7 @@
    height when we don't. */
 textarea {
     width: calc(100% - 2em);
-    height: 50ex;
-    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    height: 60ex;
 }
 @media (min-width: 900px) {
     #input, #output {
