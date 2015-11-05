@@ -1,7 +1,18 @@
-/* Columns on wide, stacked on narrow. */
-@media (min-width: 750px) {
+/* Columns on wide, stacked on narrow. At an intermediate width, they're
+   50/50; otherwise, make sure the code is wide enough. */
+@media (min-width: 900px) {
     #input, #output {
         float: left;
+    }
+    #input {
+        width: calc(500px);
+    }
+    #output {
+        width: calc(98% - 500px);
+    }
+}
+@media (min-width: 1020px) {
+    #input, #output {
         width: 49%;
     }
 }
@@ -10,16 +21,18 @@
    height when we don't. */
 textarea {
     width: calc(100% - 2em);
-    height: 30ex;
+    height: 50ex;
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-@media (min-width: 750px) {
+@media (min-width: 900px) {
+    #input, #output {
+        height: calc(100vh - 3em);
+    }
     textarea {
-        /* Take up the whole screen height. */
-        height: calc(100vh - 130px);
+        height: 100%;
     }
     #compiled {
-        height: calc(100vh - 450px);
+        height: calc(100vh - 300px - 8em);
         overflow: auto;
     }
 }
