@@ -148,6 +148,7 @@ extern mat4.scale: Mat4 Mat4 Vec3 -> Void;
 extern mat4.translate: Mat4 Mat4 Vec3 -> Void;
 extern mat4.transpose: Mat4 Mat4 -> Void;
 extern mat4.scale: Mat4 Mat4 Vec3 -> Void;
+extern mat4.invert: Mat4 Mat4 -> Void;
 
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
