@@ -67,8 +67,7 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 
 # The Web dingus.
 
-dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/bootstrap.css dingus/d3.js \
-	dingus/examples.js
+dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/d3.js dingus/examples.js
 
 WEB_SRCS := $(SRC_FILES) dingus/atw.ts
 dingus/atw.js: $(TSC) $(WEB_SRCS)
@@ -80,12 +79,6 @@ dingus/parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 	cd dingus ; npm install
 	cd dingus ; npm run-script build
-
-BOOTSTRAP := dingus/bower_components/bootstrap/dist/css/bootstrap.min.css
-$(BOOTSTRAP):
-	cd dingus ; bower install bootstrap\#4.0.0-alpha
-dingus/bootstrap.css: $(BOOTSTRAP)
-	cp $< $@
 
 D3 := dingus/bower_components/d3/d3.min.js
 $(D3):

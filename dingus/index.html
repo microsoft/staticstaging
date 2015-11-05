@@ -6,7 +6,6 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
 
     <title>atw dingus</title>
-    <link rel="stylesheet" href="bootstrap.css">
     <style>
 textarea {
     width: 100%;
@@ -58,44 +57,38 @@ textarea {
     </style>
 </head>
 <body>
-<div class="container">
 
-<h1>atw dingus</h1>
-
-<div class="row">
-    <div class="col-md-6">
-        <textarea id="code"></textarea>
-        <div id="tools">
-            <button type="button" class="btn btn-secondary btn-sm" id="clear">
-                clear
-            </button>
-            <p>
-                <select id="mode">
-                    <option value="interp">interpreter</option>
-                    <option value="compile">compiler</option>
-                    <option value="webgl">WebGL</option>
-                </select>
-            </p>
-            <p>
-                <select id="example">
-                    <option value="choose" selected disabled>
-                        choose an example
-                    </option>
-                </select>
-            </p>
-            <p id="type"></p>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div id="error" class="alert alert-danger"></div>
-        <pre id="result"></pre>
-        <div id="tree" class="hidden-sm-down"></div>
-        <pre id="compiled"></pre>
+<div id="input">
+    <textarea id="code"></textarea>
+    <div id="tools">
+        <button type="button" id="clear">
+            clear
+        </button>
+        <p>
+            <select id="mode">
+                <option value="interp">interpreter</option>
+                <option value="compile">compiler</option>
+                <option value="webgl">WebGL</option>
+            </select>
+        </p>
+        <p>
+            <select id="example">
+                <option value="choose" selected disabled>
+                    choose an example
+                </option>
+            </select>
+        </p>
+        <p id="type"></p>
     </div>
 </div>
 
+<div id="output">
+    <div id="error"></div>
+    <pre id="result"></pre>
+    <div id="tree"></div>
+    <pre id="compiled"></pre>
 </div>
+
 <script type="text/javascript" src="parser.js"></script>
 <script type="text/javascript" src="examples.js"></script>
 <script type="text/javascript" src="atw.js"></script>
