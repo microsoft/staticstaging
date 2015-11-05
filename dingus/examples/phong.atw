@@ -24,24 +24,18 @@ var id = mat4.create();
 var specular = 50.0;
 var light_color = vec3(1.0, 0.2, 0.5);
 
-# An inverse view matrix, which we'll use to get the view direction in world
-# space.
-var inv_view = mat4.create();
-
 # Phong shader.
 def phong(pos: (Float3 Array), norm: (Float3 Array), model: Mat4, lightpos: Vec3) (
-  mat4.invert(inv_view, view);
+  var camera_pos = eye(view);
 
   vtx s<
     gl_Position = projection * view * model * vec4(position, 1.0);
-
-    # TODO Move to render stage.
-    var view_dir_world = vec3(inv_view * vec4(0.0, 0.0, 1.0, 0.0));
 
     frag s<
       # Convert to world space.
       var position_world = vec3(model * vec4(pos, 1.0));
       var normal_world = normalize(vec3(model * vec4(pos, 0.0)));
+      var view_dir_world = normalize(camera_pos - position_world);
 
       # Light.
       var light_direction = normalize(lightpos - position_world);

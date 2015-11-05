@@ -5,6 +5,7 @@ var normals = require('normals');
 var canvasOrbitCamera = require('canvas-orbit-camera');
 var glContext = require('gl-context');
 var pack = require('array-pack-2d');
+var eye = require('eye-vector');
 
 var bunny = require('bunny');
 var teapot = require('teapot');
