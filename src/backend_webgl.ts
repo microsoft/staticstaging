@@ -85,10 +85,12 @@ const GL_INTRINSICS: TypeMap = {
   vec4: new OverloadedType([
     new FunType([FLOAT3, FLOAT], FLOAT4),
     new FunType([FLOAT, FLOAT, FLOAT, FLOAT], FLOAT4),
+    new FunType([FLOAT], FLOAT4),
   ]),
   vec3: new OverloadedType([
     new FunType([FLOAT4], FLOAT3),
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT3),
+    new FunType([FLOAT], FLOAT3),
   ]),
   abs: _GL_UNARY_TYPE,
   normalize: _GL_UNARY_TYPE,
