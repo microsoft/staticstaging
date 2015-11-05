@@ -30,7 +30,7 @@ textarea {
 }
 #tools > * {
     float: left;
-    margin-right: 1em;
+    margin: 0 0.5em 0 0;
 }
 
 /* Output boxes hidden initially. */
