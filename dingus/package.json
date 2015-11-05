@@ -8,7 +8,6 @@
   "dependencies": {
     "bunny": "^1.0.1",
     "teapot": "^1.0.0",
-    "canvas-fit": "^1.2.0",
     "canvas-orbit-camera": "^1.0.0",
     "gl-context": "^0.1.1",
     "gl-mat4": "^1.0.0",

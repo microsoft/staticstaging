@@ -1,6 +1,5 @@
 "use strict";
 
-var fit = require('canvas-fit');
 var mat4 = require('gl-mat4');
 var normals = require('normals');
 var bunny = require('bunny');
@@ -75,7 +74,14 @@ function start_gl(container, shfl_code) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
   var canvas = container.appendChild(document.createElement('canvas'));
-  window.addEventListener('resize', fit(canvas), false);
+  function fit() {
+    var width = container.clientWidth;
+    var height = container.clientHeight;
+    canvas.setAttribute('width', width + 'px');
+    canvas.setAttribute('height', height + 'px');
+  }
+  window.addEventListener('resize', fit);
+  fit();
 
   // Attach a `canvas-orbit-camera` thing, which handles user input for
   // manipulating the view.
