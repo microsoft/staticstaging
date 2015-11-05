@@ -1,9 +1,19 @@
+/* Columns on wide, stacked on narrow. */
+@media (min-width: 750px) {
+    #input, #output {
+        float: left;
+        width: 49%;
+    }
+}
+
+/* Make the code input as tall as possible when in columns, and with a fixed
+   height when we don't. */
 textarea {
-    width: 100%;
+    width: calc(100% - 2em);
     height: 30ex;
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
-@media (min-width: 48em) {  /* medium */
+@media (min-width: 750px) {
     textarea {
         /* Take up the whole screen height. */
         height: calc(100vh - 130px);
@@ -13,13 +23,8 @@ textarea {
         overflow: auto;
     }
 }
-#error, #result {
-    display: none;
-    clear: both;
-}
-#result.visual {
-    height: 300px;
-}
+
+/* The toolbar. */
 #tools {
     height: 2em;
 }
@@ -27,21 +32,32 @@ textarea {
     float: left;
     margin-right: 1em;
 }
+
+/* Output boxes hidden initially. */
+#error, #result {
+    display: none;
+    clear: both;
+}
+
+/* Tiny output code. */
+#compiled {
+  font-size: 60%;
+}
+
+/* When the output is a WebGL canvas, make it big. */
+#result.visual {
+    height: 300px;
+}
+
+/* The syntax tree diagram. */
 #tree {
     height: 30ex;
 }
-
-/* For the tree diagram. */
 #tree .node text {
   font-size: 80%;
 }
-
 #tree .link {
   fill: none;
   stroke: #ddd;
   stroke-width: 2px;
-}
-
-#compiled {
-  font-size: 60%;
 }
