@@ -1,4 +1,5 @@
 # title: quote and splice
+# mode: compile
 # ---
 
 # Use <> to defer code, ! to execute it, and [] to splice.

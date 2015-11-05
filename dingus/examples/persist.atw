@@ -1,4 +1,5 @@
 # title: persist
+# mode: compile
 # ---
 
 # Cross-stage persistence works either via

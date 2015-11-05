@@ -1,4 +1,5 @@
 # title: externs
+# mode: interp
 # ---
 
 # You can interoperate with JavaScript using extern declarations.
