@@ -36,19 +36,20 @@ textarea {
 }
 @media (min-width: 900px) {
     #input, #output {
-        height: calc(100vh - 3em);
+        height: calc(100vh - 7ex);
     }
     textarea {
         height: 100%;
     }
     #compiled {
-        height: calc(100vh - 300px - 8em);
+        height: calc(100vh - 300px - 13ex);
     }
 }
 
 /* The toolbar. */
 #tools {
     height: 2em;
+    margin-top: 0.5ex;
 }
 #tools > * {
     float: left;
