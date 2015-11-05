@@ -2,11 +2,14 @@
 
 var mat4 = require('gl-mat4');
 var normals = require('normals');
-var bunny = require('bunny');
-var teapot = require('teapot');
 var canvasOrbitCamera = require('canvas-orbit-camera');
 var glContext = require('gl-context');
 var pack = require('array-pack-2d');
+
+var bunny = require('bunny');
+var teapot = require('teapot');
+var snowden = require('snowden');
+var dragon = require('stanford-dragon');
 
 function make_buffer(gl, data, type, mode) {
   // Initialize a buffer.

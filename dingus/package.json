@@ -8,6 +8,9 @@
   "dependencies": {
     "bunny": "^1.0.1",
     "teapot": "^1.0.0",
+    "snowden": "^1.0.1",
+    "stanford-dragon": "^1.1.1",
+
     "canvas-orbit-camera": "^1.0.0",
     "gl-context": "^0.1.1",
     "gl-mat4": "^1.0.0",

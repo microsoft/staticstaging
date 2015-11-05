@@ -130,6 +130,8 @@ var view = dingus.view;
 # Sample assets to play with.
 extern bunny: Mesh;
 extern teapot: Mesh;
+extern snowden: Mesh;
+extern dragon: Mesh;
 
 # Mesh asset wrangling.
 extern mesh_indices: Mesh -> (Int3 Array);
