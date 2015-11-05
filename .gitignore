@@ -6,3 +6,5 @@ dingus/gl.bundle.js
 dingus/bootstrap.css
 dingus/d3.js
 dingus/bower_components/
+dingus/examples.js
+munge.js

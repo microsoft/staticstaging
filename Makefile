@@ -92,6 +92,12 @@ $(D3):
 dingus/d3.js: $(D3)
 	cp $< $@
 
+# Munge the examples.
+DINGUS_EXAMPLES := basics splice persist extern normcolor objects phong
+DINGUS_EXAMPLE_FILES := $(DINGUS_EXAMPLES:%=dingus/examples/%.atw)
+dingus/examples.js: munge.js $(DINGUS_EXAMPLE_FILES)
+	node $< $(DINGUS_EXAMPLE_FILES) > $@
+
 .PHONY: deploy
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh \
 	--exclude node_modules --exclude package.json --exclude gl.js \
@@ -142,3 +148,10 @@ dump-gl: $(CLI_JS)
 		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
 	done ; \
 	$(TEST_FAIL)
+
+
+# An asset-munging utility.
+
+# Compile the example-munging script.
+munge.js: munge.ts $(TSC) $(NODE_D)
+	$(TSC) $(TSCARGS) --out $@ $<
