@@ -10,7 +10,8 @@ TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	bug-nestedcapture bug-nestedcapture2 bug-externcapture
 TESTS_INTERP := dump splice nesteddump spdump
 TESTS_STATIC := trailingsemi comment whitespace \
-	typeerror badsplice topescape floaterror ccall ccall-expr cdef
+	typeerror badsplice topescape floaterror ccall ccall-expr cdef \
+	assoc
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
 	gl-array gl-overload gl-typeadapt gl-normcolor
 TSCARGS := --noImplicitAny

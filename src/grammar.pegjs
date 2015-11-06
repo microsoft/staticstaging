@@ -3,6 +3,19 @@
   function build_list(first, rest, index) {
     return [first].concat(extractList(rest, index));
   }
+
+  // Build a binary tree. Results in a nesting of objects with "lhs" and "rhs"
+  // members.
+  function build_tree(lhs, rhs_list) {
+    if (rhs_list.length === 0) {
+      return lhs;
+    }
+
+    var first = rhs_list[0];
+    var rest = rhs_list.slice(1);
+    first.lhs = lhs;
+    return build_tree(first, rest);
+  }
 }
 
 Program
@@ -13,7 +26,7 @@ Program
 // Expression syntax.
 
 Expr "expression"
-  = Var / Extern / Fun / CDef / Unary / Binary / Assign / CCall / Call /
+  = Var / Extern / Fun / CDef / Binary / Unary / Assign / CCall / Call /
   TermExpr
 
 SeqExpr
@@ -52,8 +65,14 @@ Unary "unary operation"
   = op:unop _ e:TermExpr
   { return {tag: "unary", expr: e, op: op}; }
 
-Binary "binary operation"
-  = lhs:TermExpr _ op:binop _ rhs:Expr
+Binary
+  = first:(MulBinary / TermExpr) rest:BinaryRest*
+  { return build_tree(first, rest); }
+BinaryRest
+  = _ op:addbinop _ rhs:(MulBinary / TermExpr)
+  { return {tag: "binary", op: op, rhs: rhs}; }
+MulBinary
+  = lhs:TermExpr _ op:mulbinop _ rhs:(MulBinary / TermExpr)
   { return {tag: "binary", lhs: lhs, rhs: rhs, op: op}; }
 
 Quote "quote"
@@ -185,10 +204,10 @@ eq
 seq
   = ";"
 
-binop "binary operator"
-  = [+\-*/]
-  // If we could use TypeScript here, it would be nice to use a static enum
-  // for the operator.
+addbinop
+  = [+\-]
+mulbinop
+  = [*/]
 
 unop "unary operator"
   = [+\-]
