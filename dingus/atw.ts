@@ -1,4 +1,5 @@
 /// <reference path="../src/driver.ts" />
+/// <reference path="../typings/codemirror/codemirror.d.ts" />
 
 declare var parser : any;
 declare function tree_canvas (
@@ -263,6 +264,14 @@ function encode_hash(obj: { [key: string]: string }): string {
   return '#' + parts.join('&');
 }
 
+// Set up CodeMirror to shadow our <textarea>.
+function codemirror_setup(box: HTMLTextAreaElement) {
+  let obj = CodeMirror.fromTextArea(box);
+  obj.on('change', function(cm) {
+    console.log("CHANGED", cm.getDoc().getValue());
+  });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
   let errbox = <HTMLElement> document.querySelector('#error');
@@ -278,12 +287,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let draw_tree: (tree_data: any) => void;
 
-  function code_value() {
-    return codebox.value.trim();
+  // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
+  let codemirror = CodeMirror.fromTextArea(codebox, {
+    lineNumbers: true,
+    mode: "alltheworld",
+  });
+
+  // Accessors for the current code in the box.
+  function get_code() {
+    if (codemirror) {
+      return codemirror.getDoc().getValue();
+    } else {
+      return codebox.value.trim();
+    }
+  }
+  function set_code(s: string) {
+    if (codemirror) {
+      codemirror.getDoc().setValue(s);
+    } else {
+      codebox.value = s;
+    }
   }
 
+  // Event handler for changes to the code.
+  let tid: number = null;
+  function handle_code () {
+    if (tid) {
+      clearTimeout(tid);
+    }
+    tid = setTimeout(run_code, RUN_DELAY_MS);
+  };
+
+  if (codemirror) {
+    codemirror.on('change', handle_code);
+  } else {
+    codebox.addEventListener('change', handle_code);
+  }
+
+
   function run_code(navigate=true) {
-    let code = code_value();
+    let code = get_code();
     let mode = modeselect.value;
 
     if (code !== "") {
@@ -364,9 +407,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (code) {
-      codebox.value = code;
+      set_code(code);
     } else {
-      codebox.value = '';
+      set_code('');
     }
 
     if (mode) {
@@ -389,15 +432,6 @@ document.addEventListener("DOMContentLoaded", function () {
     history.pushState(null, null, hash);
     handle_hash();
   }
-
-  // Wait for code input and run it.
-  let tid : number = null;
-  codebox.addEventListener('input', function () {
-    if (tid) {
-      clearTimeout(tid);
-    }
-    tid = setTimeout(run_code, RUN_DELAY_MS);
-  });
 
   // Also run the code when toggling the compile checkbox.
   modeselect.addEventListener('change', function () {
@@ -434,7 +468,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Handle the "clear" button.
   clearbtn.addEventListener('click', function () {
-    if (code_value() != '') {
+    if (get_code() != '') {
       link_to_code('');
     }
   });

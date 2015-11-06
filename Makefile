@@ -49,6 +49,7 @@ node_modules/%/package.json:
 
 NODE_D := typings/node/node.d.ts
 MINIMIST_D := typings/minimist/minimist.d.ts
+CODEMIRROR_D := typings/codemirror/codemirror.d.ts
 
 typings/%.d.ts: $(TSD)
 	$(TSD) install $(firstword $(subst /, ,$*))
@@ -67,9 +68,10 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 
 # The Web dingus.
 
-dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/d3.js dingus/examples.js
+dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/d3.js dingus/examples.js \
+	dingus/codemirror
 
-WEB_SRCS := $(SRC_FILES) dingus/atw.ts
+WEB_SRCS := $(SRC_FILES) dingus/atw.ts $(CODEMIRROR_D)
 dingus/atw.js: $(TSC) $(WEB_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
 
@@ -83,8 +85,16 @@ dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 D3 := dingus/bower_components/d3/d3.min.js
 $(D3):
 	cd dingus ; bower install d3
+	@touch $@
 dingus/d3.js: $(D3)
 	cp $< $@
+
+CODEMIRROR := dingus/bower_components/codemirror/lib
+$(CODEMIRROR):
+	cd dingus ; bower install codemirror
+	@touch $@
+dingus/codemirror: $(CODEMIRROR)
+	cp -r $< $@
 
 # Munge the examples.
 DINGUS_EXAMPLES := basics splice persist extern normcolor objects phong bug

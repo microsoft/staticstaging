@@ -30,7 +30,7 @@ pre, textarea {
 
 /* Make the code input as tall as possible when in columns, and with a fixed
    height when we don't. */
-textarea {
+#code, .CodeMirror {
     width: calc(100% - 2em);
     height: 60ex;
 }
@@ -38,7 +38,7 @@ textarea {
     #input, #output {
         height: calc(100vh - 7ex);
     }
-    textarea {
+    #code, .CodeMirror {
         height: 100%;
     }
     #compiled {

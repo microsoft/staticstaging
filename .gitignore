@@ -6,4 +6,5 @@ dingus/gl.bundle.js
 dingus/d3.js
 dingus/bower_components/
 dingus/examples.js
+dingus/codemirror
 munge.js
