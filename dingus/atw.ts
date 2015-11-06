@@ -276,7 +276,7 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
   return {
     startState() {
       return {
-        comment: false
+        paren_depth: 0,
       };
     },
 
@@ -289,7 +289,7 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
 
       for (let builtin of builtins) {
         if (stream.match(builtin)) {
-          return "atom";
+          return "builtin";
         }
       }
 
@@ -300,6 +300,12 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
 
       // Single characters.
       let ch = stream.next().toString();
+      if (ch === "(") {
+        ++state.paren_depth;
+      } else if (ch === ")") {
+        --state.paren_depth;
+      }
+
       for (let op of operators) {
         if (ch === op) {
           return "operator";
