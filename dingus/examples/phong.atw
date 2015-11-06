@@ -3,7 +3,7 @@
 # ---
 
 # Phong shader.
-def phong(pos: (Float3 Array), norm: (Float3 Array), model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
+def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
   var camera_pos = eye(view);
 
   vtx s<
@@ -32,7 +32,7 @@ def phong(pos: (Float3 Array), norm: (Float3 Array), model: Mat4, lightpos: Vec3
 );
 
 # Simple, solid-color shader.
-def solid(pos: (Float3 Array), model: Mat4, color: Vec3) (
+def solid(pos: Float3 Array, model: Mat4, color: Vec3) (
   vtx s<
     gl_Position = projection * view * model * vec4(pos, 1.0);
     frag s<

@@ -18,7 +18,7 @@ var t_indices = mesh_indices(teapot);
 var t_size = mesh_size(teapot);
 var t_model = mat4.create();
 
-def simple_shader(pos: (Float3 Array), norm: (Float3 Array), model: Mat4) (
+def simple_shader(pos: Float3 Array, norm: Float3 Array, model: Mat4) (
   vtx s<
     gl_Position = projection * view * model * vec4(pos, 1.0);
     frag s<
@@ -28,7 +28,7 @@ def simple_shader(pos: (Float3 Array), norm: (Float3 Array), model: Mat4) (
 );
 
 render r<
-  var phase = Math.sin((Date.now()) / 200);
+  var phase = Math.sin(Date.now() / 200);
   mat4.rotateX(b_model, id, phase);
   mat4.rotateZ(t_model, id, phase);
   mat4.rotateX(t_model, t_model, phase * 2);
