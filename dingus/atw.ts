@@ -264,6 +264,67 @@ function encode_hash(obj: { [key: string]: string }): string {
   return '#' + parts.join('&');
 }
 
+// CodeMirror syntax mode.
+CodeMirror.defineMode("alltheworld", function (config, pconfig) {
+  const keywords = ["var", "def", "fun", "extern"];
+  const brackets = "<>[]()";
+  const punctuation = [":", "->"];
+  const operators = ["+", "-", "*", "/"];
+  const builtins = ["render", "vtx", "frag"];
+  const quote_begin = /[A-Za-z0-9]+\</;
+
+  return {
+    startState() {
+      return {
+        comment: false
+      };
+    },
+
+    token(stream, state) {
+      for (let keyword of keywords) {
+        if (stream.match(keyword)) {
+          return "keyword";
+        }
+      }
+
+      for (let builtin of builtins) {
+        if (stream.match(builtin)) {
+          return "atom";
+        }
+      }
+
+      // Annotated quotes.
+      if (stream.match(quote_begin)) {
+        return "bracket";
+      }
+
+      // Single characters.
+      let ch = stream.next().toString();
+      for (let op of operators) {
+        if (ch === op) {
+          return "operator";
+        }
+      }
+      if (brackets.indexOf(ch) !== -1) {
+        return "bracket";
+      }
+      if (ch === "#") {
+        stream.skipToEnd();
+        return "comment";
+      }
+      return null;
+    },
+
+    /*
+    indent(state, textAfter) {
+      return
+    },
+    */
+
+    lineComment: "#",
+  };
+});
+
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
   let errbox = <HTMLElement> document.querySelector('#error');
