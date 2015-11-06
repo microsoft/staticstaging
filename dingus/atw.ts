@@ -264,14 +264,6 @@ function encode_hash(obj: { [key: string]: string }): string {
   return '#' + parts.join('&');
 }
 
-// Set up CodeMirror to shadow our <textarea>.
-function codemirror_setup(box: HTMLTextAreaElement) {
-  let obj = CodeMirror.fromTextArea(box);
-  obj.on('change', function(cm) {
-    console.log("CHANGED", cm.getDoc().getValue());
-  });
-}
-
 document.addEventListener("DOMContentLoaded", function () {
   let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
   let errbox = <HTMLElement> document.querySelector('#error');
@@ -319,7 +311,13 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   if (codemirror) {
-    codemirror.on('change', handle_code);
+    codemirror.on('change', function (cm, change) {
+      // Suppress change events from programmatic updates (to match an
+      // ordinary textarea).
+      if (change.origin !== "setValue") {
+        handle_code();
+      }
+    });
   } else {
     codebox.addEventListener('change', handle_code);
   }
