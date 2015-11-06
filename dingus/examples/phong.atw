@@ -26,7 +26,7 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
       var spec_comp_b = max(0.0, dot(normal_world, angle));
       var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
 
-      gl_FragColor = vec4((color * ndl) + vec3(spec_comp), 1.0);
+      gl_FragColor = vec4(color * ndl + vec3(spec_comp), 1.0);
     >
   >;
 );
