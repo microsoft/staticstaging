@@ -8,7 +8,8 @@ declare function tree_canvas (
   get_children: (_:any) => any[]
 ): (tree_data: any) => void;
 
-declare function start_gl(container: HTMLElement, code: string): void;
+declare function start_gl(container: HTMLElement, fps_element: HTMLElement,
+    code: string): void;
 declare const ATW_EXAMPLES: { [key: string]: string }[];
 
 const RUN_DELAY_MS = 200;
@@ -343,6 +344,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let examples = document.querySelectorAll('.example');
   let modeselect = <HTMLSelectElement> document.querySelector('#mode');
   let exampleselect = <HTMLSelectElement> document.querySelector('#example');
+  let fpsbox = <HTMLElement> document.querySelector('#fps');
 
   let draw_tree: (tree_data: any) => void;
 
@@ -422,10 +424,12 @@ document.addEventListener("DOMContentLoaded", function () {
         outbox.textContent = '';
         outbox.style.display = 'block';
         outbox.classList.add("visual");
-        start_gl(outbox, glcode);
+        fpsbox.style.display = 'block';
+        start_gl(outbox, fpsbox, glcode);
       } else {
         // Just show the output value.
         outbox.classList.remove("visual");
+        fpsbox.style.display = 'none';
         show(res, outbox);
       }
 

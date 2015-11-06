@@ -42,7 +42,7 @@ pre, textarea {
         height: 100%;
     }
     #compiled {
-        height: calc(100vh - 300px - 13ex);
+        height: calc(100vh - 300px - 18ex);
     }
 }
 
@@ -71,6 +71,15 @@ pre, textarea {
 /* When the output is a WebGL canvas, make it big. */
 #result.visual {
     height: 300px;
+}
+
+/* Framerate display. */
+#fps {
+  text-align: right;
+  font-size: 80%;
+}
+#fps::after {
+  content: " fps";
 }
 
 /* The syntax tree diagram. */

@@ -74,7 +74,7 @@ function projection_matrix(out, width, height) {
   mat4.perspective(out, fieldOfView, aspectRatio, near, far)
 }
 
-function start_gl(container, shfl_code) {
+function start_gl(container, fps_element, shfl_code) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
   var canvas = container.appendChild(document.createElement('canvas'));
@@ -140,7 +140,11 @@ function start_gl(container, shfl_code) {
     var elapsed = now - last_sample;  // Milliseconds.
     if (elapsed > sample_rate) {
       var fps = frame_count / elapsed * 1000;
-      console.log(fps + " fps");
+      if (fps_element) {
+        fps_element.textContent = fps.toFixed(2);
+      } else {
+        console.log(fps + " fps");
+      }
 
       last_sample = now;
       frame_count = 0;
