@@ -106,7 +106,12 @@ function start_gl(container, shfl_code) {
   // Invoke the setup stage.
   var shfl_func = shfl_program();
 
-  // TODO Move as much of the following as possible to SHFL land.
+  // Bookkeeping for calculating framerate.
+  var frame_count = 0;
+  var last_sample = new Date();
+  var sample_rate = 1000;
+
+  // The main render loop.
   function render() {
     // Get the current size of the canvas.
     var width = gl.drawingBufferWidth;
@@ -128,6 +133,18 @@ function start_gl(container, shfl_code) {
 
     // Invoke the compiled SHFL code.
     shfl_func();
+
+    // Framerate tracking.
+    ++frame_count;
+    var now = new Date();
+    var elapsed = now - last_sample;  // Milliseconds.
+    if (elapsed > sample_rate) {
+      var fps = frame_count / elapsed * 1000;
+      console.log(fps + " fps");
+
+      last_sample = now;
+      frame_count = 0;
+    }
   };
 }
 
