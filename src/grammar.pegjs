@@ -20,7 +20,8 @@ SeqExpr
   = Seq / HalfSeq / Expr
 
 TermExpr
-  = Quote / FloatLiteral / IntLiteral / Lookup / Splice / Persist / Run / Paren
+  = Quote / FloatLiteral / IntLiteral / CCall / Lookup / Splice / Persist /
+  Run / Paren
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
