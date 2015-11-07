@@ -127,7 +127,6 @@ function start_gl(container, fps_element) {
 
     // Rendering flags.
     gl.enable(gl.DEPTH_TEST);  // Prevent triangle overlap.
-    gl.enable(gl.CULL_FACE);  // Triangles not visible from behind.
 
     // Invoke the compiled SHFL code.
     shfl_func();
