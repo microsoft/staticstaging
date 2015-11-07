@@ -346,8 +346,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let fpsbox = <HTMLElement> document.querySelector('#fps');
   let visualbox = <HTMLElement> document.querySelector('#visual');
 
-  let draw_tree: (tree_data: any) => void;
-
   // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
   let codemirror = CodeMirror.fromTextArea(codebox, {
     lineNumbers: true,
@@ -391,6 +389,9 @@ document.addEventListener("DOMContentLoaded", function () {
     codebox.addEventListener('change', handle_code);
   }
 
+  // Lazily constructed tools.
+  let draw_tree: (tree_data: any) => void;
+  let update_gl: (code: string) => void;
 
   function run_code(navigate=true) {
     let code = get_code();
@@ -420,13 +421,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (mode === "webgl" && glcode) {
         // Start the WebGL viewer.
-        visualbox.textContent = '';
         visualbox.style.display = 'block';
         fpsbox.style.display = 'block';
         show(null, outbox);
 
         console.log(glcode);
-        start_gl(visualbox, fpsbox)(glcode);
+        if (!update_gl) {
+          update_gl = start_gl(visualbox, fpsbox);
+        }
+        update_gl(glcode);
       } else {
         // Just show the output value.
         visualbox.style.display = 'none';
