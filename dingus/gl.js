@@ -9,7 +9,6 @@ var eye = require('eye-vector');
 var bunny = require('bunny');
 var teapot = require('teapot');
 var snowden = require('snowden');
-var dragon = require('stanford-dragon');
 
 function make_buffer(gl, data, type, mode) {
   // Initialize a buffer.
