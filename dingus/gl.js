@@ -3,7 +3,6 @@
 var mat4 = require('gl-mat4');
 var normals = require('normals');
 var canvasOrbitCamera = require('canvas-orbit-camera');
-var glContext = require('gl-context');
 var pack = require('array-pack-2d');
 var eye = require('eye-vector');
 
@@ -92,7 +91,7 @@ function start_gl(container, fps_element, shfl_code) {
   var camera = canvasOrbitCamera(canvas);
 
   // Initialize the OpenGL context with our rendering function.
-  var gl = glContext(canvas, render);
+  var gl = canvas.getContext("webgl");
 
   // Create the base matrices to be used
   // when rendering the bunny. Alternatively, can
@@ -149,7 +148,11 @@ function start_gl(container, fps_element, shfl_code) {
       last_sample = now;
       frame_count = 0;
     }
+
+    window.requestAnimationFrame(render);
   };
+
+  window.requestAnimationFrame(render);
 }
 
 module.exports = start_gl;
