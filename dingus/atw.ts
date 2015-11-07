@@ -8,8 +8,8 @@ declare function tree_canvas (
   get_children: (_:any) => any[]
 ): (tree_data: any) => void;
 
-declare function start_gl(container: HTMLElement, fps_element: HTMLElement,
-    code: string): void;
+declare function start_gl(container: HTMLElement, fps_element: HTMLElement):
+  (code: string) => void;
 declare const ATW_EXAMPLES: { [key: string]: string }[];
 
 const RUN_DELAY_MS = 200;
@@ -426,7 +426,7 @@ document.addEventListener("DOMContentLoaded", function () {
         show(null, outbox);
 
         console.log(glcode);
-        start_gl(visualbox, fpsbox, glcode);
+        start_gl(visualbox, fpsbox)(glcode);
       } else {
         // Just show the output value.
         visualbox.style.display = 'none';

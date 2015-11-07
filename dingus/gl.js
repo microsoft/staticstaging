@@ -72,7 +72,9 @@ function projection_matrix(out, width, height) {
   mat4.perspective(out, fieldOfView, aspectRatio, near, far)
 }
 
-function start_gl(container, fps_element, shfl_code) {
+// Set up a canvas inside a container element. Return a function that sets the
+// render function (given compiled SHFL code as a string).
+function start_gl(container, fps_element) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
   var canvas = container.appendChild(document.createElement('canvas'));
@@ -98,16 +100,14 @@ function start_gl(container, fps_element, shfl_code) {
   var projection = mat4.create();
   var view = mat4.create();
 
-  // Execute the compiled SHFL code in context.
-  var shfl_program = shfl_eval(shfl_code, gl, projection, view);
-
-  // Invoke the setup stage.
-  var shfl_func = shfl_program();
-
   // Bookkeeping for calculating framerate.
   var frame_count = 0;
   var last_sample = new Date();
   var sample_rate = 1000;
+
+  // Initially, the SHFL function does nothing. The client needs to call us
+  // back to fill in the function. Then, we will update this variable.
+  var shfl_func = function () {};
 
   // The main render loop.
   function render() {
@@ -148,10 +148,21 @@ function start_gl(container, fps_element, shfl_code) {
       frame_count = 0;
     }
 
+    // Ask to be run again.
     window.requestAnimationFrame(render);
   };
 
+  // Request that the render function get called in the browser's render loop.
   window.requestAnimationFrame(render);
+
+  // Return a function that lets the client update the render body.
+  return function (shfl_code) {
+    // Execute the compiled SHFL code in context.
+    var shfl_program = shfl_eval(shfl_code, gl, projection, view);
+
+    // Invoke the setup stage.
+    shfl_func = shfl_program();
+  };
 }
 
 module.exports = start_gl;
