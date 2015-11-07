@@ -344,6 +344,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let modeselect = <HTMLSelectElement> document.querySelector('#mode');
   let exampleselect = <HTMLSelectElement> document.querySelector('#example');
   let fpsbox = <HTMLElement> document.querySelector('#fps');
+  let visualbox = <HTMLElement> document.querySelector('#visual');
 
   let draw_tree: (tree_data: any) => void;
 
@@ -419,15 +420,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (mode === "webgl" && glcode) {
         // Start the WebGL viewer.
-        console.log(glcode);
-        outbox.textContent = '';
-        outbox.style.display = 'block';
-        outbox.classList.add("visual");
+        visualbox.textContent = '';
+        visualbox.style.display = 'block';
         fpsbox.style.display = 'block';
-        start_gl(outbox, fpsbox, glcode);
+        show(null, outbox);
+
+        console.log(glcode);
+        start_gl(visualbox, fpsbox, glcode);
       } else {
         // Just show the output value.
-        outbox.classList.remove("visual");
+        visualbox.style.display = 'none';
         fpsbox.style.display = 'none';
         show(res, outbox);
       }

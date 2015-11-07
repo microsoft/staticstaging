@@ -72,7 +72,7 @@ pre, textarea {
 }
 
 /* When the output is a WebGL canvas, make it big. */
-#result.visual {
+#visual {
     height: 300px;
 }
 
