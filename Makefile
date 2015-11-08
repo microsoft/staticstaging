@@ -101,7 +101,8 @@ dingus/codemirror: $(CODEMIRROR)
 	cp -r $< $@
 
 # Munge the examples.
-DINGUS_EXAMPLES := basics splice persist extern normcolor objects phong bug
+DINGUS_EXAMPLES := basics splice persist progfunc extern \
+	normcolor objects phong bug
 DINGUS_EXAMPLE_FILES := $(DINGUS_EXAMPLES:%=dingus/examples/%.atw)
 dingus/examples.js: munge.js $(DINGUS_EXAMPLE_FILES)
 	printf "ATW_EXAMPLES = " > $@
