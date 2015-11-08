@@ -25,7 +25,8 @@ class Fun {
   constructor(
     public params: string[],
     public body: ExpressionNode,
-    public env: Env
+    public env: Env,
+    public pers: Pers  // In case the function was defined in a quote.
   ) {}
 }
 
@@ -173,7 +174,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     }
 
     // Construct a function value.
-    let fun = new Fun(param_names, tree.body, env);
+    let fun = new Fun(param_names, tree.body, env, pers);
     return [fun, env];
   },
 
@@ -202,7 +203,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
 
       // Evaluate the function body. Throw away any updates it makes to its
       // environment.
-      let [ret, _] = interp(target.body, call_env, pers);
+      let [ret, _] = interp(target.body, call_env, target.pers);
 
       return [ret, e];
 
