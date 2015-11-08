@@ -27,7 +27,7 @@ def simple_shader(pos: Float3 Array, norm: Float3 Array, model: Mat4) (
   >;
 );
 
-render r<
+render f<
   var phase = Math.sin(Date.now() / 200);
   mat4.rotateX(b_model, id, phase);
   mat4.rotateZ(t_model, id, phase);

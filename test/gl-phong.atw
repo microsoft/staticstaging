@@ -17,7 +17,7 @@ var normal = bunny.normals;
 
 var shininess = 0.5;
 
-render r<
+render f<
   var t = Date.now();
   var lx = Math.sin(t / 200);
   var ly = Math.sin(t / 100);

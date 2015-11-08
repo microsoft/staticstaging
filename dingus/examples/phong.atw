@@ -65,7 +65,7 @@ var id = mat4.create();
 var specular = 50.0;
 var light_color = vec3(1.0, 0.2, 0.5);
 
-render r<
+render f<
   var t = Date.now();
   var light_position = vec3(
     Math.cos(t / 200) * 20.0,

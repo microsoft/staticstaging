@@ -376,7 +376,9 @@ function jscompile(ir: CompilerIR): string {
 
 // Emit a program as a JavaScript function declaration. This works when the
 // program has no splices, and it avoids the overhead of `eval`.
-function js_emit_progfunc(compile: JSCompile, ir: CompilerIR, progid: number): string {
+function js_emit_progfunc(compile: JSCompile, ir: CompilerIR,
+    progid: number): string
+{
   let prog = ir.progs[progid];
 
   // Emit functions in the quote. These will be inserted inside the wrapper
@@ -418,7 +420,9 @@ function js_emit_progfunc(compile: JSCompile, ir: CompilerIR, progid: number): s
 
 // Emit an invocation of a quote that has been declared as a JavaScript
 // function.
-function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR, progid: number): string {
+function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR,
+    progid: number): string
+{
   // The arguments to a function stage are its persists.
   let args: string[] = [];
   for (let esc of ir.progs[progid].persist) {

@@ -287,18 +287,19 @@ function webgl_compile(ir: CompilerIR): string {
   let proc_decls = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      // Get the procs to compile.
-      let procs: Proc[] = [];
-      for (let id of ir.quoted_procs[prog.id]) {
-        procs.push(ir.procs[id]);
-      }
-
-      if (prog.annotation == "r") {
-        // Render quote. Compiled as a function.
+      if (prog.annotation == "f") {
+        // A function quote. Compile to a JavaScript function.
         proc_decls += js_emit_progfunc(_jscompile, ir, prog.id) + "\n";
 
       } else {
-        // Other quote. Compiled normally.
+        // Other quote. Compiled normally, to a string.
+
+        // Get the procs to compile.
+        let procs: Proc[] = [];
+        for (let id of ir.quoted_procs[prog.id]) {
+          procs.push(ir.procs[id]);
+        }
+
         let code: string;
         if (prog.annotation === "s") {
           // A shader program.

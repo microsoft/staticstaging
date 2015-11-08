@@ -11,7 +11,7 @@ var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
 
-render r<
+render f<
   vtx s<
     gl_Position = projection * view * model * vec4(position, 1.0);
     frag s<
