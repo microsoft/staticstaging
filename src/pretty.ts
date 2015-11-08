@@ -98,10 +98,10 @@ let pretty_type_rules: TypeVisit<void, string> = {
     return out;
   },
   visit_any(type: AnyType, param: void): string {
-    return "any";
+    return "Any";
   },
   visit_void(type: VoidType, param: void): string {
-    return "void";
+    return "Void";
   },
   visit_constructor(type: ConstructorType, param: void): string {
     return type.name;
