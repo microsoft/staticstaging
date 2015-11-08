@@ -1,0 +1,4 @@
+var x = 5;
+var qf = f< fun y:Int -> y * x >;
+!qf 3
+# -> 15

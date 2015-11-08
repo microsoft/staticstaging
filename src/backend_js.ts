@@ -379,7 +379,12 @@ function jscompile(ir: CompilerIR): string {
 function js_emit_progfunc(compile: JSCompile, ir: CompilerIR, progid: number): string {
   let prog = ir.progs[progid];
 
-  // TODO Emit functions in the quote. These become global functions.
+  // Emit functions in the quote. These will be inserted inside the wrapper
+  // function.
+  let procs = "";
+  for (let id of ir.quoted_procs[prog.id]) {
+    procs += jscompile_proc(compile, ir.procs[id]) + "\n";
+  }
 
   // Get the quote's local (bound) variables.
   let localnames: string[] = [];
@@ -406,7 +411,7 @@ function js_emit_progfunc(compile: JSCompile, ir: CompilerIR, progid: number): s
   // Finally, wrap this in an outer function that takes the parameters to
   // bind (i.e., the persists).
   let wrapper_func = emit_js_fun(progsym(prog.id), argnames, [],
-                                 `return ${render_func};`);
+                                 procs + `return ${render_func};`);
 
   return wrapper_func;
 }
