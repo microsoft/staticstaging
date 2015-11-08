@@ -77,9 +77,9 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
 ]);
 const GL_INTRINSICS: TypeMap = {
-  render: new FunType([new CodeType(ANY)], VOID),
-  vtx: new FunType([new CodeType(ANY)], VOID),
-  frag: new FunType([new CodeType(ANY)], VOID),
+  render: new FunType([new CodeType(ANY, null)], VOID),
+  vtx: new FunType([new CodeType(ANY, null)], VOID),
+  frag: new FunType([new CodeType(ANY, null)], VOID),
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new OverloadedType([

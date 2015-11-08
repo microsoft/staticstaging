@@ -136,7 +136,7 @@ Type "type"
   = FunType / InstanceType / TermType
 
 TermType
-  = PrimitiveType / CodeType / ParenType
+  = CodeType / PrimitiveType / ParenType
 
 PrimitiveType "primitive type"
   = i:ident
@@ -155,8 +155,8 @@ FunType "function type"
   { return {tag: "type_fun", params: p, ret: r}; }
 
 CodeType "code type"
-  = quote_open _ t:Type _ quote_close
-  { return {tag: "type_code", inner: t}; }
+  = a:ident? quote_open _ t:Type _ quote_close
+  { return {tag: "type_code", inner: t, annotation: a}; }
 
 FunTypeParam
   = t:TermType _

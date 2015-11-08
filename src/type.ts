@@ -29,7 +29,10 @@ class FunType extends Type {
 
 // Same with code types.
 class CodeType extends Type {
-  constructor(public inner: Type) { super() };
+  constructor(
+    public inner: Type,
+    public annotation: string
+  ) { super() };
   _brand_CodeType: void;
 };
 

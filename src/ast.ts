@@ -95,6 +95,7 @@ interface FunTypeNode extends TypeNode {
 
 interface CodeTypeNode extends TypeNode {
   inner: TypeNode;
+  annotation: string;
 }
 
 // An AST node that is not allowed to appear in source; it replaces persistent

@@ -163,7 +163,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
       // Move the result type "down" to a code type. Ignore any changes to the
       // environment.
-      return [new CodeType(t), env];
+      return [new CodeType(t, tree.annotation), env];
     },
 
     visit_escape(tree: EscapeNode, env: TypeEnv): [Type, TypeEnv] {
@@ -376,7 +376,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
 
   visit_code(tree: CodeTypeNode, types: TypeMap) {
     let inner = get_type(tree.inner, types);
-    return new CodeType(inner);
+    return new CodeType(inner, tree.annotation);
   },
 
   visit_instance(tree: InstanceTypeNode, types: TypeMap) {
@@ -425,7 +425,7 @@ let apply_type_rules: TypeVisit<[VariableType, Type], Type> = {
     return new FunType(params, ret);
   },
   visit_code(type: CodeType, [tvar, targ]: [VariableType, Type]): Type {
-    return new CodeType(apply_type(type.inner, tvar, targ));
+    return new CodeType(apply_type(type.inner, tvar, targ), type.annotation);
   },
   visit_any(type: AnyType, [tvar, targ]: [VariableType, Type]): Type {
     return type;
