@@ -20,20 +20,16 @@ function call(closure, args) {
   return closure.proc.apply(void 0, args.concat(closure.env));
 }
 function run(code) {
-  if (typeof(code) === "function") {
-    return code();
-  } else {
-    // A crazy dance to bind the persist names.
-    var params = ["c"];
-    var args = [code.prog];
-    for (var name in code.persist) {
-      params.push(name);
-      args.push(code.persist[name]);
-    }
-    var js = "(function (" + params.join(", ") + ") { return eval(c); })";
-    var func = eval(js);
-    return func.apply(void 0, args);
+  // A crazy dance to bind the persist names.
+  var params = ["c"];
+  var args = [code.prog];
+  for (var name in code.persist) {
+    params.push(name);
+    args.push(code.persist[name]);
   }
+  var js = "(function (" + params.join(", ") + ") { return eval(c); })";
+  var func = eval(js);
+  return func.apply(void 0, args);
 }
 `.trim();
 
@@ -147,8 +143,18 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
       // Compile the expression producing the program we need to invoke.
       let progex = fself(tree.expr);
 
-      // Invoke the runtime function for executing code values.
-      return `run(${paren(progex)})`;
+      let [t, _] = ir.type_table[tree.expr.id];
+      if (t instanceof CodeType) {
+        if (t.annotation === "f") {
+          // Just invoke the function value.
+          return `${paren(progex)}()`;
+        } else {
+          // Invoke the runtime function for executing code values.
+          return `run(${paren(progex)})`;
+        }
+      } else {
+        throw "error: running non-code type";
+      }
     },
 
     // A function expression produces an object containing the JavaScript
