@@ -19,6 +19,10 @@ function splice(outer, id, inner) {
 function call(closure, args) {
   return closure.proc.apply(void 0, args.concat(closure.env));
 }
+function run(code) {
+  with (code.persist)
+    return eval(code.prog);
+}
 `.trim();
 
 function _is_fun_type(type: Type): boolean {
@@ -122,14 +126,8 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
       // Compile the expression producing the program we need to invoke.
       let progex = fself(tree.expr);
 
-      let out = "(function () { /* run */\n";
-      out += "  var code = " + progex + ";\n";
-      // To fill in the persist values, we currently use JavaScript's
-      // much-maligned `with` statement. It's just what we need!
-      out += "  with (code.persist)\n";
-      out += "  return eval(code.prog);\n";
-      out += "})()";
-      return out;
+      // Invoke the runtime function for executing code values.
+      return `run(${paren(progex)})`;
     },
 
     // A function expression produces an object containing the JavaScript
