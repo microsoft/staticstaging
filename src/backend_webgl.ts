@@ -258,8 +258,8 @@ function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
 
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
-        // Invoke the render function with its persists as arguments.
-        return js_emit_progfunc_call(fself, ir, tree.args[0].id);
+        // Pass through the code argument.
+        return fself(tree.args[0]);
       }
 
       // An ordinary function call.
