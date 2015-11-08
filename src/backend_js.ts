@@ -20,8 +20,12 @@ function call(closure, args) {
   return closure.proc.apply(void 0, args.concat(closure.env));
 }
 function run(code) {
-  with (code.persist)
-    return eval(code.prog);
+  if (typeof(code) === "function") {
+    return code();
+  } else {
+    with (code.persist)
+      return eval(code.prog);
+  }
 }
 `.trim();
 
@@ -88,28 +92,37 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_quote(tree: QuoteNode, param: void): string {
-      // Compile each persist in this quote and pack them into a dictionary.
-      let persist_pairs: string[] = [];
-      for (let esc of ir.progs[tree.id].persist) {
-        let esc_expr = fself(esc.body);
-        persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
+      if (tree.annotation === "f") {
+        // A function quote, which we compile to a JavaScript function. Emit
+        // an invocation that returns a zero-argument function.
+        return js_emit_progfunc_call(fself, ir, tree.id);
+
+      } else {
+        // An ordinary string-eval quote, with the full power of splicing.
+
+        // Compile each persist in this quote and pack them into a dictionary.
+        let persist_pairs: string[] = [];
+        for (let esc of ir.progs[tree.id].persist) {
+          let esc_expr = fself(esc.body);
+          persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
+        }
+        let persists_str = "{ " + persist_pairs.join(", ") + " }";
+
+        // Create a pre-spliced code value.
+        let code_expr = "{ prog: " + progsym(tree.id) +
+          ", persist: " + persists_str + " }";
+
+        // Compile each spliced escape expression. Then, call our runtime to
+        // splice it into the code value.
+        for (let esc of ir.progs[tree.id].splice) {
+          let esc_expr = fself(esc.body);
+          code_expr = "splice(" + code_expr + ", " +
+            esc.id + ", " +
+            paren(esc_expr) + ")";
+        }
+
+        return code_expr;
       }
-      let persists_str = "{ " + persist_pairs.join(", ") + " }";
-
-      // Create a pre-spliced code value.
-      let code_expr = "{ prog: " + progsym(tree.id) +
-        ", persist: " + persists_str + " }";
-
-      // Compile each spliced escape expression. Then, call our runtime to
-      // splice it into the code value.
-      for (let esc of ir.progs[tree.id].splice) {
-        let esc_expr = fself(esc.body);
-        code_expr = "splice(" + code_expr + ", " +
-          esc.id + ", " +
-          paren(esc_expr) + ")";
-      }
-
-      return code_expr;
     },
 
     visit_escape(tree: EscapeNode, param: void): string {
@@ -328,15 +341,23 @@ function jscompile(ir: CompilerIR): string {
   let out = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      // Get the procs to compile.
-      let procs: Proc[] = [];
-      for (let id of ir.quoted_procs[prog.id]) {
-        procs.push(ir.procs[id]);
-      }
+      if (prog.annotation === "f") {
+        // A function quote. Compile to a JavaScript function.
+        out += js_emit_progfunc(_jscompile, ir, prog.id) + "\n";
 
-      let code = jscompile_prog(_jscompile, prog, procs);
-      let prog_var = emit_js_var(progsym(prog.id), code, true);
-      out += prog_var + "\n";
+      } else {
+        // An ordinary quote. Compile to a string.
+
+        // Get the procs to compile.
+        let procs: Proc[] = [];
+        for (let id of ir.quoted_procs[prog.id]) {
+          procs.push(ir.procs[id]);
+        }
+
+        let code = jscompile_prog(_jscompile, prog, procs);
+        let prog_var = emit_js_var(progsym(prog.id), code, true);
+        out += prog_var + "\n";
+      }
     }
   }
 

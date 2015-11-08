@@ -7,7 +7,8 @@ TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	nested func call quotefunc closure persist nestedpersist share sharemulti \
 	quotelet splicepersist paren parentype higherorder codearg \
 	extern externfunc mutate externmutate externmutateuse externnamed float \
-	bug-nestedcapture bug-nestedcapture2 bug-externcapture
+	bug-nestedcapture bug-nestedcapture2 bug-externcapture \
+	progfunc progfunc-persist
 TESTS_INTERP := dump splice nesteddump spdump
 TESTS_STATIC := trailingsemi comment whitespace \
 	typeerror badsplice topescape floaterror ccall ccall-expr cdef \
