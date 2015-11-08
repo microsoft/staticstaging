@@ -165,3 +165,15 @@ dump-gl: $(CLI_JS)
 # Compile the example-munging script.
 munge.js: munge.ts $(TSC) $(NODE_D)
 	$(TSC) $(TSCARGS) --out $@ $<
+
+
+# Documentation.
+
+MADOKO := node_modules/.bin/madoko
+$(MADOKO): node_modules/madoko/package.json
+
+.PHONY: docs
+docs: docs/build
+
+docs/build: docs/index.md
+	$(MADOKO) --odir=$@ $^
