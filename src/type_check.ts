@@ -342,7 +342,8 @@ function compatible(ltype: Type, rtype: Type): boolean {
     }
 
   } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
-    return compatible(ltype.inner, rtype.inner);
+    return compatible(ltype.inner, rtype.inner) &&
+      ltype.annotation === rtype.annotation;
 
   }
 

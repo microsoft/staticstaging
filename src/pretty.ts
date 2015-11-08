@@ -91,7 +91,11 @@ let pretty_type_rules: TypeVisit<void, string> = {
     return s;
   },
   visit_code(type: CodeType, param: void): string {
-    return "<" + pretty_type(type.inner) + ">";
+    let out = "<" + pretty_type(type.inner) + ">";
+    if (type.annotation) {
+      out = type.annotation + out;
+    }
+    return out;
   },
   visit_any(type: AnyType, param: void): string {
     return "any";

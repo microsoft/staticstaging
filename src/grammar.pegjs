@@ -156,7 +156,7 @@ FunType "function type"
 
 CodeType "code type"
   = a:ident? quote_open _ t:Type _ quote_close
-  { return {tag: "type_code", inner: t, annotation: a}; }
+  { return {tag: "type_code", inner: t, annotation: a || ""}; }
 
 FunTypeParam
   = t:TermType _

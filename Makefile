@@ -8,11 +8,13 @@ TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	quotelet splicepersist paren parentype higherorder codearg \
 	extern externfunc mutate externmutate externmutateuse externnamed float \
 	bug-nestedcapture bug-nestedcapture2 bug-externcapture \
-	progfunc progfunc-persist progfunc-func
+	progfunc progfunc-persist progfunc-func \
+	annotation-ok
 TESTS_INTERP := dump splice nesteddump spdump
 TESTS_STATIC := trailingsemi comment whitespace \
 	typeerror badsplice topescape floaterror ccall ccall-expr cdef \
-	assoc assoc2
+	assoc assoc2 \
+	annotation-error
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
 	gl-array gl-overload gl-typeadapt gl-normcolor
 TSCARGS := --noImplicitAny
