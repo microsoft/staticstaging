@@ -23,8 +23,16 @@ function run(code) {
   if (typeof(code) === "function") {
     return code();
   } else {
-    with (code.persist)
-      return eval(code.prog);
+    // A crazy dance to bind the persist names.
+    var params = ["c"];
+    var args = [code.prog];
+    for (var name in code.persist) {
+      params.push(name);
+      args.push(code.persist[name]);
+    }
+    var js = "(function (" + params.join(", ") + ") { return eval(c); })";
+    var func = eval(js);
+    return func.apply(void 0, args);
   }
 }
 `.trim();
