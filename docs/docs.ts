@@ -16,9 +16,10 @@ document.addEventListener("DOMContentLoaded", function () {
   function register_example(example: HTMLElement) {
     example.addEventListener('click', function () {
       let code = example.textContent.trim();
-      let hash = encode_hash({code: code});
+      let mode = example.dataset['mode'];
+      let hash = encode_hash({code: code, mode: mode});
 
-      if (the_window) {
+      if (the_window && the_window.opener && !the_window.closed) {
         the_window.location.hash = hash;
         the_window.focus();
       } else {

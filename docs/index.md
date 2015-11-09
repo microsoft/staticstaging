@@ -5,6 +5,7 @@ embed: 0
 
 .pre-indented:
   class=example
+  data-mode=compile
 
 <style>
 .example {
