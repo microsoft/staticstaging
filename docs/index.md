@@ -14,6 +14,12 @@ section depth: 1
 .example:hover {
   background: #eee;
 }
+.madoko p, .madoko li {
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+}
 </style>
 
 [TITLE]
