@@ -11,8 +11,7 @@ function encode_hash(obj: { [key: string]: string }): string {
   return '#' + parts.join('&');
 }
 
-function find_mode(e: HTMLElement) {
-  console.log(e);
+function find_mode(e: HTMLElement): string {
   if (!e) {
     return null;
   } else if (e.dataset['mode']) {
@@ -23,7 +22,7 @@ function find_mode(e: HTMLElement) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  let the_window;
+  let the_window: Window;
   function register_example(example: HTMLElement) {
     example.addEventListener('click', function () {
       let code = example.textContent.trim();

@@ -175,10 +175,10 @@ $(MADOKO): node_modules/madoko/package.json
 .PHONY: docs
 docs: docs/build/index.html docs/build/docs.js
 
-docs/build/index.html: docs/index.md
-	$(MADOKO) --odir=docs/build $^
+docs/build/index.html: docs/index.md $(MADOKO)
+	$(MADOKO) --odir=docs/build $<
 
-docs/build/docs.js: docs/docs.ts
+docs/build/docs.js: docs/docs.ts $(TSC)
 	$(TSC) $(TSCARGS) --out $@ $<
 
 
