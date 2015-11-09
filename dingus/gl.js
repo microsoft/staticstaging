@@ -92,7 +92,7 @@ function start_gl(container, fps_element) {
   var camera = canvasOrbitCamera(canvas);
 
   // Initialize the OpenGL context with our rendering function.
-  var gl = canvas.getContext("webgl");
+  var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 
   // Create the base matrices to be used
   // when rendering the bunny. Alternatively, can

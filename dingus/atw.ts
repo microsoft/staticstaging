@@ -527,17 +527,6 @@ document.addEventListener("DOMContentLoaded", function () {
     exampleselect.value = 'choose';
   });
 
-  // Example clicks load code.
-  // Using a function here because JavaScript scoping is so sad.
-  function add_example_handler(ex: HTMLElement) {
-    ex.addEventListener('click', function () {
-      link_to_code(ex.textContent, ex.dataset['mode']);
-    });
-  }
-  for (let i = 0; i < examples.length; ++i) {
-    add_example_handler(<HTMLElement> examples[i]);
-  }
-
   // Handle the "clear" button.
   clearbtn.addEventListener('click', function () {
     if (get_code() != '') {
