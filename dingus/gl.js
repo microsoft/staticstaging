@@ -107,7 +107,7 @@ function start_gl(container, fps_element) {
 
   // Initially, the SHFL function does nothing. The client needs to call us
   // back to fill in the function. Then, we will update this variable.
-  var shfl_func = function () {};
+  var shfl_render = null;
 
   // The main render loop.
   function render() {
@@ -129,7 +129,9 @@ function start_gl(container, fps_element) {
     gl.enable(gl.DEPTH_TEST);  // Prevent triangle overlap.
 
     // Invoke the compiled SHFL code.
-    shfl_func();
+    if (shfl_render) {
+      shfl_render.func.apply(void 0, shfl_render.persist);
+    }
 
     // Framerate tracking.
     ++frame_count;
@@ -160,7 +162,7 @@ function start_gl(container, fps_element) {
     var shfl_program = shfl_eval(shfl_code, gl, projection, view);
 
     // Invoke the setup stage.
-    shfl_func = shfl_program().func;
+    shfl_render = shfl_program();
   };
 }
 
