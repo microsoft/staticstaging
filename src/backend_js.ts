@@ -165,9 +165,14 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     // function for the corresponding proc and a list of environment
     // variables.
     visit_fun(tree: FunNode, param: void): string {
+      // The function captures its closed-over references and any persists
+      // used inside.
       let captures: string[] = [];
       for (let fv of ir.procs[tree.id].free) {
         captures.push(varsym(fv));
+      }
+      for (let p of ir.procs[tree.id].persists) {
+        captures.push(persistsym(p));
       }
 
       // Assemble the pair.
@@ -244,14 +249,17 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
 function jscompile_proc(compile: JSCompile, proc: Proc,
     extra_code: string = "", extra_args: string[] = []): string
 {
-  // The arguments consist of the actual parameters and the closure
-  // environment (free variables).
+  // The arguments consist of the actual parameters, the closure environment
+  // (free variables), and the persists used inside the function.
   let argnames: string[] = extra_args.slice(0);
   for (let param of proc.params) {
     argnames.push(varsym(param));
   }
   for (let fv of proc.free) {
     argnames.push(varsym(fv));
+  }
+  for (let p of proc.persists) {
+    argnames.push(persistsym(p));
   }
 
   // We also need the names of the non-parameter bound variables so we can
