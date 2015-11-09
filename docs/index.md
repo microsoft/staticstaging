@@ -186,6 +186,8 @@ The render stage needs to be a function quote (annotated with `f`), and you pass
       draw_mesh(indices, size);
     >
 
+There's a lot going on even in this small example. The next two sections will introduce the graphics-specific intrinsics that the example uses and the way data is shared between the stages. Then, we'll move on to more interesting graphics.
+
 ## WebGL and GLSL Intrinsics
 
 ## Attributes and Uniforms
