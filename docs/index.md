@@ -230,6 +230,23 @@ The third communication mode that SHFL provides is between different stages of t
 
 ## Reusable Shaders
 
+So far, our example has statically inlined the shading code with the host code. Realistically, we need to be able to separate the two. This separation is not only helpful for building a cleaner abstraction, but also so the shader can be decoupled from the object it "paints": you'll want to draw multiple objects with a single shader, or choose between multiple shaders for a single object.
+
+In SHFL, you can encapsulate shaders just by wrapping them in functions. Since shader programs are first-class values, this works without any special consideration:
+
+    def solid(pos: Float3 Array, model: Mat4, color: Vec3)
+      vtx s<
+        gl_Position = projection * view * model * vec4(pos, 1.0);
+        frag s<
+          gl_FragColor = vec4(color, 1.0);
+        >
+      >;
+
+This function, `solid`, takes the vertex position array and model-space matrix for the object it will draw along with the color to use as a red/green/blue vector. The global `projection` and `view` matrices come from closed-over state. Passing the shader to the `vtx` intrinsic binds it and its associated uniforms and attributes.
+
+Here's [a more complete example][example-objects] that uses a function-wrapped shader to draw two different objects.
+
+[example-objects]: http://adriansampson.net/atw/#example=objects
 
 
 # Loose Ends
