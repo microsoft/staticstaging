@@ -21,12 +21,27 @@ This is an example-based introduction to the Alltheworld compiler and its graphi
 
 # The Basics
 
-Alltheworld has a simple, imperative core language.
+Alltheworld has a tiny, imperative core language. You can assign to variables with `var`, do basic arithmetic, write lambdas with `fun`, and apply them ML-style:
 
-externs
+    var g = 9.8;
+    var gpe = fun mass:Float height:Float -> mass * height * g;
+    gpe 2.0 3.0
 
-    fooo
-    var x = 1
+This program evaluates to around 58.8. (You can click on any of the examples in this document to run them in your browser.)
+
+There's also an alternative Python-esque syntax for defining and invoking functions, which can be more readable:
+
+    var g = 9.8;
+    def gpe(mass:Float, height:Float)
+      mass * height * g;
+    gpe(2.0, 3.0)
+
+The language can also interoperate with JavaScript. Use `extern` to declare something from JavaScript land:
+
+    extern Math.PI: Float;
+    def circumference(radius:Float)
+      2.0 * Math.PI * radius;
+    circumference(5.0)
 
 
 # Multi-Stage Programming
