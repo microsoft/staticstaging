@@ -192,7 +192,7 @@ There's a lot going on even in this small example. The next two sections will in
 
 ## WebGL and GLSL Intrinsics
 
-SHFL gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl builtin] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s][#basics] in a standard preamble. You can see the definitive list in the source code for this preamble. **TK: Link forthcoming.** Here are a few important intrinsics you'll need:
+SHFL gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl ref] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s][#basics] in a standard preamble. You can see the definitive list in the source code for this preamble. **TK: Link forthcoming.** Here are a few important intrinsics you'll need:
 
 * `teapot`, `bunny`, and `snowden`: `Mesh`. Sample object assets.
 * `mesh_positions`: `Mesh -> Float3 Array`. Get the vertex positions from a mesh. Under the hood, a `Float3 Array` is implemented as a WebGL buffer.
@@ -204,6 +204,8 @@ SHFL gives you access to parts of the [WebGL API][webgl] for host-side code and 
 These intrinsics use matrix and vector types such as `Float4` (a 4-element float vector) and `Int3x3` (a 3-by-3 matrix of integers). We provide aliases to make these comfortable for people coming from Direct3D and HLSL (`Float3` and `Float3x3`) and from OpenGL (`Vec3` and `Mat4`). These alternate names can be used interchangeably.
 
 [drawelements]: https://msdn.microsoft.com/en-us/library/dn302396(v=vs.85).aspx
+[webgl]: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
+[glsl ref]: https://www.opengl.org/sdk/docs/man4/index.php
 
 ## Cross-Stage Persistence in SHFL
 
