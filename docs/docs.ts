@@ -11,15 +11,24 @@ function encode_hash(obj: { [key: string]: string }): string {
   return '#' + parts.join('&');
 }
 
-function register_example(example: HTMLElement) {
-  example.addEventListener('click', function () {
-    let code = example.textContent.trim();
-    let url = DINGUS_URL + encode_hash({code: code});
-    window.open(url, '_dingus');
-  });
-}
-
 document.addEventListener("DOMContentLoaded", function () {
+  let the_window;
+  function register_example(example: HTMLElement) {
+    example.addEventListener('click', function () {
+      let code = example.textContent.trim();
+      let hash = encode_hash({code: code});
+
+      if (the_window) {
+        the_window.location.hash = hash;
+        the_window.focus();
+      } else {
+        let url = DINGUS_URL + hash;
+        the_window = window.open(url, '_dingus');
+        console.log(the_window);
+      }
+    });
+  }
+
   let examples = document.querySelectorAll('.example');
   for (let i = 0; i < examples.length; ++i) {
     register_example(examples[i] as HTMLElement);
