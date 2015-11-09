@@ -31,6 +31,9 @@ function run(code) {
   var func = eval(js);
   return func.apply(void 0, args);
 }
+function frun(code) {
+  return (code.func).apply(void 0, code.persist);
+}
 `.trim();
 
 function _is_fun_type(type: Type): boolean {
@@ -145,11 +148,12 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
 
       let [t, _] = ir.type_table[tree.expr.id];
       if (t instanceof CodeType) {
+        // Invoke the appropriate runtime function for executing code values.
+        // We use a simple call wrapper for "progfuncs" and a more complex
+        // `eval` trick for ordinary string code.
         if (t.annotation === "f") {
-          // Just invoke the function value.
-          return `${paren(progex)}()`;
+          return `frun(${progex})`;
         } else {
-          // Invoke the runtime function for executing code values.
           return `run(${paren(progex)})`;
         }
       } else {
@@ -395,8 +399,7 @@ function js_emit_progfunc(compile: JSCompile, ir: CompilerIR,
 {
   let prog = ir.progs[progid];
 
-  // Emit functions in the quote. These will be inserted inside the wrapper
-  // function.
+  // Emit functions in the quote. These become global functions.
   let procs = "";
   for (let id of ir.quoted_procs[prog.id]) {
     procs += jscompile_proc(compile, ir.procs[id]) + "\n";
@@ -421,18 +424,14 @@ function js_emit_progfunc(compile: JSCompile, ir: CompilerIR,
 
   // Emit the main function body.
   let code = emit_body(compile, prog.body);
-  // Then, wrap it in a function that takes no parameters. This is the
+  // Then, wrap it in a function that takes the persists as parameters.
   // rendering function that will be called on every frame.
-  let render_func = emit_js_fun(null, [], localnames, code);
-  // Finally, wrap this in an outer function that takes the parameters to
-  // bind (i.e., the persists).
-  let wrapper_func = emit_js_fun(progsym(prog.id), argnames, [],
-                                 procs + `return ${render_func};`);
+  let func = emit_js_fun(progsym(prog.id), argnames, localnames, code);
 
-  return wrapper_func;
+  return procs + func;
 }
 
-// Emit an invocation of a quote that has been declared as a JavaScript
+// Emit a reference to a quote that has been declared as a JavaScript
 // function.
 function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR,
     progid: number): string
@@ -445,6 +444,5 @@ function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR,
     }
   }
 
-  let arglist = args.join(', ');
-  return `${progsym(progid)}(${arglist})`;
+  return `{ func: ${progsym(progid)}, persist: [${args.join(', ')}] }`;
 }
