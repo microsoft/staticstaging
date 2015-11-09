@@ -73,7 +73,7 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 # The Web dingus.
 
 dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/d3.js dingus/examples.js \
-	dingus/codemirror
+	dingus/codemirror dingus/preambles.js
 
 WEB_SRCS := $(SRC_FILES) dingus/atw.ts $(CODEMIRROR_D)
 dingus/atw.js: $(TSC) $(WEB_SRCS)
@@ -100,13 +100,17 @@ $(CODEMIRROR):
 dingus/codemirror: $(CODEMIRROR)
 	cp -r $< $@
 
-# Munge the examples.
+# Munge the examples and preamble files.
 DINGUS_EXAMPLES := basics splice persist progfunc extern \
 	normcolor objects phong bug
 DINGUS_EXAMPLE_FILES := $(DINGUS_EXAMPLES:%=dingus/examples/%.atw)
 dingus/examples.js: munge.js $(DINGUS_EXAMPLE_FILES)
 	printf "ATW_EXAMPLES = " > $@
 	node $< $(DINGUS_EXAMPLE_FILES) >> $@
+
+dingus/preambles.js: munge.js dingus/gl_preamble.atw
+	printf "ATW_PREAMBLES = " > $@
+	node $< dingus/gl_preamble.atw >> $@
 
 
 # Running tests.

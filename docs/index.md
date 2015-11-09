@@ -259,6 +259,7 @@ If you keep playing with Alltheworld and SHFL, you'll quickly notice that this i
 - Shaders and their parameters are currently coupled: you can't bind a single shader and reuse it with multiple sets of uniforms and attributes.
 - The set of exposed WebGL and GLSL features is small and ad hoc. We should expand our coverage of the built-ins.
 - These intrinsics are not currently "world-specific." For example, you won't get a type error when trying to use [the GLSL function `normalize`][normalize] in host code or the [JavaScript function `Date.now`][Date.now] in shader code---things will just break silently.
+- Functions defined in shader code are not supported. You should also be able to share functions defined at the host stage inside shaders; this is also not implemented.
 
 [normalize]: https://www.opengl.org/sdk/docs/man/html/normalize.xhtml
 [Date.now]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
