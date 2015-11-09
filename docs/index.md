@@ -251,8 +251,14 @@ Here's [a more complete example][example-objects] that uses a function-wrapped s
 
 # Loose Ends
 
-- parse errors are terrible, and they even reflect the hidden preable
-- type errors don't show you where in the source
-- `if`, `while`, `for`
-- binding intrinsics to worlds
-- separately bind shader code and parameters
+If you keep playing with Alltheworld and SHFL, you'll quickly notice that this is a research prototype. Here are a few of the most glaring current omissions:
+
+- Parse errors are frequently useless: they'll point you toward a seemingly irrelevant part of the code. In SHFL mode, the line number also reflects the (hidden) preamble code.
+- Type errors are often vague and don't have source position information.
+- Missing control flow constructs: `if`, `while`, and `for`.
+- Shaders and their parameters are currently coupled: you can't bind a single shader and reuse it with multiple sets of uniforms and attributes.
+- The set of exposed WebGL and GLSL features is small and ad hoc. We should expand our coverage of the built-ins.
+- These intrinsics are not currently "world-specific." For example, you won't get a type error when trying to use [the GLSL function `normalize`][normalize] in host code or the [JavaScript function `Date.now`][Date.now] in shader code---things will just break silently.
+
+[normalize]: https://www.opengl.org/sdk/docs/man/html/normalize.xhtml
+[Date.now]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now
