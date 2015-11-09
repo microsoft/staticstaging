@@ -160,7 +160,7 @@ function start_gl(container, fps_element) {
     var shfl_program = shfl_eval(shfl_code, gl, projection, view);
 
     // Invoke the setup stage.
-    shfl_func = shfl_program();
+    shfl_func = shfl_program().func;
   };
 }
 

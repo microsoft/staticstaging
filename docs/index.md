@@ -139,11 +139,52 @@ You'll get a type error if the annotations don't match:
 
 # Graphics { data-mode=webgl }
 
-The real xxx
+Alltheworld has a graphics-oriented extension called SHFL, for *shader family language*. In SHFL mode, the compiler targets a combination of JavaScript with WebGL API calls and [GLSL][], the associated low-level shading language.
+
+[glsl]: https://www.opengl.org/documentation/glsl/
 
 ## Shader Quotes
 
+The most obvious extension that SHFL adds is quotations that compile to GLSL shader code. Recall that we previously *annotated* quotes with `f` to make the compiler emit them as JavaScript functions; a new annotation, `s`, switches to emit them as shader programs.
+
+SHFL also has a couple of intrinsic functions, `vtx` and `frag`, to indicate vertex and fragment shaders. A fragment-shader quote is contained within a vertex-shader quote because it's a later stage. Here's a useless SHFL program:
+
+    vtx s< frag s< 1.0 > >
+
+Take a look at the compiler's output. You'll see two string literals in the final JavaScript, both of which contain a `void main() {...}` declaration that characterizes them as GLSL shader programs.
+
 ## Render, Vertex, Fragment
+
+SHFL programs use three kinds of stages. We've already seen two: the vertex shader stage and the fragment shader stage. Both of thee run on the GPU. The third stage is the *render loop* stage, which distinguishes code that runs on the CPU for every frame from code that runs once at setup time.
+
+The render stage needs to be a function quote (annotated with `f`), and you pass it to an intrinsic function called `render` to register it as the render-loop code. Inside the vertex and fragment shader stages, your job is to assign to the intrinsic variables `gl_Position` and `gl_FragColor` respectively. In the initial setup stage, there are also intrinsics to load a few built-in sample model assets. Here's a tiny example that uses all of the SHFL stages:
+
+    # Load the mesh data for a sample model.
+    var mesh = teapot;
+    var position = mesh_positions(mesh);
+    var indices = mesh_indices(mesh);
+    var size = mesh_size(mesh);
+
+    # Initialize a model matrix for the object.
+    var model = mat4.create();
+
+    render f<
+      # Bind the vertex and fragment shaders.
+      vtx s<
+        # Compute the final position of the model's vertex.
+        # The `projection` # and `view` matrices are provided
+        # by the runtime context.
+        gl_Position = projection * view * model * vec4(position, 1.0);
+
+        frag s<
+          # Use a solid color.
+          gl_FragColor = vec4(0.5, 0.3, 0.7, 1.0);
+        >
+      >;
+
+      # Draw the model with the above bound shader.
+      draw_mesh(indices, size);
+    >
 
 ## WebGL and GLSL Intrinsics
 
@@ -157,3 +198,5 @@ The real xxx
 - parse errors are terrible
 - type errors don't show you where in the source
 - `if`, `while`, `for`
+- binding intrinsics to worlds
+- separately bind shader code and parameters
