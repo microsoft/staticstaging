@@ -177,3 +177,13 @@ docs: docs/build
 
 docs/build: docs/index.md
 	$(MADOKO) --odir=$@ $^
+
+
+# Auto-build using https://facebook.github.io/watchman/
+.PHONY: watch
+watch:
+	watchman-make --settle 0.1 \
+		-p 'docs/*.md' -t docs \
+		-p 'src/*.ts' 'src/*.pegjs' atw.ts -t cli \
+		-p 'src/*.ts' 'src/*.pegjs' 'dingus/*.ts' 'dingus/gl.js' \
+			'dingus/examples/*.atw' -t dingus
