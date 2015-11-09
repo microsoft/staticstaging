@@ -26,7 +26,7 @@ section depth: 1
 
 This is an example-based introduction to the Alltheworld compiler and its graphics-centric language, SHFL.
 
-# The Basics
+# The Basics { #basics }
 
 Alltheworld has a tiny, imperative core language. You can assign to variables with `var`, do basic arithmetic, and define functions with `def`:
 
@@ -188,16 +188,51 @@ The render stage needs to be a function quote (annotated with `f`), and you pass
 
 There's a lot going on even in this small example. The next two sections will introduce the graphics-specific intrinsics that the example uses and the way data is shared between the stages. Then, we'll move on to more interesting graphics.
 
+**TK: Start with a simpler example (no mesh).**
+
 ## WebGL and GLSL Intrinsics
 
-## Attributes and Uniforms
+SHFL gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl builtin] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s][#basics] in a standard preamble. You can see the definitive list in the source code for this preamble. **TK: Link forthcoming.** Here are a few important intrinsics you'll need:
+
+* `teapot`, `bunny`, and `snowden`: `Mesh`. Sample object assets.
+* `mesh_positions`: `Mesh -> Float3 Array`. Get the vertex positions from a mesh. Under the hood, a `Float3 Array` is implemented as a WebGL buffer.
+* `mesh_indices`: `Mesh -> Int3 Array`. Get the triangle vertex indices for a mesh.
+* `mesh_size`: `Mesh -> Int`. Get the size (in triangles) of a mesh.
+* `draw_mesh`: `(Int3 Array) Int -> Void`. Draw an object given its index array and the length of the array using the currently bound shader. Uses [`gl.drawElements`][drawelements] under the hood.
+* `projection` and `view`: `Float4x4`. Transform matrices corresponding to the viewer's canvas shape and camera position.
+
+These intrinsics use matrix and vector types such as `Float4` (a 4-element float vector) and `Int3x3` (a 3-by-3 matrix of integers). We provide aliases to make these comfortable for people coming from Direct3D and HLSL (`Float3` and `Float3x3`) and from OpenGL (`Vec3` and `Mat4`). These alternate names can be used interchangeably.
+
+[drawelements]: https://msdn.microsoft.com/en-us/library/dn302396(v=vs.85).aspx
+
+## Cross-Stage Persistence in SHFL
+
+While sharing data between stages is straightforward in Alltheworld's homogeneous JavaScript mode, the SHFL mode has more work to do to build communication channels among the CPU and the rendering stages on the GPU.
+
+### Uniform Variables
+
+In the example above, we use cross-stage persistence to share data between the CPU and GPU. For example, the `model` matrix is initialized in the setup stage but used in the vertex shader. When a host communicates a value to a shader like this, it is traditionally called a [uniform variable][uniform], because the value is constant across invocations of the shader body. In the compiled code for the above example, you'll see several calls like `gl.uniformMatrix4fv(...)`. That's [the WebGL function for binding uniforms][uniformMatrix4fv] of the appropriate type.
+
+### Vertex Attributes
+
+Graphics APIs have a second mechanism for sending data to shaders that differs per vertex, called *vertex attributes*. In our above example, the `position` variable is an array of vectors indicating the location of each vertex. We don't want to pass the entire array to every invocation of the vertex shader---instead, each invocation should get a different vector, as if we had called `map` on the array.
+
+To this end, SHFL handles cross-stage persistence specially when sharing arrays from the host to a shader. If an expression `e` has type `T Array`, then in a shader quote, the persist-escape expression `%[e]` has the element type `T`. The compile code uses WebGL's APIs to bind the array as an attribute instead of a uniform.
+
+[uniform]: https://www.opengl.org/wiki/Uniform_(GLSL)
+[uniformMatrix4fv]: https://msdn.microsoft.com/en-us/library/dn302458(v=vs.85).aspx
+
+### Varying
+
+The third communication mode that SHFL provides is between different stages of the graphics pipeline. If you need to perform some computation in the vertex stage and communicate it to the fragment stage, this is the mechanism you need. In OpenGL, variables like this use a `varying` qualifier, so they are sometimes just called *varyings*. In SHFL, stage-to-stage communication looks the same between GPU stages as it does when communicating from the CPU and GPU. Persists and cross-stage references work how you expect them to, and SHFL compiles them to GLSL varyings.
 
 ## Reusable Shaders
 
 
+
 # Loose Ends
 
-- parse errors are terrible
+- parse errors are terrible, and they even reflect the hidden preable
 - type errors don't show you where in the source
 - `if`, `while`, `for`
 - binding intrinsics to worlds
