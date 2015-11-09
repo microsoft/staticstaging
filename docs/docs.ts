@@ -11,12 +11,23 @@ function encode_hash(obj: { [key: string]: string }): string {
   return '#' + parts.join('&');
 }
 
+function find_mode(e: HTMLElement) {
+  console.log(e);
+  if (!e) {
+    return null;
+  } else if (e.dataset['mode']) {
+    return e.dataset['mode'];
+  } else {
+    return find_mode(e.parentElement);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   let the_window;
   function register_example(example: HTMLElement) {
     example.addEventListener('click', function () {
       let code = example.textContent.trim();
-      let mode = example.dataset['mode'];
+      let mode = find_mode(example) || "compile";
       let hash = encode_hash({code: code, mode: mode});
 
       if (the_window && the_window.opener && !the_window.closed) {

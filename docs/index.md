@@ -2,10 +2,10 @@ title: Alltheworld and SHFL
 heading base: 2
 script: docs.js
 embed: 0
+section depth: 1
 
-.pre-indented:
+~Pre:
   class=example
-  data-mode=compile
 
 <style>
 .example {
@@ -58,7 +58,11 @@ The language can also interoperate with JavaScript. Use `extern` to declare some
 ## Staging Without Metaprogramming
 
 
-# Graphics
+# Graphics { data-mode=webgl }
+
+test
+
+    hello
 
 ## Render, Vertex, Fragment
 
