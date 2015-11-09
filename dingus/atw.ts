@@ -340,7 +340,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let outbox = <HTMLElement> document.querySelector('#result');
   let helpbox = <HTMLElement> document.querySelector('#help');
   let clearbtn = <HTMLElement> document.querySelector('#clear');
-  let examples = document.querySelectorAll('.example');
   let modeselect = <HTMLSelectElement> document.querySelector('#mode');
   let exampleselect = <HTMLSelectElement> document.querySelector('#example');
   let fpsbox = <HTMLElement> document.querySelector('#fps');

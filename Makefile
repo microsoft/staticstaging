@@ -173,17 +173,20 @@ MADOKO := node_modules/.bin/madoko
 $(MADOKO): node_modules/madoko/package.json
 
 .PHONY: docs
-docs: docs/build
+docs: docs/build/index.html docs/build/docs.js
 
-docs/build: docs/index.md
-	$(MADOKO) --odir=$@ $^
+docs/build/index.html: docs/index.md
+	$(MADOKO) --odir=docs/build $^
+
+docs/build/docs.js: docs/docs.ts
+	$(TSC) $(TSCARGS) --out $@ $<
 
 
 # Auto-build using https://facebook.github.io/watchman/
 .PHONY: watch
 watch:
 	watchman-make --settle 0.1 \
-		-p 'docs/*.md' -t docs \
+		-p 'docs/*.md' 'docs/*.ts' -t docs \
 		-p 'src/*.ts' 'src/*.pegjs' atw.ts -t cli \
 		-p 'src/*.ts' 'src/*.pegjs' 'dingus/*.ts' 'dingus/gl.js' \
 			'dingus/examples/*.atw' -t dingus

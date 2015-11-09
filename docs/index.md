@@ -1,5 +1,19 @@
 title: Alltheworld and SHFL
 heading base: 2
+script: docs.js
+embed: 0
+
+.pre-indented:
+  class=example
+
+<style>
+.example {
+  cursor: pointer;
+}
+.example:hover {
+  background: #eee;
+}
+</style>
 
 [TITLE]
 
@@ -10,6 +24,9 @@ This is an example-based introduction to the Alltheworld compiler and its graphi
 Alltheworld has a simple, imperative core language.
 
 externs
+
+    fooo
+    var x = 1
 
 
 # Multi-Stage Programming
