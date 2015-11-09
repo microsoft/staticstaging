@@ -108,14 +108,6 @@ dingus/examples.js: munge.js $(DINGUS_EXAMPLE_FILES)
 	printf "ATW_EXAMPLES = " > $@
 	node $< $(DINGUS_EXAMPLE_FILES) >> $@
 
-.PHONY: deploy
-RSYNCARGS := --compress --recursive --checksum --delete -e ssh \
-	--exclude node_modules --exclude package.json --exclude gl.js \
-	--exclude atw.ts --exclude bower_components
-DEST := dh:domains/adriansampson.net/atw
-deploy: dingus
-	rsync $(RSYNCARGS) dingus/ $(DEST)
-
 
 # Running tests.
 
@@ -182,7 +174,20 @@ docs/build/docs.js: docs/docs.ts $(TSC)
 	$(TSC) $(TSCARGS) --out $@ $<
 
 
+# Deploy the dingus and docs.
+
+.PHONY: deploy
+RSYNCARGS := --compress --recursive --checksum --delete -e ssh \
+	--exclude node_modules --exclude package.json --exclude gl.js \
+	--exclude '*.ts' --exclude bower_components --exclude docs
+DEST := dh:domains/adriansampson.net/atw
+deploy: dingus docs
+	rsync $(RSYNCARGS) dingus/ $(DEST)
+	rsync $(RSYNCARGS) docs/build/ $(DEST)/docs
+
+
 # Auto-build using https://facebook.github.io/watchman/
+
 .PHONY: watch
 watch:
 	watchman-make --settle 0.1 \
