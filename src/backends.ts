@@ -1,5 +1,4 @@
-/// <reference path="ast.ts" />
-/// <reference path="compile.ts" />
+/// <reference path="compile/ir.ts" />
 
 // Utilities used by the various code-generation backends.
 
