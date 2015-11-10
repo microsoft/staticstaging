@@ -1,14 +1,9 @@
 /// <reference path="../ast.ts" />
 /// <reference path="../type_elaborate.ts" />
 
-// The main output of def/use analysis: For every lookup and assignment node
-// ID, the table contains:
-// * a defining node ID
-// * and a flag indicating whether the variable is bound (vs. free) in the
-//   function context
-// * the number of "stages away" the lookup was defined: 0 for in the current
-//   quote, nonzero for a cross-stage reference
-type DefUseTable = [number, boolean, number][];
+// The def/use table: for every use node ID, the corresponding definition (let
+// or parameter) node ID.
+type DefUseTable = number[];
 
 // A procedure is a lambda-lifted function. It includes the original body of
 // the function and the IDs of the parameters and the closed-over free

@@ -30,7 +30,7 @@ function lambda_lift_frame(id: number): LambdaLiftFrame {
 }
 
 type LambdaLift = ASTFold<[LambdaLiftFrame[], Proc[]]>;
-function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
+function gen_lambda_lift(defuse: DefUseTable, scopes: Scope[], externs: string[]):
   Gen<LambdaLift>
 {
   return function (fself: LambdaLift): LambdaLift {
@@ -98,16 +98,18 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
         [frames, procs]: [LambdaLiftFrame[], Proc[]]):
         [LambdaLiftFrame[], Proc[]]
       {
-        let [defid, is_bound, _] = defuse[tree.id];
-        let is_extern = externs[defid] !== undefined;
-
-        // Possibly add this to the free variables.
         let frame = hd(frames);
-        let f: number[];
-        if (!is_bound && !is_extern) {
-          f = set_add(frame.free, defid);
-        } else {
-          f = frame.free;
+        let f: number[] = frame.free;
+
+        let defid = defuse[tree.id];
+        let is_extern = externs[defid] !== undefined;
+        if (!is_extern) {
+          let is_bound = scopes[defid].func === scopes[tree.id].func;
+
+          // Possibly add this to the free variables.
+          if (!is_bound) {
+            f = set_add(frame.free, defid);
+          }
         }
 
         let ret_frame = assign(frame, { free: f });
@@ -169,10 +171,10 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
 
 // A wrapper for lambda lifting also includes the "main" function as a Proc
 // with no free variables.
-function lambda_lift(tree: SyntaxNode, table: DefUseTable, externs: string[]):
+function lambda_lift(tree: SyntaxNode, table: DefUseTable, scopes: Scope[], externs: string[]):
   [Proc[], Proc]
 {
-  let _lambda_lift = fix(gen_lambda_lift(table, externs));
+  let _lambda_lift = fix(gen_lambda_lift(table, scopes, externs));
   let [frames, procs] = _lambda_lift(tree, [[lambda_lift_frame(null)], []]);
   let main: Proc = {
     id: null,

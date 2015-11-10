@@ -80,7 +80,7 @@ function semantically_analyze(tree: SyntaxNode,
   }
 
   // Lambda lifting and quote lifting.
-  let [procs, main] = lambda_lift(tree, table, externs);
+  let [procs, main] = lambda_lift(tree, table, scopes, externs);
   let progs = quote_lift(tree);
 
   // Prog-to-Proc mapping.

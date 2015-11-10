@@ -46,7 +46,7 @@ function handle_use(tree: LookupNode | AssignNode,
     [[NameStack, NameMap], DefUseTable]
 {
   // Try an ordinary variable lookup.
-  let [def_id, fun_index, quote_index] = ns_lookup(ns, tree.ident);
+  let [def_id, _, __] = ns_lookup(ns, tree.ident);
   if (def_id === undefined) {
     // Try an extern.
     def_id = externs[tree.ident];
@@ -55,12 +55,8 @@ function handle_use(tree: LookupNode | AssignNode,
     }
   }
 
-  // The variable is bound (as opposed to free) if it is found in the
-  // topmost function scope.
-  let bound = (fun_index === 0);
-
   let t = table.slice(0);
-  t[tree.id] = [def_id, bound, quote_index];
+  t[tree.id] = def_id;
   return [[ns, externs], t];
 }
 

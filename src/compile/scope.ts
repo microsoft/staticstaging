@@ -29,7 +29,14 @@ function gen_find_scopes(fself: FindScopes): FindScopes {
     {
       let frame: Scope = { func: tree.id, quote: hd(frames).quote };
       let [_, s] = fold_rules.visit_fun(tree, [cons(frame, tl(frames)), scopes]);
-      return [frames, s];
+
+      // Also add the parameters, which don't get visited by normal recursion.
+      let scopes_out = s.slice(0);
+      for (let param of tree.params) {
+        scopes_out[param.id] = frame;
+      }
+
+      return [frames, scopes_out];
     },
   });
 
