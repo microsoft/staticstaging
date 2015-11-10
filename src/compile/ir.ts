@@ -81,9 +81,6 @@ interface CompilerIR {
   toplevel_procs: number[];
   quoted_procs: number[][];
 
-  // The containing Prog ID for each Prog (or undefined for top-level Progs).
-  containing_progs: number[];
-
   // Type elaboration.
   type_table: TypeTable;
 

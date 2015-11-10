@@ -33,21 +33,6 @@ function group_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
   return [toplevel, quoted];
 }
 
-// Find the containing Prog ID for each Prog.
-function get_containing_progs(progs: Prog[]): number[] {
-  let containing_progs: number[] = [];
-
-  for (let prog of progs) {
-    if (prog !== undefined) {
-      for (let subprog of prog.subprograms) {
-        containing_progs[subprog] = prog.id;
-      }
-    }
-  }
-
-  return containing_progs;
-}
-
 // Find all the `extern`s in a program.
 type FindExterns = ASTFold<string[]>;
 function gen_find_externs(fself: FindExterns): FindExterns {
@@ -100,8 +85,6 @@ function semantically_analyze(tree: SyntaxNode,
 
   // Prog-to-Proc mapping.
   let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs);
-  // Prog-to-Prog mapping.
-  let containing_progs = get_containing_progs(progs);
 
   return {
     defuse: table,
@@ -110,7 +93,6 @@ function semantically_analyze(tree: SyntaxNode,
     main: main,
     toplevel_procs: toplevel_procs,
     quoted_procs: quoted_procs,
-    containing_progs: containing_progs,
     type_table: type_table,
     externs: externs,
     scopes: scopes,
