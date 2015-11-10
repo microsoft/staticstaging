@@ -6,37 +6,12 @@
 // of maps*. The map assigns a defining node ID for names. We need a stack to
 // reflect function scopes, and a stack of *those* to reflect quotes.
 type NameMap = { [name: string]: number };
-type NameStack = NameMap[][];
+type NameStack = NameMap[];
 
-// Get the head of the head of a NameStack.
-function ns_hd <T> (a: T[][]): T {
-  return hd(hd(a));
-}
-
-// Like overlay, but works on the top-top of a NameStack.
-function ns_overlay <T> (a: T[][]): T[][] {
-  let ha = hd(a).slice(0);
-  let hm = overlay(hd(ha));
-  return cons(cons(hm, tl(ha)), tl(a));
-}
-
-// Create an overlay *function* scope in the top stack of a NameStack.
-function ns_push_scope(ns: NameStack): NameStack {
-  let top_stack = cons(<NameMap> {}, hd(ns));
-  return cons(top_stack, tl(ns));
-}
-
-// Look up a value from any function scope in the top quote scope. Return the
-// value and the indices (first in function scopes, then in quote scopes)
-// where the value was found.
-function ns_lookup (a: NameStack, key: string): [number, number, number] {
-  for (let i = 0; i < a.length; ++i) {
-    let [v, j] = stack_lookup(hd(a), key);
-    if (v !== undefined) {
-      return [v, j, i];
-    }
-  }
-  return [undefined, undefined, undefined];
+// Like overlay, but works on the top of a NameStack.
+function head_overlay <T> (a: T[]): T[] {
+  let hm = overlay(hd(a));
+  return cons(hm, tl(a));
 }
 
 // The def/use analysis case for uses: both lookup and assignment nodes work
@@ -46,7 +21,7 @@ function handle_use(tree: LookupNode | AssignNode,
     [[NameStack, NameMap], DefUseTable]
 {
   // Try an ordinary variable lookup.
-  let [def_id, _, __] = ns_lookup(ns, tree.ident);
+  let [def_id, _] = stack_lookup(ns, tree.ident);
   if (def_id === undefined) {
     // Try an extern.
     def_id = externs[tree.ident];
@@ -72,8 +47,8 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [[NameStack, NameMap], DefUseTable]
     {
       let [[n1, e1], t1] = fself(tree.expr, [[ns, externs], table]);
-      let n2 = ns_overlay(n1);
-      ns_hd(n2)[tree.ident] = tree.id;
+      let n2 = head_overlay(n1);
+      hd(n2)[tree.ident] = tree.id;
       return [[n2, e1], t1];
     },
 
@@ -83,9 +58,9 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [[NameStack, NameMap], DefUseTable]
     {
       // Update the top map with the function parameters.
-      let n = ns_push_scope(ns);
+      let n = head_overlay(ns);
       for (let param of tree.params) {
-        ns_hd(n)[param.name] = param.id;
+        hd(n)[param.name] = param.id;
       }
 
       // Traverse the body with this new map.
@@ -120,7 +95,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [[NameStack, NameMap], DefUseTable]
     {
       // Traverse inside the quote using a new, empty name map stack.
-      let n = cons([<NameMap> {}], ns);
+      let n = cons(<NameMap> {}, ns);
       let [_, t] = fold_rules.visit_quote(tree, [[n, externs], table]);
       // Then throw away the name map stack but preserve the updated table.
       return [[ns, externs], t];
@@ -167,6 +142,6 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 // intrinsics).
 let _find_def_use = fix(gen_find_def_use);
 function find_def_use(tree: SyntaxNode, externs: NameMap): DefUseTable {
-  let [_, t] = _find_def_use(tree, [[[[{}]], externs], []]);
+  let [_, t] = _find_def_use(tree, [[[{}], externs], []]);
   return t;
 }
