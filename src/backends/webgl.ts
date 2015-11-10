@@ -1,6 +1,6 @@
-/// <reference path="util.ts" />
-/// <reference path="backend_js.ts" />
-/// <reference path="backend_glsl.ts" />
+/// <reference path="../util.ts" />
+/// <reference path="js.ts" />
+/// <reference path="glsl.ts" />
 
 const WEBGL_RUNTIME = `
 // Shader management.

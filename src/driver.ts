@@ -3,8 +3,8 @@
 /// <reference path="type_elaborate.ts" />
 /// <reference path="sugar.ts" />
 /// <reference path="compile/compile.ts" />
-/// <reference path="backend_js.ts" />
-/// <reference path="backend_webgl.ts" />
+/// <reference path="backends/js.ts" />
+/// <reference path="backends/webgl.ts" />
 
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the

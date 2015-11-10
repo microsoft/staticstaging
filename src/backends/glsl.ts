@@ -1,9 +1,8 @@
-/// <reference path="visit.ts" />
-/// <reference path="util.ts" />
-/// <reference path="compile/compile.ts" />
+/// <reference path="../visit.ts" />
+/// <reference path="../util.ts" />
+/// <reference path="../compile/compile.ts" />
 /// <reference path="backends.ts" />
-/// <reference path="type.ts" />
-/// <reference path="type_check.ts" />
+/// <reference path="../type.ts" />
 
 // Special GLSL matrix and vector types.
 // Someday, a more structured notion of generic vector and matrix types would

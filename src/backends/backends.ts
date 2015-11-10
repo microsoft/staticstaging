@@ -1,4 +1,4 @@
-/// <reference path="compile/ir.ts" />
+/// <reference path="../compile/ir.ts" />
 
 // Utilities used by the various code-generation backends.
 
