@@ -49,7 +49,6 @@ var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
-var model = mat4.create();
 
 # Light-source marker model.
 var b_position = mesh_positions(bunny);
@@ -58,7 +57,7 @@ var b_indices = mesh_indices(bunny);
 var b_size = mesh_size(bunny);
 var b_model = mat4.create();
 
-# Make the bunny tiny.
+# An identity matrix, which we'll use for model positioning.
 var id = mat4.create();
 
 # The parameters for the Phong shader.
@@ -73,7 +72,7 @@ render f<
     Math.sin(t / 200) * 20.0
   );
 
-  phong(position, normal, model, light_position, light_color, specular);
+  phong(position, normal, id, light_position, light_color, specular);
   draw_mesh(indices, size);
 
   # Place the bunny at the light source, for illustrative purposes.
