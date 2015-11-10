@@ -10,15 +10,15 @@
 // The Proc table on the side serves as *substitutes* for these nodes, so
 // their contents (especially `fun` nodes) are irrelevant even though they
 // still exist.
-//
-// The parameters are:
-// - Accumulated free variables.
-// - Accumulated bound variables.
-// - A stack indicating the current quote ID.
-// - A stack of sets of persist escape IDs for the current function. We treat
-//   these similarly to free variables.
-// - The output list of Procs.
-type LambdaLift = ASTFold<[number[], number[], number[], number[][], Proc[]]>;
+
+interface LambdaLiftFrame {
+  qid: number,  // Current quote ID.
+  free: number[],  // Accumulated free variable IDs.
+  bound: number[],  // Accumulated bound variable IDs.
+  persists: number[],  // Accumulated persist IDs.
+}
+
+type LambdaLift = ASTFold<[LambdaLiftFrame[], Proc[]]>;
 function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
   Gen<LambdaLift>
 {
@@ -27,8 +27,8 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
     let rules = compose_visit(fold_rules, {
       // Collect the free variables and construct a Proc.
       visit_fun(tree: FunNode,
-        [free, bound, qid, escs, procs]: [number[], number[], number[], number[][], Proc[]]):
-        [number[], number[], number[], number[][], Proc[]]
+        [frames, procs]: [LambdaLiftFrame[], Proc[]]):
+        [LambdaLiftFrame[], Proc[]]
       {
         // Accumulate the parameter IDs. They are considered bound variables
         // for the purpose of recursion into the body.
@@ -37,15 +37,16 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
           params.push(param.id);
         }
 
-        let [f, b, _, e, p] = fold_rules.visit_fun(tree, [[], params, qid, cons([], tl(escs)), procs]);
-
-        // Get the top quote ID, or null for the outermost stage.
-        let q: number;
-        if (qid.length > 0) {
-          q = hd(qid);
-        } else {
-          q = null;
-        }
+        // Recursive call.
+        let frame = hd(frames);
+        let subframe: LambdaLiftFrame = {
+          qid: frame.qid,
+          free: [],
+          bound: params,
+          persists: [],
+        };
+        let [frames2, procs2] = fold_rules.visit_fun(tree, [cons(subframe, tl(frames)), procs]);
+        let frame2 = hd(frames2);
 
         // Insert the new Proc. Procs are indexed by the ID of the defining
         // `fun` node.
@@ -53,93 +54,105 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
           id: tree.id,
           body: tree.body,
           params: params,
-          free: f,
-          bound: set_diff(b, params),  // Do not double-count params.
-          quote: q,
-          persists: hd(e),
+          free: frame2.free,
+          bound: set_diff(frame2.bound, params),  // Do not double-count params.
+          quote: frame.qid,
+          persists: frame2.persists,
           csr: [],
         };
-        let p2 = p.slice(0);
-        p2[tree.id] = proc;
+        let ret_procs = procs2.slice(0);
+        ret_procs[tree.id] = proc;
 
-        // Free variables in the child that are not bound here get passed back
-        // up to the parent.
-        let sub_free = set_diff(f, bound);
-        let parent_free = free.concat(sub_free);
+        let ret_frame: LambdaLiftFrame = {
+          qid: frame.qid,
+          bound: frame.bound,
 
-        // Similarly, persists in this function are also persists in the
-        // containing function.
-        let outer_escs = hd(e).concat(hd(escs));
-        let parent_escs = cons(outer_escs, tl(escs));
+          // Add our new free variables to the parent's free variables, except
+          // for its bound variables.
+          free: frame.free.concat(set_diff(frame2.free, frame.bound)),
 
-        return [parent_free, bound, qid, parent_escs, p2];
+          // Persists in this function are also persists in the containing
+          // function.
+          persists: frame2.persists.concat(frame.persists),
+        };
+        return [cons(ret_frame, tl(frames2)), ret_procs];
       },
 
       // Add free variables to the free set.
       visit_lookup(tree: LookupNode,
-        [free, bound, qid, escs, procs]: [number[], number[], number[], number[][], Proc[]]):
-        [number[], number[], number[], number[][], Proc[]]
+        [frames, procs]: [LambdaLiftFrame[], Proc[]]):
+        [LambdaLiftFrame[], Proc[]]
       {
         let [defid, is_bound, _] = defuse[tree.id];
         let is_extern = externs[defid] !== undefined;
 
+        // Possibly add this to the free variables.
+        let frame = hd(frames);
         let f: number[];
         if (!is_bound && !is_extern) {
-          f = set_add(free, defid);
+          f = set_add(frame.free, defid);
         } else {
-          f = free;
+          f = frame.free;
         }
 
-        return [f, bound, qid, escs, procs];
+        let ret_frame = assign(frame, { free: f });
+        return [cons(ret_frame, tl(frames)), procs];
       },
 
       // Add bound variables to the bound set.
       visit_let(tree: LetNode,
-        [free, bound, qid, escs, procs]: [number[], number[], number[], number[][], Proc[]]):
-        [number[], number[], number[], number[][], Proc[]]
+        [frames, procs]: [LambdaLiftFrame[], Proc[]]):
+        [LambdaLiftFrame[], Proc[]]
       {
-        let [f, b, _, e, p] = fold_rules.visit_let(tree, [free, bound, qid, escs, procs]);
-        let b2 = set_add(b, tree.id);
-        return [f, b2, qid, e, p];
+        let [frames2, procs2] = fold_rules.visit_let(tree, [frames, procs]);
+        let frame = hd(frames2);
+        let ret_frame = assign(frame, {
+          bound: set_add(frame.bound, tree.id),
+        });
+        return [cons(ret_frame, tl(frames2)), procs2];
       },
 
-      // Push a quote ID and escapes.
+      // Push a frame.
       visit_quote(tree: QuoteNode,
-        [free, bound, qid, escs, procs]: [number[], number[], number[], number[][], Proc[]]):
-        [number[], number[], number[], number[][], Proc[]]
+        [frames, procs]: [LambdaLiftFrame[], Proc[]]):
+        [LambdaLiftFrame[], Proc[]]
       {
-        let q = cons(tree.id, qid);
-        let e = cons([], escs);
-        let [f, b, _, __, p] = fself(tree.expr, [free, bound, q, e, procs]);
-        return [f, b, qid, escs, p];
+        let rec_frame: LambdaLiftFrame = {
+          qid: tree.id,
+          bound: [],
+          free: [],
+          persists: [],
+        };
+        let [frames2, procs2] = fself(tree.expr, [cons(rec_frame, frames), procs]);
+        return [tl(frames2), procs2];
       },
 
-      // Pop a quote ID and escapes. If this is a persist escape, record it.
+      // Pop a frame.
       visit_escape(tree: EscapeNode,
-        [free, bound, qid, escs, procs]: [number[], number[], number[], number[][], Proc[]]):
-        [number[], number[], number[], number[][], Proc[]]
+        [frames, procs]: [LambdaLiftFrame[], Proc[]]):
+        [LambdaLiftFrame[], Proc[]]
       {
-        let q = tl(qid);
-        let e = tl(escs);
-        let [f, b, _, __, p] = fself(tree.expr, [free, bound, q, e, procs]);
+        let frame = hd(frames);
+        let [frames2, procs2] = fself(tree.expr, [tl(frames), procs]);
 
         // Add persist escapes to the top scope.
-        let e2: number[][];
+        let ret_persists: number[];
         if (tree.kind === "persist") {
-          e2 = cons(hd(escs).concat(tree.id), tl(escs));
+          ret_persists = frame.persists.concat(tree.id);
         } else {
-          e2 = escs;
+          ret_persists = frame.persists;
         }
 
-        return [f, b, qid, e2, p];
+        let ret_frame = assign(frame, { persists: ret_persists });
+        return [cons(ret_frame, tl(frames2)), procs2];
       },
     });
 
     return function (tree: SyntaxNode,
-      [free, bound, qid, escs, procs]: [number[], number[], number[], number[][], Proc[]]):
-      [number[], number[], number[], number[][], Proc[]]
+      [frames, procs]: [LambdaLiftFrame[], Proc[]]):
+      [LambdaLiftFrame[], Proc[]]
     {
-      return ast_visit(rules, tree, [free, bound, qid, escs, procs]);
+      return ast_visit(rules, tree, [frames, procs]);
     }
   }
 }
@@ -150,13 +163,18 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable, externs: string[]):
   [Proc[], Proc]
 {
   let _lambda_lift = fix(gen_lambda_lift(table, externs));
-  let [_, bound, __, ___, procs] = _lambda_lift(tree, [[], [], [], [[]], []]);
+  let [frames, procs] = _lambda_lift(tree, [[{
+    qid: null,
+    free: [],
+    bound: [],
+    persists: [],
+  }], []]);
   let main: Proc = {
     id: null,
     body: tree,
     params: [],
     free: [],
-    bound: bound,
+    bound: hd(frames).bound,
     quote: null,
     persists: [],
     csr: [],
