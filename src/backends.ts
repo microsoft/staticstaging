@@ -94,7 +94,7 @@ function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
 function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
     emit_extern: (name: string, type: Type) => string,
     tree: LookupNode): string {
-  let [defid, _] = ir.defuse[tree.id];
+  let [defid, _, __] = ir.defuse[tree.id];
   let name = ir.externs[defid];
   if (name !== undefined) {
     let [type, _] = ir.type_table[tree.id];

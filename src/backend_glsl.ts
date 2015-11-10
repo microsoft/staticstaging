@@ -255,7 +255,7 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_extern(tree: ExternNode, param: void): string {
-      let [defid, _] = ir.defuse[tree.id];
+      let [defid, _, __] = ir.defuse[tree.id];
       let name = ir.externs[defid];
       return glsl_emit_extern(name, null);
     },

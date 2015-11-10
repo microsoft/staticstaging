@@ -5,9 +5,13 @@
 /// <reference path="type_elaborate.ts" />
 
 // The main output of def/use analysis: For every lookup and assignment node
-// ID, a defining node ID and a flag indicating whether the variable is bound
-// (vs. free).
-type DefUseTable = [number, boolean][];
+// ID, the table contains:
+// * a defining node ID
+// * and a flag indicating whether the variable is bound (vs. free) in the
+//   function context
+// * the number of "stages away" the lookup was defined: 0 for in the current
+//   quote, nonzero for a cross-stage reference
+type DefUseTable = [number, boolean, number][];
 
 // The intermediate data structure for def/use analysis is a *stack of stack
 // of maps*. The map assigns a defining node ID for names. We need a stack to
@@ -34,9 +38,16 @@ function ns_push_scope(ns: NameStack): NameStack {
 }
 
 // Look up a value from any function scope in the top quote scope. Return the
-// value and the index (in *function* scopes) where the value was found.
-function ns_lookup (a: NameStack, key: string): [number, number] {
-  return stack_lookup(hd(a), key);
+// value and the indices (first in function scopes, then in quote scopes)
+// where the value was found.
+function ns_lookup (a: NameStack, key: string): [number, number, number] {
+  for (let i = 0; i < a.length; ++i) {
+    let [v, j] = stack_lookup(hd(a), key);
+    if (v !== undefined) {
+      return [v, j, i];
+    }
+  }
+  return [undefined, undefined, undefined];
 }
 
 // The def/use analysis case for uses: both lookup and assignment nodes work
@@ -46,7 +57,7 @@ function handle_use(tree: LookupNode | AssignNode,
     [[NameStack, NameMap], DefUseTable]
 {
   // Try an ordinary variable lookup.
-  let [def_id, scope_index] = ns_lookup(ns, tree.ident);
+  let [def_id, fun_index, quote_index] = ns_lookup(ns, tree.ident);
   if (def_id === undefined) {
     // Try an extern.
     def_id = externs[tree.ident];
@@ -57,10 +68,10 @@ function handle_use(tree: LookupNode | AssignNode,
 
   // The variable is bound (as opposed to free) if it is found in the
   // topmost function scope.
-  let bound = (scope_index === 0);
+  let bound = (fun_index === 0);
 
   let t = table.slice(0);
-  t[tree.id] = [def_id, bound];
+  t[tree.id] = [def_id, bound, quote_index];
   return [[ns, externs], t];
 }
 
@@ -265,7 +276,7 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
         [free, bound, qid, escs, procs]: [number[], number[], number[], number[][], Proc[]]):
         [number[], number[], number[], number[][], Proc[]]
       {
-        let [defid, is_bound] = defuse[tree.id];
+        let [defid, is_bound, _] = defuse[tree.id];
         let is_extern = externs[defid] !== undefined;
 
         let f: number[];
