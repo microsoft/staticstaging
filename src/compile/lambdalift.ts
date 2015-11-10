@@ -13,9 +13,20 @@
 
 interface LambdaLiftFrame {
   qid: number,  // Current quote ID.
-  free: number[],  // Accumulated free variable IDs.
-  bound: number[],  // Accumulated bound variable IDs.
-  persists: number[],  // Accumulated persist IDs.
+  free: number[],  // Free variable IDs in the current function.
+  bound: number[],  // Bound variable IDs declared in the function.
+  persists: number[],  // Persist IDs.
+  csrs: number[],  // Cross-stage references IDs.
+}
+
+function lambda_lift_frame(id: number): LambdaLiftFrame {
+  return {
+    qid: id,
+    free: [],
+    bound: [],
+    persists: [],
+    csrs: [],
+  };
 }
 
 type LambdaLift = ASTFold<[LambdaLiftFrame[], Proc[]]>;
@@ -44,6 +55,7 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
           free: [],
           bound: params,
           persists: [],
+          csrs: [],
         };
         let [frames2, procs2] = fold_rules.visit_fun(tree, [cons(subframe, tl(frames)), procs]);
         let frame2 = hd(frames2);
@@ -58,7 +70,7 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
           bound: set_diff(frame2.bound, params),  // Do not double-count params.
           quote: frame.qid,
           persists: frame2.persists,
-          csr: [],
+          csr: frame2.csrs,
         };
         let ret_procs = procs2.slice(0);
         ret_procs[tree.id] = proc;
@@ -74,6 +86,9 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
           // Persists in this function are also persists in the containing
           // function.
           persists: frame2.persists.concat(frame.persists),
+
+          // Same with cross-stage references.
+          csrs: frame2.csrs.concat(frame.csrs),
         };
         return [cons(ret_frame, tl(frames2)), ret_procs];
       },
@@ -117,12 +132,7 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
         [frames, procs]: [LambdaLiftFrame[], Proc[]]):
         [LambdaLiftFrame[], Proc[]]
       {
-        let rec_frame: LambdaLiftFrame = {
-          qid: tree.id,
-          bound: [],
-          free: [],
-          persists: [],
-        };
+        let rec_frame = lambda_lift_frame(tree.id);
         let [frames2, procs2] = fself(tree.expr, [cons(rec_frame, frames), procs]);
         return [tl(frames2), procs2];
       },
@@ -163,12 +173,7 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable, externs: string[]):
   [Proc[], Proc]
 {
   let _lambda_lift = fix(gen_lambda_lift(table, externs));
-  let [frames, procs] = _lambda_lift(tree, [[{
-    qid: null,
-    free: [],
-    bound: [],
-    persists: [],
-  }], []]);
+  let [frames, procs] = _lambda_lift(tree, [[lambda_lift_frame(null)], []]);
   let main: Proc = {
     id: null,
     body: tree,

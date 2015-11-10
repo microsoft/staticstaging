@@ -11,6 +11,7 @@ interface QuoteLiftFrame {
   persists: ProgEscape[],  // Persist escapes in the quote.
   splices: ProgEscape[],  // Splice escapes.
   subprograms: number[],  // IDs of contained quotes.
+  csrs: CrossStageReference[],  // IDs for cross-stage reference nodes.
 };
 
 function quote_lift_frame(id: number): QuoteLiftFrame {
@@ -20,6 +21,7 @@ function quote_lift_frame(id: number): QuoteLiftFrame {
     persists: [],
     splices: [],
     subprograms: [],
+    csrs: [],
   };
 }
 
@@ -60,7 +62,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         persist: frame.persists,
         splice: frame.splices,
         subprograms: frame.subprograms,
-        csr: [],
+        csr: frame.csrs,
       };
 
       // Pop off the frame we just consumed at the head of the recursion
