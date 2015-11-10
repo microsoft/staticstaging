@@ -1,6 +1,6 @@
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
-/// <reference path="compile.ts" />
+/// <reference path="compile/compile.ts" />
 /// <reference path="backends.ts" />
 
 // A tiny runtime provides our splicing routine.

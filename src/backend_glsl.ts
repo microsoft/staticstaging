@@ -1,6 +1,6 @@
 /// <reference path="visit.ts" />
 /// <reference path="util.ts" />
-/// <reference path="compile.ts" />
+/// <reference path="compile/compile.ts" />
 /// <reference path="backends.ts" />
 /// <reference path="type.ts" />
 /// <reference path="type_check.ts" />

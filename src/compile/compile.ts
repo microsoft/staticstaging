@@ -1,12 +1,7 @@
-/// <reference path="ast.ts" />
-/// <reference path="visit.ts" />
-/// <reference path="type.ts" />
-/// <reference path="type_elaborate.ts" />
-
-/// <reference path="compile/ir.ts" />
-/// <reference path="compile/defuse.ts" />
-/// <reference path="compile/lambdalift.ts" />
-/// <reference path="compile/quotelift.ts" />
+/// <reference path="ir.ts" />
+/// <reference path="defuse.ts" />
+/// <reference path="lambdalift.ts" />
+/// <reference path="quotelift.ts" />
 
 // Given tables of Procs and Procs, index them by their containing Progs.
 // Return:

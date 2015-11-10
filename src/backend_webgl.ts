@@ -1,5 +1,4 @@
 /// <reference path="util.ts" />
-/// <reference path="compile.ts" />
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_glsl.ts" />
 

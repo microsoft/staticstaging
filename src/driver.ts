@@ -2,7 +2,7 @@
 /// <reference path="pretty.ts" />
 /// <reference path="type_elaborate.ts" />
 /// <reference path="sugar.ts" />
-/// <reference path="compile.ts" />
+/// <reference path="compile/compile.ts" />
 /// <reference path="backend_js.ts" />
 /// <reference path="backend_webgl.ts" />
 
