@@ -6,14 +6,16 @@
 // details that need to be passed recursively through quote-lifting to
 // construct Progs.
 interface QuoteLiftFrame {
+  progid: number,  // Or null for outside any quote.
   bound: number[],  // List of local variable IDs.
   persists: ProgEscape[],  // Persist escapes in the quote.
   splices: ProgEscape[],  // Splice escapes.
   subprograms: number[],  // IDs of contained quotes.
 };
 
-function quote_lift_frame(): QuoteLiftFrame {
+function quote_lift_frame(id: number): QuoteLiftFrame {
   return {
+    progid: id,
     bound: [],
     persists: [],
     splices: [],
@@ -41,7 +43,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
       [QuoteLiftFrame[], Prog[]]
     {
       // Push an empty context for the recursion.
-      let frames_inner = cons(quote_lift_frame(), frames);
+      let frames_inner = cons(quote_lift_frame(tree.id), frames);
       let [f, p] = fold_rules.visit_quote(tree, [frames_inner, progs]);
 
       // The filled-in result at the top of the stack is the data for this
@@ -58,6 +60,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
         persist: frame.persists,
         splice: frame.splices,
         subprograms: frame.subprograms,
+        csr: [],
       };
 
       // Pop off the frame we just consumed at the head of the recursion
@@ -132,7 +135,7 @@ function gen_quote_lift(fself: QuoteLift): QuoteLift {
 
 let _quote_lift = fix(gen_quote_lift);
 function quote_lift(tree: SyntaxNode): Prog[] {
-  let [_, progs] = _quote_lift(tree, [[quote_lift_frame()], []]);
+  let [_, progs] = _quote_lift(tree, [[quote_lift_frame(null)], []]);
   return progs;
 }
 

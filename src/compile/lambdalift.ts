@@ -57,6 +57,7 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
           bound: set_diff(b, params),  // Do not double-count params.
           quote: q,
           persists: hd(e),
+          csr: [],
         };
         let p2 = p.slice(0);
         p2[tree.id] = proc;
@@ -158,6 +159,7 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable, externs: string[]):
     bound: bound,
     quote: null,
     persists: [],
+    csr: [],
   };
   return [procs, main];
 }

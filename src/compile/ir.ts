@@ -20,12 +20,19 @@ interface Proc {
   free: number[],
   bound: number[],
   quote: number,  // or null for outside any quote
+
   persists: number[],
+  csr: number[],
 };
 
 interface ProgEscape {
   id: number,
   body: ExpressionNode,
+}
+
+interface CrossStageReference {
+  defid: number,  // The defining let-node ID.
+  defprogid: number,  // The defining quote ID.
 }
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
@@ -35,6 +42,10 @@ interface Prog {
   body: ExpressionNode,
   annotation: string,
   bound: number[],
+
+  // A table for references (lookup and assignment nodes) that refer to an
+  // outer stage.
+  csr: CrossStageReference[],
 
   // Plain lists of all the escapes in the program.
   persist: ProgEscape[],
