@@ -55,6 +55,14 @@ interface Prog {
   subprograms: number[],
 }
 
+// A Scope marks the containing quote and function IDs for any node. Either
+// "coordinate" may be null if the tree is outside of a function (in its
+// current quote) or is top-level, outside of any quote.
+interface Scope {
+  func: number,
+  quote: number,
+};
+
 // The mid-level IR structure.
 interface CompilerIR {
   // The def/use table.
@@ -81,4 +89,7 @@ interface CompilerIR {
 
   // Names of externs, indexed by the `extern` expression ID.
   externs: string[];
+
+  // Scopes for every tree node.
+  scopes: Scope[],
 }

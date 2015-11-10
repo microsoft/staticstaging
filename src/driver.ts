@@ -112,6 +112,7 @@ function driver_compile(config: DriverConfig, tree: SyntaxNode,
   ir = semantically_analyze(tree, type_table, _intrinsics(config));
 
   // Log some intermediates.
+  config.log('scopes', ir.scopes);
   config.log('def/use', ir.defuse);
   config.log('progs', ir.progs);
   config.log('procs', ir.procs);

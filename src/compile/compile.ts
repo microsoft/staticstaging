@@ -2,6 +2,7 @@
 /// <reference path="defuse.ts" />
 /// <reference path="lambdalift.ts" />
 /// <reference path="quotelift.ts" />
+/// <reference path="scope.ts" />
 
 // Given tables of Procs and Procs, index them by their containing Progs.
 // Return:
@@ -77,6 +78,9 @@ function semantically_analyze(tree: SyntaxNode,
     intrinsics_map[name] = id;
   }
 
+  // Find scopes.
+  let scopes = find_scopes(tree);
+
   // Use the current intrinsics to build the def/use table.
   // TODO It would be nicer if the def/use pass could just ignore the externs
   // since we find them separately, below.
@@ -109,5 +113,6 @@ function semantically_analyze(tree: SyntaxNode,
     containing_progs: containing_progs,
     type_table: type_table,
     externs: externs,
+    scopes: scopes,
   };
 }
