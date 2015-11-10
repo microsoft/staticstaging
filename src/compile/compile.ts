@@ -9,7 +9,7 @@
 // - A list of unquoted Procs.
 // - A table of lists of quoted Procs, indexed by the Prog ID.
 // (Quoted progs are already listed in the `subprograms` field.
-function group_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
+function group_by_prog(procs: Proc[], progs: Prog[], scopes: Scope[]): [number[], number[][]] {
   // Initialize the tables for quoted procs and progs.
   let quoted: number[][] = [];
   for (let prog of progs) {
@@ -22,10 +22,11 @@ function group_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
   let toplevel: number[] = [];
   for (let proc of procs) {
     if (proc !== undefined) {
-      if (proc.quote === null) {
+      let quote_id = scopes[proc.id].quote;
+      if (quote_id === null) {
         toplevel.push(proc.id);
       } else {
-        quoted[proc.quote].push(proc.id);
+        quoted[quote_id].push(proc.id);
       }
     }
   }
@@ -84,7 +85,7 @@ function semantically_analyze(tree: SyntaxNode,
   let progs = quote_lift(tree);
 
   // Prog-to-Proc mapping.
-  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs);
+  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs, scopes);
 
   return {
     defuse: table,

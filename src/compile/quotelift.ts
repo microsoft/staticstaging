@@ -11,7 +11,7 @@ interface QuoteLiftFrame {
   persists: ProgEscape[],  // Persist escapes in the quote.
   splices: ProgEscape[],  // Splice escapes.
   subprograms: number[],  // IDs of contained quotes.
-  csrs: CrossStageReference[],  // IDs for cross-stage reference nodes.
+  csrs: number[],  // IDs for cross-stage reference nodes.
 };
 
 function quote_lift_frame(id: number): QuoteLiftFrame {

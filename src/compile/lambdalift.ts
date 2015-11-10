@@ -12,7 +12,6 @@
 // still exist.
 
 interface LambdaLiftFrame {
-  qid: number,  // Current quote ID.
   free: number[],  // Free variable IDs in the current function.
   bound: number[],  // Bound variable IDs declared in the function.
   persists: number[],  // Persist IDs.
@@ -21,7 +20,6 @@ interface LambdaLiftFrame {
 
 function lambda_lift_frame(id: number): LambdaLiftFrame {
   return {
-    qid: id,
     free: [],
     bound: [],
     persists: [],
@@ -51,7 +49,6 @@ function gen_lambda_lift(defuse: DefUseTable, scopes: Scope[], externs: string[]
         // Recursive call.
         let frame = hd(frames);
         let subframe: LambdaLiftFrame = {
-          qid: frame.qid,
           free: [],
           bound: params,
           persists: [],
@@ -68,7 +65,6 @@ function gen_lambda_lift(defuse: DefUseTable, scopes: Scope[], externs: string[]
           params: params,
           free: frame2.free,
           bound: set_diff(frame2.bound, params),  // Do not double-count params.
-          quote: frame.qid,
           persists: frame2.persists,
           csr: frame2.csrs,
         };
@@ -76,7 +72,6 @@ function gen_lambda_lift(defuse: DefUseTable, scopes: Scope[], externs: string[]
         ret_procs[tree.id] = proc;
 
         let ret_frame: LambdaLiftFrame = {
-          qid: frame.qid,
           bound: frame.bound,
 
           // Add our new free variables to the parent's free variables, except
@@ -182,7 +177,6 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable, scopes: Scope[], exte
     params: [],
     free: [],
     bound: hd(frames).bound,
-    quote: null,
     persists: [],
     csr: [],
   };
