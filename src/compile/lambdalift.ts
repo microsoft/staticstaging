@@ -144,7 +144,7 @@ function gen_lambda_lift(defuse: DefUseTable, externs: string[]):
         }
 
         let ret_frame = assign(frame, { persists: ret_persists });
-        return [cons(ret_frame, tl(frames2)), procs2];
+        return [cons(ret_frame, frames2), procs2];
       },
     });
 
