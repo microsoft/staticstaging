@@ -179,7 +179,8 @@ function attribute_vars(scopes: Scope[], main: Proc, containers: number[],
     // scope until our defining scope.
     let cur_scope = containers[use_id];
     while (cur_scope != def_scope_id && cur_scope != null) {
-      scopes[cur_scope].free.push(def_id);
+      let scope = scopes[cur_scope];
+      scope.free = set_add(scope.free, def_id);
 
       // Move up by one scope.
       cur_scope = containers[cur_scope];
