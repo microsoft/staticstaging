@@ -5,7 +5,7 @@
 // or parameter) node ID.
 type DefUseTable = number[];
 
-interface VarScope {
+interface Scope {
   id: number,  // or null for top-level
   body: ExpressionNode,
   free: number[],  // variables referenced here, defined elsewhere
@@ -18,12 +18,16 @@ interface VarScope {
   // Containing and contained scopes.
   parent: number,
   children: number[],
+
+  // Similarly, for jumping directly through functions to quotes.
+  quote_parent: number,
+  quote_children: number[],
 }
 
 // A procedure is a lambda-lifted function. It includes the original body of
 // the function and the IDs of the parameters and the closed-over free
 // variables used in the function.
-interface Proc extends VarScope {
+interface Proc extends Scope {
   params: number[],
 };
 
@@ -34,11 +38,8 @@ interface ProgEscape {
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
 // Progs can have bound variables but not free variables.
-interface Prog extends VarScope {
+interface Prog extends Scope {
   annotation: string,
-
-  // TODO remove
-  subprograms: number[],
 }
 
 // The mid-level IR structure.

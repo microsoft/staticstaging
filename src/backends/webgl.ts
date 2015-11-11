@@ -136,11 +136,11 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
   let vertex_prog = ir.progs[progid];
 
   // Get the fragment program.
-  if (vertex_prog.subprograms.length > 1 ||
-      vertex_prog.subprograms.length < 1) {
+  if (vertex_prog.quote_children.length > 1 ||
+      vertex_prog.quote_children.length < 1) {
     throw "error: vertex quote must have exactly one fragment quote";
   }
-  let fragment_prog = ir.progs[vertex_prog.subprograms[0]];
+  let fragment_prog = ir.progs[vertex_prog.quote_children[0]];
 
   return [vertex_prog, fragment_prog];
 }

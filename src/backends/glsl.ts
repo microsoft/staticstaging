@@ -365,10 +365,10 @@ function glsl_compile_prog(compile: GLSLCompile,
 
   // Declare `out` variables for the persists in the subprogram. There can be
   // at most one subprogram for every shader.
-  if (prog.subprograms.length > 1) {
+  if (prog.quote_children.length > 1) {
     throw "error: too many subprograms";
-  } else if (prog.subprograms.length === 1) {
-    let subprog = ir.progs[prog.subprograms[0]];
+  } else if (prog.quote_children.length === 1) {
+    let subprog = ir.progs[prog.quote_children[0]];
     for (let esc of subprog.persist) {
       if (esc !== undefined) {
         decls.push(glsl_persist_decl(ir, esc, kind, true));
@@ -419,11 +419,10 @@ function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   if (prog.annotation === "f") {
     return ProgKind.render;
   } else if (prog.annotation === "s") {
-    let parentid = _containing_quote(ir.scopes, ir.is_prog, progid);
-    if (parentid === undefined) {
+    if (prog.quote_parent === null) {
       return ProgKind.vertex;
     }
-    let parprog = ir.progs[parentid];
+    let parprog = ir.progs[prog.quote_parent];
     if (parprog.annotation === "f") {
       return ProgKind.vertex;
     } else {

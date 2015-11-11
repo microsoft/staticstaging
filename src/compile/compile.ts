@@ -21,7 +21,7 @@ function group_by_prog(procs: Proc[], progs: Prog[], scopes: number[], is_prog: 
   let toplevel: number[] = [];
   for (let proc of procs) {
     if (proc !== undefined) {
-      let quote_id = _containing_quote(scopes, is_prog, proc.id);
+      let quote_id = proc.quote_parent;
       if (quote_id === null) {
         toplevel.push(proc.id);
       } else {

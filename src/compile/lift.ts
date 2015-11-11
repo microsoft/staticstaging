@@ -63,10 +63,11 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
   let procs: Proc[] = [];
   let progs: Prog[] = [];
   let is_prog: boolean[] = [];  // TODO remove
-  let all_scopes: VarScope[] = [];
+  let all_scopes: Scope[] = [];
   for (let node of index) {
     if (node !== undefined) {
       if (_is_quote(node)) {
+        // TODO dedup the common stuff
         let prog: Prog = {
           id: node.id,
           body: node.expr,
@@ -79,9 +80,8 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
 
           parent: scopes[node.id],
           children: [],
-
-          // TODO remove
-          subprograms: [],
+          quote_parent: _containing_quote(scopes, is_prog, node.id),
+          quote_children: [],
         };
         progs[node.id] = prog;
         all_scopes[node.id] = prog;
@@ -106,6 +106,8 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
 
           parent: scopes[node.id],
           children: [],
+          quote_parent: _containing_quote(scopes, is_prog, node.id),
+          quote_children: [],
         };
         procs[node.id] = proc;
         all_scopes[node.id] = proc;
@@ -127,20 +129,22 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
 
     parent: null,
     children: [],
+    quote_parent: null,
+    quote_children: [],
   };
 
   // Attribute each scope as a child of its parent.
   for (let scope of all_scopes) {
     if (scope !== undefined) {
+      // Nearest scope of either kind.
       let parent_scope = scope.parent === null ? main :
         all_scopes[scope.parent];
       parent_scope.children.push(scope.id);
 
-      // TODO keep/remove?
-      let parent_quote = _containing_quote(scopes, is_prog, scope.id);
-      if (parent_quote !== null) {
-        progs[parent_quote].subprograms.push(scope.id);
-      }
+      // Nearest quote.
+      let parent_quote = scope.quote_parent === null ? main :
+        progs[scope.quote_parent];
+      parent_quote.quote_children.push(scope.id);
     }
   }
 
