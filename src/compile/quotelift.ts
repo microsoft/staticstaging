@@ -25,13 +25,6 @@ function quote_lift_frame(id: number): QuoteLiftFrame {
   };
 }
 
-function _quote_lift_use(tree: AssignNode | LookupNode,
-  [frames, progs]: [QuoteLiftFrame[], Prog[]]):
-  [QuoteLiftFrame[], Prog[]]
-{
-  return null;
-}
-
 // Quote lifting is like lambda lifting, but for quotes.
 //
 // As with lambda lifting, we don't actually change the AST, but the resulting
@@ -129,14 +122,6 @@ function gen_quote_lift(defuse: DefUseTable, scopes: Scope[], externs: string[])
         // returned from the recursion.
         let f2 = cons(newf, f);
         return [f2, p];
-      },
-
-      // TODO for assignments also
-      visit_lookup(tree: LookupNode,
-        [frames, progs]: [QuoteLiftFrame[], Prog[]]):
-        [QuoteLiftFrame[], Prog[]]
-      {
-        return _quote_lift_use(tree, [frames, progs]);
       },
     });
 
