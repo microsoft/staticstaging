@@ -46,6 +46,10 @@ function _is_escape(tree: SyntaxNode): tree is EscapeNode {
   return tree.tag === "escape";
 }
 
+function _is_let(tree: SyntaxNode): tree is EscapeNode {
+  return tree.tag === "let";
+}
+
 // Construct mostly-empty Procs and Progs from an indexed tree. Return:
 // - the function table (Procs)
 // - the main Proc
@@ -159,7 +163,7 @@ function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
 
 // Attribute variables definitions and uses to scopes' bound and free
 // variables, respectively.
-function attribute_vars(scopes: Scope[], main: Proc, containers: number[],
+function attribute_uses(scopes: Scope[], containers: number[],
     defuse: DefUseTable)
 {
   for (let use_id in defuse) {
@@ -171,10 +175,6 @@ function attribute_vars(scopes: Scope[], main: Proc, containers: number[],
       continue;
     }
 
-    // Attribute to defining scope as bound variable.
-    let def_scope = def_scope_id === null ? main : scopes[def_scope_id];
-    def_scope.bound = set_add(def_scope.bound, def_id);
-
     // Walk the scopes upward from the use location. We are *free* in every
     // scope until our defining scope.
     let cur_scope = containers[use_id];
@@ -184,6 +184,21 @@ function attribute_vars(scopes: Scope[], main: Proc, containers: number[],
 
       // Move up by one scope.
       cur_scope = containers[cur_scope];
+    }
+  }
+}
+
+// Attribute variables definitions and uses to scopes' bound variable sets.
+function attribute_defs(scopes: Scope[], main: Proc, containers: number[],
+    index: SyntaxNode[])
+{
+  for (let node of index) {
+    if (node !== undefined) {
+      if (_is_let(node)) {
+        let def_scope_id = containers[node.id];
+        let def_scope = def_scope_id === null ? main : scopes[def_scope_id];
+        def_scope.bound = set_add(def_scope.bound, node.id);
+      }
     }
   }
 }
@@ -248,7 +263,8 @@ function lift(tree: SyntaxNode, defuse: DefUseTable): [Proc[], Proc, Prog[]] {
   assign_children(scopes, main, progs, containers);
 
   // Fill in free and bound variables.
-  attribute_vars(scopes, main, containers, defuse);
+  attribute_uses(scopes, containers, defuse);
+  attribute_defs(scopes, main, containers, index);
 
   // Fill in the escapes (`persist` and `splice`).
   attribute_escs(scopes, progs, containers, index);
