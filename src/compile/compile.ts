@@ -70,7 +70,7 @@ function semantically_analyze(tree: SyntaxNode,
   // Use the current intrinsics to build the def/use table.
   // TODO It would be nicer if the def/use pass could just ignore the externs
   // since we find them separately, below.
-  let table = find_def_use(tree, intrinsics_map);
+  let defuse = find_def_use(tree, intrinsics_map);
 
   // Find the "real" externs in the program, and add the intrinsics to the
   // map.
@@ -81,14 +81,14 @@ function semantically_analyze(tree: SyntaxNode,
   }
 
   // Lambda lifting and quote lifting.
-  let [procs, main] = lambda_lift(tree, table, scopes, externs);
-  let progs = quote_lift(tree);
+  let [procs, main] = lambda_lift(tree, defuse, scopes, externs);
+  let progs = quote_lift(tree, defuse, scopes, externs);
 
   // Prog-to-Proc mapping.
   let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs, scopes);
 
   return {
-    defuse: table,
+    defuse: defuse,
     procs: procs,
     progs: progs,
     main: main,
