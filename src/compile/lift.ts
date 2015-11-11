@@ -124,14 +124,15 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
 }
 
 // Find the nearest containing scope that's in `progs`.
-function _containing_quote(containers: number[], progs: Prog[],
+// TODO just use `scopes` and `.parent`
+function _nearest_quote(containers: number[], progs: Prog[],
     where: number): number {
   if (where === null) {
     return null;
   } else if (progs[where] !== undefined) {
     return where;
   } else {
-    return _containing_quote(containers, progs, containers[where]);
+    return _nearest_quote(containers, progs, containers[where]);
   }
 }
 
@@ -148,7 +149,8 @@ function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
       parent_scope.children.push(scope.id);
 
       // Find the quote parent.
-      scope.quote_parent = _containing_quote(containers, progs, scope.id);
+      // TODO MOVE ME
+      scope.quote_parent = _nearest_quote(containers, progs, scope.parent);
 
       // Nearest quote.
       let parent_quote = scope.quote_parent === null ? main :
@@ -190,7 +192,7 @@ function attribute_vars(scopes: Scope[], main: Proc, containers: number[],
 
 // Finally, attribute every escape to its containing quote and every function
 // in between.
-function attribute_escs(scopes: Scope[], containers: number[],
+function attribute_escs(scopes: Scope[], progs: Prog[], containers: number[],
     index: SyntaxNode[])
 {
   for (let node of index) {
@@ -201,11 +203,20 @@ function attribute_escs(scopes: Scope[], containers: number[],
           body: node.expr,
         };
 
+        // Get the nearest quote ID. This is either the direct parent or its
+        // containing quote.
+        let quote_id: number;
+        let closest_scope = containers[node.id];
+        if (progs[closest_scope]) {
+          quote_id = closest_scope;
+        } else {
+          quote_id = scopes[closest_scope].quote_parent;
+        }
+
         // Iterate through all the scopes from here to the relevant next
         // quote. This makes all the intervening functions inside the quote
         // aware that there's an escape in their body, which can work like a
         // free variable.
-        let quote_id = scopes[containers[node.id]].quote_parent;
         for (let cur_scope = containers[node.id];
              cur_scope !== containers[quote_id];
              cur_scope = containers[cur_scope])
@@ -238,7 +249,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable): [Proc[], Proc, Prog[]] {
   attribute_vars(scopes, main, containers, defuse);
 
   // Fill in the escapes (`persist` and `splice`).
-  attribute_escs(scopes, containers, index);
+  attribute_escs(scopes, progs, containers, index);
 
   return [procs, main, progs];
 }
