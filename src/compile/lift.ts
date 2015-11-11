@@ -49,7 +49,6 @@ function _is_escape(tree: SyntaxNode): tree is EscapeNode {
 // TODO This could be memoized/precomputed.
 function _containing_quote(scopes: number[], progs: Prog[],
     where: number): number {
-  console.log(where);
   if (where === null) {
     return null;
   } else if (progs[where] !== undefined) {
@@ -83,7 +82,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
 
           parent: scopes[node.id],
           children: [],
-          quote_parent: _containing_quote(scopes, progs, node.id),
+          quote_parent: null,
           quote_children: [],
         };
 
@@ -137,6 +136,9 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
       let parent_scope = scope.parent === null ? main :
         all_scopes[scope.parent];
       parent_scope.children.push(scope.id);
+
+      // Find the quote parent.
+      scope.quote_parent = _containing_quote(scopes, progs, scope.id);
 
       // Nearest quote.
       let parent_quote = scope.quote_parent === null ? main :
