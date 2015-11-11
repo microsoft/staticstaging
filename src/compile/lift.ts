@@ -46,23 +46,22 @@ function _is_escape(tree: SyntaxNode): tree is EscapeNode {
 }
 
 // TODO This could be memoized/precomputed.
-function _containing_quote(scopes: number[], is_prog: boolean[],
+function _containing_quote(scopes: number[], progs: Prog[],
     where: number): number {
   if (where === null) {
     return null;
-  } else if (is_prog[where]) {
+  } else if (progs[where] !== undefined) {
     return where;
   } else {
-    return _containing_quote(scopes, is_prog, scopes[where]);
+    return _containing_quote(scopes, progs, scopes[where]);
   }
 }
 
 function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
-    index: SyntaxNode[]): [Proc[], Proc, Prog[], boolean[]] {
+    index: SyntaxNode[]): [Proc[], Proc, Prog[]] {
   // Construct "empty" Proc and Prog nodes.
   let procs: Proc[] = [];
   let progs: Prog[] = [];
-  let is_prog: boolean[] = [];  // TODO remove
   let all_scopes: Scope[] = [];
   for (let node of index) {
     if (node !== undefined) {
@@ -80,12 +79,11 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
 
           parent: scopes[node.id],
           children: [],
-          quote_parent: _containing_quote(scopes, is_prog, node.id),
+          quote_parent: _containing_quote(scopes, progs, node.id),
           quote_children: [],
         };
         progs[node.id] = prog;
         all_scopes[node.id] = prog;
-        is_prog[node.id] = true;
 
       } else if (_is_fun(node)) {
         // In Python, [p.id for p in params].
@@ -106,12 +104,11 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
 
           parent: scopes[node.id],
           children: [],
-          quote_parent: _containing_quote(scopes, is_prog, node.id),
+          quote_parent: _containing_quote(scopes, progs, node.id),
           quote_children: [],
         };
         procs[node.id] = proc;
         all_scopes[node.id] = proc;
-        is_prog[node.id] = false;
       }
     }
   }
@@ -184,7 +181,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
         // quote. This makes all the intervening functions inside the quote
         // aware that there's an escape in their body, which can work like a
         // free variable.
-        let quote_id = _containing_quote(scopes, is_prog, node.id);
+        let quote_id = _containing_quote(scopes, progs, node.id);
         for (let cur_scope = scopes[node.id];
              cur_scope !== scopes[quote_id];
              cur_scope = scopes[cur_scope])
@@ -201,5 +198,5 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
     }
   }
 
-  return [procs, main, progs, is_prog];
+  return [procs, main, progs];
 }

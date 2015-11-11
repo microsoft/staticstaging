@@ -8,7 +8,7 @@
 // - A list of unquoted Procs.
 // - A table of lists of quoted Procs, indexed by the Prog ID.
 // (Quoted progs are already listed in the `subprograms` field.
-function group_by_prog(procs: Proc[], progs: Prog[], scopes: number[], is_prog: boolean[]): [number[], number[][]] {
+function group_by_prog(procs: Proc[], progs: Prog[], scopes: number[]): [number[], number[][]] {
   // Initialize the tables for quoted procs and progs.
   let quoted: number[][] = [];
   for (let prog of progs) {
@@ -80,11 +80,11 @@ function semantically_analyze(tree: SyntaxNode,
   }
 
   // TODO
-  let [procs, main, progs, is_prog] = lift(tree, defuse, scopes, index_tree(tree));
+  let [procs, main, progs] = lift(tree, defuse, scopes, index_tree(tree));
 
   // Prog-to-Proc mapping.
   // TODO remove this
-  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs, scopes, is_prog);
+  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs, scopes);
 
   return {
     defuse: defuse,
@@ -96,6 +96,5 @@ function semantically_analyze(tree: SyntaxNode,
     type_table: type_table,
     externs: externs,
     scopes: scopes,
-    is_prog: is_prog,  // TODO remove
   };
 }
