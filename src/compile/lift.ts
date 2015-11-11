@@ -46,27 +46,18 @@ function _is_escape(tree: SyntaxNode): tree is EscapeNode {
   return tree.tag === "escape";
 }
 
-// TODO This could be memoized/precomputed.
-function _containing_quote(scopes: number[], progs: Prog[],
-    where: number): number {
-  if (where === null) {
-    return null;
-  } else if (progs[where] !== undefined) {
-    return where;
-  } else {
-    return _containing_quote(scopes, progs, scopes[where]);
-  }
-}
-
-function lift(tree: SyntaxNode, defuse: DefUseTable,
-    index: SyntaxNode[]): [Proc[], Proc, Prog[]] {
-  // Get the parent scope for every node in the tree.
-  let scopes = find_scopes(tree);
-
-  // Construct "empty" Proc and Prog nodes.
+// Construct mostly-empty Procs and Progs from an indexed tree. Return:
+// - the function table (Procs)
+// - the main Proc
+// - the program table (Progs)
+// - a combined table containing both Procs and Progs
+function skeleton_scopes(tree: SyntaxNode, containers: number[],
+  index: SyntaxNode[]):
+  [Proc[], Proc, Prog[], Scope[]]
+{
   let procs: Proc[] = [];
   let progs: Prog[] = [];
-  let all_scopes: Scope[] = [];
+  let scopes: Scope[] = [];
   for (let node of index) {
     if (node !== undefined) {
       if (_is_quote(node) || _is_fun(node)) {
@@ -80,7 +71,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
           persist: [],
           splice: [],
 
-          parent: scopes[node.id],
+          parent: containers[node.id],
           children: [],
           quote_parent: null,
           quote_children: [],
@@ -92,7 +83,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
             annotation: node.annotation,
           });
           progs[node.id] = prog;
-          all_scopes[node.id] = prog;
+          scopes[node.id] = prog;
 
         // Function (Proc) specifics.
         } else if (_is_fun(node)) {
@@ -106,7 +97,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
             params: param_ids,
           });
           procs[node.id] = proc;
-          all_scopes[node.id] = proc;
+          scopes[node.id] = proc;
         }
       }
     }
@@ -129,16 +120,35 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
     quote_children: [],
   };
 
+  return [procs, main, progs, scopes];
+}
+
+// Find the nearest containing scope that's in `progs`.
+function _containing_quote(containers: number[], progs: Prog[],
+    where: number): number {
+  if (where === null) {
+    return null;
+  } else if (progs[where] !== undefined) {
+    return where;
+  } else {
+    return _containing_quote(containers, progs, containers[where]);
+  }
+}
+
+// Assign the parents and children of the skeletal scopes.
+function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
+    containers: number[])
+{
   // Attribute each scope as a child of its parent.
-  for (let scope of all_scopes) {
+  for (let scope of scopes) {
     if (scope !== undefined) {
       // Nearest scope of either kind.
       let parent_scope = scope.parent === null ? main :
-        all_scopes[scope.parent];
+        scopes[scope.parent];
       parent_scope.children.push(scope.id);
 
       // Find the quote parent.
-      scope.quote_parent = _containing_quote(scopes, progs, scope.id);
+      scope.quote_parent = _containing_quote(containers, progs, scope.id);
 
       // Nearest quote.
       let parent_quote = scope.quote_parent === null ? main :
@@ -146,31 +156,38 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
       parent_quote.quote_children.push(scope.id);
     }
   }
+}
 
-  // Next, attribute every *use* (lookup or assignment) as a free variable
-  // where appropriate.
-  // Attribute every *definition* as a bound variable in its containing scope.
+// Attribute variables definitions and uses to scopes' bound and free
+// variables, respectively.
+function attribute_vars(scopes: Scope[], main: Proc, containers: number[],
+    defuse: DefUseTable)
+{
   for (let use_id in defuse) {
     let def_id = defuse[use_id];
 
     // Attribute to defining scope as bound variable.
-    let def_scope_id = scopes[def_id];
-    let def_scope = def_scope_id === null ? main : all_scopes[def_scope_id];
+    let def_scope_id = containers[def_id];
+    let def_scope = def_scope_id === null ? main : scopes[def_scope_id];
     def_scope.bound = set_add(def_scope.bound, def_id);
 
     // Walk the scopes upward from the use location. We are *free* in every
     // scope until our defining scope.
-    let cur_scope = scopes[use_id];
+    let cur_scope = containers[use_id];
     while (cur_scope != def_scope_id && cur_scope != null) {
-      all_scopes[cur_scope].free.push(def_id);
+      scopes[cur_scope].free.push(def_id);
 
       // Move up by one scope.
-      cur_scope = scopes[cur_scope];
+      cur_scope = containers[cur_scope];
     }
   }
+}
 
-  // Finally, attribute every escape to its containing quote and every
-  // function in between.
+// Finally, attribute every escape to its containing quote and every function
+// in between.
+function attribute_escs(scopes: Scope[], containers: number[],
+    index: SyntaxNode[])
+{
   for (let node of index) {
     if (node !== undefined) {
       if (_is_escape(node)) {
@@ -183,15 +200,15 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
         // quote. This makes all the intervening functions inside the quote
         // aware that there's an escape in their body, which can work like a
         // free variable.
-        let quote_id = all_scopes[scopes[node.id]].quote_parent;
-        for (let cur_scope = scopes[node.id];
-             cur_scope !== scopes[quote_id];
-             cur_scope = scopes[cur_scope])
+        let quote_id = scopes[containers[node.id]].quote_parent;
+        for (let cur_scope = containers[node.id];
+             cur_scope !== containers[quote_id];
+             cur_scope = containers[cur_scope])
         {
           if (node.kind === "persist") {
-            all_scopes[cur_scope].persist.push(esc);
+            scopes[cur_scope].persist.push(esc);
           } else if (node.kind === "splice") {
-            all_scopes[cur_scope].splice.push(esc);
+            scopes[cur_scope].splice.push(esc);
           } else {
             throw "error: unknown escape kind";
           }
@@ -199,6 +216,24 @@ function lift(tree: SyntaxNode, defuse: DefUseTable,
       }
     }
   }
+}
+
+function lift(tree: SyntaxNode, defuse: DefUseTable): [Proc[], Proc, Prog[]] {
+  // Some bookkeeping to get started.
+  let containers = find_scopes(tree);
+  let index = index_tree(tree);
+
+  // Construct "empty" Proc and Prog nodes.
+  let [procs, main, progs, scopes] = skeleton_scopes(tree, containers, index);
+
+  // Fill in parents and children.
+  assign_children(scopes, main, progs, containers);
+
+  // Fill in free and bound variables.
+  attribute_vars(scopes, main, containers, defuse);
+
+  // Fill in the escapes (`persist` and `splice`).
+  attribute_escs(scopes, containers, index);
 
   return [procs, main, progs];
 }

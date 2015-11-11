@@ -75,8 +75,8 @@ function semantically_analyze(tree: SyntaxNode,
     externs[id] = name;
   }
 
-  // TODO
-  let [procs, main, progs] = lift(tree, defuse, index_tree(tree));
+  // Lambda- and quote-lifting.
+  let [procs, main, progs] = lift(tree, defuse);
 
   // Prog-to-Proc mapping.
   // TODO remove this
