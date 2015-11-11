@@ -5,18 +5,28 @@
 // or parameter) node ID.
 type DefUseTable = number[];
 
+interface VarScope {
+  id: number,  // or null for top-level
+  body: ExpressionNode,
+  free: number[],  // variables referenced here, defined elsewhere
+  bound: number[],  // variables defined here
+  
+  // Explicit escapes.
+  persist: ProgEscape[],
+  splice: ProgEscape[],
+  
+  // Containing and contained scopes.
+  parent: number,
+  children: number[],
+  
+  csr: number[],  // TODO remove
+}
+
 // A procedure is a lambda-lifted function. It includes the original body of
 // the function and the IDs of the parameters and the closed-over free
 // variables used in the function.
-interface Proc {
-  id: number,  // or null for the main proc
-  body: ExpressionNode,
+interface Proc extends VarScope {
   params: number[],
-  free: number[],
-  bound: number[],
-
-  persists: number[],
-  csr: number[],
 };
 
 interface ProgEscape {
@@ -26,21 +36,10 @@ interface ProgEscape {
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
 // Progs can have bound variables but not free variables.
-interface Prog {
-  id: number,
-  body: ExpressionNode,
+interface Prog extends VarScope {
   annotation: string,
-  bound: number[],
 
-  // A list of references (lookup and assignment nodes) that refer to an
-  // outer stage.
-  csr: number[],
-
-  // Plain lists of all the escapes in the program.
-  persist: ProgEscape[],
-  splice: ProgEscape[],
-
-  // List of IDs of subprograms inside the program.
+  // TODO remove
   subprograms: number[],
 }
 

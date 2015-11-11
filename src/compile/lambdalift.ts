@@ -14,7 +14,7 @@
 interface LambdaLiftFrame {
   free: number[],  // Free variable IDs in the current function.
   bound: number[],  // Bound variable IDs declared in the function.
-  persists: number[],  // Persist IDs.
+  persists: ProgEscape[],  // Persist IDs.
   csrs: number[],  // Cross-stage reference defining IDs.
 }
 
@@ -65,8 +65,11 @@ function gen_lambda_lift(defuse: DefUseTable, scopes: Scope[], externs: string[]
           params: params,
           free: frame2.free,
           bound: set_diff(frame2.bound, params),  // Do not double-count params.
-          persists: frame2.persists,
+          persist: frame2.persists,
           csr: frame2.csrs,
+          parent: null,
+          splice: [],
+          children: [],
         };
         let ret_procs = procs2.slice(0);
         ret_procs[tree.id] = proc;
@@ -147,9 +150,9 @@ function gen_lambda_lift(defuse: DefUseTable, scopes: Scope[], externs: string[]
         let [frames2, procs2] = fself(tree.expr, [tl(frames), procs]);
 
         // Add persist escapes to the top scope.
-        let ret_persists: number[];
+        let ret_persists: ProgEscape[];
         if (tree.kind === "persist") {
-          ret_persists = frame.persists.concat(tree.id);
+          ret_persists = frame.persists.concat({ id: tree.id, body: tree.expr });
         } else {
           ret_persists = frame.persists;
         }
@@ -181,8 +184,11 @@ function lambda_lift(tree: SyntaxNode, table: DefUseTable, scopes: Scope[], exte
     params: [],
     free: [],
     bound: hd(frames).bound,
-    persists: [],
+    persist: [],
+    splice: [],
+    parent: null,
     csr: [],
+    children: [],
   };
   return [procs, main];
 }

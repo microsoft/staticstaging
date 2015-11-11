@@ -61,6 +61,9 @@ function gen_quote_lift(defuse: DefUseTable, scopes: Scope[], externs: string[])
           splice: frame.splices,
           subprograms: frame.subprograms,
           csr: frame.csrs,
+          free: [],
+          parent: null,
+          children: [],
         };
 
         // Pop off the frame we just consumed at the head of the recursion

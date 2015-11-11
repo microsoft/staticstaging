@@ -171,8 +171,8 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
       for (let fv of ir.procs[tree.id].free) {
         captures.push(varsym(fv));
       }
-      for (let p of ir.procs[tree.id].persists) {
-        captures.push(persistsym(p));
+      for (let p of ir.procs[tree.id].persist) {
+        captures.push(persistsym(p.id));
       }
 
       // Assemble the pair.
@@ -258,8 +258,8 @@ function jscompile_proc(compile: JSCompile, proc: Proc,
   for (let fv of proc.free) {
     argnames.push(varsym(fv));
   }
-  for (let p of proc.persists) {
-    argnames.push(persistsym(p));
+  for (let p of proc.persist) {
+    argnames.push(persistsym(p.id));
   }
 
   // We also need the names of the non-parameter bound variables so we can
