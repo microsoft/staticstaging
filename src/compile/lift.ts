@@ -65,12 +65,11 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
   let all_scopes: Scope[] = [];
   for (let node of index) {
     if (node !== undefined) {
-      if (_is_quote(node)) {
-        // TODO dedup the common stuff
-        let prog: Prog = {
+      if (_is_quote(node) || _is_fun(node)) {
+        // Common data for any scope.
+        let scope: Scope = {
           id: node.id,
-          body: node.expr,
-          annotation: node.annotation,
+          body: _is_quote(node) ? node.expr : (node as FunNode).body,
 
           free: [],
           bound: [],
@@ -82,33 +81,29 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
           quote_parent: _containing_quote(scopes, progs, node.id),
           quote_children: [],
         };
-        progs[node.id] = prog;
-        all_scopes[node.id] = prog;
 
-      } else if (_is_fun(node)) {
-        // In Python, [p.id for p in params].
-        let param_ids: number[] = [];
-        for (let param of node.params) {
-          param_ids.push(param.id);
+        // Quote (Prog) specifics.
+        if (_is_quote(node)) {
+          let prog: Prog = assign(scope, {
+            annotation: node.annotation,
+          });
+          progs[node.id] = prog;
+          all_scopes[node.id] = prog;
+
+        // Function (Proc) specifics.
+        } else if (_is_fun(node)) {
+          // In Python, [p.id for p in params].
+          let param_ids: number[] = [];
+          for (let param of node.params) {
+            param_ids.push(param.id);
+          }
+
+          let proc: Proc = assign(scope, {
+            params: param_ids,
+          });
+          procs[node.id] = proc;
+          all_scopes[node.id] = proc;
         }
-
-        let proc: Proc = {
-          id: node.id,
-          body: node.body,
-          params: param_ids,
-
-          free: [],
-          bound: [],
-          persist: [],
-          splice: [],
-
-          parent: scopes[node.id],
-          children: [],
-          quote_parent: _containing_quote(scopes, progs, node.id),
-          quote_children: [],
-        };
-        procs[node.id] = proc;
-        all_scopes[node.id] = proc;
       }
     }
   }
