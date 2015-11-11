@@ -164,7 +164,7 @@ function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
 // Attribute variables definitions and uses to scopes' bound and free
 // variables, respectively.
 function attribute_uses(scopes: Scope[], containers: number[],
-    defuse: DefUseTable)
+    defuse: DefUseTable, index: SyntaxNode[])
 {
   for (let use_id in defuse) {
     let def_id = defuse[use_id];
@@ -172,6 +172,11 @@ function attribute_uses(scopes: Scope[], containers: number[],
     // Get the defining scope, or ignore if it's an intrinsic.
     let def_scope_id = containers[def_id];
     if (def_scope_id === undefined) {
+      continue;
+    }
+
+    // Also ignore externs.
+    if (index[def_id].tag === "extern") {
       continue;
     }
 
@@ -263,7 +268,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable): [Proc[], Proc, Prog[]] {
   assign_children(scopes, main, progs, containers);
 
   // Fill in free and bound variables.
-  attribute_uses(scopes, containers, defuse);
+  attribute_uses(scopes, containers, defuse, index);
   attribute_defs(scopes, main, containers, index);
 
   // Fill in the escapes (`persist` and `splice`).
