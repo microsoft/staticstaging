@@ -198,5 +198,5 @@ watch:
 	watchman-make --settle 0.1 \
 		-p 'docs/*.md' 'docs/*.ts' -t docs \
 		-p 'src/**/*.ts' 'src/*.pegjs' atw.ts -t cli \
-		-p 'src/*.ts' 'src/*.pegjs' 'dingus/*.ts' 'dingus/gl.js' \
+		-p 'src/**/*.ts' 'src/*.pegjs' 'dingus/*.ts' 'dingus/gl.js' \
 			'dingus/examples/*.atw' -t dingus

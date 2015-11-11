@@ -166,8 +166,13 @@ function attribute_vars(scopes: Scope[], main: Proc, containers: number[],
   for (let use_id in defuse) {
     let def_id = defuse[use_id];
 
-    // Attribute to defining scope as bound variable.
+    // Get the defining scope, or ignore if it's an intrinsic.
     let def_scope_id = containers[def_id];
+    if (def_scope_id === undefined) {
+      continue;
+    }
+
+    // Attribute to defining scope as bound variable.
     let def_scope = def_scope_id === null ? main : scopes[def_scope_id];
     def_scope.bound = set_add(def_scope.bound, def_id);
 
