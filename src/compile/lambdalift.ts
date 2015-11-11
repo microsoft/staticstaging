@@ -15,7 +15,7 @@ interface LambdaLiftFrame {
   free: number[],  // Free variable IDs in the current function.
   bound: number[],  // Bound variable IDs declared in the function.
   persists: number[],  // Persist IDs.
-  csrs: number[],  // Cross-stage references IDs.
+  csrs: number[],  // Cross-stage reference defining IDs.
 }
 
 function lambda_lift_frame(id: number): LambdaLiftFrame {
@@ -89,21 +89,25 @@ function gen_lambda_lift(defuse: DefUseTable, scopes: Scope[], externs: string[]
       },
 
       // Add free variables to the free set.
+      // TODO Do this for assignment also.
       visit_lookup(tree: LookupNode,
         [frames, procs]: [LambdaLiftFrame[], Proc[]]):
         [LambdaLiftFrame[], Proc[]]
       {
         let frame = hd(frames);
         let f: number[] = frame.free;
+        let c: number[] = frame.csrs;
 
         let defid = defuse[tree.id];
         let is_extern = externs[defid] !== undefined;
         if (!is_extern) {
-          let is_bound = scopes[defid].func === scopes[tree.id].func;
-
           // Possibly add this to the free variables.
-          if (!is_bound) {
-            f = set_add(frame.free, defid);
+          if (cross_stage(scopes, defid, tree.id)) {
+            // Cross-stage reference.
+            c = set_add(c, defid);
+          } else if (!same_scope(scopes, defid, tree.id)) {
+            // Free, in-stage variable.
+            f = set_add(f, defid);
           }
         }
 

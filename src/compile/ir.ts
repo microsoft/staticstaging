@@ -79,3 +79,15 @@ interface CompilerIR {
   // Scopes for every tree node.
   scopes: Scope[],
 }
+
+function same_scope(scopes: Scope[], a: number, b: number): boolean {
+  let a_scope = scopes[a];
+  let b_scope = scopes[b];
+  return a_scope.func === b_scope.func && a_scope.quote === b_scope.quote;
+}
+
+function cross_stage(scopes: Scope[], defid: number, useid: number): boolean {
+  let def_scope = scopes[defid];
+  let use_scope = scopes[useid];
+  return def_scope.quote !== use_scope.quote;
+}
