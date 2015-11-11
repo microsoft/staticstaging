@@ -10,16 +10,14 @@ interface VarScope {
   body: ExpressionNode,
   free: number[],  // variables referenced here, defined elsewhere
   bound: number[],  // variables defined here
-  
+
   // Explicit escapes.
   persist: ProgEscape[],
   splice: ProgEscape[],
-  
+
   // Containing and contained scopes.
   parent: number,
   children: number[],
-  
-  csr: number[],  // TODO remove
 }
 
 // A procedure is a lambda-lifted function. It includes the original body of
@@ -42,14 +40,6 @@ interface Prog extends VarScope {
   // TODO remove
   subprograms: number[],
 }
-
-// A Scope marks the containing quote and function IDs for any node. Either
-// "coordinate" may be null if the tree is outside of a function (in its
-// current quote) or is top-level, outside of any quote.
-interface Scope {
-  func: number,
-  quote: number,
-};
 
 // The mid-level IR structure.
 interface CompilerIR {
@@ -75,18 +65,9 @@ interface CompilerIR {
   // Names of externs, indexed by the `extern` expression ID.
   externs: string[];
 
-  // Scopes for every tree node.
-  scopes: Scope[],
-}
+  // Containing scopes for every tree node.
+  scopes: number[],
 
-function same_scope(scopes: Scope[], a: number, b: number): boolean {
-  let a_scope = scopes[a];
-  let b_scope = scopes[b];
-  return a_scope.func === b_scope.func && a_scope.quote === b_scope.quote;
-}
-
-function cross_stage(scopes: Scope[], defid: number, useid: number): boolean {
-  let def_scope = scopes[defid];
-  let use_scope = scopes[useid];
-  return def_scope.quote !== use_scope.quote;
+  // TODO transitional
+  is_prog: boolean[],
 }

@@ -1,15 +1,14 @@
 /// <reference path="ir.ts" />
 /// <reference path="defuse.ts" />
-/// <reference path="lambdalift.ts" />
-/// <reference path="quotelift.ts" />
 /// <reference path="scope.ts" />
+/// <reference path="lift.ts" />
 
 // Given tables of Procs and Procs, index them by their containing Progs.
 // Return:
 // - A list of unquoted Procs.
 // - A table of lists of quoted Procs, indexed by the Prog ID.
 // (Quoted progs are already listed in the `subprograms` field.
-function group_by_prog(procs: Proc[], progs: Prog[], scopes: Scope[]): [number[], number[][]] {
+function group_by_prog(procs: Proc[], progs: Prog[], scopes: number[], is_prog: boolean[]): [number[], number[][]] {
   // Initialize the tables for quoted procs and progs.
   let quoted: number[][] = [];
   for (let prog of progs) {
@@ -22,7 +21,7 @@ function group_by_prog(procs: Proc[], progs: Prog[], scopes: Scope[]): [number[]
   let toplevel: number[] = [];
   for (let proc of procs) {
     if (proc !== undefined) {
-      let quote_id = scopes[proc.id].quote;
+      let quote_id = _containing_quote(scopes, is_prog, proc.id);
       if (quote_id === null) {
         toplevel.push(proc.id);
       } else {
@@ -80,12 +79,12 @@ function semantically_analyze(tree: SyntaxNode,
     externs[id] = name;
   }
 
-  // Lambda lifting and quote lifting.
-  let [procs, main] = lambda_lift(tree, defuse, scopes, externs);
-  let progs = quote_lift(tree, defuse, scopes, externs);
+  // TODO
+  let [procs, main, progs, is_prog] = lift(tree, defuse, scopes, index_tree(tree));
 
   // Prog-to-Proc mapping.
-  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs, scopes);
+  // TODO remove this
+  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs, scopes, is_prog);
 
   return {
     defuse: defuse,
@@ -97,5 +96,6 @@ function semantically_analyze(tree: SyntaxNode,
     type_table: type_table,
     externs: externs,
     scopes: scopes,
+    is_prog: is_prog,  // TODO remove
   };
 }

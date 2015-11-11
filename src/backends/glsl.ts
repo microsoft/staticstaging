@@ -419,7 +419,7 @@ function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   if (prog.annotation === "f") {
     return ProgKind.render;
   } else if (prog.annotation === "s") {
-    let parentid = ir.scopes[progid].quote;
+    let parentid = _containing_quote(ir.scopes, ir.is_prog, progid);
     if (parentid === undefined) {
       return ProgKind.vertex;
     }
