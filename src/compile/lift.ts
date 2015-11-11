@@ -62,6 +62,7 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
     if (node !== undefined) {
       if (_is_quote(node) || _is_fun(node)) {
         // Common data for any scope.
+        let parent = containers[node.id];
         let scope: Scope = {
           id: node.id,
           body: _is_quote(node) ? node.expr : (node as FunNode).body,
@@ -71,9 +72,9 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
           persist: [],
           splice: [],
 
-          parent: containers[node.id],
+          parent: parent,
           children: [],
-          quote_parent: null,
+          quote_parent: _nearest_quote(containers, progs, parent),
           quote_children: [],
         };
 
@@ -136,7 +137,7 @@ function _nearest_quote(containers: number[], progs: Prog[],
   }
 }
 
-// Assign the parents and children of the skeletal scopes.
+// Assign children of the skeletal scopes.
 function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
     containers: number[])
 {
@@ -147,10 +148,6 @@ function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
       let parent_scope = scope.parent === null ? main :
         scopes[scope.parent];
       parent_scope.children.push(scope.id);
-
-      // Find the quote parent.
-      // TODO MOVE ME
-      scope.quote_parent = _nearest_quote(containers, progs, scope.parent);
 
       // Nearest quote.
       let parent_quote = scope.quote_parent === null ? main :
@@ -242,7 +239,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable): [Proc[], Proc, Prog[]] {
   // Construct "empty" Proc and Prog nodes.
   let [procs, main, progs, scopes] = skeleton_scopes(tree, containers, index);
 
-  // Fill in parents and children.
+  // Fill in children.
   assign_children(scopes, main, progs, containers);
 
   // Fill in free and bound variables.
