@@ -214,10 +214,8 @@ function attribute_escs(scopes: Scope[], progs: Prog[], containers: number[],
         // quote. This makes all the intervening functions inside the quote
         // aware that there's an escape in their body, which can work like a
         // free variable.
-        for (let cur_scope = containers[node.id];
-             cur_scope !== containers[quote_id];
-             cur_scope = containers[cur_scope])
-        {
+        let cur_scope = containers[node.id];
+        while (1) {
           if (node.kind === "persist") {
             scopes[cur_scope].persist.push(esc);
           } else if (node.kind === "splice") {
@@ -225,6 +223,12 @@ function attribute_escs(scopes: Scope[], progs: Prog[], containers: number[],
           } else {
             throw "error: unknown escape kind";
           }
+
+          // Proceed to parent.
+          if (cur_scope == quote_id) {
+            break;
+          }
+          cur_scope = containers[cur_scope];
         }
       }
     }
