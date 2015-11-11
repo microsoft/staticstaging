@@ -68,7 +68,4 @@ interface CompilerIR {
 
   // Containing scopes for every tree node.
   scopes: number[],
-
-  // TODO transitional
-  is_prog: boolean[],
 }

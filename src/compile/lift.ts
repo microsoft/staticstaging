@@ -181,7 +181,7 @@ function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
         // quote. This makes all the intervening functions inside the quote
         // aware that there's an escape in their body, which can work like a
         // free variable.
-        let quote_id = _containing_quote(scopes, progs, node.id);
+        let quote_id = all_scopes[scopes[node.id]].quote_parent;
         for (let cur_scope = scopes[node.id];
              cur_scope !== scopes[quote_id];
              cur_scope = scopes[cur_scope])
