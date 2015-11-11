@@ -55,11 +55,6 @@ interface CompilerIR {
   // The quote-lifted Progs. Again, the Progs are indexed by ID.
   progs: Prog[];
 
-  // Association tables between Progs and their associated Procs. Also, a list
-  // of Procs from the top level---not associated with any quote.
-  toplevel_procs: number[];
-  quoted_procs: number[][];
-
   // Type elaboration.
   type_table: TypeTable;
 

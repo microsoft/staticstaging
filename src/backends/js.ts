@@ -376,8 +376,12 @@ function jscompile(ir: CompilerIR): string {
 
         // Get the procs to compile.
         let procs: Proc[] = [];
-        for (let id of ir.quoted_procs[prog.id]) {
-          procs.push(ir.procs[id]);
+        for (let proc of ir.procs) {
+          if (proc !== undefined) {
+            if (proc.quote_parent === prog.id) {
+              procs.push(proc);
+            }
+          }
         }
 
         let code = jscompile_prog(_jscompile, prog, procs);
@@ -388,9 +392,13 @@ function jscompile(ir: CompilerIR): string {
   }
 
   // Compile each proc to a JS function.
-  for (let id of ir.toplevel_procs) {
-    out += jscompile_proc(_jscompile, ir.procs[id]);
-    out += "\n";
+  for (let proc of ir.procs) {
+    if (proc !== undefined) {
+      if (proc.quote_parent === null) {
+        out += jscompile_proc(_jscompile, proc);
+        out += "\n";
+      }
+    }
   }
 
   // Emit and invoke the main (anonymous) function.
@@ -409,8 +417,12 @@ function js_emit_progfunc(compile: JSCompile, ir: CompilerIR,
 
   // Emit functions in the quote. These become global functions.
   let procs = "";
-  for (let id of ir.quoted_procs[prog.id]) {
-    procs += jscompile_proc(compile, ir.procs[id]) + "\n";
+  for (let proc of ir.procs) {
+    if (proc !== undefined) {
+      if (proc.quote_parent === prog.id) {
+        procs += jscompile_proc(compile, proc) + "\n";
+      }
+    }
   }
 
   // Get the quote's local (bound) variables.

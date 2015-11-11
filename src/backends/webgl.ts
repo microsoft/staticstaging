@@ -295,8 +295,12 @@ function webgl_compile(ir: CompilerIR): string {
 
         // Get the procs to compile.
         let procs: Proc[] = [];
-        for (let id of ir.quoted_procs[prog.id]) {
-          procs.push(ir.procs[id]);
+        for (let proc of ir.procs) {
+          if (proc !== undefined) {
+            if (proc.quote_parent === prog.id) {
+              procs.push(proc);
+            }
+          }
         }
 
         let code: string;
@@ -314,9 +318,13 @@ function webgl_compile(ir: CompilerIR): string {
 
   // Compile each *top-level* proc, including the main function, to a
   // JavaScript function.
-  for (let id of ir.toplevel_procs) {
-    proc_decls += jscompile_proc(_jscompile, ir.procs[id]);
-    proc_decls += "\n";
+  for (let proc of ir.procs) {
+    if (proc !== undefined) {
+      if (proc.quote_parent === null) {
+        proc_decls += jscompile_proc(_jscompile, proc);
+        proc_decls += "\n";
+      }
+    }
   }
   // The result of the wrapper is the main function.
   proc_decls += 'return /* main */ ' + jscompile_proc(_jscompile, ir.main);

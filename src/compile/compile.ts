@@ -2,36 +2,6 @@
 /// <reference path="defuse.ts" />
 /// <reference path="lift.ts" />
 
-// Given tables of Procs and Procs, index them by their containing Progs.
-// Return:
-// - A list of unquoted Procs.
-// - A table of lists of quoted Procs, indexed by the Prog ID.
-// (Quoted progs are already listed in the `subprograms` field.
-function group_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
-  // Initialize the tables for quoted procs and progs.
-  let quoted: number[][] = [];
-  for (let prog of progs) {
-    if (prog !== undefined) {
-      quoted[prog.id] = [];
-    }
-  }
-
-  // Insert each proc where it goes.
-  let toplevel: number[] = [];
-  for (let proc of procs) {
-    if (proc !== undefined) {
-      let quote_id = proc.quote_parent;
-      if (quote_id === null) {
-        toplevel.push(proc.id);
-      } else {
-        quoted[quote_id].push(proc.id);
-      }
-    }
-  }
-
-  return [toplevel, quoted];
-}
-
 // Find all the `extern`s in a program.
 type FindExterns = ASTFold<string[]>;
 function gen_find_externs(fself: FindExterns): FindExterns {
@@ -78,17 +48,11 @@ function semantically_analyze(tree: SyntaxNode,
   // Lambda- and quote-lifting.
   let [procs, main, progs] = lift(tree, defuse);
 
-  // Prog-to-Proc mapping.
-  // TODO remove this
-  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs);
-
   return {
     defuse: defuse,
     procs: procs,
     progs: progs,
     main: main,
-    toplevel_procs: toplevel_procs,
-    quoted_procs: quoted_procs,
     type_table: type_table,
     externs: externs,
   };
