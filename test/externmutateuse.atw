@@ -1,4 +1,4 @@
-extern e: Int;
+extern global.e: Int;
 var x = 1;
-e = x
+global.e = x
 # -> 1

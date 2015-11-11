@@ -122,6 +122,6 @@ function set_diff <T> (a: T[], b: T[]): T[] {
 // Eval inside a scope.
 function scope_eval(code: string): any {
   return (function () {
-    return eval(code);
+    return eval("'use strict'; " + code);
   })();
 }
