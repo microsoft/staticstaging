@@ -1,6 +1,5 @@
 /// <reference path="ir.ts" />
 /// <reference path="defuse.ts" />
-/// <reference path="scope.ts" />
 /// <reference path="lift.ts" />
 
 // Given tables of Procs and Procs, index them by their containing Progs.
@@ -8,7 +7,7 @@
 // - A list of unquoted Procs.
 // - A table of lists of quoted Procs, indexed by the Prog ID.
 // (Quoted progs are already listed in the `subprograms` field.
-function group_by_prog(procs: Proc[], progs: Prog[], scopes: number[]): [number[], number[][]] {
+function group_by_prog(procs: Proc[], progs: Prog[]): [number[], number[][]] {
   // Initialize the tables for quoted procs and progs.
   let quoted: number[][] = [];
   for (let prog of progs) {
@@ -63,9 +62,6 @@ function semantically_analyze(tree: SyntaxNode,
     intrinsics_map[name] = id;
   }
 
-  // Find scopes.
-  let scopes = find_scopes(tree);
-
   // Use the current intrinsics to build the def/use table.
   // TODO It would be nicer if the def/use pass could just ignore the externs
   // since we find them separately, below.
@@ -80,11 +76,11 @@ function semantically_analyze(tree: SyntaxNode,
   }
 
   // TODO
-  let [procs, main, progs] = lift(tree, defuse, scopes, index_tree(tree));
+  let [procs, main, progs] = lift(tree, defuse, index_tree(tree));
 
   // Prog-to-Proc mapping.
   // TODO remove this
-  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs, scopes);
+  let [toplevel_procs, quoted_procs] = group_by_prog(procs, progs);
 
   return {
     defuse: defuse,
@@ -95,6 +91,5 @@ function semantically_analyze(tree: SyntaxNode,
     quoted_procs: quoted_procs,
     type_table: type_table,
     externs: externs,
-    scopes: scopes,
   };
 }

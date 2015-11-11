@@ -1,4 +1,5 @@
 /// <reference path="ir.ts" />
+/// <reference path="scope.ts" />
 /// <reference path="../visit.ts" />
 
 // A simple, imperative walk that indexes *all* the syntax nodes in a tree by
@@ -48,6 +49,7 @@ function _is_escape(tree: SyntaxNode): tree is EscapeNode {
 // TODO This could be memoized/precomputed.
 function _containing_quote(scopes: number[], progs: Prog[],
     where: number): number {
+  console.log(where);
   if (where === null) {
     return null;
   } else if (progs[where] !== undefined) {
@@ -57,8 +59,11 @@ function _containing_quote(scopes: number[], progs: Prog[],
   }
 }
 
-function lift(tree: SyntaxNode, defuse: DefUseTable, scopes: number[],
+function lift(tree: SyntaxNode, defuse: DefUseTable,
     index: SyntaxNode[]): [Proc[], Proc, Prog[]] {
+  // Get the parent scope for every node in the tree.
+  let scopes = find_scopes(tree);
+
   // Construct "empty" Proc and Prog nodes.
   let procs: Proc[] = [];
   let progs: Prog[] = [];

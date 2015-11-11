@@ -65,7 +65,4 @@ interface CompilerIR {
 
   // Names of externs, indexed by the `extern` expression ID.
   externs: string[];
-
-  // Containing scopes for every tree node.
-  scopes: number[],
 }
