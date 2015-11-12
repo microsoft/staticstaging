@@ -266,7 +266,6 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
   };
 }
 
-// Tie the recursion knot.
 function get_glsl_compile(ir: CompilerIR): GLSLCompile {
   let rules = glsl_compile_rules(f, ir);
   function f (tree: SyntaxNode): string {

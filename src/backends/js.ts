@@ -56,8 +56,84 @@ function js_emit_extern(name: string, type: Type) {
   }
 }
 
+// Create a JavaScript function definition. `name` can be null, in which case
+// this is an anonymous function expression.
+function emit_js_fun(name: string, argnames: string[], localnames: string[],
+    body: string): string {
+  let anon = (name === null);
+
+  // Emit the definition.
+  let out = "";
+  if (anon) {
+    out += "(";
+  }
+  out += "function ";
+  if (!anon) {
+    out += name;
+  }
+  out += "(" + argnames.join(", ") + ") {\n";
+  if (localnames.length) {
+    out += "  var " + localnames.join(", ") + ";\n";
+  }
+  out += indent(body, true);
+  out += "\n}";
+  if (anon) {
+    out += ")";
+  }
+  return out;
+}
+
+// Turn a value into a JavaScript string literal. Mutli-line strings become
+// nice, readable multi-line concatenations. (This will be obviated by ES6's
+// template strings.)
+function emit_js_string(value: any) {
+  if (typeof(value) === "string") {
+    let parts: string[] = [];
+    let chunks = value.split("\n");
+    for (let i = 0; i < chunks.length; ++i) {
+      let chunk = chunks[i];
+      if (i < chunks.length - 1) {
+        chunk += "\n";
+      }
+      parts.push(JSON.stringify(chunk));
+    }
+    return parts.join(" +\n");
+  } else {
+    return JSON.stringify(value);
+  }
+}
+
+// Emit a JavaScript variable declaration. If `verbose`, then there will be a
+// newline between the name and the beginning of the initialization value.
+function emit_js_var(name: string, value: any, verbose=false): string {
+  let out = "var " + name + " =";
+  if (verbose) {
+    out += "\n";
+  } else {
+    out += " ";
+  }
+  out += emit_js_string(value) + ";";
+  return out;
+}
+
+// Like `pretty_value`, but for values in the *compiled* JavaScript world.
+function pretty_js_value(v: any): string {
+  if (typeof v == 'number') {
+    return v.toString();
+  } else if (v.proc !== undefined) {
+    return "(fun)";
+  } else if (v.prog !== undefined) {
+    // It is a non-goal of this backend to be able to pretty-print quotations.
+    // You can use the interpreter if you want that.
+    return "<quote>";
+  } else {
+    throw "error: unknown value kind";
+  }
+}
+
 
 // The core recursive compiler rules.
+
 type JSCompile = (tree: SyntaxNode) => string;
 function js_compile_rules(fself: JSCompile, ir: CompilerIR):
   ASTVisit<void, string>
@@ -98,8 +174,14 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     visit_quote(tree: QuoteNode, param: void): string {
       if (tree.annotation === "f") {
         // A function quote, which we compile to a JavaScript function. Emit
-        // an invocation that returns a zero-argument function.
-        return js_emit_progfunc_call(fself, ir, tree.id);
+        // a closure value with the persists as arguments.
+        let args: string[] = [];
+        for (let esc of ir.progs[tree.id].persist) {
+          if (esc !== undefined) {
+            args.push(paren(fself(esc.body)));
+          }
+        }
+        return `{ proc: ${progsym(tree.id)}, env: [${args.join(', ')}] }`;
 
       } else {
         // An ordinary string-eval quote, with the full power of splicing.
@@ -204,7 +286,6 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
   };
 }
 
-// Tie the recursion knot.
 function get_js_compile(ir: CompilerIR): JSCompile {
   let rules = js_compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
@@ -213,32 +294,8 @@ function get_js_compile(ir: CompilerIR): JSCompile {
   return f;
 }
 
-// Create a JavaScript function definition. `name` can be null, in which case
-// this is an anonymous function expression.
-function emit_js_fun(name: string, argnames: string[], localnames: string[],
-    body: string): string {
-  let anon = (name === null);
 
-  // Emit the definition.
-  let out = "";
-  if (anon) {
-    out += "(";
-  }
-  out += "function ";
-  if (!anon) {
-    out += name;
-  }
-  out += "(" + argnames.join(", ") + ") {\n";
-  if (localnames.length) {
-    out += "  var " + localnames.join(", ") + ";\n";
-  }
-  out += indent(body, true);
-  out += "\n}";
-  if (anon) {
-    out += ")";
-  }
-  return out;
-}
+// Compiling Procs.
 
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
@@ -297,42 +354,13 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
   return out;
 }
 
-// Turn a value into a JavaScript string literal. Mutli-line strings become
-// nice, readable multi-line concatenations. (This will be obviated by ES6's
-// template strings.)
-function emit_js_string(value: any) {
-  if (typeof(value) === "string") {
-    let parts: string[] = [];
-    let chunks = value.split("\n");
-    for (let i = 0; i < chunks.length; ++i) {
-      let chunk = chunks[i];
-      if (i < chunks.length - 1) {
-        chunk += "\n";
-      }
-      parts.push(JSON.stringify(chunk));
-    }
-    return parts.join(" +\n");
-  } else {
-    return JSON.stringify(value);
-  }
-}
 
-// Emit a JavaScript variable declaration. If `verbose`, then there will be a
-// newline between the name and the beginning of the initialization value.
-function emit_js_var(name: string, value: any, verbose=false): string {
-  let out = "var " + name + " =";
-  if (verbose) {
-    out += "\n";
-  } else {
-    out += " ";
-  }
-  out += emit_js_string(value) + ";";
-  return out;
-}
+// Compiling Progs.
 
 // Compile a quotation (a.k.a. Prog) to a string constant. Also compiles the
 // Procs that appear inside this quotation.
-function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR, prog: Prog): string
+function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
+    prog: Prog): string
 {
   // Compile each function defined in this quote.
   let procs = "";
@@ -415,20 +443,8 @@ function js_emit_prog(compile: JSCompile, ir: CompilerIR,
   }
 }
 
-// Like `pretty_value`, but for values in the *compiled* JavaScript world.
-function pretty_js_value(v: any): string {
-  if (typeof v == 'number') {
-    return v.toString();
-  } else if (v.proc !== undefined) {
-    return "(fun)";
-  } else if (v.prog !== undefined) {
-    // It is a non-goal of this backend to be able to pretty-print quotations.
-    // You can use the interpreter if you want that.
-    return "<quote>";
-  } else {
-    throw "error: unknown value kind";
-  }
-}
+
+// Top-level compilation.
 
 // Compile the IR to a complete JavaScript program.
 function jscompile(ir: CompilerIR): string {
@@ -448,20 +464,4 @@ function jscompile(ir: CompilerIR): string {
   out += "()";
 
   return out;
-}
-
-// Emit a reference to a quote that has been declared as a JavaScript
-// function.
-function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR,
-    progid: number): string
-{
-  // The arguments to a function stage are its persists.
-  let args: string[] = [];
-  for (let esc of ir.progs[progid].persist) {
-    if (esc !== undefined) {
-      args.push(paren(compile(esc.body)));
-    }
-  }
-
-  return `{ proc: ${progsym(progid)}, env: [${args.join(', ')}] }`;
 }
