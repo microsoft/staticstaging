@@ -311,11 +311,13 @@ function _emit_procs(compile: JSCompile, ir: CompilerIR, scope: number) {
   return out;
 }
 
-/*
-function _bound_vars(ir: CompilerIR, scope: number) {
+function _bound_vars(ir: CompilerIR, scope: Scope) {
+  let names: string[] = [];
+  for (let bv of scope.bound) {
+    names.push(varsym(bv));
+  }
   return names;
 }
-*/
 
 
 // Compiling Procs.
@@ -341,12 +343,7 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
 
   // We also need the names of the non-parameter bound variables so we can
   // declare them.
-  let localnames: string[] = [];
-  for (let bv of proc.bound) {
-    if (proc.params.indexOf(bv) == -1) {
-      localnames.push(varsym(bv));
-    }
-  }
+  let localnames = _bound_vars(ir, proc);
 
   // Check whether this is main (and hence anonymous).
   let name: string;
@@ -381,10 +378,7 @@ function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
   let procs = _emit_procs(compile, ir, prog.id);
 
   // Get the quote's local (bound) variables.
-  let localnames: string[] = [];
-  for (let bv of prog.bound) {
-    localnames.push(varsym(bv));
-  }
+  let localnames = _bound_vars(ir, prog);
 
   // Wrap the code in a function to avoid polluting the namespace.
   let body = emit_body(compile, prog.body);
@@ -404,10 +398,7 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
   let procs = _emit_procs(compile, ir, prog.id);
 
   // Get the quote's local (bound) variables.
-  let localnames: string[] = [];
-  for (let bv of prog.bound) {
-    localnames.push(varsym(bv));
-  }
+  let localnames = _bound_vars(ir, prog);
 
   // Get the quote's persists. These manifest as parameters to the function.
   let argnames: string[] = [];
