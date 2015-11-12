@@ -322,9 +322,15 @@ function _bound_vars(ir: CompilerIR, scope: Scope) {
 // Compile the body of a Scope as a JavaScript function.
 function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
     argnames: string[], scope: Scope): string {
+  // Emit all children functions.
+  let procs = _emit_procs(compile, ir, scope.id);
+
+  // Emit the target function.
   let localnames = _bound_vars(ir, scope);
   let body = emit_body(compile, scope.body);
-  return emit_js_fun(name, argnames, localnames, body);
+  let func = emit_js_fun(name, argnames, localnames, body);
+
+  return procs + func;
 }
 
 
@@ -335,9 +341,6 @@ function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
 // an appropriately named function declaration.
 function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
 {
-  // Emit all children functions.
-  let procs = _emit_procs(compile, ir, proc.id);
-
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
   let argnames: string[] = [];
@@ -351,10 +354,7 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
     argnames.push(persistsym(p.id));
   }
 
-  // Declaration for this function declaration.
-  let func = _emit_scope_func(compile, ir, procsym(proc.id), argnames, proc);
-
-  return procs + func;
+  return _emit_scope_func(compile, ir, procsym(proc.id), argnames, proc);
 }
 
 
@@ -365,15 +365,11 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
 function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
     prog: Prog): string
 {
-  // Emit all children functions.
-  let procs = _emit_procs(compile, ir, prog.id);
-
   // Emit (and invoke) the main function for the program.
-  let func = _emit_scope_func(compile, ir, null, [], prog);
-  func += "()";
+  let code = _emit_scope_func(compile, ir, null, [], prog);
+  code += "()";
 
   // Wrap the whole thing in a variable declaration.
-  let code = procs + func;
   return emit_js_var(progsym(prog.id), code, true);
 }
 
@@ -387,19 +383,13 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
     throw "error: splices not allowed in a program quote";
   }
 
-  // Emit all children functions.
-  let procs = _emit_procs(compile, ir, prog.id);
-
   // Get the quote's persists. These manifest as parameters to the function.
   let argnames: string[] = [];
   for (let esc of prog.persist) {
     argnames.push(persistsym(esc.id));
   }
 
-  // Emit the main function, which takes the persists as parameters.
-  let func = _emit_scope_func(compile, ir, progsym(prog.id), argnames, prog);
-
-  return procs + func;
+  return _emit_scope_func(compile, ir, progsym(prog.id), argnames, prog);
 }
 
 // Emit a JavaScript Prog. The backend depends on the annotation.
