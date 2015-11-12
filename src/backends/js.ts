@@ -319,6 +319,13 @@ function _bound_vars(ir: CompilerIR, scope: Scope) {
   return names;
 }
 
+// Compile the body of a Scope as a JavaScript function.
+function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
+    argnames: string[], localnames: string[], scope: Scope): string {
+  let body = emit_body(compile, scope.body);
+  return emit_js_fun(name, argnames, localnames, body);
+}
+
 
 // Compiling Procs.
 
@@ -356,12 +363,11 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
   }
 
   // Declaration for this function declaration.
-  let body = emit_body(compile, proc.body);
   let func = "";
   if (wrapped) {
     func = "return /* main */ ";
   }
-  func += emit_js_fun(name, argnames, localnames, body);
+  func += _emit_scope_func(compile, ir, name, argnames, localnames, proc);
 
   return procs + func;
 }
@@ -380,9 +386,9 @@ function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
   // Emit all children functions.
   let procs = _emit_procs(compile, ir, prog.id);
 
-  // Wrap the code in a function to avoid polluting the namespace.
-  let body = emit_body(compile, prog.body);
-  let func = emit_js_fun(null, [], localnames, body) + "()";
+  // Emit (and invoke) the main function for the program.
+  let func = _emit_scope_func(compile, ir, null, [], localnames, prog);
+  func += "()";
 
   // Wrap the whole thing in a variable declaration.
   let code = procs + func;
@@ -412,8 +418,8 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
   }
 
   // Emit the main function, which takes the persists as parameters.
-  let body = emit_body(compile, prog.body);
-  let func = emit_js_fun(progsym(prog.id), argnames, localnames, body);
+  let func = _emit_scope_func(compile, ir, progsym(prog.id), argnames,
+      localnames, prog);
 
   return procs + func;
 }
