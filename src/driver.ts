@@ -98,13 +98,9 @@ export function frontend(config: Config, source: string,
     config.error(e);
     return;
   }
-
-  // Remove syntactic sugar.
-  let sugarfree = desugar(elaborated, type_table, _check(config));
-  config.log('sugar-free', sugarfree);
   config.log('type table', type_table);
 
-  checked(sugarfree, type_table);
+  checked(elaborated, type_table);
 }
 
 export function compile(config: Config, tree: SyntaxNode,
@@ -142,7 +138,11 @@ export function compile(config: Config, tree: SyntaxNode,
 export function interpret(config: Config, tree: SyntaxNode,
     type_table: TypeTable, executed: (result: string) => void)
 {
-  let val = Interp.interpret(tree);
+  // Remove syntactic sugar.
+  let sugarfree = desugar(tree, type_table, _check(config));
+  config.log('sugar-free', sugarfree);
+
+  let val = Interp.interpret(sugarfree);
   executed(Interp.pretty_value(val));
 }
 

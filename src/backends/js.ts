@@ -195,11 +195,15 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
           let esc_expr = fself(esc.body);
           persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
         }
-        let persists_str = "{ " + persist_pairs.join(", ") + " }";
+
+        // Include free variables as persists.
+        for (let fv of ir.progs[tree.id].free) {
+          persist_pairs.push(varsym(fv) + ": " + varsym(fv));
+        }
 
         // Create a pre-spliced code value.
-        let code_expr = "{ prog: " + progsym(tree.id) +
-          ", persist: " + persists_str + " }";
+        let pers_list = `{ ${persist_pairs.join(", ")} }`;
+        let code_expr = `{ prog: ${progsym(tree.id)}, persist: ${pers_list} }`;
 
         // Compile each spliced escape expression. Then, call our runtime to
         // splice it into the code value.
@@ -422,7 +426,7 @@ export function emit(ir: CompilerIR): string {
   // Compile each program.
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      out += emit_prog(_jscompile, ir, prog);
+      out += emit_prog(_jscompile, ir, prog) + "\n";
     }
   }
 
