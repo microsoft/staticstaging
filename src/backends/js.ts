@@ -184,6 +184,13 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
             args.push(paren(fself(esc.body)));
           }
         }
+
+        // Same for free variables.
+        for (let fv of ir.progs[tree.id].free) {
+          args.push(varsym(fv));
+        }
+
+        // Emit an ordinary closure value. The persists are arguments.
         return `{ proc: ${progsym(tree.id)}, env: [${args.join(', ')}] }`;
 
       } else {
@@ -395,6 +402,11 @@ function emit_prog_func(compile: Compile, ir: CompilerIR,
   let argnames: string[] = [];
   for (let esc of prog.persist) {
     argnames.push(persistsym(esc.id));
+  }
+
+  // Same for free variables.
+  for (let fv of prog.free) {
+    argnames.push(varsym(fv));
   }
 
   return _emit_scope_func(compile, ir, progsym(prog.id), argnames, prog);
