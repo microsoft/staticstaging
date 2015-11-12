@@ -243,7 +243,7 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
-function jscompile_proc(compile: JSCompile, proc: Proc,
+function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
     extra_code: string = "", extra_args: string[] = []): string
 {
   // The arguments consist of the actual parameters, the closure environment
@@ -276,12 +276,25 @@ function jscompile_proc(compile: JSCompile, proc: Proc,
     name = procsym(proc.id);
   }
 
+  // Recursively emit all the functions contained within this one.
+  let out = "";
+  for (let subproc of ir.procs) {
+    if (subproc !== undefined) {
+      if (subproc.parent === proc.id) {
+        out += js_emit_proc(compile, ir, subproc);
+        out += "\n";
+      }
+    }
+  }
+
   // Function declaration.
   let body = emit_body(compile, proc.body);
   if (extra_code) {
     body = extra_code + body;
   }
-  return emit_js_fun(name, argnames, localnames, body);
+  out += emit_js_fun(name, argnames, localnames, body);
+
+  return out;
 }
 
 // Turn a value into a JavaScript string literal. Mutli-line strings become
@@ -320,12 +333,17 @@ function emit_js_var(name: string, value: any, verbose=false): string {
 // Compile a quotation (a.k.a. Prog) to a string. This string should be
 // embedded in JavaScript so it can be `eval`ed. Also compiles the Procs that
 // appear inside this quotation.
-function jscompile_prog(compile: JSCompile, prog: Prog, procs: Proc[]): string {
+function js_emit_prog(compile: JSCompile, ir: CompilerIR, prog: Prog): string
+{
   // Compile each function defined in this quote.
   let procs_str = "";
-  for (let proc of procs) {
-    procs_str += jscompile_proc(compile, proc);
-    procs_str += "\n";
+  for (let proc of ir.procs) {
+    if (proc !== undefined) {
+      if (proc.parent === prog.id) {
+        procs_str += js_emit_proc(compile, ir, proc);
+        procs_str += "\n";
+      }
+    }
   }
 
   // Get the quote's local (bound) variables.
@@ -370,36 +388,15 @@ function jscompile(ir: CompilerIR): string {
 
       } else {
         // An ordinary quote. Compile to a string.
-
-        // Get the procs to compile.
-        let procs: Proc[] = [];
-        for (let proc of ir.procs) {
-          if (proc !== undefined) {
-            if (proc.quote_parent === prog.id) {
-              procs.push(proc);
-            }
-          }
-        }
-
-        let code = jscompile_prog(_jscompile, prog, procs);
+        let code = js_emit_prog(_jscompile, ir, prog);
         let prog_var = emit_js_var(progsym(prog.id), code, true);
         out += prog_var + "\n";
       }
     }
   }
 
-  // Compile each proc to a JS function.
-  for (let proc of ir.procs) {
-    if (proc !== undefined) {
-      if (proc.quote_parent === null) {
-        out += jscompile_proc(_jscompile, proc);
-        out += "\n";
-      }
-    }
-  }
-
   // Emit and invoke the main (anonymous) function.
-  out += jscompile_proc(_jscompile, ir.main);
+  out += js_emit_proc(_jscompile, ir, ir.main);
   out += "()";
 
   return out;
@@ -417,7 +414,7 @@ function js_emit_progfunc(compile: JSCompile, ir: CompilerIR,
   for (let proc of ir.procs) {
     if (proc !== undefined) {
       if (proc.quote_parent === prog.id) {
-        procs += jscompile_proc(compile, proc) + "\n";
+        procs += js_emit_proc(compile, ir, proc) + "\n";
       }
     }
   }

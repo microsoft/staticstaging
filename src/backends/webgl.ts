@@ -309,25 +309,16 @@ function webgl_compile(ir: CompilerIR): string {
           code = glsl_compile_prog(_glslcompile, ir, prog.id);
         } else {
           // Ordinary JavaScript quotation.
-          code = jscompile_prog(_jscompile, prog, procs);
+          code = js_emit_prog(_jscompile, ir, prog, procs);
         }
         prog_decls += emit_js_var(progsym(prog.id), code, true) + "\n";
       }
     }
   }
 
-  // Compile each *top-level* proc, including the main function, to a
-  // JavaScript function.
-  for (let proc of ir.procs) {
-    if (proc !== undefined) {
-      if (proc.quote_parent === null) {
-        proc_decls += jscompile_proc(_jscompile, proc);
-        proc_decls += "\n";
-      }
-    }
-  }
   // The result of the wrapper is the main function.
-  proc_decls += 'return /* main */ ' + jscompile_proc(_jscompile, ir.main);
+  // TODO TODO this "return" is broken
+  proc_decls += 'return /* main */ ' + js_emit_proc(_jscompile, ir, ir.main);
 
   // For each *shader* quotation (i.e., top-level shader quote), generate the
   // setup code.
