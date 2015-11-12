@@ -300,9 +300,9 @@ function emit_type(type: Type): string {
 // - `kind`, indicating whether this is an vertex (outer) shader program or a
 //   fragment (inner) shader
 // - `out`, indicating whether the variable is going into or out of the stage
-function persist_decl(ir: CompilerIR, esc: ProgEscape,
+function persist_decl(ir: CompilerIR, valueid: number, varid: number,
     kind: ProgKind, out: boolean): string {
-  let [type, _] = ir.type_table[esc.body.id];
+  let [type, _] = ir.type_table[valueid];
 
   // Array types indicate an attribute. Use the element type. Attributes get
   // no special qualifier distinction from uniforms; they both just get marked
@@ -318,11 +318,7 @@ function persist_decl(ir: CompilerIR, esc: ProgEscape,
   let qual: string;
   if (kind === ProgKind.vertex) {
     if (out) {
-      if (attribute) {
-        throw "error: vertex-to-fragment arrays not allowed";
-      } else {
-        qual = "varying";
-      }
+      qual = "varying";
     } else {  // in
       if (attribute) {
         qual = "attribute";
@@ -334,17 +330,13 @@ function persist_decl(ir: CompilerIR, esc: ProgEscape,
     if (out) {
       throw "error: fragment outputs not allowed";
     } else {
-      if (attribute) {
-        throw "error: fragment attributes not allowed";
-      } else {
-        qual = "varying";
-      }
+      qual = "varying";
     }
   } else {
     throw "error: unknown shader kind";
   }
 
-  return emit_decl(qual, emit_type(decl_type), persistsym(esc.id));
+  return emit_decl(qual, emit_type(decl_type), persistsym(varid));
 }
 
 export function compile_prog(compile: Compile,
@@ -359,22 +351,26 @@ export function compile_prog(compile: Compile,
     throw "error: unexpected program kind";
   }
 
-  // Declare `in` variables for the persists.
+  // Declare `in` variables for the persists and free variables.
   let decls: string[] = [];
   for (let esc of prog.persist) {
-    decls.push(persist_decl(ir, esc, kind, false));
+    decls.push(persist_decl(ir, esc.body.id, esc.id, kind, false));
+  }
+  for (let fv of prog.free) {
+    decls.push(persist_decl(ir, fv, fv, kind, false));
   }
 
-  // Declare `out` variables for the persists in the subprogram. There can be
-  // at most one subprogram for every shader.
+  // Declare `out` variables for the persists (and free variables) in the
+  // subprogram. There can be at most one subprogram for every shader.
   if (prog.quote_children.length > 1) {
     throw "error: too many subprograms";
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
     for (let esc of subprog.persist) {
-      if (esc !== undefined) {
-        decls.push(persist_decl(ir, esc, kind, true));
-      }
+      decls.push(persist_decl(ir, esc.body.id, esc.id, kind, true));
+    }
+    for (let fv of subprog.free) {
+      decls.push(persist_decl(ir, fv, fv, kind, true));
     }
   }
 
