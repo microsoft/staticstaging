@@ -2,6 +2,8 @@
 /// <reference path="../visit.ts" />
 /// <reference path="../util.ts" />
 
+module FindScopes {
+
 // A ScopeFrame marks the containing quote and function IDs for any node.
 // Either "coordinate" may be null if the tree is outside of a function (in
 // its current quote) or is top-level, outside of any quote.
@@ -10,8 +12,8 @@ interface ScopeFrame {
   quote: number,
 };
 
-type FindScopes = ASTFold<[ScopeFrame[], number[]]>;
-function gen_find_scopes(fself: FindScopes): FindScopes {
+type FindScopesFun = ASTFold<[ScopeFrame[], number[]]>;
+function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     visit_quote(tree: QuoteNode,
@@ -36,7 +38,8 @@ function gen_find_scopes(fself: FindScopes): FindScopes {
       [ScopeFrame[], number[]]
     {
       let frame: ScopeFrame = { func: tree.id, quote: hd(frames).quote };
-      let [_, s] = fold_rules.visit_fun(tree, [cons(frame, tl(frames)), scopes]);
+      let [_, s] = fold_rules.visit_fun(tree,
+          [cons(frame, tl(frames)), scopes]);
 
       // Also add the parameters, which don't get visited by normal recursion.
       let scopes_out = s.slice(0);
@@ -61,7 +64,9 @@ function gen_find_scopes(fself: FindScopes): FindScopes {
 }
 
 let _find_scopes = fix(gen_find_scopes);
-function find_scopes(tree: SyntaxNode): number[] {
+export function find_scopes(tree: SyntaxNode): number[] {
   let [_, scopes] = _find_scopes(tree, [[{ func: null, quote: null }], []]);
   return scopes;
+}
+
 }

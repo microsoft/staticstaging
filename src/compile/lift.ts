@@ -262,7 +262,7 @@ export function lift(tree: SyntaxNode, defuse: DefUseTable):
   [Proc[], Proc, Prog[]]
 {
   // Some bookkeeping to get started.
-  let containers = find_scopes(tree);
+  let containers = FindScopes.find_scopes(tree);
   let index = index_tree(tree);
 
   // Construct "empty" Proc and Prog nodes.
