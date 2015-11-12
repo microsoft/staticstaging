@@ -53,6 +53,14 @@ const TYPE_NAMES: { [_: string]: string } = {
   "Float4x4": "mat4",
 };
 
+// A naming convention for global communication (uniform/attribute/varying)
+// variables in shaders. The `scopeid` is the ID of the quote where the
+// variable is used. `exprid` is the ID of the variable or persist scape
+// expression.
+export function shadervarsym(scopeid: number, varid: number) {
+  return "s" + scopeid + "v" + varid;
+}
+
 
 // Checking for our magic `vtx` and `frag` intrinsics, which indicate the
 // structure of shader programs.
@@ -167,16 +175,18 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
     },
 
     visit_let(tree: LetNode, param: void): string {
-      let varname = varsym(tree.id);
+      let varname = shadervarsym(nearest_quote(ir, tree.id), tree.id);
       return varname + " = " + paren(fself(tree.expr));
     },
 
     visit_assign(tree: AssignNode, param: void): string {
-      return emit_assign(ir, fself, tree);
+      let vs = (id => shadervarsym(nearest_quote(ir, tree.id), id));
+      return emit_assign(ir, fself, tree, vs);
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      return emit_lookup(ir, fself, emit_extern, tree);
+      let vs = (id => shadervarsym(nearest_quote(ir, tree.id), id));
+      return emit_lookup(ir, fself, emit_extern, tree, vs);
     },
 
     visit_unary(tree: UnaryNode, param: void): string {
@@ -198,7 +208,7 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
       if (tree.kind === "splice") {
         return splicesym(tree.id);
       } else if (tree.kind === "persist") {
-        return persistsym(tree.id);
+        return shadervarsym(nearest_quote(ir, tree.id), tree.id);
       } else {
         throw "error: unknown escape kind";
       }
@@ -226,7 +236,7 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
           let subprog = ir.progs[quote.id];
           let assignments: string[] = [];
           for (let esc of subprog.persist) {
-            let varname = persistsym(esc.id);
+            let varname = shadervarsym(tree.id, esc.id);
             let value = fself(esc.body);
             assignments.push(varname + " = " + paren(value));
           }
@@ -300,7 +310,7 @@ function emit_type(type: Type): string {
 // - `kind`, indicating whether this is an vertex (outer) shader program or a
 //   fragment (inner) shader
 // - `out`, indicating whether the variable is going into or out of the stage
-function persist_decl(ir: CompilerIR, valueid: number, varid: number,
+function persist_decl(ir: CompilerIR, progid: number, valueid: number, varid: number,
     kind: ProgKind, out: boolean): string {
   let [type, _] = ir.type_table[valueid];
 
@@ -336,7 +346,7 @@ function persist_decl(ir: CompilerIR, valueid: number, varid: number,
     throw "error: unknown shader kind";
   }
 
-  return emit_decl(qual, emit_type(decl_type), persistsym(varid));
+  return emit_decl(qual, emit_type(decl_type), shadervarsym(progid, varid));
 }
 
 export function compile_prog(compile: Compile,
@@ -354,10 +364,10 @@ export function compile_prog(compile: Compile,
   // Declare `in` variables for the persists and free variables.
   let decls: string[] = [];
   for (let esc of prog.persist) {
-    decls.push(persist_decl(ir, esc.body.id, esc.id, kind, false));
+    decls.push(persist_decl(ir, progid, esc.body.id, esc.id, kind, false));
   }
   for (let fv of prog.free) {
-    decls.push(persist_decl(ir, fv, fv, kind, false));
+    decls.push(persist_decl(ir, progid, fv, fv, kind, false));
   }
 
   // Declare `out` variables for the persists (and free variables) in the
@@ -367,10 +377,10 @@ export function compile_prog(compile: Compile,
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
     for (let esc of subprog.persist) {
-      decls.push(persist_decl(ir, esc.body.id, esc.id, kind, true));
+      decls.push(persist_decl(ir, progid, esc.body.id, esc.id, kind, true));
     }
     for (let fv of subprog.free) {
-      decls.push(persist_decl(ir, fv, fv, kind, true));
+      decls.push(persist_decl(ir, progid, fv, fv, kind, true));
     }
   }
 
@@ -378,7 +388,7 @@ export function compile_prog(compile: Compile,
   let local_decls: string[] = [];
   for (let id of prog.bound) {
     let [t, _] = ir.type_table[id];
-    local_decls.push(`${emit_type(t)} ${varsym(id)};\n`);
+    local_decls.push(`${emit_type(t)} ${shadervarsym(progid, id)};\n`);
   }
   let local_decls_s = local_decls.join("");
 

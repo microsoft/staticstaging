@@ -1,6 +1,7 @@
 /// <reference path="ir.ts" />
 /// <reference path="defuse.ts" />
 /// <reference path="lift.ts" />
+/// <reference path="scope.ts" />
 
 // Find all the `extern`s in a program.
 type FindExterns = ASTFold<string[]>;
@@ -46,7 +47,8 @@ function semantically_analyze(tree: SyntaxNode,
   }
 
   // Lambda- and quote-lifting.
-  let [procs, main, progs] = Lift.lift(tree, defuse);
+  let containers = FindScopes.find_scopes(tree);
+  let [procs, main, progs] = Lift.lift(tree, defuse, containers);
 
   return {
     defuse: defuse,
@@ -55,5 +57,6 @@ function semantically_analyze(tree: SyntaxNode,
     main: main,
     type_table: type_table,
     externs: externs,
+    containers: containers,
   };
 }

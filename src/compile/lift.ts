@@ -1,5 +1,4 @@
 /// <reference path="ir.ts" />
-/// <reference path="scope.ts" />
 /// <reference path="../visit.ts" />
 
 module Lift {
@@ -258,11 +257,9 @@ function attribute_escs(scopes: Scope[], progs: Prog[], containers: number[],
   }
 }
 
-export function lift(tree: SyntaxNode, defuse: DefUseTable):
+export function lift(tree: SyntaxNode, defuse: DefUseTable, containers: number[]):
   [Proc[], Proc, Prog[]]
 {
-  // Some bookkeeping to get started.
-  let containers = FindScopes.find_scopes(tree);
   let index = index_tree(tree);
 
   // Construct "empty" Proc and Prog nodes.

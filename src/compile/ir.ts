@@ -60,4 +60,30 @@ interface CompilerIR {
 
   // Names of externs, indexed by the `extern` expression ID.
   externs: string[];
+
+  // A mapping from every AST node ID to the containing scope ID.
+  containers: number[],
+}
+
+// Find the nearest containing quote to the syntax node. If the syntax node is
+// already a quote, it is returned.
+function nearest_quote(ir: CompilerIR, id: number): number {
+  // Is this a quote itself?
+  if (ir.progs[id]) {
+    return id;
+  }
+
+  // Is it top-level?
+  let scope = ir.containers[id];
+  if (scope === null) {
+    return null;
+  }
+
+  // Is the container a quote?
+  if (ir.progs[scope]) {
+    return scope;
+  }
+
+  // Otherwise, get the containing quote for the container.
+  return ir.procs[scope].quote_parent;
 }

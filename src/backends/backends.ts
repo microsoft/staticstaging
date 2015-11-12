@@ -79,7 +79,7 @@ function emit_seq(seq: SeqNode, sep: string,
 // A helper for emitting assignments. Handles both externs and normal
 // variables.
 function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
-    tree: AssignNode): string {
+    tree: AssignNode, get_varsym=varsym): string {
   let defid = ir.defuse[tree.id];
   let extern = ir.externs[defid];
   if (extern !== undefined) {
@@ -87,7 +87,7 @@ function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
     return extern + " = " + paren(emit(tree.expr));
   } else {
     // Ordinary variable assignment.
-    let jsvar = varsym(defid);
+    let jsvar = get_varsym(defid);
     return jsvar + " = " + paren(emit(tree.expr));
   }
 }
@@ -96,7 +96,8 @@ function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
 // variables.
 function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
     emit_extern: (name: string, type: Type) => string,
-    tree: LookupNode): string {
+    tree: LookupNode,
+    get_varsym=varsym): string {
   let defid = ir.defuse[tree.id];
   let name = ir.externs[defid];
   if (name !== undefined) {
@@ -104,7 +105,7 @@ function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
     return emit_extern(name, type);
   } else {
     // An ordinary variable lookup.
-    return varsym(defid);
+    return get_varsym(defid);
   }
 }
 

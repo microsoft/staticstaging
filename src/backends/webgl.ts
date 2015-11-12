@@ -154,7 +154,7 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 // These are equal for free variables (cross-stage references), but correspond
 // to the quote body and the quote for explicit persists.
 function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
-    varid: number, persist: boolean): string
+    varid: number): string
 {
   let [type, _] = ir.type_table[valueid];
   let element_type = GLSL._unwrap_array(type);
@@ -167,7 +167,7 @@ function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
   // Emit the WebGL call to get the location.
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid);
-  let varname = persist ? persistsym(varid) : varsym(varid);
+  let varname = GLSL.shadervarsym(scopeid, varid);
   return JS.emit_var(
     locsym(varid),
     `gl.${func}(${shader}, ${JS.emit_string(varname)})`
@@ -188,10 +188,10 @@ function emit_shader_setup(ir: CompilerIR, progid: number): string {
   // Get the variable locations, for both explicit persists and for free
   // variables.
   for (let esc of vertex_prog.persist) {
-    out += emit_loc_var(ir, vertex_prog.id, esc.body.id, esc.id, true) + "\n";
+    out += emit_loc_var(ir, vertex_prog.id, esc.body.id, esc.id) + "\n";
   }
   for (let fv of vertex_prog.free) {
-    out += emit_loc_var(ir, vertex_prog.id, fv, fv, false) + "\n";
+    out += emit_loc_var(ir, vertex_prog.id, fv, fv) + "\n";
   }
 
   return out;
