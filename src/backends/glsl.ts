@@ -14,6 +14,7 @@ const FLOAT4X4 = new PrimitiveType("Float4x4");
 const ARRAY = new ConstructorType("Array");
 const INT3 = new PrimitiveType("Int3");
 const INT4 = new PrimitiveType("Int4");
+
 const GL_TYPES: TypeMap = {
   "Float3": FLOAT3,
   "Float4": FLOAT4,
@@ -33,13 +34,15 @@ const GL_TYPES: TypeMap = {
   "Mesh": new PrimitiveType("Mesh"),
 };
 
+module GLSL {
+
 const NUMERIC_TYPES: Type[] = [
   FLOAT3, FLOAT4,
   FLOAT3X3, FLOAT4X4,
   INT3, INT4,
 ];
 
-const GLSL_TYPE_NAMES: { [_: string]: string } = {
+const TYPE_NAMES: { [_: string]: string } = {
   "Int": "int",
   "Int3": "ivec3",
   "Int4": "ivec4",
@@ -64,7 +67,7 @@ function is_intrinsic(tree: CallNode, name: string) {
   return false;
 }
 
-function is_intrinsic_call(tree: ExpressionNode, name: string) {
+export function is_intrinsic_call(tree: ExpressionNode, name: string) {
   if (tree.tag === "call") {
     return is_intrinsic(tree as CallNode, name);
   }
@@ -75,7 +78,7 @@ function frag_expr(tree: ExpressionNode) {
   return is_intrinsic_call(tree, "frag");
 }
 
-function glsl_emit_extern(name: string, type: Type): string {
+function emit_extern(name: string, type: Type): string {
   return name;
 }
 
@@ -84,7 +87,7 @@ function glsl_emit_extern(name: string, type: Type): string {
 // individual values when they persist.
 
 // A helper function that unwraps array types. Non-array types are unaffected.
-function _unwrap_array(t: Type): Type {
+export function _unwrap_array(t: Type): Type {
   if (t instanceof InstanceType) {
     if (t.cons === ARRAY) {
       // Get the inner type: the array element type.
@@ -95,7 +98,7 @@ function _unwrap_array(t: Type): Type {
 }
 
 // The type mixin itself.
-function gl_type_mixin(fsuper: TypeCheck): TypeCheck {
+export function type_mixin(fsuper: TypeCheck): TypeCheck {
   let type_rules = complete_visit(fsuper, {
     // The goal here is to take lookups into prior stages of type `X Array`
     // and turn them into type `X`.
@@ -136,8 +139,8 @@ function gl_type_mixin(fsuper: TypeCheck): TypeCheck {
 
 // The core compiler rules for emitting GLSL code.
 
-type GLSLCompile = (tree: SyntaxNode) => string;
-function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
+export type Compile = (tree: SyntaxNode) => string;
+export function compile_rules(fself: Compile, ir: CompilerIR):
   ASTVisit<void, string>
 {
   return {
@@ -173,7 +176,7 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      return emit_lookup(ir, fself, glsl_emit_extern, tree);
+      return emit_lookup(ir, fself, emit_extern, tree);
     },
 
     visit_unary(tree: UnaryNode, param: void): string {
@@ -256,7 +259,7 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
     visit_extern(tree: ExternNode, param: void): string {
       let defid = ir.defuse[tree.id];
       let name = ir.externs[defid];
-      return glsl_emit_extern(name, null);
+      return emit_extern(name, null);
     },
 
     visit_persist(tree: PersistNode, param: void): string {
@@ -266,21 +269,21 @@ function glsl_compile_rules(fself: GLSLCompile, ir: CompilerIR):
   };
 }
 
-function get_glsl_compile(ir: CompilerIR): GLSLCompile {
-  let rules = glsl_compile_rules(f, ir);
+export function get_compile(ir: CompilerIR): Compile {
+  let rules = compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
   return f;
 }
 
-function emit_glsl_decl(qualifier: string, type: string, name: string) {
+function emit_decl(qualifier: string, type: string, name: string) {
   return qualifier + " " + type + " " + name + ";";
 }
 
-function emit_glsl_type(type: Type): string {
+function emit_type(type: Type): string {
   if (type instanceof PrimitiveType) {
-    let name = GLSL_TYPE_NAMES[type.name];
+    let name = TYPE_NAMES[type.name];
     if (name === undefined) {
       throw "error: primitive type " + type.name + " unsupported in GLSL";
     } else {
@@ -297,7 +300,7 @@ function emit_glsl_type(type: Type): string {
 // - `kind`, indicating whether this is an vertex (outer) shader program or a
 //   fragment (inner) shader
 // - `out`, indicating whether the variable is going into or out of the stage
-function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
+function persist_decl(ir: CompilerIR, esc: ProgEscape,
     kind: ProgKind, out: boolean): string {
   let [type, _] = ir.type_table[esc.body.id];
 
@@ -341,10 +344,10 @@ function glsl_persist_decl(ir: CompilerIR, esc: ProgEscape,
     throw "error: unknown shader kind";
   }
 
-  return emit_glsl_decl(qual, emit_glsl_type(decl_type), persistsym(esc.id));
+  return emit_decl(qual, emit_type(decl_type), persistsym(esc.id));
 }
 
-function glsl_compile_prog(compile: GLSLCompile,
+export function compile_prog(compile: Compile,
     ir: CompilerIR, progid: number): string {
   // TODO compile the functions
 
@@ -359,7 +362,7 @@ function glsl_compile_prog(compile: GLSLCompile,
   // Declare `in` variables for the persists.
   let decls: string[] = [];
   for (let esc of prog.persist) {
-    decls.push(glsl_persist_decl(ir, esc, kind, false));
+    decls.push(persist_decl(ir, esc, kind, false));
   }
 
   // Declare `out` variables for the persists in the subprogram. There can be
@@ -370,7 +373,7 @@ function glsl_compile_prog(compile: GLSLCompile,
     let subprog = ir.progs[prog.quote_children[0]];
     for (let esc of subprog.persist) {
       if (esc !== undefined) {
-        decls.push(glsl_persist_decl(ir, esc, kind, true));
+        decls.push(persist_decl(ir, esc, kind, true));
       }
     }
   }
@@ -379,7 +382,7 @@ function glsl_compile_prog(compile: GLSLCompile,
   let local_decls: string[] = [];
   for (let id of prog.bound) {
     let [t, _] = ir.type_table[id];
-    local_decls.push(`${emit_glsl_type(t)} ${varsym(id)};\n`);
+    local_decls.push(`${emit_type(t)} ${varsym(id)};\n`);
   }
   let local_decls_s = local_decls.join("");
 
@@ -407,13 +410,13 @@ function glsl_compile_prog(compile: GLSLCompile,
 //   other program or whose containing program is a function program.
 // - A render program is any function program.
 // - Anything else is an ordinary program.
-enum ProgKind {
+export enum ProgKind {
   ordinary,
   render,
   vertex,
   fragment,
 }
-function prog_kind(ir: CompilerIR, progid: number): ProgKind {
+export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   let prog = ir.progs[progid];
   if (prog.annotation === "f") {
     return ProgKind.render;
@@ -430,4 +433,6 @@ function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   } else {
     return ProgKind.ordinary;
   }
+}
+
 }

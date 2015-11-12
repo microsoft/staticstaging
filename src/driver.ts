@@ -55,7 +55,7 @@ function _types(config: DriverConfig): TypeMap {
 function _check(config: DriverConfig): Gen<TypeCheck> {
   let check = gen_check;
   if (config.webgl) {
-    check = compose(gl_type_mixin, check);
+    check = compose(GLSL.type_mixin, check);
   }
   return check;
 }

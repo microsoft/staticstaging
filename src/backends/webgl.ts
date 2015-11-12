@@ -159,7 +159,7 @@ function emit_shader_setup(ir: CompilerIR, progid: number) {
   // Get the variable locations.
   for (let esc of vertex_prog.persist) {
     let [type, _] = ir.type_table[esc.body.id];
-    let element_type = _unwrap_array(type);
+    let element_type = GLSL._unwrap_array(type);
     let attribute = false;  // As opposed to uniform.
     if (element_type != type) {
       // An array type indicates an attribute.
@@ -232,10 +232,10 @@ function emit_shader_binding(emit: JS.Compile, ir: CompilerIR,
 
 // Check for our intrinsics.
 function vtx_expr(tree: ExpressionNode) {
-  return is_intrinsic_call(tree, "vtx");
+  return GLSL.is_intrinsic_call(tree, "vtx");
 }
 function render_expr(tree: ExpressionNode) {
-  return is_intrinsic_call(tree, "render");
+  return GLSL.is_intrinsic_call(tree, "render");
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
@@ -270,7 +270,7 @@ function compile_rules(fself: JS.Compile, ir: CompilerIR):
 }
 
 // Tie the recursion knot.
-function get_compile(ir: CompilerIR): GLSLCompile {
+function get_compile(ir: CompilerIR): JS.Compile {
   let rules = compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
@@ -281,7 +281,7 @@ function get_compile(ir: CompilerIR): GLSLCompile {
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 export function emit(ir: CompilerIR): string {
   let _jscompile = get_compile(ir);
-  let _glslcompile = get_glsl_compile(ir);
+  let _glslcompile = GLSL.get_compile(ir);
 
   // Compile each program.
   // TODO This loop duplicates the JS one.
@@ -290,7 +290,7 @@ export function emit(ir: CompilerIR): string {
     if (prog !== undefined) {
       if (prog.annotation == "s") {
         // A shader program.
-        let code = glsl_compile_prog(_glslcompile, ir, prog.id);
+        let code = GLSL.compile_prog(_glslcompile, ir, prog.id);
         decls += JS.emit_var(progsym(prog.id), code, true) + "\n";
 
       } else {
@@ -305,7 +305,7 @@ export function emit(ir: CompilerIR): string {
   let setup_parts: string[] = [];
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      if (prog_kind(ir, prog.id) === ProgKind.vertex) {
+      if (GLSL.prog_kind(ir, prog.id) === GLSL.ProgKind.vertex) {
         setup_parts.push(emit_shader_setup(ir, prog.id));
       }
     }
