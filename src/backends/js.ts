@@ -295,6 +295,29 @@ function get_js_compile(ir: CompilerIR): JSCompile {
 }
 
 
+// Common utilities for emitting Scopes (Procs and Progs).
+
+// Compile all the Procs who are children of a given scope.
+function _emit_procs(compile: JSCompile, ir: CompilerIR, scope: number) {
+  let out = "";
+  for (let subproc of ir.procs) {
+    if (subproc !== undefined) {
+      if (subproc.parent === scope) {
+        out += js_emit_proc(compile, ir, subproc);
+        out += "\n";
+      }
+    }
+  }
+  return out;
+}
+
+/*
+function _bound_vars(ir: CompilerIR, scope: number) {
+  return names;
+}
+*/
+
+
 // Compiling Procs.
 
 // Compile a single Proc to a JavaScript function definition. If the Proc is
@@ -334,15 +357,7 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
   }
 
   // Recursively emit all the functions contained within this one.
-  let out = "";
-  for (let subproc of ir.procs) {
-    if (subproc !== undefined) {
-      if (subproc.parent === proc.id) {
-        out += js_emit_proc(compile, ir, subproc);
-        out += "\n";
-      }
-    }
-  }
+  let out = _emit_procs(compile, ir, proc.id);
 
   // Declaration for this function declaration.
   let body = emit_body(compile, proc.body);
@@ -363,15 +378,7 @@ function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
     prog: Prog): string
 {
   // Compile each function defined in this quote.
-  let procs = "";
-  for (let proc of ir.procs) {
-    if (proc !== undefined) {
-      if (proc.parent === prog.id) {
-        procs += js_emit_proc(compile, ir, proc);
-        procs += "\n";
-      }
-    }
-  }
+  let procs = _emit_procs(compile, ir, prog.id);
 
   // Get the quote's local (bound) variables.
   let localnames: string[] = [];
@@ -394,14 +401,7 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
     prog: Prog): string
 {
   // Emit functions in the quote. These become global functions.
-  let procs = "";
-  for (let proc of ir.procs) {
-    if (proc !== undefined) {
-      if (proc.quote_parent === prog.id) {
-        procs += js_emit_proc(compile, ir, proc) + "\n";
-      }
-    }
-  }
+  let procs = _emit_procs(compile, ir, prog.id);
 
   // Get the quote's local (bound) variables.
   let localnames: string[] = [];
