@@ -175,38 +175,7 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
     },
 
     visit_quote(tree: QuoteNode, param: void): string {
-      if (tree.annotation === "f") {
-        return emit_quote_func(fself, ir, tree.id);
-      } else {
-        // An ordinary string-eval quote, with the full power of splicing.
-
-        // Compile each persist in this quote and pack them into a dictionary.
-        let persist_pairs: string[] = [];
-        for (let esc of ir.progs[tree.id].persist) {
-          let esc_expr = fself(esc.body);
-          persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
-        }
-
-        // Include free variables as persists.
-        for (let fv of ir.progs[tree.id].free) {
-          persist_pairs.push(varsym(fv) + ": " + varsym(fv));
-        }
-
-        // Create a pre-spliced code value.
-        let pers_list = `{ ${persist_pairs.join(", ")} }`;
-        let code_expr = `{ prog: ${progsym(tree.id)}, persist: ${pers_list} }`;
-
-        // Compile each spliced escape expression. Then, call our runtime to
-        // splice it into the code value.
-        for (let esc of ir.progs[tree.id].splice) {
-          let esc_expr = fself(esc.body);
-          code_expr = "splice(" + code_expr + ", " +
-            esc.id + ", " +
-            paren(esc_expr) + ")";
-        }
-
-        return code_expr;
-      }
+      return emit_quote(fself, ir, tree.id);
     },
 
     visit_escape(tree: EscapeNode, param: void): string {
@@ -296,6 +265,21 @@ function _free_vars(scope: Scope) {
   return names;
 }
 
+// Emit a function expression as a closure.
+function emit_func(compile: Compile, ir: CompilerIR, scopeid: number):
+  string
+{
+  let args = _free_vars(ir.procs[scopeid]);
+
+  // The function captures its closed-over references and any persists
+  // used inside.
+  for (let p of ir.procs[scopeid].persist) {
+    args.push(persistsym(p.id));
+  }
+
+  return _emit_closure(procsym(scopeid), args);
+}
+
 // Emit a quote as a function closure (i.e., for an f<> quote).
 function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
   string
@@ -312,19 +296,46 @@ function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
   return _emit_closure(progsym(scopeid), args);
 }
 
-// Emit a function expression as a closure.
-function emit_func(compile: Compile, ir: CompilerIR, scopeid: number):
+// Emit a quote as a full code value (which supports splicing).
+function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
   string
 {
-  let args = _free_vars(ir.procs[scopeid]);
-
-  // The function captures its closed-over references and any persists
-  // used inside.
-  for (let p of ir.procs[scopeid].persist) {
-    args.push(persistsym(p.id));
+  // Compile each persist in this quote and pack them into a dictionary.
+  let persist_pairs: string[] = [];
+  for (let esc of ir.progs[scopeid].persist) {
+    let esc_expr = compile(esc.body);
+    persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
   }
 
-  return _emit_closure(procsym(scopeid), args);
+  // Include free variables as persists.
+  for (let fv of ir.progs[scopeid].free) {
+    persist_pairs.push(varsym(fv) + ": " + varsym(fv));
+  }
+
+  // Create a pre-spliced code value.
+  let pers_list = `{ ${persist_pairs.join(", ")} }`;
+  let code_expr = `{ prog: ${progsym(scopeid)}, persist: ${pers_list} }`;
+
+  // Compile each spliced escape expression. Then, call our runtime to
+  // splice it into the code value.
+  for (let esc of ir.progs[scopeid].splice) {
+    let esc_expr = compile(esc.body);
+    code_expr = "splice(" + code_expr + ", " +
+      esc.id + ", " +
+      paren(esc_expr) + ")";
+  }
+
+  return code_expr;
+}
+
+// Emit a quote. The kind of JavaScript value depends on the annotation.
+function emit_quote(compile: Compile, ir: CompilerIR, scopeid: number): string
+{
+  if (ir.progs[scopeid].annotation === "f") {
+    return emit_quote_func(compile, ir, scopeid);
+  } else {
+    return emit_quote_eval(compile, ir, scopeid);
+  }
 }
 
 
