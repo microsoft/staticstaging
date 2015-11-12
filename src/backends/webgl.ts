@@ -197,12 +197,56 @@ function emit_shader_setup(ir: CompilerIR, progid: number): string {
   return out;
 }
 
-function emit_shader_binding(emit: JS.Compile, ir: CompilerIR,
+// Emit a single WebGL binding call for a uniform or attribute. Takes the
+// value to bind as a pre-compiled JavaScript string. You also provide the ID
+// of the value being sent and the ID of the variable in the shader.
+function emit_param_binding(ir: CompilerIR, valueid: number, varid: number,
+    value: string): string
+{
+  let [type, _] = ir.type_table[valueid];
+
+  // Primitive types are bound as uniforms.
+  if (type instanceof PrimitiveType) {
+    let fname = GL_UNIFORM_FUNCTIONS[type.name];
+    if (fname === undefined) {
+      throw "error: unsupported uniform type " + type.name;
+    }
+
+    let is_matrix = fname.indexOf("Matrix") !== -1;
+    let out = `gl.${fname}(${locsym(varid)}`;
+    if (is_matrix) {
+      // Transpose parameter.
+      out += ", false";
+    }
+    out += `, ${paren(value)})`;
+    return out;
+
+  // Array types are bound as attributes.
+  } else if (type instanceof InstanceType && type.cons === ARRAY) {
+    let t = type.arg;
+    if (t instanceof PrimitiveType) {
+      // Call our runtime function to bind the attribute. The parameters are
+      // the WebGL context, the attribute location, and the buffer.
+      return `bind_attribute(gl, ${locsym(varid)}, ${paren(value)})`;
+      // TODO Actually use the type.
+    } else {
+      throw "error: attributes must be primitive types";
+    }
+
+  } else {
+    throw "error: persisted values must be primitive or array types";
+  }
+}
+
+// Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
+// shader). This includes both the `useProgram` call and the `bindX` calls to
+// set up the uniforms and attributes.
+function emit_shader_binding(compile: JS.Compile, ir: CompilerIR,
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
   // Bind the shader program.
-  let out = "gl.useProgram(" + shadersym(vertex_prog.id) + ")";
+  let out = `gl.useProgram(${shadersym(vertex_prog.id)})`;
 
   // Emit and bind the uniforms.
   // Because of our desugaring approach, all uniforms and attributes will
@@ -210,43 +254,8 @@ function emit_shader_binding(emit: JS.Compile, ir: CompilerIR,
   // jump directly from the fragment stage to the host, we'll need to do some
   // more work here.
   for (let esc of vertex_prog.persist) {
-    out += ",\n";
-
-    let value = emit(esc.body);
-    let [type, _] = ir.type_table[esc.body.id];
-
-    // Primitive types are bound as uniforms.
-    if (type instanceof PrimitiveType) {
-      let fname = GL_UNIFORM_FUNCTIONS[type.name];
-      if (fname === undefined) {
-        throw "error: unsupported uniform type " + type.name;
-      }
-
-      let is_matrix = fname.indexOf("Matrix") !== -1;
-      out += `gl.${fname}(${locsym(esc.id)}`;
-      if (is_matrix) {
-        // Transpose parameter.
-        out += ", false";
-      }
-      out += `, ${paren(value)})`;
-
-    // Array types are bound as attributes.
-    } else if (type instanceof InstanceType && type.cons === ARRAY) {
-      let t = type.arg;
-      if (t instanceof PrimitiveType) {
-        // Call our runtime function to bind the attribute. The parameters are
-        // the WebGL context, the attribute location, and the buffer.
-        out += "bind_attribute(gl, " +
-          locsym(esc.id) + ", " +
-          paren(value) + ")";
-        // TODO Actually use the type.
-      } else {
-        throw "error: attributes must be primitive types";
-      }
-
-    } else {
-      throw "error: persisted values must be primitive or array types";
-    }
+    let value = compile(esc.body);
+    out += ",\n" + emit_param_binding(ir, esc.body.id, esc.id, value);
   }
 
   return out;
