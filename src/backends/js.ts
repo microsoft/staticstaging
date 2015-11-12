@@ -243,7 +243,8 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
-function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
+function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
+    wrapped=false): string
 {
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
@@ -286,8 +287,11 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
     }
   }
 
-  // Function declaration.
+  // Declaration for this function declaration.
   let body = emit_body(compile, proc.body);
+  if (wrapped) {
+    out += "return /* main */ ";
+  }
   out += emit_js_fun(name, argnames, localnames, body);
 
   return out;

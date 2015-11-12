@@ -307,8 +307,7 @@ function webgl_compile(ir: CompilerIR): string {
   }
 
   // The result of the wrapper is the main function.
-  // TODO TODO this "return" is broken
-  proc_decls += 'return /* main */ ' + js_emit_proc(_jscompile, ir, ir.main);
+  proc_decls += js_emit_proc(_jscompile, ir, ir.main, true);
 
   // For each *shader* quotation (i.e., top-level shader quote), generate the
   // setup code.
