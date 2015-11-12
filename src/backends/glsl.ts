@@ -377,10 +377,10 @@ export function compile_prog(compile: Compile,
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
     for (let esc of subprog.persist) {
-      decls.push(persist_decl(ir, progid, esc.body.id, esc.id, kind, true));
+      decls.push(persist_decl(ir, subprog.id, esc.body.id, esc.id, kind, true));
     }
     for (let fv of subprog.free) {
-      decls.push(persist_decl(ir, progid, fv, fv, kind, true));
+      decls.push(persist_decl(ir, subprog.id, fv, fv, kind, true));
     }
   }
 
