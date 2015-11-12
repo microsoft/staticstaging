@@ -281,27 +281,20 @@ function webgl_compile(ir: CompilerIR): string {
   let _jscompile = get_webgl_compile(ir);
   let _glslcompile = get_glsl_compile(ir);
 
-  // Compile each program to a string.
+  // Compile each program.
+  // TODO This loop duplicates the JS one.
   let prog_decls = "";
   let proc_decls = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      if (prog.annotation == "f") {
-        // A function quote. Compile to a JavaScript function.
-        proc_decls += js_emit_progfunc(_jscompile, ir, prog.id) + "\n";
+      if (prog.annotation == "s") {
+        // A shader program.
+        let code = glsl_compile_prog(_glslcompile, ir, prog.id);
+        prog_decls += emit_js_var(progsym(prog.id), code, true) + "\n";
 
       } else {
-        // Other quote. Compiled normally, to a string.
-
-        let code: string;
-        if (prog.annotation === "s") {
-          // A shader program.
-          code = glsl_compile_prog(_glslcompile, ir, prog.id);
-        } else {
-          // Ordinary JavaScript quotation.
-          code = js_emit_prog(_jscompile, ir, prog);
-        }
-        prog_decls += emit_js_var(progsym(prog.id), code, true) + "\n";
+        // Ordinary JavaScript.
+        prog_decls += js_emit_prog(_jscompile, ir, prog);
       }
     }
   }

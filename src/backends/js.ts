@@ -333,7 +333,7 @@ function emit_js_var(name: string, value: any, verbose=false): string {
 // Compile a quotation (a.k.a. Prog) to a string. This string should be
 // embedded in JavaScript so it can be `eval`ed. Also compiles the Procs that
 // appear inside this quotation.
-function js_emit_prog(compile: JSCompile, ir: CompilerIR, prog: Prog): string
+function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR, prog: Prog): string
 {
   // Compile each function defined in this quote.
   let procs_str = "";
@@ -359,56 +359,11 @@ function js_emit_prog(compile: JSCompile, ir: CompilerIR, prog: Prog): string
   return procs_str + code_wrapped;
 }
 
-// Like `pretty_value`, but for values in the *compiled* JavaScript world.
-function pretty_js_value(v: any): string {
-  if (typeof v == 'number') {
-    return v.toString();
-  } else if (v.proc !== undefined) {
-    return "(fun)";
-  } else if (v.prog !== undefined) {
-    // It is a non-goal of this backend to be able to pretty-print quotations.
-    // You can use the interpreter if you want that.
-    return "<quote>";
-  } else {
-    throw "error: unknown value kind";
-  }
-}
-
-// Compile the IR to a complete JavaScript program.
-function jscompile(ir: CompilerIR): string {
-  let _jscompile = get_js_compile(ir);
-
-  // Compile each program to a string.
-  let out = "";
-  for (let prog of ir.progs) {
-    if (prog !== undefined) {
-      if (prog.annotation === "f") {
-        // A function quote. Compile to a JavaScript function.
-        out += js_emit_progfunc(_jscompile, ir, prog.id) + "\n";
-
-      } else {
-        // An ordinary quote. Compile to a string.
-        let code = js_emit_prog(_jscompile, ir, prog);
-        let prog_var = emit_js_var(progsym(prog.id), code, true);
-        out += prog_var + "\n";
-      }
-    }
-  }
-
-  // Emit and invoke the main (anonymous) function.
-  out += js_emit_proc(_jscompile, ir, ir.main);
-  out += "()";
-
-  return out;
-}
-
 // Emit a program as a JavaScript function declaration. This works when the
 // program has no splices, and it avoids the overhead of `eval`.
-function js_emit_progfunc(compile: JSCompile, ir: CompilerIR,
-    progid: number): string
+function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
+    prog: Prog): string
 {
-  let prog = ir.progs[progid];
-
   // Emit functions in the quote. These become global functions.
   let procs = "";
   for (let proc of ir.procs) {
@@ -443,6 +398,58 @@ function js_emit_progfunc(compile: JSCompile, ir: CompilerIR,
   let func = emit_js_fun(progsym(prog.id), argnames, localnames, code);
 
   return procs + func;
+}
+
+// Emit a JavaScript Prog. The backend depends on the annotation.
+function js_emit_prog(compile: JSCompile, ir: CompilerIR,
+    prog: Prog): string
+{
+  if (prog.annotation === "f") {
+    // A function quote. Compile to a JavaScript function.
+    return js_emit_prog_func(compile, ir, prog);
+
+  } else {
+    // An ordinary quote. Compile to a string.
+    // TODO move this into js_emit_prog_eval
+    let code = js_emit_prog_eval(compile, ir, prog);
+    let prog_var = emit_js_var(progsym(prog.id), code, true);
+    return prog_var;
+  }
+}
+
+// Like `pretty_value`, but for values in the *compiled* JavaScript world.
+function pretty_js_value(v: any): string {
+  if (typeof v == 'number') {
+    return v.toString();
+  } else if (v.proc !== undefined) {
+    return "(fun)";
+  } else if (v.prog !== undefined) {
+    // It is a non-goal of this backend to be able to pretty-print quotations.
+    // You can use the interpreter if you want that.
+    return "<quote>";
+  } else {
+    throw "error: unknown value kind";
+  }
+}
+
+// Compile the IR to a complete JavaScript program.
+function jscompile(ir: CompilerIR): string {
+  let _jscompile = get_js_compile(ir);
+
+  let out = "";
+
+  // Compile each program.
+  for (let prog of ir.progs) {
+    if (prog !== undefined) {
+      out += js_emit_prog(_jscompile, ir, prog);
+    }
+  }
+
+  // Emit and invoke the main (anonymous) function.
+  out += js_emit_proc(_jscompile, ir, ir.main);
+  out += "()";
+
+  return out;
 }
 
 // Emit a reference to a quote that has been declared as a JavaScript
