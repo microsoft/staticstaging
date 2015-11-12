@@ -89,7 +89,7 @@ export function emit_fun(name: string, argnames: string[],
 // Turn a value into a JavaScript string literal. Mutli-line strings become
 // nice, readable multi-line concatenations. (This will be obviated by ES6's
 // template strings.)
-export function emit_string(value: any) {
+export function emit_string(value: string) {
   if (typeof(value) === "string") {
     let parts: string[] = [];
     let chunks = value.split("\n");
@@ -108,14 +108,15 @@ export function emit_string(value: any) {
 
 // Emit a JavaScript variable declaration. If `verbose`, then there will be a
 // newline between the name and the beginning of the initialization value.
-export function emit_var(name: string, value: any, verbose=false): string {
+export function emit_var(name: string, value: string, verbose=false): string {
   let out = "var " + name + " =";
   if (verbose) {
     out += "\n";
   } else {
     out += " ";
   }
-  out += emit_string(value) + ";";
+  out += value;
+  out += ";";
   return out;
 }
 
@@ -417,7 +418,7 @@ function emit_prog_eval(compile: Compile, ir: CompilerIR,
   code += "()";
 
   // Wrap the whole thing in a variable declaration.
-  return emit_var(progsym(prog.id), code, true);
+  return emit_var(progsym(prog.id), emit_string(code), true);
 }
 
 // Emit a program as a JavaScript function declaration. This works when the

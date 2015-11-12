@@ -147,29 +147,42 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
   return [vertex_prog, fragment_prog];
 }
 
+// Emit the JavaScript variable declaration for a *location value* pointing to
+// a shader variable. The `scopeid` is the ID of the quote for the shader
+// where the variable is located. `valueid` indicates the value being
+// communicated, and `varid` is the ID of the variable as the shader sees it.
+// These are equal for free variables (cross-stage references), but correspond
+// to the quote body and the quote for explicit persists.
+function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
+    varid: number): string
+{
+  let [type, _] = ir.type_table[valueid];
+  let element_type = GLSL._unwrap_array(type);
+  let attribute = false;  // As opposed to uniform.
+  if (element_type != type) {
+    // An array type indicates an attribute.
+    attribute = true;
+  }
+
+  // Emit the WebGL call to get the location.
+  let func = attribute ? "getAttribLocation" : "getUniformLocation";
+  let shader = shadersym(scopeid);
+  let varname = JS.emit_string(persistsym(varid));
+  return JS.emit_var(locsym(varid), `gl.${func}(${shader}, ${varname})`);
+}
+
 function emit_shader_setup(ir: CompilerIR, progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
   // Compile and link the shader program.
-  let out = "var " + shadersym(vertex_prog.id) +
-    " = get_shader(gl, " +
-    progsym(vertex_prog.id) + ", " +
-    progsym(fragment_prog.id) + ");\n";
+  let out = JS.emit_var(
+    shadersym(vertex_prog.id),
+    `get_shader(gl, ${progsym(vertex_prog.id)}, ${progsym(fragment_prog.id)})`
+  ) + "\n";
 
   // Get the variable locations.
   for (let esc of vertex_prog.persist) {
-    let [type, _] = ir.type_table[esc.body.id];
-    let element_type = GLSL._unwrap_array(type);
-    let attribute = false;  // As opposed to uniform.
-    if (element_type != type) {
-      // An array type indicates an attribute.
-      attribute = true;
-    }
-
-    let func = attribute ? "getAttribLocation" : "getUniformLocation";
-    out += "var " + locsym(esc.id) + " = gl." + func + "(" +
-      shadersym(vertex_prog.id) + ", " +
-      JS.emit_string(persistsym(esc.id)) + ");\n";
+    out += emit_loc_var(ir, vertex_prog.id, esc.body.id, esc.id) + "\n";
   }
 
   return out;
@@ -290,7 +303,7 @@ export function emit(ir: CompilerIR): string {
       if (prog.annotation == "s") {
         // A shader program.
         let code = GLSL.compile_prog(_glslcompile, ir, prog.id);
-        out += JS.emit_var(progsym(prog.id), code, true) + "\n";
+        out += JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
 
       } else {
         // Ordinary JavaScript.
