@@ -180,12 +180,12 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
     },
 
     visit_assign(tree: AssignNode, param: void): string {
-      let vs = (id => shadervarsym(nearest_quote(ir, tree.id), id));
+      let vs = (id:number) => shadervarsym(nearest_quote(ir, tree.id), id);
       return emit_assign(ir, fself, tree, vs);
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      let vs = (id => shadervarsym(nearest_quote(ir, tree.id), id));
+      let vs = (id:number) => shadervarsym(nearest_quote(ir, tree.id), id);
       return emit_lookup(ir, fself, emit_extern, tree, vs);
     },
 
@@ -229,16 +229,22 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
         if (arg.tag === "quote") {
           let quote = <QuoteNode> arg;
 
-          // Assign to all the variables corresponding persists for the
-          // fragment shader's quotation.
           // TODO Maybe this should move to the end of emission instead of the
           // call rule.
+
+          // Assign to all the variables corresponding to persists and free
+          // variables for the fragment shader's quotation.
           let subprog = ir.progs[quote.id];
           let assignments: string[] = [];
           for (let esc of subprog.persist) {
-            let varname = shadervarsym(tree.id, esc.id);
+            let varname = shadervarsym(subprog.id, esc.id);
             let value = fself(esc.body);
-            assignments.push(varname + " = " + paren(value));
+            assignments.push(`${varname} = ${paren(value)}`);
+          }
+          for (let fv of subprog.free) {
+            let destvar = shadervarsym(subprog.id, fv);
+            let srcvar = shadervarsym(ir.progs[subprog.quote_parent].id, fv);
+            assignments.push(`${destvar} = ${srcvar}`);
           }
 
           if (assignments.length) {
