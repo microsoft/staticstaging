@@ -3,6 +3,8 @@
 /// <reference path="util.ts" />
 /// <reference path="pretty.ts" />
 
+module Interp {
+
 // Dynamic syntax.
 
 type Value = number | Code | Fun | Extern;
@@ -430,13 +432,15 @@ function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers,
 }
 
 // Helper to execute to a value in an (optionally) empty initial environment.
-function interpret(program: SyntaxNode, e: Env = {}, p: Pers = []): Value {
+export function interpret(program: SyntaxNode, e: Env = {}, p: Pers = []):
+  Value
+{
   let [v, _] = interp(program, e, p);
   return v;
 }
 
 // Format a resulting value as a string.
-function pretty_value(v: Value): string {
+export function pretty_value(v: Value): string {
   if (typeof v == 'number') {
     return v.toString();
   } else if (v instanceof Code) {
@@ -448,4 +452,6 @@ function pretty_value(v: Value): string {
   } else {
     throw "error: unknown value kind " + typeof(v);
   }
+}
+
 }

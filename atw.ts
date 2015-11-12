@@ -63,7 +63,7 @@ function main() {
   }
 
   // Configure the driver.
-  let config: DriverConfig = {
+  let config: Driver.Config = {
     parser: parser,
     webgl: webgl,
 
@@ -79,12 +79,12 @@ function main() {
 
   // Read the source file and run the driver.
   read_string(fn, function (source) {
-    driver_frontend(config, source, fn, function (tree, types) {
+    Driver.frontend(config, source, fn, function (tree, types) {
       if (compile) {
         // Compiler.
-        driver_compile(config, tree, types, function (code) {
+        Driver.compile(config, tree, types, function (code) {
           if (execute) {
-            driver_execute(config, code, function (res) {
+            Driver.execute(config, code, function (res) {
               console.log(res);
             });
           } else {
@@ -94,7 +94,7 @@ function main() {
 
       } else {
         // Interpreter.
-        driver_interpret(config, tree, types, function (res) {
+        Driver.interpret(config, tree, types, function (res) {
           console.log(res);
         });
       }

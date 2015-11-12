@@ -6,19 +6,21 @@
 /// <reference path="backends/js.ts" />
 /// <reference path="backends/webgl.ts" />
 
+module Driver {
+
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the
 // steps using a configuration object that handles certain events. The steps
 // are:
 //
-// - `driver_frontend`: Parse, typecheck, and desugar. This needs to be done
+// - `frontend`: Parse, typecheck, and desugar. This needs to be done
 //   regardless of whether you want to compile or interpret.
-// - `driver_interpret`: More or less what it sounds like.
-// - `driver_compile`: Compile the checked code to executable code.
-// - `driver_execute`: Run the compiled code, hopefully getting the same
+// - `interpret`: More or less what it sounds like.
+// - `compile`: Compile the checked code to executable code.
+// - `execute`: Run the compiled code, hopefully getting the same
 //   result as the interpreter would.
 
-interface DriverConfig {
+export interface Config {
   parser: any,  // The parser object from PEG.js.
   webgl: boolean,
 
@@ -28,7 +30,7 @@ interface DriverConfig {
   log: (...msg: any[]) => void,
 }
 
-function _intrinsics(config: DriverConfig): TypeMap {
+function _intrinsics(config: Config): TypeMap {
   if (config.webgl) {
     return WebGL.INTRINSICS;
   } else {
@@ -36,7 +38,7 @@ function _intrinsics(config: DriverConfig): TypeMap {
   }
 }
 
-function _runtime(config: DriverConfig): string {
+function _runtime(config: Config): string {
   let runtime = JS.RUNTIME + "\n";
   if (config.webgl) {
     runtime += WebGL.RUNTIME + "\n";
@@ -44,7 +46,7 @@ function _runtime(config: DriverConfig): string {
   return runtime;
 }
 
-function _types(config: DriverConfig): TypeMap {
+function _types(config: Config): TypeMap {
   if (config.webgl) {
     return assign({}, BUILTIN_TYPES, GL_TYPES);
   } else {
@@ -52,7 +54,7 @@ function _types(config: DriverConfig): TypeMap {
   }
 }
 
-function _check(config: DriverConfig): Gen<TypeCheck> {
+function _check(config: Config): Gen<TypeCheck> {
   let check = gen_check;
   if (config.webgl) {
     check = compose(GLSL.type_mixin, check);
@@ -60,7 +62,7 @@ function _check(config: DriverConfig): Gen<TypeCheck> {
   return check;
 }
 
-function driver_frontend(config: DriverConfig, source: string,
+export function frontend(config: Config, source: string,
     filename: string,
     checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
@@ -105,7 +107,7 @@ function driver_frontend(config: DriverConfig, source: string,
   checked(sugarfree, type_table);
 }
 
-function driver_compile(config: DriverConfig, tree: SyntaxNode,
+export function compile(config: Config, tree: SyntaxNode,
     type_table: TypeTable, compiled: (code: string) => void)
 {
   let ir: CompilerIR;
@@ -137,27 +139,29 @@ function driver_compile(config: DriverConfig, tree: SyntaxNode,
   compiled(jscode);
 }
 
-function driver_interpret(config: DriverConfig, tree: SyntaxNode,
+export function interpret(config: Config, tree: SyntaxNode,
     type_table: TypeTable, executed: (result: string) => void)
 {
-  let val = interpret(tree);
-  executed(pretty_value(val));
+  let val = Interp.interpret(tree);
+  executed(Interp.pretty_value(val));
 }
 
 // Get the complete, `eval`-able JavaScript program, including the runtime
 // code.
-function driver_full_code(config: DriverConfig, jscode: string): string {
+export function full_code(config: Config, jscode: string): string {
   return _runtime(config) + jscode;
 }
 
-function driver_execute(config: DriverConfig, jscode: string,
+export function execute(config: Config, jscode: string,
     executed: (result: string) => void)
 {
-  let res = scope_eval(driver_full_code(config, jscode));
+  let res = scope_eval(full_code(config, jscode));
   if (config.webgl) {
     throw "error: driver can't execute WebGL programs";
   }
 
   // Pass a formatted value.
   executed(JS.pretty_value(res));
+}
+
 }

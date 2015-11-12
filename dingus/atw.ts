@@ -135,7 +135,7 @@ function atw_run(code: string, mode: string)
   // Configure the driver to store a bunch of results.
   let error: string = null;
   let type: string = null;
-  let config: DriverConfig = {
+  let config: Driver.Config = {
     parser: parser,
     webgl: mode === "webgl",
 
@@ -164,23 +164,23 @@ function atw_run(code: string, mode: string)
   let jscode: string = null;
   let ast: SyntaxNode = null;
   let glcode: string = null;
-  driver_frontend(config, code, null, function (tree, types) {
+  Driver.frontend(config, code, null, function (tree, types) {
     ast = tree;
 
     if (mode === "interp") {
       // Interpreter.
-      driver_interpret(config, tree, types, function (r) {
+      Driver.interpret(config, tree, types, function (r) {
         res = r;
       });
 
     } else {
       // Compiler.
-      driver_compile(config, tree, types, function (code) {
+      Driver.compile(config, tree, types, function (code) {
         jscode = code;
         if (mode === "webgl") {
-          glcode = driver_full_code(config, jscode);
+          glcode = Driver.full_code(config, jscode);
         } else {
-          driver_execute(config, code, function (r) {
+          Driver.execute(config, code, function (r) {
             res = r;
           });
         }
