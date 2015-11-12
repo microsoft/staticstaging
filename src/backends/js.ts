@@ -328,6 +328,12 @@ function _bound_vars(ir: CompilerIR, scope: Scope) {
 function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
     wrapped=false): string
 {
+  // Declare local (bound) variables.
+  let localnames = _bound_vars(ir, proc);
+
+  // Emit all children functions.
+  let procs = _emit_procs(compile, ir, proc.id);
+
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
   let argnames: string[] = [];
@@ -341,10 +347,6 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
     argnames.push(persistsym(p.id));
   }
 
-  // We also need the names of the non-parameter bound variables so we can
-  // declare them.
-  let localnames = _bound_vars(ir, proc);
-
   // Check whether this is main (and hence anonymous).
   let name: string;
   if (proc.id === null) {
@@ -353,17 +355,15 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
     name = procsym(proc.id);
   }
 
-  // Recursively emit all the functions contained within this one.
-  let out = _emit_procs(compile, ir, proc.id);
-
   // Declaration for this function declaration.
   let body = emit_body(compile, proc.body);
+  let func = "";
   if (wrapped) {
-    out += "return /* main */ ";
+    func = "return /* main */ ";
   }
-  out += emit_js_fun(name, argnames, localnames, body);
+  func += emit_js_fun(name, argnames, localnames, body);
 
-  return out;
+  return procs + func;
 }
 
 
@@ -374,11 +374,11 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
 function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
     prog: Prog): string
 {
-  // Compile each function defined in this quote.
-  let procs = _emit_procs(compile, ir, prog.id);
-
-  // Get the quote's local (bound) variables.
+  // Declare local (bound) variables.
   let localnames = _bound_vars(ir, prog);
+
+  // Emit all children functions.
+  let procs = _emit_procs(compile, ir, prog.id);
 
   // Wrap the code in a function to avoid polluting the namespace.
   let body = emit_body(compile, prog.body);
@@ -394,11 +394,16 @@ function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
 function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
     prog: Prog): string
 {
-  // Emit functions in the quote. These become global functions.
-  let procs = _emit_procs(compile, ir, prog.id);
+  // The must be no splices.
+  if (prog.splice.length) {
+    throw "error: splices not allowed in a program quote";
+  }
 
-  // Get the quote's local (bound) variables.
+  // Declare local (bound) variables.
   let localnames = _bound_vars(ir, prog);
+
+  // Emit all children functions.
+  let procs = _emit_procs(compile, ir, prog.id);
 
   // Get the quote's persists. These manifest as parameters to the function.
   let argnames: string[] = [];
@@ -406,15 +411,8 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
     argnames.push(persistsym(esc.id));
   }
 
-  // The must be no splices.
-  if (prog.splice.length) {
-    throw "error: splices not allowed in a program quote";
-  }
-
-  // Emit the main function body.
+  // Emit the main function, which takes the persists as parameters.
   let body = emit_body(compile, prog.body);
-  // Then, wrap it in a function that takes the persists as parameters.
-  // rendering function that will be called on every frame.
   let func = emit_js_fun(progsym(prog.id), argnames, localnames, body);
 
   return procs + func;
