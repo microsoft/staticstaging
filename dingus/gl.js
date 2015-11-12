@@ -130,7 +130,7 @@ function start_gl(container, fps_element) {
 
     // Invoke the compiled SHFL code.
     if (shfl_render) {
-      shfl_render.func.apply(void 0, shfl_render.persist);
+      shfl_render.proc.apply(void 0, shfl_render.env);
     }
 
     // Framerate tracking.

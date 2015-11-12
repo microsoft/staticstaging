@@ -31,9 +31,6 @@ function run(code) {
   var func = eval(js);
   return func.apply(void 0, args);
 }
-function frun(code) {
-  return (code.func).apply(void 0, code.persist);
-}
 `.trim();
 
 function _is_fun_type(type: Type): boolean {
@@ -152,7 +149,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
         // We use a simple call wrapper for "progfuncs" and a more complex
         // `eval` trick for ordinary string code.
         if (t.annotation === "f") {
-          return `frun(${progex})`;
+          return `call((${progex}), [])`;
         } else {
           return `run(${paren(progex)})`;
         }
@@ -464,5 +461,5 @@ function js_emit_progfunc_call(compile: JSCompile, ir: CompilerIR,
     }
   }
 
-  return `{ func: ${progsym(progid)}, persist: [${args.join(', ')}] }`;
+  return `{ proc: ${progsym(progid)}, env: [${args.join(', ')}] }`;
 }
