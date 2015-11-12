@@ -2,6 +2,8 @@
 /// <reference path="scope.ts" />
 /// <reference path="../visit.ts" />
 
+module Lift {
+
 // A simple, imperative walk that indexes *all* the syntax nodes in a tree by
 // their ID. We use this to build Procs and Progs by looking up the
 // corresponding quote, function, and escape nodes.
@@ -256,7 +258,9 @@ function attribute_escs(scopes: Scope[], progs: Prog[], containers: number[],
   }
 }
 
-function lift(tree: SyntaxNode, defuse: DefUseTable): [Proc[], Proc, Prog[]] {
+export function lift(tree: SyntaxNode, defuse: DefUseTable):
+  [Proc[], Proc, Prog[]]
+{
   // Some bookkeeping to get started.
   let containers = find_scopes(tree);
   let index = index_tree(tree);
@@ -275,4 +279,6 @@ function lift(tree: SyntaxNode, defuse: DefUseTable): [Proc[], Proc, Prog[]] {
   attribute_escs(scopes, progs, containers, index);
 
   return [procs, main, progs];
+}
+
 }

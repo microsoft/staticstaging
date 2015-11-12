@@ -2,10 +2,13 @@
 /// <reference path="../visit.ts" />
 /// <reference path="../util.ts" />
 
+type NameMap = { [name: string]: number };
+
+module DefUse {
+
 // The intermediate data structure for def/use analysis is a *stack of stack
 // of maps*. The map assigns a defining node ID for names. We need a stack to
 // reflect function scopes, and a stack of *those* to reflect quotes.
-type NameMap = { [name: string]: number };
 type NameStack = NameMap[];
 
 // Like overlay, but works on the top of a NameStack.
@@ -141,7 +144,9 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 // You can provide an initial NameMap of externs (for implementing
 // intrinsics).
 let _find_def_use = fix(gen_find_def_use);
-function find_def_use(tree: SyntaxNode, externs: NameMap): DefUseTable {
+export function find_def_use(tree: SyntaxNode, externs: NameMap): DefUseTable {
   let [_, t] = _find_def_use(tree, [[[{}], externs], []]);
   return t;
+}
+
 }
