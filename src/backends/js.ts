@@ -3,7 +3,6 @@
 /// <reference path="../compile/compile.ts" />
 /// <reference path="backends.ts" />
 
-// A tiny runtime provides our splicing routine.
 const JS_RUNTIME = `
 function assign() {
   var t = arguments[0];
@@ -33,6 +32,9 @@ function run(code) {
 }
 `.trim();
 
+
+// Code-generation utilities.
+
 function _is_fun_type(type: Type): boolean {
   if (type instanceof FunType) {
     return true;
@@ -55,9 +57,7 @@ function js_emit_extern(name: string, type: Type) {
 }
 
 
-// The core recursive compiler rules. Takes an elaborated, desugared,
-// lambda-lifted AST with its corresponding def/use table. Works on a single
-// Proc or Prog body at a time.
+// The core recursive compiler rules.
 type JSCompile = (tree: SyntaxNode) => string;
 function js_compile_rules(fself: JSCompile, ir: CompilerIR):
   ASTVisit<void, string>
@@ -330,18 +330,17 @@ function emit_js_var(name: string, value: any, verbose=false): string {
   return out;
 }
 
-// Compile a quotation (a.k.a. Prog) to a string. This string should be
-// embedded in JavaScript so it can be `eval`ed. Also compiles the Procs that
-// appear inside this quotation.
+// Compile a quotation (a.k.a. Prog) to a string constant. Also compiles the
+// Procs that appear inside this quotation.
 function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR, prog: Prog): string
 {
   // Compile each function defined in this quote.
-  let procs_str = "";
+  let procs = "";
   for (let proc of ir.procs) {
     if (proc !== undefined) {
       if (proc.parent === prog.id) {
-        procs_str += js_emit_proc(compile, ir, proc);
-        procs_str += "\n";
+        procs += js_emit_proc(compile, ir, proc);
+        procs += "\n";
       }
     }
   }
@@ -353,10 +352,12 @@ function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR, prog: Prog): stri
   }
 
   // Wrap the code in a function to avoid polluting the namespace.
-  let code = emit_body(compile, prog.body);
-  let code_wrapped = emit_js_fun(null, [], localnames, code) + "()";
+  let body = emit_body(compile, prog.body);
+  let func = emit_js_fun(null, [], localnames, body) + "()";
 
-  return procs_str + code_wrapped;
+  // Wrap the whole thing in a variable declaration.
+  let code = procs + func;
+  return emit_js_var(progsym(prog.id), code, true);
 }
 
 // Emit a program as a JavaScript function declaration. This works when the
@@ -392,10 +393,10 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
   }
 
   // Emit the main function body.
-  let code = emit_body(compile, prog.body);
+  let body = emit_body(compile, prog.body);
   // Then, wrap it in a function that takes the persists as parameters.
   // rendering function that will be called on every frame.
-  let func = emit_js_fun(progsym(prog.id), argnames, localnames, code);
+  let func = emit_js_fun(progsym(prog.id), argnames, localnames, body);
 
   return procs + func;
 }
@@ -410,10 +411,7 @@ function js_emit_prog(compile: JSCompile, ir: CompilerIR,
 
   } else {
     // An ordinary quote. Compile to a string.
-    // TODO move this into js_emit_prog_eval
-    let code = js_emit_prog_eval(compile, ir, prog);
-    let prog_var = emit_js_var(progsym(prog.id), code, true);
-    return prog_var;
+    return js_emit_prog_eval(compile, ir, prog);
   }
 }
 
