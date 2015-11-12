@@ -284,18 +284,17 @@ export function emit(ir: CompilerIR): string {
   let _glslcompile = GLSL.get_compile(ir);
 
   // Compile each program.
-  // TODO This loop duplicates the JS one.
-  let decls = "";
+  let out = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       if (prog.annotation == "s") {
         // A shader program.
         let code = GLSL.compile_prog(_glslcompile, ir, prog.id);
-        decls += JS.emit_var(progsym(prog.id), code, true) + "\n";
+        out += JS.emit_var(progsym(prog.id), code, true) + "\n";
 
       } else {
         // Ordinary JavaScript.
-        decls += JS.emit_prog(_jscompile, ir, prog);
+        out += JS.emit_prog(_jscompile, ir, prog) + "\n";
       }
     }
   }
@@ -310,15 +309,12 @@ export function emit(ir: CompilerIR): string {
       }
     }
   }
-  let setup_code = setup_parts.join("");
+  out += setup_parts.join("") + "\n";
 
   // Wrap up the setup code with the main function(s).
-  let body = setup_code + "\n";
-  body += JS.emit_proc(_jscompile, ir, ir.main) + "\n";
-  body += "return main;";
-  let wrapper = JS.emit_fun(null, [], [], body) + '()';
-
-  return decls + wrapper;
+  out += JS.emit_proc(_jscompile, ir, ir.main) + "\n";
+  out += "return main;";
+  return JS.emit_fun(null, [], [], out) + '()';
 }
 
 }
