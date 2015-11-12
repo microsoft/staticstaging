@@ -293,23 +293,13 @@ function webgl_compile(ir: CompilerIR): string {
       } else {
         // Other quote. Compiled normally, to a string.
 
-        // Get the procs to compile.
-        let procs: Proc[] = [];
-        for (let proc of ir.procs) {
-          if (proc !== undefined) {
-            if (proc.quote_parent === prog.id) {
-              procs.push(proc);
-            }
-          }
-        }
-
         let code: string;
         if (prog.annotation === "s") {
           // A shader program.
           code = glsl_compile_prog(_glslcompile, ir, prog.id);
         } else {
           // Ordinary JavaScript quotation.
-          code = js_emit_prog(_jscompile, ir, prog, procs);
+          code = js_emit_prog(_jscompile, ir, prog);
         }
         prog_decls += emit_js_var(progsym(prog.id), code, true) + "\n";
       }
