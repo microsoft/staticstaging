@@ -333,8 +333,7 @@ function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
-function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
-    wrapped=false): string
+function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
 {
   // Emit all children functions.
   let procs = _emit_procs(compile, ir, proc.id);
@@ -352,20 +351,8 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
     argnames.push(persistsym(p.id));
   }
 
-  // Check whether this is main (and hence anonymous).
-  let name: string;
-  if (proc.id === null) {
-    name = null;
-  } else {
-    name = procsym(proc.id);
-  }
-
   // Declaration for this function declaration.
-  let func = "";
-  if (wrapped) {
-    func = "return /* main */ ";
-  }
-  func += _emit_scope_func(compile, ir, name, argnames, proc);
+  let func = _emit_scope_func(compile, ir, procsym(proc.id), argnames, proc);
 
   return procs + func;
 }
@@ -446,8 +433,8 @@ function jscompile(ir: CompilerIR): string {
   }
 
   // Emit and invoke the main (anonymous) function.
-  out += js_emit_proc(_jscompile, ir, ir.main);
-  out += "()";
+  out += js_emit_proc(_jscompile, ir, ir.main) + "\n";
+  out += `${procsym(null)}()`;
 
   return out;
 }

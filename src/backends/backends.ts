@@ -10,7 +10,11 @@ function varsym(defid: number) {
 // Get a function name for an ATW Proc by its ID, which is the same as the
 // defining `fun` node ID.
 function procsym(procid: number) {
-  return "f" + procid;
+  if (procid === null) {
+    return "main";
+  } else {
+    return "f" + procid;
+  }
 }
 
 // Get a string constant name for an ATW quotation (i.e., a Prog) by its ID,

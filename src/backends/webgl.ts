@@ -283,24 +283,20 @@ function webgl_compile(ir: CompilerIR): string {
 
   // Compile each program.
   // TODO This loop duplicates the JS one.
-  let prog_decls = "";
-  let proc_decls = "";
+  let decls = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       if (prog.annotation == "s") {
         // A shader program.
         let code = glsl_compile_prog(_glslcompile, ir, prog.id);
-        prog_decls += emit_js_var(progsym(prog.id), code, true) + "\n";
+        decls += emit_js_var(progsym(prog.id), code, true) + "\n";
 
       } else {
         // Ordinary JavaScript.
-        prog_decls += js_emit_prog(_jscompile, ir, prog);
+        decls += js_emit_prog(_jscompile, ir, prog);
       }
     }
   }
-
-  // The result of the wrapper is the main function.
-  proc_decls += js_emit_proc(_jscompile, ir, ir.main, true);
 
   // For each *shader* quotation (i.e., top-level shader quote), generate the
   // setup code.
@@ -314,8 +310,11 @@ function webgl_compile(ir: CompilerIR): string {
   }
   let setup_code = setup_parts.join("");
 
-  // Wrap the shader setup code and the main code together in a function.
-  let wrapper = emit_js_fun(null, [], [], setup_code + proc_decls) + '()';
+  // Wrap up the setup code with the main function(s).
+  let body = setup_code + "\n";
+  body += js_emit_proc(_jscompile, ir, ir.main) + "\n";
+  body += "return main;";
+  let wrapper = emit_js_fun(null, [], [], body) + '()';
 
-  return prog_decls + wrapper;
+  return decls + wrapper;
 }
