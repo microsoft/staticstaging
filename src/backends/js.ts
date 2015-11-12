@@ -321,7 +321,8 @@ function _bound_vars(ir: CompilerIR, scope: Scope) {
 
 // Compile the body of a Scope as a JavaScript function.
 function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
-    argnames: string[], localnames: string[], scope: Scope): string {
+    argnames: string[], scope: Scope): string {
+  let localnames = _bound_vars(ir, scope);
   let body = emit_body(compile, scope.body);
   return emit_js_fun(name, argnames, localnames, body);
 }
@@ -335,9 +336,6 @@ function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
 function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
     wrapped=false): string
 {
-  // Declare local (bound) variables.
-  let localnames = _bound_vars(ir, proc);
-
   // Emit all children functions.
   let procs = _emit_procs(compile, ir, proc.id);
 
@@ -367,7 +365,7 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
   if (wrapped) {
     func = "return /* main */ ";
   }
-  func += _emit_scope_func(compile, ir, name, argnames, localnames, proc);
+  func += _emit_scope_func(compile, ir, name, argnames, proc);
 
   return procs + func;
 }
@@ -380,14 +378,11 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc,
 function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
     prog: Prog): string
 {
-  // Declare local (bound) variables.
-  let localnames = _bound_vars(ir, prog);
-
   // Emit all children functions.
   let procs = _emit_procs(compile, ir, prog.id);
 
   // Emit (and invoke) the main function for the program.
-  let func = _emit_scope_func(compile, ir, null, [], localnames, prog);
+  let func = _emit_scope_func(compile, ir, null, [], prog);
   func += "()";
 
   // Wrap the whole thing in a variable declaration.
@@ -405,9 +400,6 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
     throw "error: splices not allowed in a program quote";
   }
 
-  // Declare local (bound) variables.
-  let localnames = _bound_vars(ir, prog);
-
   // Emit all children functions.
   let procs = _emit_procs(compile, ir, prog.id);
 
@@ -418,8 +410,7 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
   }
 
   // Emit the main function, which takes the persists as parameters.
-  let func = _emit_scope_func(compile, ir, progsym(prog.id), argnames,
-      localnames, prog);
+  let func = _emit_scope_func(compile, ir, progsym(prog.id), argnames, prog);
 
   return procs + func;
 }
