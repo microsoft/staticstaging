@@ -212,6 +212,7 @@ function emit_param_binding(ir: CompilerIR, valueid: number, varid: number,
       throw "error: unsupported uniform type " + type.name;
     }
 
+    // Construct the call to gl.uniformX.
     let is_matrix = fname.indexOf("Matrix") !== -1;
     let out = `gl.${fname}(${locsym(varid)}`;
     if (is_matrix) {
@@ -248,14 +249,14 @@ function emit_shader_binding(compile: JS.Compile, ir: CompilerIR,
   // Bind the shader program.
   let out = `gl.useProgram(${shadersym(vertex_prog.id)})`;
 
-  // Emit and bind the uniforms.
-  // Because of our desugaring approach, all uniforms and attributes will
-  // appear as escapes in the vertex quote. If we ever make it possible to
-  // jump directly from the fragment stage to the host, we'll need to do some
-  // more work here.
+  // Emit and bind the uniforms and attributes. First for explicit persists,
+  // and then for free variables.
   for (let esc of vertex_prog.persist) {
     let value = compile(esc.body);
     out += ",\n" + emit_param_binding(ir, esc.body.id, esc.id, value);
+  }
+  for (let fv of vertex_prog.free) {
+    out += ",\n" + emit_param_binding(ir, fv, fv, varsym(fv));
   }
 
   return out;
