@@ -286,16 +286,16 @@ function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
 {
   let args: string[] = [];
 
+  // Same for free variables.
+  for (let fv of ir.progs[scopeid].free) {
+    args.push(varsym(fv));
+  }
+
   // Compile each persist so we can pass it in the environment.
   for (let esc of ir.progs[scopeid].persist) {
     if (esc !== undefined) {
       args.push(paren(compile(esc.body)));
     }
-  }
-
-  // Same for free variables.
-  for (let fv of ir.progs[scopeid].free) {
-    args.push(varsym(fv));
   }
 
   // Emit a closure value, which consists of a pair of the code reference and
@@ -413,15 +413,15 @@ function emit_prog_func(compile: Compile, ir: CompilerIR,
     throw "error: splices not allowed in a program quote";
   }
 
-  // Get the quote's persists. These manifest as parameters to the function.
+  // Free variables become parameters.
   let argnames: string[] = [];
-  for (let esc of prog.persist) {
-    argnames.push(persistsym(esc.id));
-  }
-
-  // Same for free variables.
   for (let fv of prog.free) {
     argnames.push(varsym(fv));
+  }
+
+  // Same with the quote's persists.
+  for (let esc of prog.persist) {
+    argnames.push(persistsym(esc.id));
   }
 
   return _emit_scope_func(compile, ir, progsym(prog.id), argnames, prog);
