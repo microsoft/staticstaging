@@ -176,23 +176,7 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
 
     visit_quote(tree: QuoteNode, param: void): string {
       if (tree.annotation === "f") {
-        // A function quote, which we compile to a JavaScript function. Emit
-        // a closure value with the persists as arguments.
-        let args: string[] = [];
-        for (let esc of ir.progs[tree.id].persist) {
-          if (esc !== undefined) {
-            args.push(paren(fself(esc.body)));
-          }
-        }
-
-        // Same for free variables.
-        for (let fv of ir.progs[tree.id].free) {
-          args.push(varsym(fv));
-        }
-
-        // Emit an ordinary closure value. The persists are arguments.
-        return `{ proc: ${progsym(tree.id)}, env: [${args.join(', ')}] }`;
-
+        return emit_quote_func(fself, ir, tree.id);
       } else {
         // An ordinary string-eval quote, with the full power of splicing.
 
@@ -254,24 +238,9 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
       }
     },
 
-    // A function expression produces an object containing the JavaScript
-    // function for the corresponding proc and a list of environment
-    // variables.
+    // A function expression produces a closure value.
     visit_fun(tree: FunNode, param: void): string {
-      // The function captures its closed-over references and any persists
-      // used inside.
-      let captures: string[] = [];
-      for (let fv of ir.procs[tree.id].free) {
-        captures.push(varsym(fv));
-      }
-      for (let p of ir.procs[tree.id].persist) {
-        captures.push(persistsym(p.id));
-      }
-
-      // Assemble the pair.
-      let out = "{ proc: " + procsym(tree.id) + ", ";
-      out += "env: [" + captures.join(', ') + "] }";
-      return out;
+      return emit_func(fself, ir, tree.id);
     },
 
     // An invocation unpacks the closure environment and calls the function
@@ -306,6 +275,52 @@ function get_compile(ir: CompilerIR): Compile {
     return ast_visit(rules, tree, null);
   };
   return f;
+}
+
+
+// Code value emission for quote and function nodes.
+
+// Emit a quote as a function closure (i.e., for an f<> quote).
+function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
+  string
+{
+  let args: string[] = [];
+
+  // Compile each persist so we can pass it in the environment.
+  for (let esc of ir.progs[scopeid].persist) {
+    if (esc !== undefined) {
+      args.push(paren(compile(esc.body)));
+    }
+  }
+
+  // Same for free variables.
+  for (let fv of ir.progs[scopeid].free) {
+    args.push(varsym(fv));
+  }
+
+  // Emit a closure value, which consists of a pair of the code reference and
+  // the environment (persists and free variables).
+  return `{ proc: ${progsym(scopeid)}, env: [${args.join(', ')}] }`;
+}
+
+// Emit a function expression as a closure.
+function emit_func(compile: Compile, ir: CompilerIR, scopeid: number):
+  string
+{
+  // The function captures its closed-over references and any persists
+  // used inside.
+  let captures: string[] = [];
+  for (let fv of ir.procs[scopeid].free) {
+    captures.push(varsym(fv));
+  }
+  for (let p of ir.procs[scopeid].persist) {
+    captures.push(persistsym(p.id));
+  }
+
+  // Assemble the pair.
+  let out = "{ proc: " + procsym(scopeid) + ", ";
+  out += "env: [" + captures.join(', ') + "] }";
+  return out;
 }
 
 
