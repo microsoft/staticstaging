@@ -30,7 +30,7 @@ interface DriverConfig {
 
 function _intrinsics(config: DriverConfig): TypeMap {
   if (config.webgl) {
-    return GL_INTRINSICS;
+    return WebGL.INTRINSICS;
   } else {
     return BUILTIN_OPERATORS;
   }
@@ -39,7 +39,7 @@ function _intrinsics(config: DriverConfig): TypeMap {
 function _runtime(config: DriverConfig): string {
   let runtime = JS.RUNTIME + "\n";
   if (config.webgl) {
-    runtime += WEBGL_RUNTIME + "\n";
+    runtime += WebGL.RUNTIME + "\n";
   }
   return runtime;
 }
@@ -121,7 +121,7 @@ function driver_compile(config: DriverConfig, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      jscode = webgl_compile(ir);
+      jscode = WebGL.emit(ir);
     } else {
       jscode = JS.emit(ir);
     }

@@ -2,7 +2,9 @@
 /// <reference path="js.ts" />
 /// <reference path="glsl.ts" />
 
-const WEBGL_RUNTIME = `
+module WebGL {
+
+export const RUNTIME = `
 // Shader management.
 function compile_glsl(gl, type, src) {
   var shader = gl.createShader(type);
@@ -75,7 +77,7 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
 ]);
-const GL_INTRINSICS: TypeMap = {
+export const INTRINSICS: TypeMap = {
   render: new FunType([new CodeType(ANY, "f")], VOID),
   vtx: new FunType([new CodeType(ANY, "s")], VOID),
   frag: new FunType([new CodeType(ANY, "s")], VOID),
@@ -237,7 +239,7 @@ function render_expr(tree: ExpressionNode) {
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
-function webgl_compile_rules(fself: JS.Compile, ir: CompilerIR):
+function compile_rules(fself: JS.Compile, ir: CompilerIR):
   ASTVisit<void, string>
 {
   let js_rules = JS.compile_rules(fself, ir);
@@ -268,8 +270,8 @@ function webgl_compile_rules(fself: JS.Compile, ir: CompilerIR):
 }
 
 // Tie the recursion knot.
-function get_webgl_compile(ir: CompilerIR): GLSLCompile {
-  let rules = webgl_compile_rules(f, ir);
+function get_compile(ir: CompilerIR): GLSLCompile {
+  let rules = compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
@@ -277,8 +279,8 @@ function get_webgl_compile(ir: CompilerIR): GLSLCompile {
 }
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
-function webgl_compile(ir: CompilerIR): string {
-  let _jscompile = get_webgl_compile(ir);
+export function emit(ir: CompilerIR): string {
+  let _jscompile = get_compile(ir);
   let _glslcompile = get_glsl_compile(ir);
 
   // Compile each program.
@@ -317,4 +319,6 @@ function webgl_compile(ir: CompilerIR): string {
   let wrapper = JS.emit_fun(null, [], [], body) + '()';
 
   return decls + wrapper;
+}
+
 }
