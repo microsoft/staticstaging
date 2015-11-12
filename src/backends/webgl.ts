@@ -167,13 +167,13 @@ function emit_shader_setup(ir: CompilerIR, progid: number) {
     let func = attribute ? "getAttribLocation" : "getUniformLocation";
     out += "var " + locsym(esc.id) + " = gl." + func + "(" +
       shadersym(vertex_prog.id) + ", " +
-      emit_js_string(persistsym(esc.id)) + ");\n";
+      JS.emit_string(persistsym(esc.id)) + ");\n";
   }
 
   return out;
 }
 
-function emit_shader_binding(emit: JSCompile, ir: CompilerIR,
+function emit_shader_binding(emit: JS.Compile, ir: CompilerIR,
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
@@ -237,10 +237,10 @@ function render_expr(tree: ExpressionNode) {
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
-function webgl_compile_rules(fself: JSCompile, ir: CompilerIR):
+function webgl_compile_rules(fself: JS.Compile, ir: CompilerIR):
   ASTVisit<void, string>
 {
-  let js_rules = js_compile_rules(fself, ir);
+  let js_rules = JS.compile_rules(fself, ir);
   return compose_visit(js_rules, {
     // Compile calls to our intrinsics for binding shaders.
     visit_call(tree: CallNode, p: void): string {
@@ -289,11 +289,11 @@ function webgl_compile(ir: CompilerIR): string {
       if (prog.annotation == "s") {
         // A shader program.
         let code = glsl_compile_prog(_glslcompile, ir, prog.id);
-        decls += emit_js_var(progsym(prog.id), code, true) + "\n";
+        decls += JS.emit_var(progsym(prog.id), code, true) + "\n";
 
       } else {
         // Ordinary JavaScript.
-        decls += js_emit_prog(_jscompile, ir, prog);
+        decls += JS.emit_prog(_jscompile, ir, prog);
       }
     }
   }
@@ -312,9 +312,9 @@ function webgl_compile(ir: CompilerIR): string {
 
   // Wrap up the setup code with the main function(s).
   let body = setup_code + "\n";
-  body += js_emit_proc(_jscompile, ir, ir.main) + "\n";
+  body += JS.emit_proc(_jscompile, ir, ir.main) + "\n";
   body += "return main;";
-  let wrapper = emit_js_fun(null, [], [], body) + '()';
+  let wrapper = JS.emit_fun(null, [], [], body) + '()';
 
   return decls + wrapper;
 }

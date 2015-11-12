@@ -37,7 +37,7 @@ function _intrinsics(config: DriverConfig): TypeMap {
 }
 
 function _runtime(config: DriverConfig): string {
-  let runtime = JS_RUNTIME + "\n";
+  let runtime = JS.RUNTIME + "\n";
   if (config.webgl) {
     runtime += WEBGL_RUNTIME + "\n";
   }
@@ -123,7 +123,7 @@ function driver_compile(config: DriverConfig, tree: SyntaxNode,
     if (config.webgl) {
       jscode = webgl_compile(ir);
     } else {
-      jscode = jscompile(ir);
+      jscode = JS.emit(ir);
     }
   } catch (e) {
     if (typeof(e) === "string") {
@@ -159,5 +159,5 @@ function driver_execute(config: DriverConfig, jscode: string,
   }
 
   // Pass a formatted value.
-  executed(pretty_js_value(res));
+  executed(JS.pretty_value(res));
 }

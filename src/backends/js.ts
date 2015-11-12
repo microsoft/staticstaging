@@ -3,7 +3,9 @@
 /// <reference path="../compile/compile.ts" />
 /// <reference path="backends.ts" />
 
-const JS_RUNTIME = `
+module JS {
+
+export const RUNTIME = `
 function assign() {
   var t = arguments[0];
   for (var i = 1; i < arguments.length; ++i)
@@ -45,7 +47,7 @@ function _is_fun_type(type: Type): boolean {
   }
 }
 
-function js_emit_extern(name: string, type: Type) {
+function emit_extern(name: string, type: Type) {
   if (_is_fun_type(type)) {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
@@ -58,8 +60,9 @@ function js_emit_extern(name: string, type: Type) {
 
 // Create a JavaScript function definition. `name` can be null, in which case
 // this is an anonymous function expression.
-function emit_js_fun(name: string, argnames: string[], localnames: string[],
-    body: string): string {
+export function emit_fun(name: string, argnames: string[],
+    localnames: string[], body: string): string
+{
   let anon = (name === null);
 
   // Emit the definition.
@@ -86,7 +89,7 @@ function emit_js_fun(name: string, argnames: string[], localnames: string[],
 // Turn a value into a JavaScript string literal. Mutli-line strings become
 // nice, readable multi-line concatenations. (This will be obviated by ES6's
 // template strings.)
-function emit_js_string(value: any) {
+export function emit_string(value: any) {
   if (typeof(value) === "string") {
     let parts: string[] = [];
     let chunks = value.split("\n");
@@ -105,19 +108,19 @@ function emit_js_string(value: any) {
 
 // Emit a JavaScript variable declaration. If `verbose`, then there will be a
 // newline between the name and the beginning of the initialization value.
-function emit_js_var(name: string, value: any, verbose=false): string {
+export function emit_var(name: string, value: any, verbose=false): string {
   let out = "var " + name + " =";
   if (verbose) {
     out += "\n";
   } else {
     out += " ";
   }
-  out += emit_js_string(value) + ";";
+  out += emit_string(value) + ";";
   return out;
 }
 
 // Like `pretty_value`, but for values in the *compiled* JavaScript world.
-function pretty_js_value(v: any): string {
+export function pretty_value(v: any): string {
   if (typeof v == 'number') {
     return v.toString();
   } else if (v.proc !== undefined) {
@@ -134,8 +137,8 @@ function pretty_js_value(v: any): string {
 
 // The core recursive compiler rules.
 
-type JSCompile = (tree: SyntaxNode) => string;
-function js_compile_rules(fself: JSCompile, ir: CompilerIR):
+export type Compile = (tree: SyntaxNode) => string;
+export function compile_rules(fself: Compile, ir: CompilerIR):
   ASTVisit<void, string>
 {
   return {
@@ -157,7 +160,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      return emit_lookup(ir, fself, js_emit_extern, tree);
+      return emit_lookup(ir, fself, emit_extern, tree);
     },
 
     visit_unary(tree: UnaryNode, param: void): string {
@@ -277,7 +280,7 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
     visit_extern(tree: ExternNode, param: void): string {
       let name = ir.externs[tree.id];
       let [type, _] = ir.type_table[tree.id];
-      return js_emit_extern(name, type);
+      return emit_extern(name, type);
     },
 
     visit_persist(tree: PersistNode, param: void): string {
@@ -286,8 +289,8 @@ function js_compile_rules(fself: JSCompile, ir: CompilerIR):
   };
 }
 
-function get_js_compile(ir: CompilerIR): JSCompile {
-  let rules = js_compile_rules(f, ir);
+function get_compile(ir: CompilerIR): Compile {
+  let rules = compile_rules(f, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
@@ -298,12 +301,12 @@ function get_js_compile(ir: CompilerIR): JSCompile {
 // Common utilities for emitting Scopes (Procs and Progs).
 
 // Compile all the Procs who are children of a given scope.
-function _emit_procs(compile: JSCompile, ir: CompilerIR, scope: number) {
+function _emit_procs(compile: Compile, ir: CompilerIR, scope: number) {
   let out = "";
   for (let subproc of ir.procs) {
     if (subproc !== undefined) {
       if (subproc.parent === scope) {
-        out += js_emit_proc(compile, ir, subproc);
+        out += emit_proc(compile, ir, subproc);
         out += "\n";
       }
     }
@@ -320,7 +323,7 @@ function _bound_vars(ir: CompilerIR, scope: Scope) {
 }
 
 // Compile the body of a Scope as a JavaScript function.
-function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
+function _emit_scope_func(compile: Compile, ir: CompilerIR, name: string,
     argnames: string[], scope: Scope): string {
   // Emit all children functions.
   let procs = _emit_procs(compile, ir, scope.id);
@@ -328,7 +331,7 @@ function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
   // Emit the target function.
   let localnames = _bound_vars(ir, scope);
   let body = emit_body(compile, scope.body);
-  let func = emit_js_fun(name, argnames, localnames, body);
+  let func = emit_fun(name, argnames, localnames, body);
 
   return procs + func;
 }
@@ -339,7 +342,8 @@ function _emit_scope_func(compile: JSCompile, ir: CompilerIR, name: string,
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
-function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
+export function emit_proc(compile: Compile, ir: CompilerIR, proc: Proc):
+  string
 {
   // The arguments consist of the actual parameters, the closure environment
   // (free variables), and the persists used inside the function.
@@ -362,7 +366,7 @@ function js_emit_proc(compile: JSCompile, ir: CompilerIR, proc: Proc): string
 
 // Compile a quotation (a.k.a. Prog) to a string constant. Also compiles the
 // Procs that appear inside this quotation.
-function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
+function emit_prog_eval(compile: Compile, ir: CompilerIR,
     prog: Prog): string
 {
   // Emit (and invoke) the main function for the program.
@@ -370,12 +374,12 @@ function js_emit_prog_eval(compile: JSCompile, ir: CompilerIR,
   code += "()";
 
   // Wrap the whole thing in a variable declaration.
-  return emit_js_var(progsym(prog.id), code, true);
+  return emit_var(progsym(prog.id), code, true);
 }
 
 // Emit a program as a JavaScript function declaration. This works when the
 // program has no splices, and it avoids the overhead of `eval`.
-function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
+function emit_prog_func(compile: Compile, ir: CompilerIR,
     prog: Prog): string
 {
   // The must be no splices.
@@ -393,16 +397,16 @@ function js_emit_prog_func(compile: JSCompile, ir: CompilerIR,
 }
 
 // Emit a JavaScript Prog. The backend depends on the annotation.
-function js_emit_prog(compile: JSCompile, ir: CompilerIR,
+export function emit_prog(compile: Compile, ir: CompilerIR,
     prog: Prog): string
 {
   if (prog.annotation === "f") {
     // A function quote. Compile to a JavaScript function.
-    return js_emit_prog_func(compile, ir, prog);
+    return emit_prog_func(compile, ir, prog);
 
   } else {
     // An ordinary quote. Compile to a string.
-    return js_emit_prog_eval(compile, ir, prog);
+    return emit_prog_eval(compile, ir, prog);
   }
 }
 
@@ -410,21 +414,23 @@ function js_emit_prog(compile: JSCompile, ir: CompilerIR,
 // Top-level compilation.
 
 // Compile the IR to a complete JavaScript program.
-function jscompile(ir: CompilerIR): string {
-  let _jscompile = get_js_compile(ir);
+export function emit(ir: CompilerIR): string {
+  let _jscompile = get_compile(ir);
 
   let out = "";
 
   // Compile each program.
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      out += js_emit_prog(_jscompile, ir, prog);
+      out += emit_prog(_jscompile, ir, prog);
     }
   }
 
   // Emit and invoke the main (anonymous) function.
-  out += js_emit_proc(_jscompile, ir, ir.main) + "\n";
+  out += emit_proc(_jscompile, ir, ir.main) + "\n";
   out += `${procsym(null)}()`;
 
   return out;
+}
+
 }
