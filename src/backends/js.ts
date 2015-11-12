@@ -280,16 +280,27 @@ function get_compile(ir: CompilerIR): Compile {
 
 // Code value emission for quote and function nodes.
 
+// Emit a closure value, which consists of a pair of the code reference and
+// the environment (persists and free variables).
+function _emit_closure(name: string, env: string[]) {
+  return `{ proc: ${name}, env: [${env.join(', ')}] }`;
+}
+
+// Get all the names of free variables in a scope.
+// In Python: [varsym(id) for id in scope.free]
+function _free_vars(scope: Scope) {
+  let names: string[] = [];
+  for (let fv of scope.free) {
+    names.push(varsym(fv));
+  }
+  return names;
+}
+
 // Emit a quote as a function closure (i.e., for an f<> quote).
 function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
   string
 {
-  let args: string[] = [];
-
-  // Same for free variables.
-  for (let fv of ir.progs[scopeid].free) {
-    args.push(varsym(fv));
-  }
+  let args = _free_vars(ir.progs[scopeid]);
 
   // Compile each persist so we can pass it in the environment.
   for (let esc of ir.progs[scopeid].persist) {
@@ -298,29 +309,22 @@ function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
     }
   }
 
-  // Emit a closure value, which consists of a pair of the code reference and
-  // the environment (persists and free variables).
-  return `{ proc: ${progsym(scopeid)}, env: [${args.join(', ')}] }`;
+  return _emit_closure(progsym(scopeid), args);
 }
 
 // Emit a function expression as a closure.
 function emit_func(compile: Compile, ir: CompilerIR, scopeid: number):
   string
 {
+  let args = _free_vars(ir.procs[scopeid]);
+
   // The function captures its closed-over references and any persists
   // used inside.
-  let captures: string[] = [];
-  for (let fv of ir.procs[scopeid].free) {
-    captures.push(varsym(fv));
-  }
   for (let p of ir.procs[scopeid].persist) {
-    captures.push(persistsym(p.id));
+    args.push(persistsym(p.id));
   }
 
-  // Assemble the pair.
-  let out = "{ proc: " + procsym(scopeid) + ", ";
-  out += "env: [" + captures.join(', ') + "] }";
-  return out;
+  return _emit_closure(procsym(scopeid), args);
 }
 
 
@@ -340,7 +344,9 @@ function _emit_procs(compile: Compile, ir: CompilerIR, scope: number) {
   return out;
 }
 
-function _bound_vars(ir: CompilerIR, scope: Scope) {
+// Get all the names of bound variables in a scope.
+// In Python: [varsym(id) for id in scope.bound]
+function _bound_vars(scope: Scope) {
   let names: string[] = [];
   for (let bv of scope.bound) {
     names.push(varsym(bv));
@@ -355,7 +361,7 @@ function _emit_scope_func(compile: Compile, ir: CompilerIR, name: string,
   let procs = _emit_procs(compile, ir, scope.id);
 
   // Emit the target function.
-  let localnames = _bound_vars(ir, scope);
+  let localnames = _bound_vars(scope);
   let body = emit_body(compile, scope.body);
   let func = emit_fun(name, argnames, localnames, body);
 
