@@ -17,7 +17,7 @@ TESTS_STATIC := trailingsemi comment whitespace \
 	assoc assoc2 \
 	annotation-error
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
-	gl-array gl-overload gl-typeadapt gl-normcolor
+	gl-array gl-overload gl-typeadapt gl-normcolor gl-persistbug
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)

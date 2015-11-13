@@ -1,0 +1,6 @@
+def f(x:Int)
+  vtx s<
+    frag s<
+      x
+    >
+  >
