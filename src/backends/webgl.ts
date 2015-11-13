@@ -129,9 +129,10 @@ function shadersym(progid: number) {
 }
 
 // Get a JavaScript variable name to hold a shader location. Uses the ID of
-// the corresponding escape expression inside the shader.
-function locsym(escid: number) {
-  return "l" + escid;
+// the corresponding escape expression inside the shader, or the defining
+// variable ID for free variables. Also needs the ID of the quote.
+function locsym(scopeid: number, escid: number) {
+  return "s" + scopeid + "l" + escid;
 }
 
 function get_prog_pair(ir: CompilerIR, progid: number) {
@@ -169,7 +170,7 @@ function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
   let shader = shadersym(scopeid);
   let varname = GLSL.shadervarsym(scopeid, varid);
   return JS.emit_var(
-    locsym(varid),
+    locsym(scopeid, varid),
     `gl.${func}(${shader}, ${JS.emit_string(varname)})`
   );
 }
@@ -200,8 +201,8 @@ function emit_shader_setup(ir: CompilerIR, progid: number): string {
 // Emit a single WebGL binding call for a uniform or attribute. Takes the
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
-function emit_param_binding(ir: CompilerIR, valueid: number, varid: number,
-    value: string): string
+function emit_param_binding(ir: CompilerIR, scopeid: number, valueid: number,
+    varid: number, value: string): string
 {
   let [type, _] = ir.type_table[valueid];
 
@@ -214,7 +215,7 @@ function emit_param_binding(ir: CompilerIR, valueid: number, varid: number,
 
     // Construct the call to gl.uniformX.
     let is_matrix = fname.indexOf("Matrix") !== -1;
-    let out = `gl.${fname}(${locsym(varid)}`;
+    let out = `gl.${fname}(${locsym(scopeid, varid)}`;
     if (is_matrix) {
       // Transpose parameter.
       out += ", false";
@@ -228,7 +229,7 @@ function emit_param_binding(ir: CompilerIR, valueid: number, varid: number,
     if (t instanceof PrimitiveType) {
       // Call our runtime function to bind the attribute. The parameters are
       // the WebGL context, the attribute location, and the buffer.
-      return `bind_attribute(gl, ${locsym(varid)}, ${paren(value)})`;
+      return `bind_attribute(gl, ${locsym(scopeid, varid)}, ${paren(value)})`;
       // TODO Actually use the type.
     } else {
       throw "error: attributes must be primitive types";
@@ -253,10 +254,10 @@ function emit_shader_binding(compile: JS.Compile, ir: CompilerIR,
   // and then for free variables.
   for (let esc of vertex_prog.persist) {
     let value = compile(esc.body);
-    out += ",\n" + emit_param_binding(ir, esc.body.id, esc.id, value);
+    out += ",\n" + emit_param_binding(ir, progid, esc.body.id, esc.id, value);
   }
   for (let fv of vertex_prog.free) {
-    out += ",\n" + emit_param_binding(ir, fv, fv, varsym(fv));
+    out += ",\n" + emit_param_binding(ir, progid, fv, fv, varsym(fv));
   }
 
   return out;
