@@ -215,7 +215,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let param_types : Type[] = [];
       let body_env_hd = overlay(hd(stack));
       for (let param of tree.params) {
-        let ptype = get_type(param.type, named);
+        let [ptype, _] = check(param, env);
         param_types.push(ptype);
         body_env_hd[param.name] = ptype;
       }
@@ -228,6 +228,11 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // Construct the function type.
       let fun_type = new FunType(param_types, ret_type);
       return [fun_type, env];
+    },
+
+    visit_param(tree: ParamNode, env: TypeEnv): [Type, TypeEnv] {
+      let [_, __, ___, named] = env;
+      return [get_type(tree.type, named), env];
     },
 
     visit_call(tree: CallNode, env: TypeEnv): [Type, TypeEnv] {

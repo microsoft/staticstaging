@@ -5,6 +5,10 @@
 // A container for elaborated type information.
 type TypeTable = [Type, TypeEnv][];
 
+function _is_fun(tree: SyntaxNode): tree is FunNode {
+  return tree.tag === "fun";
+}
+
 // A functional mixin for the type checker that stores the results in a table
 // on the side. The AST must be stamped with IDs.
 function elaborate_mixin(type_table : TypeTable): Gen<TypeCheck> {

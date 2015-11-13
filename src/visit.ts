@@ -17,6 +17,7 @@ interface ASTVisit<P, R> {
   visit_call(tree: CallNode, param: P): R;
   visit_extern(tree: ExternNode, param: P): R;
   visit_persist(tree: PersistNode, param: P): R;
+  visit_param?(tree: ParamNode, param: P): R;
 }
 
 // Tag-based dispatch to the visit functions. A somewhat messy alternative
@@ -52,6 +53,8 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_extern(<ExternNode> tree, param);
     case "persist":
       return visitor.visit_persist(<PersistNode> tree, param);
+    case "param":
+      return visitor.visit_param(<ParamNode> tree, param);
 
     default:
       throw "error: unknown syntax node " + tree.tag;
@@ -75,11 +78,12 @@ interface PartialASTVisit<P, R> {
   visit_call? (tree: CallNode, param: P): R;
   visit_extern? (tree: ExternNode, param: P): R;
   visit_persist? (tree: PersistNode, param: P): R;
+  visit_param? (tree: ParamNode, param: P): R;
 }
 
 let AST_TYPES = ["literal", "seq", "let", "assign", "lookup", "unary",
                  "binary", "quote", "escape", "run", "fun", "call", "extern",
-                 "persist"];
+                 "persist", "param"];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
 // is some messy run-time metaprogramming!
