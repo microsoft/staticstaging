@@ -6,7 +6,7 @@ SOURCES := interp.ts ast.ts visit.ts pretty.ts util.ts driver.ts \
 	backends/backends.ts backends/js.ts backends/glsl.ts backends/webgl.ts
 TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	nested func call quotefunc closure persist nestedpersist share sharemulti \
-	quotelet splicepersist paren parentype higherorder codearg \
+	quotelet splicepersist paren parentype higherorder codearg funcshare \
 	extern externfunc mutate externmutate externmutateuse externnamed float \
 	bug-nestedcapture bug-nestedcapture2 bug-externcapture \
 	progfunc progfunc-persist progfunc-func progfunc-share \
