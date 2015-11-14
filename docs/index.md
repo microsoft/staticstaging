@@ -270,4 +270,3 @@ The major missing features, which I'm working on now, are:
 
 - It's not yet possible to communicate *directly* from the CPU to the fragment stage using a fragment uniform. This will require a multi-stage escape construct.
 - We need constructs for compile-time metaprogramming of later stages. This also depends on multi-stage escapes.
-- If you use the same prior-stage value twice in a shader quote, it will be (wastefully) communicated twice. We should communicate the value once and re-use it. Strangely enough, this is not just a performance issue---it also triggers a strange bug in IE.
