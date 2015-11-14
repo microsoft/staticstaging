@@ -66,12 +66,12 @@ Quote "quote"
   { return {tag: "quote", expr: e, annotation: a || ""}; }
 
 Splice "splice escape"
-  = splice_open _ e:SeqExpr _ splice_close
-  { return {tag: "escape", expr: e, kind: "splice"}; }
+  = escape_open _ e:SeqExpr _ escape_close n:int?
+  { return {tag: "escape", expr: e, count: n || 1, kind: "splice"}; }
 
 Persist "persist escape"
-  = persist_open _ e:SeqExpr _ persist_close
-  { return {tag: "escape", expr: e, kind: "persist"}; }
+  = persist_marker escape_open _ e:SeqExpr _ escape_close n:int?
+  { return {tag: "escape", expr: e, count: n || 1, kind: "persist"}; }
 
 Run "run"
   = run _ e:TermExpr
@@ -204,17 +204,14 @@ quote_open "quote start"
 quote_close "quote end"
   = ">"
 
-splice_open "splice start"
+escape_open
   = "["
 
-splice_close "splice end"
+escape_close
   = "]"
 
-persist_open "persist start"
-  = "%["
-
-persist_close "persist end"
-  = "]"
+persist_marker
+  = "%"
 
 run "run operator"
   = "!"
