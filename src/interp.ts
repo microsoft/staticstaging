@@ -296,7 +296,9 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
   visit_escape(tree: EscapeNode,
       [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    let s = stage - 1;  // The escaped expression runs "up" one stage.
+    // The escape moves us "up" `count` stages.
+    let s = stage - tree.count;
+
     if (s == 0) {
       // Escaped back out of the top-level quote! Evaluate it and integrate it
       // with the quote, either by splicing or persisting.
@@ -421,7 +423,14 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
   visit_persist(tree: PersistNode,
       [stage, env, pers, opers]: [number, Env, Pers, Pers]):
       [SyntaxNode, Env, Pers] {
-    throw "error: persist cannot appear in source code";
+    // Take the persist from the current quote and retain it as a persist for
+    // this quote. (This arises in multi-stage escapes: the Persist gets
+    // created for the outer quote, and the inner quote needs to keep it as a
+    // persist.)
+    let value = opers[tree.index];
+    let p = pers.concat([value]);
+    let expr: PersistNode = {tag: "persist", index: p.length - 1};
+    return [expr, env, p];
   },
 }
 
