@@ -36,7 +36,14 @@ let Pretty : ASTVisit<void, string> = {
   },
 
   visit_escape(tree: EscapeNode, _: void): string {
-    return "[ " + pretty(tree.expr) + " ]";
+    let out = "[ " + pretty(tree.expr) + " ]";
+    if (tree.kind === "persist") {
+      out = "%" + out;
+    }
+    if (tree.count > 1) {
+      out += tree.count;
+    }
+    return out;
   },
 
   visit_run(tree: RunNode, _: void): string {

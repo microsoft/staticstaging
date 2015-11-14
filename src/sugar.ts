@@ -29,18 +29,15 @@ function gen_desugar(type_table: TypeTable, check: Gen<TypeCheck>):
           return fsuper(tree);
         } else {
           // A variable from any other stage is an auto-persist. Construct a
-          // nested set of explicit persist escapes.
+          // persist escape that looks up `index` stages.
           let lookup : LookupNode = { tag: "lookup", ident: tree.ident };
-          let escape : EscapeNode;
-          let new_tree : ExpressionNode = lookup;
-          for (let i = 0; i < index; ++i) {
-            escape = { tag: "escape", kind: "persist", expr: new_tree };
-            new_tree = escape;
-          }
+          let escape : EscapeNode = {
+            tag: "escape", kind: "persist", expr: lookup, count: index
+          };
 
           // Now we elaborate the subtree to preserve the restrictions of the
           // IR.
-          let elaborated = elaborate_subtree(new_tree, env, type_table, check);
+          let elaborated = elaborate_subtree(escape, env, type_table, check);
 
           return elaborated;
         }
