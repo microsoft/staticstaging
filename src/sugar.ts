@@ -21,8 +21,13 @@ function gen_desugar(type_table: TypeTable, check: Gen<TypeCheck>):
     return function (tree: SyntaxNode): SyntaxNode {
       if (is_lookup(tree)) {
         let [type, env] = type_table[tree.id];
-        let [stack, _] = env;
-        let [__, index] = stack_lookup(stack, tree.ident);
+        let [stack, _, externs, __] = env;
+        if (tree.ident in externs) {
+          // Extern accesses are not desugared.
+          return fsuper(tree);
+        }
+
+        let [___, index] = stack_lookup(stack, tree.ident);
 
         if (index === 0) {
           // A variable from the current stage. This is a normal access.
