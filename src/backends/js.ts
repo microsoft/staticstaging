@@ -5,11 +5,6 @@
 
 module JS {
 
-// A marker used in eval-based quotes as a placeholder for the main function's
-// argument names. The arguments are inserted lazily so we can determine the
-// final list after all the splicing is done.
-const ARG_LIST_TOKEN = '__ARGLIST__';
-
 export const RUNTIME = `
 function assign() {
   var t = arguments[0];
@@ -26,23 +21,16 @@ function call(closure, args) {
   return closure.proc.apply(void 0, args.concat(closure.env));
 }
 function run(code) {
-  // Get the environment's names and values so we can bind them.
-  var keys = [];
-  var values = [];
-  for (var key in code.env) {
-    keys.push(key);
-    values.push(code.env[key]);
+  // A crazy dance to bind the persist names.
+  var params = ["c"];
+  var args = [code.prog];
+  for (var name in code.persist) {
+    params.push(name);
+    args.push(code.persist[name]);
   }
-
-  // Construct and interpolate the name list.
-  var js = code.prog.replace("${ARG_LIST_TOKEN}", keys.join(', '));
-
-  console.log(js);
-  console.log(eval(js).apply(void 0, values));
-
-  // Execute the code.
+  var js = "(function (" + params.join(", ") + ") { return eval(c); })";
   var func = eval(js);
-  return func.apply(void 0, values);
+  return func.apply(void 0, args);
 }
 `.trim();
 
@@ -327,7 +315,7 @@ function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
 
   // Create a pre-spliced code value.
   let pers_list = `{ ${persist_pairs.join(", ")} }`;
-  let code_expr = `{ prog: ${progsym(scopeid)}, env: ${pers_list} }`;
+  let code_expr = `{ prog: ${progsym(scopeid)}, persist: ${pers_list} }`;
 
   // Compile each spliced escape expression. Then, call our runtime to
   // splice it into the code value.
@@ -426,7 +414,8 @@ function emit_prog_eval(compile: Compile, ir: CompilerIR,
     prog: Prog): string
 {
   // Emit (and invoke) the main function for the program.
-  let code = _emit_scope_func(compile, ir, null, [ARG_LIST_TOKEN], prog);
+  let code = _emit_scope_func(compile, ir, null, [], prog);
+  code += "()";
 
   // Wrap the whole thing in a variable declaration.
   return emit_var(progsym(prog.id), emit_string(code), true);
