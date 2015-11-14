@@ -167,30 +167,32 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_escape(tree: EscapeNode, env: TypeEnv): [Type, TypeEnv] {
-      // Escaping beyond the top level is not allowed.
+      // Make sure we don't escape "too far" beyond the top level.
       let level = env.length;
-      if (level == 0) {
-        throw "type error: top-level escape";
+      let count = tree.count;
+      if (count > level) {
+        throw `type error: can't escape ${count}x at level ${level}`;
       }
 
-      // Pop the current (quotation) environment off of the environment stack
-      // before checking the escape.
+      // Pop `count` quotation contexts off the stack before checking the
+      // escape.
       let [stack, anns, externs, named] = env;
-      let inner_env: TypeEnv = [tl(stack), tl(anns), externs, named];
+      let inner_env: TypeEnv =
+        [stack.slice(count), anns.slice(count), externs, named];
       let [t, e] = check(tree.expr, inner_env);
 
       if (tree.kind === "splice") {
         // The result of the escape's expression must be code, so it can be
         // spliced.
         if (t instanceof CodeType) {
-          // Move the type "up" one stage.
+          // The result type is the type that was quoted.
           return [t.inner, env];
         } else {
           throw "type error: escape produced non-code value";
         }
 
       } else if (tree.kind === "persist") {
-        // A persist escape has the same type as the outer type.
+        // A persist escape has the same type as the original type.
         return [t, env];
 
       } else {
