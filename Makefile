@@ -12,7 +12,7 @@ TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	progfunc progfunc-persist progfunc-func progfunc-share \
 	annotation-ok \
 	multiescape-persist multiescape-splice multiescape-csr
-TESTS_INTERP := dump splice nesteddump spdump
+TESTS_INTERP := dump splice nesteddump spdump multiescape-splicedump
 TESTS_STATIC := trailingsemi comment whitespace \
 	typeerror badsplice topescape floaterror ccall ccall-expr cdef \
 	assoc assoc2 \
