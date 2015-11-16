@@ -211,8 +211,8 @@ function attribute_defs(scopes: Scope[], main: Proc, containers: number[],
 
 // Finally, attribute every escape to its containing quote and every function
 // in between.
-function attribute_escs(scopes: Scope[], progs: Prog[], containers: number[],
-    index: SyntaxNode[])
+function attribute_escapes(scopes: Scope[], progs: Prog[],
+    containers: number[], index: SyntaxNode[])
 {
   for (let node of index) {
     if (node !== undefined) {
@@ -222,15 +222,8 @@ function attribute_escs(scopes: Scope[], progs: Prog[], containers: number[],
           body: node.expr,
         };
 
-        // Get the nearest quote ID. This is either the direct parent or its
-        // containing quote.
-        let quote_id: number;
-        let closest_scope = containers[node.id];
-        if (progs[closest_scope]) {
-          quote_id = closest_scope;
-        } else {
-          quote_id = scopes[closest_scope].quote_parent;
-        }
+        // Get the nearest quote ID.
+        let quote_id = _nearest_quote(containers, progs, node.id);
 
         // Iterate through all the scopes from here to the relevant next
         // quote. This makes all the intervening functions inside the quote
@@ -273,7 +266,7 @@ export function lift(tree: SyntaxNode, defuse: DefUseTable, containers: number[]
   attribute_defs(scopes, main, containers, index);
 
   // Fill in the escapes (`persist` and `splice`).
-  attribute_escs(scopes, progs, containers, index);
+  attribute_escapes(scopes, progs, containers, index);
 
   return [procs, main, progs];
 }
