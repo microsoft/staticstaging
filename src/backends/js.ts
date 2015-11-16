@@ -342,17 +342,29 @@ function emit_quote(compile: Compile, ir: CompilerIR, scopeid: number): string
 
 // Common utilities for emitting Scopes (Procs and Progs).
 
-// Compile all the Procs who are children of a given scope.
-function _emit_procs(compile: Compile, ir: CompilerIR, scope: number) {
+// Compile all the Procs and progs who are children of a given scope.
+function _emit_subscopes(compile: Compile, ir: CompilerIR, scope: number) {
   let out = "";
+
+  // Procs (functions).
   for (let subproc of ir.procs) {
     if (subproc !== undefined) {
       if (subproc.parent === scope) {
-        out += emit_proc(compile, ir, subproc);
+        out += emit_proc(compile, ir, subproc) + "\n";
         out += "\n";
       }
     }
   }
+
+  // Progs (quotes).
+  for (let subprog of ir.progs) {
+    if (subprog !== undefined) {
+      if (subprog.parent === scope) {
+        out += emit_prog(compile, ir, subprog) + "\n";
+      }
+    }
+  }
+
   return out;
 }
 
@@ -368,16 +380,25 @@ function _bound_vars(scope: Scope) {
 
 // Compile the body of a Scope as a JavaScript function.
 function _emit_scope_func(compile: Compile, ir: CompilerIR, name: string,
-    argnames: string[], scope: Scope): string {
-  // Emit all children functions.
-  let procs = _emit_procs(compile, ir, scope.id);
+    argnames: string[], scope: Scope, main=false): string {
+  // Emit all children scopes.
+  let subscopes = _emit_subscopes(compile, ir, scope.id);
 
-  // Emit the target function.
+  // Emit the target function code.
   let localnames = _bound_vars(scope);
   let body = emit_body(compile, scope.body);
-  let func = emit_fun(name, argnames, localnames, body);
 
-  return procs + func;
+  // Construct the function wrapper. For the main (top-level) function, the
+  // subscopes appear *inside* the body. Otherwise, they appear above.
+  if (main) {
+    body = subscopes + body;
+  }
+  let func = emit_fun(name, argnames, localnames, body);
+  if (!main) {
+    func = subscopes + func;
+  }
+
+  return func;
 }
 
 
@@ -402,7 +423,18 @@ export function emit_proc(compile: Compile, ir: CompilerIR, proc: Proc):
     argnames.push(persistsym(p.id));
   }
 
-  return _emit_scope_func(compile, ir, procsym(proc.id), argnames, proc);
+  // Get the name of the function, or null for the main function.
+  let name: string;
+  let main: boolean;
+  if (proc.id === null) {
+    name = null;
+    main = true;
+  } else {
+    name = procsym(proc.id);
+    main = false;
+  }
+
+  return _emit_scope_func(compile, ir, name, argnames, proc, main);
 }
 
 
@@ -414,7 +446,7 @@ function emit_prog_eval(compile: Compile, ir: CompilerIR,
     prog: Prog): string
 {
   // Emit (and invoke) the main function for the program.
-  let code = _emit_scope_func(compile, ir, null, [], prog);
+  let code = _emit_scope_func(compile, ir, null, [], prog, true);
   code += "()";
 
   // Wrap the whole thing in a variable declaration.
@@ -428,7 +460,7 @@ function emit_prog_func(compile: Compile, ir: CompilerIR,
 {
   // The must be no splices.
   if (prog.splice.length) {
-    throw "error: splices not allowed in a program quote";
+    throw "error: splices not allowed in a function quote";
   }
 
   // Free variables become parameters.
@@ -466,18 +498,9 @@ export function emit_prog(compile: Compile, ir: CompilerIR,
 export function emit(ir: CompilerIR): string {
   let _jscompile = get_compile(ir);
 
-  let out = "";
-
-  // Compile each program.
-  for (let prog of ir.progs) {
-    if (prog !== undefined) {
-      out += emit_prog(_jscompile, ir, prog) + "\n";
-    }
-  }
-
   // Emit and invoke the main (anonymous) function.
-  out += emit_proc(_jscompile, ir, ir.main) + "\n";
-  out += `${procsym(null)}()`;
+  let out = "";
+  out += emit_proc(_jscompile, ir, ir.main) + "()";
 
   return out;
 }
