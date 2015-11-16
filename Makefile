@@ -9,7 +9,6 @@ TESTS_BASIC := print seq let add unary quote escape nestedrun \
 	quotelet splicepersist paren parentype higherorder codearg funcshare \
 	extern externfunc mutate externmutate externmutateuse externnamed float \
 	bug-nestedcapture bug-nestedcapture2 bug-externcapture \
-	progfunc progfunc-persist progfunc-func progfunc-share \
 	annotation-ok \
 	multiescape-persist multiescape-splice multiescape-csr
 TESTS_INTERP := dump splice nesteddump spdump multiescape-splicedump
@@ -17,6 +16,8 @@ TESTS_STATIC := trailingsemi comment whitespace \
 	typeerror badsplice topescape floaterror ccall ccall-expr cdef \
 	assoc assoc2 \
 	annotation-error
+TESTS_COMPILE := progfunc progfunc-persist progfunc-func progfunc-share \
+	multiescape-progfunc-splice
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
 	gl-array gl-overload gl-typeadapt gl-normcolor gl-persistbug
 TSCARGS := --noImplicitAny
@@ -124,7 +125,7 @@ for name in $1 ; do \
 done
 endef
 
-TEST_COMPILE := $(call run_tests,$(TESTS_BASIC),-cx)
+TEST_COMPILE := $(call run_tests,$(TESTS_BASIC) $(TESTS_COMPILE),-cx)
 TEST_INTERP := $(call run_tests,$(TESTS_BASIC) $(TESTS_STATIC) $(TESTS_INTERP),)
 TEST_FAIL := [ ! $$failed ]
 
