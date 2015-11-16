@@ -217,18 +217,26 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
   for (let node of index) {
     if (node !== undefined) {
       if (_is_escape(node)) {
+        // Get the quote that "owns" this escape: this is the quote that is N
+        // steps up the quote containment chain, where N is the "level" of the
+        // escape.
+        let quote_id = node.id;
+        for (let i = 0; i < node.count; ++i) {
+          quote_id = _nearest_quote(containers, progs, containers[quote_id]);
+        }
+
         let esc: ProgEscape = {
           id: node.id,
           body: node.expr,
+          count: node.count,
+          prog: quote_id,
         };
-
-        // Get the nearest quote ID.
-        let quote_id = _nearest_quote(containers, progs, node.id);
 
         // Iterate through all the scopes from here to the relevant next
         // quote. This makes all the intervening functions inside the quote
         // aware that there's an escape in their body, which can work like a
-        // free variable.
+        // free variable. In the case of multi-level escapes, this can also
+        // affect quotes.
         let cur_scope = containers[node.id];
         while (1) {
           if (node.kind === "persist") {

@@ -34,6 +34,8 @@ interface Proc extends Scope {
 interface ProgEscape {
   id: number,
   body: ExpressionNode,
+  count: number,
+  prog: number,
 }
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
