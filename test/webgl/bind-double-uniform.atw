@@ -1,0 +1,11 @@
+# This tests the situation where the same constant is used as a uniform in
+# both stages.
+var x = 5;
+render f<
+  vtx s<
+    x * 2;
+    frag s<
+      x * 3
+    >
+  >
+>

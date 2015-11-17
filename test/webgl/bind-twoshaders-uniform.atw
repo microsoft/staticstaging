@@ -1,0 +1,15 @@
+# A uniform that is used in two different shaders.
+var x = 5;
+render f<
+  vtx s<
+    frag s<
+      x * 3
+    >
+  >;
+
+  vtx s<
+    frag s<
+      x * 5
+    >
+  >
+>

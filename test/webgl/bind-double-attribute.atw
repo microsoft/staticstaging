@@ -1,0 +1,12 @@
+# This tests the situation where the same array is used as an attribute in
+# both stages.
+extern e: Float3 Array;
+var x = e;
+render f<
+  vtx s<
+    abs(x);
+    frag s<
+      abs(x)
+    >
+  >
+>
