@@ -4,22 +4,6 @@ SOURCES := interp.ts ast.ts visit.ts pretty.ts util.ts driver.ts \
 	compile/compile.ts compile/ir.ts compile/defuse.ts \
 	compile/scope.ts compile/lift.ts \
 	backends/backends.ts backends/js.ts backends/glsl.ts backends/webgl.ts
-TESTS_BASIC := print seq let add unary quote escape nestedrun \
-	nested func call quotefunc closure persist nestedpersist share sharemulti \
-	quotelet splicepersist paren parentype higherorder codearg funcshare \
-	extern externfunc mutate externmutate externmutateuse externnamed float \
-	bug-nestedcapture bug-nestedcapture2 bug-externcapture \
-	annotation-ok \
-	multiescape-persist multiescape-splice multiescape-csr
-TESTS_INTERP := dump splice nesteddump spdump multiescape-splicedump
-TESTS_STATIC := trailingsemi comment whitespace \
-	typeerror badsplice topescape floaterror ccall ccall-expr cdef \
-	assoc assoc2 \
-	annotation-error
-TESTS_COMPILE := progfunc progfunc-persist progfunc-func progfunc-share \
-	multiescape-progfunc-splice multiescape-effect multiescape-effect-progfunc
-TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
-	gl-array gl-overload gl-typeadapt gl-normcolor gl-persistbug
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
@@ -120,13 +104,18 @@ dingus/preambles.js: munge.js dingus/gl_preamble.atw
 
 define run_tests
 for name in $1 ; do \
-	sh test.sh $2 test/$$name.atw ; \
+	sh test.sh $2 $$name ; \
 	if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
 done
 endef
 
-TEST_COMPILE := $(call run_tests,$(TESTS_BASIC) $(TESTS_COMPILE),-cx)
-TEST_INTERP := $(call run_tests,$(TESTS_BASIC) $(TESTS_STATIC) $(TESTS_INTERP),)
+TESTS_BASIC := $(wildcard test/basic/*.atw)
+TESTS_COMPILE := $(TESTS_BASIC) $(wildcard tests/compile/*.atw)
+TESTS_INTERP := $(TESTS_BASIC) $(wildcard tests/static/*.atw) \
+	$(wildcard tests/interp/*.atw)
+
+TEST_COMPILE := $(call run_tests,$(TESTS_COMPILE),-cx)
+TEST_INTERP := $(call run_tests,$(TESTS_INTERP),)
 TEST_FAIL := [ ! $$failed ]
 
 .PHONY: test-compile
@@ -151,9 +140,9 @@ test: $(CLI_JS)
 # Just dump the output code for the WebGL examples.
 .PHONY: dump-gl
 dump-gl: $(CLI_JS)
-	@for name in $(TESTS_WEBGL) ; do \
-		echo $$name ; \
-		node atw.js -cw test/$$name.atw ; \
+	@for name in $(wildcard test/webgl/*.atw) ; do \
+		basename $$name .atw ; \
+		node atw.js -cw $$name ; \
 		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
 	done ; \
 	$(TEST_FAIL)
