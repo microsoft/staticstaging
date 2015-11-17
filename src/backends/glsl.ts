@@ -232,19 +232,32 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
           // TODO Maybe this should move to the end of emission instead of the
           // call rule.
 
-          // Assign to all the variables corresponding to persists and free
-          // variables for the fragment shader's quotation.
           let subprog = ir.progs[quote.id];
           let assignments: string[] = [];
+
+          // Assign to all the variables corresponding to persists *that it
+          // owns*, or which need to be *implicitly decayed* from attribute to
+          // varying. Other persists will be handled in shader setup by sending
+          // a uniform directly to the later shader.
           for (let esc of subprog.persist) {
-            let varname = shadervarsym(subprog.id, esc.id);
-            let value = fself(esc.body);
-            assignments.push(`${varname} = ${paren(value)}`);
+            // Either owned here *or* a decayed attribute.
+            let [type,] = ir.type_table[esc.body.id];
+            if (esc.prog === subprog.id || _attribute_type(type)) {
+              let varname = shadervarsym(subprog.id, esc.id);
+              let value = fself(esc.body);
+              assignments.push(`${varname} = ${paren(value)}`);
+            }
           }
+
+          // Same for free variables.
+          // TODO Deduplicate this with the above loop.
           for (let fv of subprog.free) {
-            let destvar = shadervarsym(subprog.id, fv);
-            let srcvar = shadervarsym(ir.progs[subprog.quote_parent].id, fv);
-            assignments.push(`${destvar} = ${srcvar}`);
+            let [type,] = ir.type_table[fv];
+            if (ir.containers[fv] === subprog.parent || _attribute_type(type)) {
+              let destvar = shadervarsym(subprog.id, fv);
+              let srcvar = shadervarsym(ir.progs[subprog.quote_parent].id, fv);
+              assignments.push(`${destvar} = ${srcvar}`);
+            }
           }
 
           if (assignments.length) {
@@ -310,14 +323,23 @@ function emit_type(type: Type): string {
   }
 }
 
+// Check whether the type of a value implies that it needs to be passed as an
+// attribute: i.e., it is an array type.
+function _attribute_type(t) {
+  if (t instanceof InstanceType) {
+    return t.cons === ARRAY;
+  }
+  return false;
+}
+
 // Emit a declaration for a variable going into or out of the current shader
 // program. The variable reflects an escape in this program or a subprogram.
 // The flags:
 // - `kind`, indicating whether this is an vertex (outer) shader program or a
 //   fragment (inner) shader
 // - `out`, indicating whether the variable is going into or out of the stage
-function persist_decl(ir: CompilerIR, progid: number, valueid: number, varid: number,
-    kind: ProgKind, out: boolean): string {
+function persist_decl(ir: CompilerIR, progid: number, valueid: number,
+    varid: number, kind: ProgKind, out: boolean): string {
   let [type, _] = ir.type_table[valueid];
 
   // Array types indicate an attribute. Use the element type. Attributes get
@@ -346,7 +368,20 @@ function persist_decl(ir: CompilerIR, progid: number, valueid: number, varid: nu
     if (out) {
       throw "error: fragment outputs not allowed";
     } else {
-      qual = "varying";
+      if (attribute) {
+        // Implicitly passed through by vertex shader.
+        qual = "varying";
+      } else {
+        let defining_quote = nearest_quote(ir, valueid);
+        let defining_kind = prog_kind(ir, defining_quote);
+        if (defining_kind === ProgKind.render) {
+          // A direct uniform.
+          qual = "uniform";
+        } else {
+          // Explicitly passed from vertex shader.
+          qual = "varying";
+        }
+      }
     }
   } else {
     throw "error: unknown shader kind";

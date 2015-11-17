@@ -214,9 +214,15 @@ function emit_param_binding(ir: CompilerIR, scopeid: number, valueid: number,
       throw "error: unsupported uniform type " + type.name;
     }
 
+    // Determine where the uniform goes: to the vertex shader or to the
+    // fragment shader? This depends on the *containing* (rather than
+    // *owning*) scope for the reference/escape.
+    let containing_scope = nearest_quote(ir, varid);
+    let locname = locsym(containing_scope, varid);
+
     // Construct the call to gl.uniformX.
     let is_matrix = fname.indexOf("Matrix") !== -1;
-    let out = `gl.${fname}(${locsym(scopeid, varid)}`;
+    let out = `gl.${fname}(${locname}`;
     if (is_matrix) {
       // Transpose parameter.
       out += ", false";
