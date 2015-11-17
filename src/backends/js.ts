@@ -13,9 +13,17 @@ function assign() {
       t[k] = arguments[i][k];
   return t;
 }
-function splice(outer, id, inner) {
-  return { prog: outer.prog.replace('__SPLICE_' + id + '__', inner.prog),
-    persist: assign({}, outer.persist, inner.persist) };
+function splice(outer, id, inner, level) {
+  var token = '__SPLICE_' + id + '__';
+  var code = inner.prog;
+  for (var i = 0; i < level - 1; ++i) {
+    // Escape the string to fit at the appropriate nesting level.
+    code = JSON.stringify(code).slice(1, -1);
+  }
+  return {
+    prog: outer.prog.replace(token, code),
+    persist: assign({}, outer.persist, inner.persist)
+  };
 }
 function call(closure, args) {
   return closure.proc.apply(void 0, args.concat(closure.env));
@@ -344,9 +352,8 @@ function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
   // splice it into the code value.
   for (let esc of ir.progs[scopeid].owned_splice) {
     let esc_expr = compile(esc.body);
-    code_expr = "splice(" + code_expr + ", " +
-      esc.id + ", " +
-      paren(esc_expr) + ")";
+    code_expr =
+      `splice(${code_expr}, ${esc.id}, ${paren(esc_expr)}, ${esc.count})`;
   }
 
   return code_expr;
