@@ -345,8 +345,7 @@ export function emit(ir: CompilerIR): string {
   out += setup_parts.join("") + "\n";
 
   // Wrap up the setup code with the main function(s).
-  out += JS.emit_proc(_jscompile, ir, ir.main) + "\n";
-  out += "return main;";
+  out += "return " + JS.emit_proc(_jscompile, ir, ir.main) + "\n";
   return JS.emit_fun(null, [], [], out) + '()';
 }
 
