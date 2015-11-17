@@ -1,4 +1,5 @@
 /// <reference path="../util.ts" />
+/// <reference path="backend.ts" />
 /// <reference path="js.ts" />
 /// <reference path="glsl.ts" />
 
@@ -243,7 +244,7 @@ function emit_param_binding(ir: CompilerIR, scopeid: number, valueid: number,
 // Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
 // shader). This includes both the `useProgram` call and the `bindX` calls to
 // set up the uniforms and attributes.
-function emit_shader_binding(compile: JS.Compile, ir: CompilerIR,
+function emit_shader_binding(compile: Compile, ir: CompilerIR,
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
@@ -272,10 +273,10 @@ function render_expr(tree: ExpressionNode) {
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
-function compile_rules(fself: JS.Compile, ir: CompilerIR):
+function compile_rules(fself: Compile, backend: Backend, ir: CompilerIR):
   ASTVisit<void, string>
 {
-  let js_rules = JS.compile_rules(fself, ir);
+  let js_rules = JS.compile_rules(fself, backend, ir);
   return compose_visit(js_rules, {
     // Compile calls to our intrinsics for binding shaders.
     visit_call(tree: CallNode, p: void): string {
@@ -303,8 +304,8 @@ function compile_rules(fself: JS.Compile, ir: CompilerIR):
 }
 
 // Tie the recursion knot.
-function get_compile(ir: CompilerIR): JS.Compile {
-  let rules = compile_rules(f, ir);
+function get_compile(backend: Backend, ir: CompilerIR): Compile {
+  let rules = compile_rules(f, backend, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
@@ -313,7 +314,13 @@ function get_compile(ir: CompilerIR): JS.Compile {
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 export function emit(ir: CompilerIR): string {
-  let _jscompile = get_compile(ir);
+  let backend: Backend = {
+    compile: null,
+    emit_proc: JS.emit_proc,
+    emit_prog: JS.emit_prog,
+  };
+  backend.compile = get_compile(backend, ir);
+
   let _glslcompile = GLSL.get_compile(ir);
 
   // Compile each shader program.
@@ -335,7 +342,7 @@ export function emit(ir: CompilerIR): string {
   }
 
   // Wrap up the setup code with the main function(s).
-  out += "return " + JS.emit_proc(_jscompile, ir, ir.main);
+  out += "return " + Backends.emit(backend, ir);
   return JS.emit_fun(null, [], [], out) + '()';
 }
 

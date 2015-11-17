@@ -2,6 +2,7 @@
 /// <reference path="../util.ts" />
 /// <reference path="../compile/compile.ts" />
 /// <reference path="emitutil.ts" />
+/// <reference path="backend.ts" />
 
 module Backends.JS {
 
@@ -151,8 +152,8 @@ export function pretty_value(v: any): string {
 
 // The core recursive compiler rules.
 
-export type Compile = (tree: SyntaxNode) => string;
-export function compile_rules(fself: Compile, ir: CompilerIR):
+export function compile_rules(fself: Compile, backend: Backend,
+    ir: CompilerIR):
   ASTVisit<void, string>
 {
   return {
@@ -189,7 +190,7 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
     },
 
     visit_quote(tree: QuoteNode, param: void): string {
-      return emit_quote(fself, ir, tree.id);
+      return emit_quote(backend, ir, tree.id);
     },
 
     visit_escape(tree: EscapeNode, param: void): string {
@@ -223,7 +224,7 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
 
     // A function expression produces a closure value.
     visit_fun(tree: FunNode, param: void): string {
-      return emit_func(fself, ir, tree.id);
+      return emit_func(backend, ir, tree.id);
     },
 
     // An invocation unpacks the closure environment and calls the function
@@ -252,8 +253,8 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
   };
 }
 
-function get_compile(ir: CompilerIR): Compile {
-  let rules = compile_rules(f, ir);
+function get_compile(backend: Backend, ir: CompilerIR): Compile {
+  let rules = compile_rules(f, backend, ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
@@ -283,14 +284,14 @@ function _free_vars(scope: Scope) {
 // JavaScript variable name indicating the persist; the value is either the
 // expression to compute its value or just the name again to pass along a
 // value from an outer quote.
-function _persists(compile: Compile, prog: Prog): [string, string][] {
+function _persists(backend: Backend, prog: Prog): [string, string][] {
   let pairs: [string, string][] = [];
   for (let esc of prog.persist) {
     let key = persistsym(esc.id);
     let value: string;
     if (esc.prog === prog.id) {
       // We own this persist. Compute the expression.
-      value = paren(compile(esc.body));
+      value = paren(backend.compile(esc.body));
     } else {
       // Just pass along the pre-computed value.
       value = key;
@@ -301,7 +302,7 @@ function _persists(compile: Compile, prog: Prog): [string, string][] {
 }
 
 // Emit a function expression as a closure.
-function emit_func(compile: Compile, ir: CompilerIR, scopeid: number):
+function emit_func(backend: Backend, ir: CompilerIR, scopeid: number):
   string
 {
   let args = _free_vars(ir.procs[scopeid]);
@@ -316,13 +317,13 @@ function emit_func(compile: Compile, ir: CompilerIR, scopeid: number):
 }
 
 // Emit a quote as a function closure (i.e., for an f<> quote).
-function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
+function emit_quote_func(backend: Backend, ir: CompilerIR, scopeid: number):
   string
 {
   let args = _free_vars(ir.progs[scopeid]);
 
   // Compile each persist so we can pass it in the environment.
-  for (let [key, value] of _persists(compile, ir.progs[scopeid])) {
+  for (let [key, value] of _persists(backend, ir.progs[scopeid])) {
     args.push(value);
   }
 
@@ -330,12 +331,12 @@ function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
 }
 
 // Emit a quote as a full code value (which supports splicing).
-function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
+function emit_quote_eval(backend: Backend, ir: CompilerIR, scopeid: number):
   string
 {
   // Compile each persist in this quote and pack them into a dictionary.
   let persist_pairs: string[] = [];
-  for (let [key, value] of _persists(compile, ir.progs[scopeid])) {
+  for (let [key, value] of _persists(backend, ir.progs[scopeid])) {
     persist_pairs.push(`${key}: ${value}`);
   }
 
@@ -351,7 +352,7 @@ function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
   // Compile each spliced escape expression. Then, call our runtime to
   // splice it into the code value.
   for (let esc of ir.progs[scopeid].owned_splice) {
-    let esc_expr = compile(esc.body);
+    let esc_expr = backend.compile(esc.body);
 
     // Determine how many levels of *eval* quotes are between the owning
     // quotation and the place where the expression needs to be inserted. This
@@ -375,12 +376,12 @@ function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
 }
 
 // Emit a quote. The kind of JavaScript value depends on the annotation.
-function emit_quote(compile: Compile, ir: CompilerIR, scopeid: number): string
+function emit_quote(backend: Backend, ir: CompilerIR, scopeid: number): string
 {
   if (ir.progs[scopeid].annotation === "f") {
-    return emit_quote_func(compile, ir, scopeid);
+    return emit_quote_func(backend, ir, scopeid);
   } else {
-    return emit_quote_eval(compile, ir, scopeid);
+    return emit_quote_eval(backend, ir, scopeid);
   }
 }
 
@@ -388,27 +389,27 @@ function emit_quote(compile: Compile, ir: CompilerIR, scopeid: number): string
 // Common utilities for emitting Scopes (Procs and Progs).
 
 // Emit either kind of scope.
-function _emit_scope(compile: Compile, ir: CompilerIR, scope: number) {
+function _emit_scope(backend: Backend, ir: CompilerIR, scope: number) {
   // Try a Proc.
   let proc = ir.procs[scope];
   if (proc) {
-    return emit_proc(compile, ir, proc);
+    return emit_proc(backend, ir, proc);
   }
 
   // Try a Prog.
   let prog = ir.progs[scope];
   if (prog) {
-    return emit_prog(compile, ir, prog);
+    return emit_prog(backend, ir, prog);
   }
 
   throw "error: unknown scope id";
 }
 
 // Compile all the Procs and progs who are children of a given scope.
-function _emit_subscopes(compile: Compile, ir: CompilerIR, scope: Scope) {
+function _emit_subscopes(backend: Backend, ir: CompilerIR, scope: Scope) {
   let out = "";
   for (let id of scope.children) {
-    out += _emit_scope(compile, ir, id) + "\n";
+    out += _emit_scope(backend, ir, id) + "\n";
   }
   return out;
 }
@@ -424,14 +425,14 @@ function _bound_vars(scope: Scope) {
 }
 
 // Compile the body of a Scope as a JavaScript function.
-function _emit_scope_func(compile: Compile, ir: CompilerIR, name: string,
+function _emit_scope_func(backend: Backend, ir: CompilerIR, name: string,
     argnames: string[], scope: Scope, main=false): string {
   // Emit all children scopes.
-  let subscopes = _emit_subscopes(compile, ir, scope);
+  let subscopes = _emit_subscopes(backend, ir, scope);
 
   // Emit the target function code.
   let localnames = _bound_vars(scope);
-  let body = emit_body(compile, scope.body);
+  let body = emit_body(backend.compile, scope.body);
 
   // Construct the function wrapper. For the main (top-level) function, the
   // subscopes appear *inside* the body. Otherwise, they appear above.
@@ -452,7 +453,7 @@ function _emit_scope_func(compile: Compile, ir: CompilerIR, name: string,
 // Compile a single Proc to a JavaScript function definition. If the Proc is
 // main, then it is an anonymous function expression; otherwise, this produces
 // an appropriately named function declaration.
-export function emit_proc(compile: Compile, ir: CompilerIR, proc: Proc):
+export function emit_proc(backend: Backend, ir: CompilerIR, proc: Proc):
   string
 {
   // The arguments consist of the actual parameters, the closure environment
@@ -479,7 +480,7 @@ export function emit_proc(compile: Compile, ir: CompilerIR, proc: Proc):
     main = false;
   }
 
-  return _emit_scope_func(compile, ir, name, argnames, proc, main);
+  return _emit_scope_func(backend, ir, name, argnames, proc, main);
 }
 
 
@@ -487,11 +488,11 @@ export function emit_proc(compile: Compile, ir: CompilerIR, proc: Proc):
 
 // Compile a quotation (a.k.a. Prog) to a string constant. Also compiles the
 // Procs that appear inside this quotation.
-function emit_prog_eval(compile: Compile, ir: CompilerIR,
+function emit_prog_eval(backend: Backend, ir: CompilerIR,
     prog: Prog): string
 {
   // Emit (and invoke) the main function for the program.
-  let code = _emit_scope_func(compile, ir, null, [], prog, true);
+  let code = _emit_scope_func(backend, ir, null, [], prog, true);
   code += "()";
 
   // Wrap the whole thing in a variable declaration.
@@ -500,7 +501,7 @@ function emit_prog_eval(compile: Compile, ir: CompilerIR,
 
 // Emit a program as a JavaScript function declaration. This works when the
 // program has no splices, and it avoids the overhead of `eval`.
-function emit_prog_func(compile: Compile, ir: CompilerIR,
+function emit_prog_func(backend: Backend, ir: CompilerIR,
     prog: Prog): string
 {
   // The must be no splices.
@@ -519,20 +520,20 @@ function emit_prog_func(compile: Compile, ir: CompilerIR,
     argnames.push(persistsym(esc.id));
   }
 
-  return _emit_scope_func(compile, ir, progsym(prog.id), argnames, prog);
+  return _emit_scope_func(backend, ir, progsym(prog.id), argnames, prog);
 }
 
 // Emit a JavaScript Prog. The backend depends on the annotation.
-export function emit_prog(compile: Compile, ir: CompilerIR,
+export function emit_prog(backend: Backend, ir: CompilerIR,
     prog: Prog): string
 {
   if (prog.annotation === "f") {
     // A function quote. Compile to a JavaScript function.
-    return emit_prog_func(compile, ir, prog);
+    return emit_prog_func(backend, ir, prog);
 
   } else {
     // An ordinary quote. Compile to a string.
-    return emit_prog_eval(compile, ir, prog);
+    return emit_prog_eval(backend, ir, prog);
   }
 }
 
@@ -541,13 +542,15 @@ export function emit_prog(compile: Compile, ir: CompilerIR,
 
 // Compile the IR to a complete JavaScript program.
 export function emit(ir: CompilerIR): string {
-  let _jscompile = get_compile(ir);
+  let backend: Backend = {
+    compile: null,
+    emit_proc: emit_proc,
+    emit_prog: emit_prog,
+  };
+  backend.compile = get_compile(backend, ir);
 
   // Emit and invoke the main (anonymous) function.
-  let out = "";
-  out += emit_proc(_jscompile, ir, ir.main) + "()";
-
-  return out;
+  return Backends.emit(backend, ir) + "()";
 }
 
 }

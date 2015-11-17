@@ -2,6 +2,7 @@
 /// <reference path="../util.ts" />
 /// <reference path="../compile/compile.ts" />
 /// <reference path="emitutil.ts" />
+/// <reference path="backend.ts" />
 /// <reference path="../type.ts" />
 
 // Special GLSL matrix and vector types.
@@ -147,7 +148,6 @@ export function type_mixin(fsuper: TypeCheck): TypeCheck {
 
 // The core compiler rules for emitting GLSL code.
 
-export type Compile = (tree: SyntaxNode) => string;
 export function compile_rules(fself: Compile, ir: CompilerIR):
   ASTVisit<void, string>
 {
