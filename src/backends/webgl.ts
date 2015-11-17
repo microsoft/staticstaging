@@ -312,28 +312,43 @@ function get_compile(emitter: Emitter): Compile {
   return f;
 }
 
-// Choose between emitting JavaScript and GLSL.
-function emit_prog(emitter: Emitter, prog: Prog): string {
-  if (prog.annotation == "s") {
-    // Emit the shader program.
-    let code = GLSL.compile_prog(emitter.glsl_compile, emitter.ir, prog.id);
-    let out = JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
-
-    // If it's a *vertex shader* quote (i.e., a top-level shader quote),
-    // emit its setup code too.
-    if (GLSL.prog_kind(emitter.ir, prog.id) === GLSL.ProgKind.vertex) {
-      out += emit_shader_setup(emitter.ir, prog.id) + "\n";
-    }
-
-    return out;
-  } else {
-    return JS.emit_prog(emitter, prog);
-  }
-}
-
 // Our WebGL emitter also has a function to emit GLSL code.
 interface Emitter extends Backends.Emitter {
   glsl_compile: Compile,
+}
+
+function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
+  let out = "";
+
+  // Emit subprograms.
+  for (let subid of prog.quote_children) {
+    let subprog = emitter.ir.progs[subid];
+    if (subprog.annotation !== "s") {
+      throw "error: subprograms not allowed in shaders";
+    }
+    out += emit_glsl_prog(emitter, subprog);
+  }
+
+  // Emit the shader program.
+  let code = GLSL.compile_prog(emitter.glsl_compile, emitter.ir, prog.id);
+  out += JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
+
+  // If it's a *vertex shader* quote (i.e., a top-level shader quote),
+  // emit its setup code too.
+  if (GLSL.prog_kind(emitter.ir, prog.id) === GLSL.ProgKind.vertex) {
+    out += emit_shader_setup(emitter.ir, prog.id);
+  }
+
+  return out;
+}
+
+// Choose between emitting JavaScript and GLSL.
+function emit_prog(emitter: Emitter, prog: Prog): string {
+  if (prog.annotation == "s") {
+    return emit_glsl_prog(emitter, prog);
+  } else {
+    return JS.emit_prog(emitter, prog);
+  }
 }
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
@@ -343,7 +358,7 @@ export function emit(ir: CompilerIR): string {
     compile: null,
     glsl_compile: null,
     emit_proc: JS.emit_proc,
-    emit_prog: JS.emit_prog,
+    emit_prog: emit_prog,
   };
   emitter.compile = get_compile(emitter);
   emitter.glsl_compile = GLSL.get_compile(ir);
