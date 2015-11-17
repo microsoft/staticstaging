@@ -388,28 +388,11 @@ function emit_quote(emitter: Emitter, scopeid: number): string
 
 // Common utilities for emitting Scopes (Procs and Progs).
 
-// Emit either kind of scope.
-function _emit_scope(emitter: Emitter, scope: number) {
-  // Try a Proc.
-  let proc = emitter.ir.procs[scope];
-  if (proc) {
-    return emit_proc(emitter, proc);
-  }
-
-  // Try a Prog.
-  let prog = emitter.ir.progs[scope];
-  if (prog) {
-    return emit_prog(emitter, prog);
-  }
-
-  throw "error: unknown scope id";
-}
-
 // Compile all the Procs and progs who are children of a given scope.
 function _emit_subscopes(emitter: Emitter, scope: Scope) {
   let out = "";
   for (let id of scope.children) {
-    out += _emit_scope(emitter, id) + "\n";
+    out += emit_scope(emitter, id) + "\n";
   }
   return out;
 }

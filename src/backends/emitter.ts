@@ -25,4 +25,21 @@ export function emit(emitter: Emitter) {
   return emitter.emit_proc(emitter, emitter.ir.main);
 }
 
+// Emit either kind of scope.
+export function emit_scope(emitter: Emitter, scope: number) {
+  // Try a Proc.
+  let proc = emitter.ir.procs[scope];
+  if (proc) {
+    return emitter.emit_proc(emitter, proc);
+  }
+
+  // Try a Prog.
+  let prog = emitter.ir.progs[scope];
+  if (prog) {
+    return emitter.emit_prog(emitter, prog);
+  }
+
+  throw "error: unknown scope id";
+}
+
 }
