@@ -16,7 +16,7 @@ function assign() {
 function splice(outer, id, inner, level) {
   var token = '__SPLICE_' + id + '__';
   var code = inner.prog;
-  for (var i = 0; i < level - 1; ++i) {
+  for (var i = 0; i < level; ++i) {
     // Escape the string to fit at the appropriate nesting level.
     code = JSON.stringify(code).slice(1, -1);
   }
@@ -352,8 +352,23 @@ function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
   // splice it into the code value.
   for (let esc of ir.progs[scopeid].owned_splice) {
     let esc_expr = compile(esc.body);
+
+    // Determine how many levels of *eval* quotes are between the owning
+    // quotation and the place where the expression needs to be inserted. This
+    // is the number of string-escaping rounds we need.
+    let eval_quotes = 0;
+    let cur_quote = nearest_quote(ir, esc.id);
+    for (let i = 0; i < esc.count - 1; ++i) {
+      let prog = ir.progs[cur_quote];
+      if (prog.annotation !== "f") {
+        ++eval_quotes;
+      }
+      cur_quote = prog.quote_parent;
+    }
+
+    // Emit the call to the `splice` runtime function.
     code_expr =
-      `splice(${code_expr}, ${esc.id}, ${paren(esc_expr)}, ${esc.count})`;
+      `splice(${code_expr}, ${esc.id}, ${paren(esc_expr)}, ${eval_quotes})`;
   }
 
   return code_expr;
