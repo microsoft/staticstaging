@@ -387,29 +387,29 @@ function emit_quote(compile: Compile, ir: CompilerIR, scopeid: number): string
 
 // Common utilities for emitting Scopes (Procs and Progs).
 
+// Emit either kind of scope.
+function _emit_scope(compile: Compile, ir: CompilerIR, scope: number) {
+  // Try a Proc.
+  let proc = ir.procs[scope];
+  if (proc) {
+    return emit_proc(compile, ir, proc);
+  }
+
+  // Try a Prog.
+  let prog = ir.progs[scope];
+  if (prog) {
+    return emit_prog(compile, ir, prog);
+  }
+
+  throw "error: unknown scope id";
+}
+
 // Compile all the Procs and progs who are children of a given scope.
-function _emit_subscopes(compile: Compile, ir: CompilerIR, scope: number) {
+function _emit_subscopes(compile: Compile, ir: CompilerIR, scope: Scope) {
   let out = "";
-
-  // Procs (functions).
-  for (let subproc of ir.procs) {
-    if (subproc !== undefined) {
-      if (subproc.parent === scope) {
-        out += emit_proc(compile, ir, subproc) + "\n";
-        out += "\n";
-      }
-    }
+  for (let id of scope.children) {
+    out += _emit_scope(compile, ir, id) + "\n";
   }
-
-  // Progs (quotes).
-  for (let subprog of ir.progs) {
-    if (subprog !== undefined) {
-      if (subprog.parent === scope) {
-        out += emit_prog(compile, ir, subprog) + "\n";
-      }
-    }
-  }
-
   return out;
 }
 
@@ -427,7 +427,7 @@ function _bound_vars(scope: Scope) {
 function _emit_scope_func(compile: Compile, ir: CompilerIR, name: string,
     argnames: string[], scope: Scope, main=false): string {
   // Emit all children scopes.
-  let subscopes = _emit_subscopes(compile, ir, scope.id);
+  let subscopes = _emit_subscopes(compile, ir, scope);
 
   // Emit the target function code.
   let localnames = _bound_vars(scope);
