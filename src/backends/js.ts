@@ -1,7 +1,7 @@
 /// <reference path="../visit.ts" />
 /// <reference path="../util.ts" />
 /// <reference path="../compile/compile.ts" />
-/// <reference path="backends.ts" />
+/// <reference path="emitutil.ts" />
 
 module Backends.JS {
 

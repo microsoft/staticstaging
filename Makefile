@@ -3,7 +3,7 @@ SOURCES := interp.ts ast.ts visit.ts pretty.ts util.ts driver.ts \
 	type.ts type_check.ts type_elaborate.ts sugar.ts \
 	compile/compile.ts compile/ir.ts compile/defuse.ts \
 	compile/scope.ts compile/lift.ts \
-	backends/backends.ts backends/js.ts backends/glsl.ts backends/webgl.ts
+	backends/emitutil.ts backends/js.ts backends/glsl.ts backends/webgl.ts
 TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
