@@ -100,6 +100,19 @@ export function emit_fun(name: string, argnames: string[],
   return out;
 }
 
+// Wrap some code in an anonymous JavaScript function (and possibly invoke it)
+// to isolate its variables. The code should define a function called `main`,
+// which we will invoke.
+export function emit_main_wrapper(code, call=true): string {
+  let inner_code = code + "\n" + "return main();";
+  let wrapper = emit_fun(null, [], [], inner_code);
+  if (call) {
+    return wrapper + "()";
+  } else {
+    return wrapper;
+  }
+}
+
 // Turn a value into a JavaScript string literal. Mutli-line strings become
 // nice, readable multi-line concatenations. (This will be obviated by ES6's
 // template strings.)
@@ -409,7 +422,7 @@ function _bound_vars(scope: Scope) {
 
 // Compile the body of a Scope as a JavaScript function.
 function _emit_scope_func(emitter: Emitter, name: string,
-    argnames: string[], scope: Scope, main=false): string {
+    argnames: string[], scope: Scope): string {
   // Emit all children scopes.
   let subscopes = _emit_subscopes(emitter, scope);
 
@@ -417,17 +430,8 @@ function _emit_scope_func(emitter: Emitter, name: string,
   let localnames = _bound_vars(scope);
   let body = emit_body(emitter.compile, scope.body);
 
-  // Construct the function wrapper. For the main (top-level) function, the
-  // subscopes appear *inside* the body. Otherwise, they appear above.
-  if (main) {
-    body = subscopes + body;
-  }
   let func = emit_fun(name, argnames, localnames, body);
-  if (!main) {
-    func = subscopes + func;
-  }
-
-  return func;
+  return subscopes + func;
 }
 
 
@@ -454,16 +458,13 @@ export function emit_proc(emitter: Emitter, proc: Proc):
 
   // Get the name of the function, or null for the main function.
   let name: string;
-  let main: boolean;
   if (proc.id === null) {
-    name = null;
-    main = true;
+    name = 'main';
   } else {
     name = procsym(proc.id);
-    main = false;
   }
 
-  return _emit_scope_func(emitter, name, argnames, proc, main);
+  return _emit_scope_func(emitter, name, argnames, proc);
 }
 
 
@@ -475,8 +476,7 @@ function emit_prog_eval(emitter: Emitter,
     prog: Prog): string
 {
   // Emit (and invoke) the main function for the program.
-  let code = _emit_scope_func(emitter, null, [], prog, true);
-  code += "()";
+  let code = emit_main_wrapper(_emit_scope_func(emitter, 'main', [], prog));
 
   // Wrap the whole thing in a variable declaration.
   return emit_var(progsym(prog.id), emit_string(code), true);
@@ -534,7 +534,7 @@ export function emit(ir: CompilerIR): string {
   emitter.compile = get_compile(emitter);
 
   // Emit and invoke the main (anonymous) function.
-  return Backends.emit(emitter) + "()";
+  return emit_main_wrapper(Backends.emit(emitter));
 }
 
 }
