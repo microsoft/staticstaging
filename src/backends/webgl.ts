@@ -304,8 +304,8 @@ function compile_rules(fself: Compile, emitter: Emitter, ir: CompilerIR):
 }
 
 // Tie the recursion knot.
-function get_compile(emitter: Emitter, ir: CompilerIR): Compile {
-  let rules = compile_rules(f, emitter, ir);
+function get_compile(emitter: Emitter): Compile {
+  let rules = compile_rules(f, emitter, emitter.ir);
   function f (tree: SyntaxNode): string {
     return ast_visit(rules, tree, null);
   };
@@ -315,11 +315,12 @@ function get_compile(emitter: Emitter, ir: CompilerIR): Compile {
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 export function emit(ir: CompilerIR): string {
   let emitter: Emitter = {
+    ir: ir,
     compile: null,
     emit_proc: JS.emit_proc,
     emit_prog: JS.emit_prog,
   };
-  emitter.compile = get_compile(emitter, ir);
+  emitter.compile = get_compile(emitter);
 
   let _glslcompile = GLSL.get_compile(ir);
 
@@ -342,7 +343,7 @@ export function emit(ir: CompilerIR): string {
   }
 
   // Wrap up the setup code with the main function(s).
-  out += "return " + Backends.emit(emitter, ir);
+  out += "return " + Backends.emit(emitter);
   return JS.emit_fun(null, [], [], out) + '()';
 }
 
