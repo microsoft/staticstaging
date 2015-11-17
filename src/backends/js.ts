@@ -103,7 +103,7 @@ export function emit_fun(name: string, argnames: string[],
 // Wrap some code in an anonymous JavaScript function (and possibly invoke it)
 // to isolate its variables. The code should define a function called `main`,
 // which we will invoke.
-export function emit_main_wrapper(code, call=true): string {
+export function emit_main_wrapper(code: string, call=true): string {
   let inner_code = code + "\n" + "return main();";
   let wrapper = emit_fun(null, [], [], inner_code);
   if (call) {
