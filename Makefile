@@ -17,7 +17,7 @@ TESTS_STATIC := trailingsemi comment whitespace \
 	assoc assoc2 \
 	annotation-error
 TESTS_COMPILE := progfunc progfunc-persist progfunc-func progfunc-share \
-	multiescape-progfunc-splice
+	multiescape-progfunc-splice multiescape-effect multiescape-effect-progfunc
 TESTS_WEBGL := gl-quote gl-persist gl-vtxfrag gl-outputs gl-types gl-vec4 \
 	gl-array gl-overload gl-typeadapt gl-normcolor gl-persistbug
 TSCARGS := --noImplicitAny

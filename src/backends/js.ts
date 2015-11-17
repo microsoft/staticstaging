@@ -266,6 +266,27 @@ function _free_vars(scope: Scope) {
   return names;
 }
 
+// Get a list of key/value pairs for the persists in a Program. The key is the
+// JavaScript variable name indicating the persist; the value is either the
+// expression to compute its value or just the name again to pass along a
+// value from an outer quote.
+function _persists(compile: Compile, prog: Prog): [string, string][] {
+  let pairs: [string, string][] = [];
+  for (let esc of prog.persist) {
+    let key = persistsym(esc.id);
+    let value: string;
+    if (esc.prog === prog.id) {
+      // We own this persist. Compute the expression.
+      value = paren(compile(esc.body));
+    } else {
+      // Just pass along the pre-computed value.
+      value = key;
+    }
+    pairs.push([key, value]);
+  }
+  return pairs;
+}
+
 // Emit a function expression as a closure.
 function emit_func(compile: Compile, ir: CompilerIR, scopeid: number):
   string
@@ -288,10 +309,8 @@ function emit_quote_func(compile: Compile, ir: CompilerIR, scopeid: number):
   let args = _free_vars(ir.progs[scopeid]);
 
   // Compile each persist so we can pass it in the environment.
-  for (let esc of ir.progs[scopeid].persist) {
-    if (esc !== undefined) {
-      args.push(paren(compile(esc.body)));
-    }
+  for (let [key, value] of _persists(compile, ir.progs[scopeid])) {
+    args.push(value);
   }
 
   return _emit_closure(progsym(scopeid), args);
@@ -303,9 +322,8 @@ function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
 {
   // Compile each persist in this quote and pack them into a dictionary.
   let persist_pairs: string[] = [];
-  for (let esc of ir.progs[scopeid].persist) {
-    let esc_expr = compile(esc.body);
-    persist_pairs.push(persistsym(esc.id) + ": " + paren(esc_expr));
+  for (let [key, value] of _persists(compile, ir.progs[scopeid])) {
+    persist_pairs.push(`${key}: ${value}`);
   }
 
   // Include free variables as persists.
