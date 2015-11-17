@@ -364,8 +364,7 @@ export function emit(ir: CompilerIR): string {
   emitter.glsl_compile = GLSL.get_compile(ir);
 
   // Wrap up the setup code with the main function(s).
-  let out = Backends.emit(emitter);
-  return JS.emit_fun(null, [], [], out) + '()';
+  return Backends.emit(emitter);
 }
 
 }
