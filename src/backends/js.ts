@@ -319,7 +319,7 @@ function emit_quote_eval(compile: Compile, ir: CompilerIR, scopeid: number):
 
   // Compile each spliced escape expression. Then, call our runtime to
   // splice it into the code value.
-  for (let esc of ir.progs[scopeid].splice) {
+  for (let esc of ir.progs[scopeid].owned_splice) {
     let esc_expr = compile(esc.body);
     code_expr = "splice(" + code_expr + ", " +
       esc.id + ", " +
@@ -459,7 +459,7 @@ function emit_prog_func(compile: Compile, ir: CompilerIR,
     prog: Prog): string
 {
   // The must be no splices.
-  if (prog.splice.length) {
+  if (prog.owned_splice.length) {
     throw "error: splices not allowed in a function quote";
   }
 

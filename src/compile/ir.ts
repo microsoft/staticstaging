@@ -11,9 +11,10 @@ interface Scope {
   free: number[],  // variables referenced here, defined elsewhere
   bound: number[],  // variables defined here
 
-  // Explicit escapes.
-  persist: ProgEscape[],
-  splice: ProgEscape[],
+  // Explicit escapes. These are lists of escapes that appear anywhere
+  // inside the scope, regardless of the escape's level.
+  persist: Escape[],
+  splice: Escape[],
 
   // Containing and contained scopes.
   parent: number,
@@ -31,17 +32,24 @@ interface Proc extends Scope {
   params: number[],
 };
 
-interface ProgEscape {
+interface Escape {
   id: number,
   body: ExpressionNode,
   count: number,
-  prog: number,
+  prog: number,  // The quote that *owns* this escape.
 }
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
 // Progs can have bound variables but not free variables.
 interface Prog extends Scope {
   annotation: string,
+
+  // Subsets of the overall `persist` and `splice` lists for which this quote
+  // is the "owner" of the escape. The owner is the quote at the level that
+  // matches the escape's level count---the point at which the expression is
+  // evaluated.
+  owned_persist: Escape[],
+  owned_splice: Escape[],
 }
 
 // The mid-level IR structure.

@@ -87,6 +87,8 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
         if (_is_quote(node)) {
           let prog: Prog = assign(scope, {
             annotation: node.annotation,
+            owned_persist: [],
+            owned_splice: [],
           });
           progs[node.id] = prog;
           scopes[node.id] = prog;
@@ -225,12 +227,21 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
           quote_id = _nearest_quote(containers, progs, containers[quote_id]);
         }
 
-        let esc: ProgEscape = {
+        let esc: Escape = {
           id: node.id,
           body: node.expr,
           count: node.count,
           prog: quote_id,
         };
+
+        // Attribute the unique "owner" of this escape.
+        if (node.kind === "persist") {
+          progs[quote_id].owned_persist.push(esc);
+        } else if (node.kind === "splice") {
+          progs[quote_id].owned_splice.push(esc);
+        } else {
+          throw "error: unknown escape kind";
+        }
 
         // Iterate through all the scopes from here to the relevant next
         // quote. This makes all the intervening functions inside the quote
