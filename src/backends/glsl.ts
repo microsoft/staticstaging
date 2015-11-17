@@ -223,53 +223,9 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
     },
 
     visit_call(tree: CallNode, param: void): string {
+      // The fragment call emits nothing here.
       if (frag_expr(tree)) {
-        // The argument must be a literal quote node.
-        let arg = tree.args[0];
-        if (arg.tag === "quote") {
-          let quote = <QuoteNode> arg;
-
-          // TODO Maybe this should move to the end of emission instead of the
-          // call rule.
-
-          let subprog = ir.progs[quote.id];
-          let assignments: string[] = [];
-
-          // Assign to all the variables corresponding to persists *that it
-          // owns*, or which need to be *implicitly decayed* from attribute to
-          // varying. Other persists will be handled in shader setup by sending
-          // a uniform directly to the later shader.
-          for (let esc of subprog.persist) {
-            // Either owned here *or* a decayed attribute.
-            let [type,] = ir.type_table[esc.body.id];
-            if (esc.prog === subprog.id || _attribute_type(type)) {
-              let varname = shadervarsym(subprog.id, esc.id);
-              let value = fself(esc.body);
-              assignments.push(`${varname} = ${paren(value)}`);
-            }
-          }
-
-          // Same for free variables.
-          // TODO Deduplicate this with the above loop.
-          for (let fv of subprog.free) {
-            let [type,] = ir.type_table[fv];
-            if (ir.containers[fv] === subprog.parent || _attribute_type(type)) {
-              let destvar = shadervarsym(subprog.id, fv);
-              let srcvar = shadervarsym(ir.progs[subprog.quote_parent].id, fv);
-              assignments.push(`${destvar} = ${srcvar}`);
-            }
-          }
-
-          if (assignments.length) {
-            return "/* pass to fragment shader */\n" +
-                   assignments.join(",\n");
-          } else {
-            return "";
-          }
-
-        } else {
-          throw "error: non-quote used with frag";
-        }
+        return "";
       }
 
       // Check that it's a static call.
@@ -422,23 +378,39 @@ export function compile_prog(compile: Compile,
   }
 
   // Declare `out` variables for the persists (and free variables) in the
-  // subprogram. There can be at most one subprogram for every shader.
+  // subprogram. At the same time, accumulate the assignment statements that
+  // we'll use to set these `out` variables.
+  let varying_asgts: string[] = [];
+  // There can be at most one subprogram for every shader.
   if (prog.quote_children.length > 1) {
     throw "error: too many subprograms";
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
+
     for (let esc of subprog.persist) {
       decls.push(persist_decl(ir, subprog.id, esc.body.id, esc.id, kind, true));
+
+      // Compile the escape's expression and assign the corresponding
+      // variable.
+      let varname = shadervarsym(subprog.id, esc.id);
+      let value = compile(esc.body);
+      varying_asgts.push(`${varname} = ${paren(value)}`);
     }
+
     for (let fv of subprog.free) {
       decls.push(persist_decl(ir, subprog.id, fv, fv, kind, true));
+
+      // Pass through the appropriate variable.
+      let destvar = shadervarsym(subprog.id, fv);
+      let srcvar = shadervarsym(ir.progs[subprog.quote_parent].id, fv);
+      varying_asgts.push(`${destvar} = ${srcvar}`);
     }
   }
 
   // Emit the bound variable declarations.
   let local_decls: string[] = [];
   for (let id of prog.bound) {
-    let [t, _] = ir.type_table[id];
+    let [t,] = ir.type_table[id];
     local_decls.push(`${emit_type(t)} ${shadervarsym(progid, id)};\n`);
   }
   let local_decls_s = local_decls.join("");
@@ -446,7 +418,10 @@ export function compile_prog(compile: Compile,
   // Wrap the code in a "main" function.
   let code = emit_body(compile, prog.body, "");
   code = local_decls_s + code;
-  let main = "void main() {\n" + indent(code, true) + "\n}";
+  if (varying_asgts.length) {
+    code += "\n// pass to next stage\n" + varying_asgts.join(";\n") + ";";
+  }
+  let main = `void main() {\n${indent(code, true)}\n}`;
 
   // This version of GLSL requires a precision declaration.
   let out = "precision mediump float;\n";
