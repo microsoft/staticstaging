@@ -21,14 +21,19 @@ function call(closure, args) {
   return closure.proc.apply(void 0, args.concat(closure.env));
 }
 function run(code) {
-  // A crazy dance to bind the persist names.
-  var params = ["c"];
-  var args = [code.prog];
+  // Get the persist names and values to bind.
+  var params = [];
+  var args = [];
   for (var name in code.persist) {
     params.push(name);
     args.push(code.persist[name]);
   }
-  var js = "(function (" + params.join(", ") + ") { return eval(c); })";
+
+  // Inject the names into the quote's top-level function wrapper.
+  var js = code.prog.replace("()", "(" + params.join(", ") + ")");
+  // Strip off the invocation from the end.
+  js = js.slice(0, -2);
+  // Invoke the extracted function.
   var func = eval(js);
   return func.apply(void 0, args);
 }
