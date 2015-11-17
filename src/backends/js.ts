@@ -3,7 +3,7 @@
 /// <reference path="../compile/compile.ts" />
 /// <reference path="backends.ts" />
 
-module JS {
+module Backends.JS {
 
 export const RUNTIME = `
 function assign() {

@@ -2,7 +2,7 @@
 /// <reference path="js.ts" />
 /// <reference path="glsl.ts" />
 
-module WebGL {
+module Backends.WebGL {
 
 export const RUNTIME = `
 // Shader management.
@@ -316,36 +316,26 @@ export function emit(ir: CompilerIR): string {
   let _jscompile = get_compile(ir);
   let _glslcompile = GLSL.get_compile(ir);
 
-  // Compile each program.
+  // Compile each shader program.
   let out = "";
   for (let prog of ir.progs) {
     if (prog !== undefined) {
       if (prog.annotation == "s") {
-        // A shader program.
+        // Emit the shader program.
         let code = GLSL.compile_prog(_glslcompile, ir, prog.id);
         out += JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
 
-      } else {
-        // Ordinary JavaScript.
-        out += JS.emit_prog(_jscompile, ir, prog) + "\n";
+        // If it's a *vertex shader* quote (i.e., a top-level shader quote),
+        // emit its setup code too.
+        if (GLSL.prog_kind(ir, prog.id) === GLSL.ProgKind.vertex) {
+          out += emit_shader_setup(ir, prog.id) + "\n";
+        }
       }
     }
   }
-
-  // For each *shader* quotation (i.e., top-level shader quote), generate the
-  // setup code.
-  let setup_parts: string[] = [];
-  for (let prog of ir.progs) {
-    if (prog !== undefined) {
-      if (GLSL.prog_kind(ir, prog.id) === GLSL.ProgKind.vertex) {
-        setup_parts.push(emit_shader_setup(ir, prog.id));
-      }
-    }
-  }
-  out += setup_parts.join("") + "\n";
 
   // Wrap up the setup code with the main function(s).
-  out += "return " + JS.emit_proc(_jscompile, ir, ir.main) + "\n";
+  out += "return " + JS.emit_proc(_jscompile, ir, ir.main);
   return JS.emit_fun(null, [], [], out) + '()';
 }
 

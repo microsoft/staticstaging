@@ -32,16 +32,16 @@ export interface Config {
 
 function _intrinsics(config: Config): TypeMap {
   if (config.webgl) {
-    return WebGL.INTRINSICS;
+    return Backends.WebGL.INTRINSICS;
   } else {
     return BUILTIN_OPERATORS;
   }
 }
 
 function _runtime(config: Config): string {
-  let runtime = JS.RUNTIME + "\n";
+  let runtime = Backends.JS.RUNTIME + "\n";
   if (config.webgl) {
-    runtime += WebGL.RUNTIME + "\n";
+    runtime += Backends.WebGL.RUNTIME + "\n";
   }
   return runtime;
 }
@@ -57,7 +57,7 @@ function _types(config: Config): TypeMap {
 function _check(config: Config): Gen<TypeCheck> {
   let check = gen_check;
   if (config.webgl) {
-    check = compose(GLSL.type_mixin, check);
+    check = compose(Backends.GLSL.type_mixin, check);
   }
   return check;
 }
@@ -119,9 +119,9 @@ export function compile(config: Config, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      jscode = WebGL.emit(ir);
+      jscode = Backends.WebGL.emit(ir);
     } else {
-      jscode = JS.emit(ir);
+      jscode = Backends.JS.emit(ir);
     }
   } catch (e) {
     if (typeof(e) === "string") {
@@ -161,7 +161,7 @@ export function execute(config: Config, jscode: string,
   }
 
   // Pass a formatted value.
-  executed(JS.pretty_value(res));
+  executed(Backends.JS.pretty_value(res));
 }
 
 }

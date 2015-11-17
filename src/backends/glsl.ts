@@ -34,7 +34,7 @@ const GL_TYPES: TypeMap = {
   "Mesh": new PrimitiveType("Mesh"),
 };
 
-module GLSL {
+module Backends.GLSL {
 
 const NUMERIC_TYPES: Type[] = [
   FLOAT3, FLOAT4,

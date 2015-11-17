@@ -1,21 +1,23 @@
 /// <reference path="../compile/ir.ts" />
 
+module Backends {
+
 // Utilities used by the various code-generation backends.
 
 // Get a variable name for an ATW variable by its defining node ID.
-function varsym(defid: number) {
+export function varsym(defid: number) {
   return 'v' + defid;
 }
 
 // Get a function name for an ATW Proc by its ID, which is the same as the
 // defining `fun` node ID.
-function procsym(procid: number) {
+export function procsym(procid: number) {
   return "f" + procid;
 }
 
 // Get a string constant name for an ATW quotation (i.e., a Prog) by its ID,
 // which is the same as the `quote` node ID.
-function progsym(progid: number) {
+export function progsym(progid: number) {
   return "q" + progid;
 }
 
@@ -23,18 +25,18 @@ function progsym(progid: number) {
 // & replace to substitute in code into an expression.
 // TODO Eventually, a better implementation of this idea would just
 // concatenate string fragments instead of using find & replace.
-function splicesym(escid: number) {
+export function splicesym(escid: number) {
   return "__SPLICE_" + escid + "__";
 }
 
 // Get a variable name for communicating *persist* escapes into an `eval`
 // call.
-function persistsym(escid: number) {
+export function persistsym(escid: number) {
   return "p" + escid;
 }
 
 // Parenthesize an expression.
-function paren(e: string) {
+export function paren(e: string) {
   return "(" + e + ")";
 }
 
@@ -48,7 +50,7 @@ function repeat(s: string, n: number): string {
 }
 
 // Indent a string by a given number of spaces.
-function indent(s: string, first=false, spaces=2): string {
+export function indent(s: string, first=false, spaces=2): string {
   let space = repeat(" ", spaces);
   let out = s.replace(/\n/g, "\n" + space);
   if (first) {
@@ -58,7 +60,7 @@ function indent(s: string, first=false, spaces=2): string {
 }
 
 // A helper for emitting sequence expressions without emitting unneeded code.
-function emit_seq(seq: SeqNode, sep: string,
+export function emit_seq(seq: SeqNode, sep: string,
     emit: (_:ExpressionNode) => string,
     pred: (_:ExpressionNode) => boolean = useful_pred): string
 {
@@ -74,7 +76,7 @@ function emit_seq(seq: SeqNode, sep: string,
 
 // A helper for emitting assignments. Handles both externs and normal
 // variables.
-function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
+export function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
     tree: AssignNode, get_varsym=varsym): string {
   let defid = ir.defuse[tree.id];
   let extern = ir.externs[defid];
@@ -90,7 +92,7 @@ function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
 
 // A helper for emitting lookups. Also handles both externs and ordinary
 // variables.
-function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
+export function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
     emit_extern: (name: string, type: Type) => string,
     tree: LookupNode,
     get_varsym=varsym): string {
@@ -132,7 +134,7 @@ function useful_pred(tree: ExpressionNode): boolean {
 // Compile a top-level expression for the body of a function. The emitted code
 // returns value of the function. The optional `pred` function can decide
 // whether to emit (non-terminal) expressions.
-function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
+export function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
     ret="return ", sep=";",
     pred: (_:ExpressionNode) => boolean = useful_pred): string
 {
@@ -147,4 +149,6 @@ function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
     }
   }
   return statements.join(sep + "\n") + sep;
+}
+
 }
