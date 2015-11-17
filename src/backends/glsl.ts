@@ -332,6 +332,18 @@ function _attribute_type(t: Type) {
   return false;
 }
 
+// Check whether a scope is a render/ordinary quote or the main, top-level
+// program.
+function _is_cpu_scope(ir: CompilerIR, progid: number) {
+  if (progid === null) {
+    return true;
+  }
+
+  let defining_kind = prog_kind(ir, progid);
+  return defining_kind === ProgKind.render ||
+         defining_kind === ProgKind.ordinary;
+}
+
 // Emit a declaration for a variable going into or out of the current shader
 // program. The variable reflects an escape in this program or a subprogram.
 // The flags:
@@ -372,9 +384,7 @@ function persist_decl(ir: CompilerIR, progid: number, valueid: number,
         // Implicitly passed through by vertex shader.
         qual = "varying";
       } else {
-        let defining_quote = nearest_quote(ir, valueid);
-        let defining_kind = prog_kind(ir, defining_quote);
-        if (defining_kind === ProgKind.render) {
+        if (_is_cpu_scope(ir, nearest_quote(ir, valueid))) {
           // A direct uniform.
           qual = "uniform";
         } else {
