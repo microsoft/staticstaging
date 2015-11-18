@@ -317,7 +317,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
     if (_attribute_type(type)) {
       // An attribute, originally.
-      if (ir.containers[fv] === prog.parent) {
+      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
         // As above, the variable is defined in the containing program. The
         // array-to-element decay occurs here.
         g.value_name = varsym(fv);
