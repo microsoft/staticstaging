@@ -97,7 +97,7 @@ function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
     varid: number): string
 {
   let [type, _] = ir.type_table[valueid];
-  let element_type = GLSL._unwrap_array(type);
+  let element_type = _unwrap_array(type);
   let attribute = false;  // As opposed to uniform.
   if (element_type != type) {
     // An array type indicates an attribute.
@@ -268,7 +268,8 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
   }
 
   // Emit the shader program.
-  let code = GLSL.compile_prog(emitter.glsl_compile, emitter.ir, prog.id);
+  let code = GLSL.compile_prog(emitter.glsl_compile, emitter.ir, emitter.glue,
+      prog.id);
   out += JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),

@@ -10,17 +10,6 @@ module Backends.GL.GLSL {
 // Type checking for uniforms, which are automatically demoted from arrays to
 // individual values when they persist.
 
-// A helper function that unwraps array types. Non-array types are unaffected.
-export function _unwrap_array(t: Type): Type {
-  if (t instanceof InstanceType) {
-    if (t.cons === ARRAY) {
-      // Get the inner type: the array element type.
-      return t.arg;
-    }
-  }
-  return t;
-}
-
 // The type mixin itself.
 export function type_mixin(fsuper: TypeCheck): TypeCheck {
   let type_rules = complete_visit(fsuper, {
@@ -201,85 +190,8 @@ export function get_compile(ir: CompilerIR): Compile {
 
 // Emitting the surrounding machinery for communicating between stages.
 
-// Check whether the type of a value implies that it needs to be passed as an
-// attribute: i.e., it is an array type.
-function _attribute_type(t: Type) {
-  if (t instanceof InstanceType) {
-    return t.cons === ARRAY;
-  }
-  return false;
-}
-
-// Check whether a scope is a render/ordinary quote or the main, top-level
-// program.
-function _is_cpu_scope(ir: CompilerIR, progid: number) {
-  if (progid === null) {
-    return true;
-  }
-
-  let defining_kind = prog_kind(ir, progid);
-  return defining_kind === ProgKind.render ||
-         defining_kind === ProgKind.ordinary;
-}
-
-// Emit a declaration for a variable going into or out of the current shader
-// program. The variable reflects an escape in this program or a subprogram.
-// The flags:
-// - `kind`, indicating whether this is an vertex (outer) shader program or a
-//   fragment (inner) shader
-// - `out`, indicating whether the variable is going into or out of the stage
-function persist_decl(ir: CompilerIR, progid: number, valueid: number,
-    varid: number, kind: ProgKind, out: boolean): string {
-  let [type, _] = ir.type_table[valueid];
-
-  // Array types indicate an attribute. Use the element type. Attributes get
-  // no special qualifier distinction from uniforms; they both just get marked
-  // as `in` variables.
-  let decl_type = type;
-  let element_type = _unwrap_array(decl_type);
-  let attribute = element_type != decl_type;  // As opposed to uniform.
-  decl_type = element_type;
-
-  // Determine the type qualifier. In WebGL 2, this will be as simple as:
-  // let qual = out ? "out" : "in";
-  // Sadly, in WebGL 1, we need more complex qualifiers.
-  let qual: string;
-  if (kind === ProgKind.vertex) {
-    if (out) {
-      qual = "varying";
-    } else {  // in
-      if (attribute) {
-        qual = "attribute";
-      } else {
-        qual = "uniform";
-      }
-    }
-  } else if (kind === ProgKind.fragment) {
-    if (out) {
-      throw "error: fragment outputs not allowed";
-    } else {
-      if (attribute) {
-        // Implicitly passed through by vertex shader.
-        qual = "varying";
-      } else {
-        if (_is_cpu_scope(ir, nearest_quote(ir, valueid))) {
-          // A direct uniform.
-          qual = "uniform";
-        } else {
-          // Explicitly passed from vertex shader.
-          qual = "varying";
-        }
-      }
-    }
-  } else {
-    throw "error: unknown shader kind";
-  }
-
-  return emit_decl(qual, emit_type(decl_type), shadervarsym(progid, varid));
-}
-
 export function compile_prog(compile: Compile,
-    ir: CompilerIR, progid: number): string {
+    ir: CompilerIR, glue: Glue[][], progid: number): string {
   // TODO compile the functions
 
   let prog = ir.progs[progid];
@@ -292,11 +204,16 @@ export function compile_prog(compile: Compile,
 
   // Declare `in` variables for the persists and free variables.
   let decls: string[] = [];
-  for (let esc of prog.persist) {
-    decls.push(persist_decl(ir, progid, esc.body.id, esc.id, kind, false));
-  }
-  for (let fv of prog.free) {
-    decls.push(persist_decl(ir, progid, fv, fv, kind, false));
+  for (let g of glue[progid]) {
+    let qual: string;
+    if (g.from_host) {
+      qual = "uniform";
+    } else if (g.attribute) {
+      qual = "attribute";
+    } else {
+      qual = "varying";
+    }
+    decls.push(emit_decl(qual, emit_type(g.type), g.name));
   }
 
   // Declare `out` variables for the persists (and free variables) in the
@@ -308,24 +225,18 @@ export function compile_prog(compile: Compile,
     throw "error: too many subprograms";
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
+    for (let g of glue[subprog.id]) {
+      if (!g.from_host) {
+        decls.push(emit_decl("varying", emit_type(g.type), g.name));
 
-    for (let esc of subprog.persist) {
-      decls.push(persist_decl(ir, subprog.id, esc.body.id, esc.id, kind, true));
-
-      // Compile the escape's expression and assign the corresponding
-      // variable.
-      let varname = shadervarsym(subprog.id, esc.id);
-      let value = compile(esc.body);
-      varying_asgts.push(`${varname} = ${paren(value)}`);
-    }
-
-    for (let fv of subprog.free) {
-      decls.push(persist_decl(ir, subprog.id, fv, fv, kind, true));
-
-      // Pass through the appropriate variable.
-      let destvar = shadervarsym(subprog.id, fv);
-      let srcvar = shadervarsym(ir.progs[subprog.quote_parent].id, fv);
-      varying_asgts.push(`${destvar} = ${srcvar}`);
+        let value: string;
+        if (g.value_name) {
+          value = g.value_name;
+        } else {
+          value = paren(compile(g.value_expr));
+        }
+        varying_asgts.push(`${g.name} = ${value}`);
+      }
     }
   }
 

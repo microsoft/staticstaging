@@ -189,7 +189,8 @@ export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
 // to emit) these pieces of glue:
 // - GLSL attribute/varying/uniform declarations.
 // - Assignments to pass data from one GLSL program to the next.
-// - WebGL's binding calls.
+// - WebGL's location API (setup time).
+// - WebGL's binding calls (render time).
 
 // Check whether a scope is a render/ordinary quote or the main, top-level
 // program.
