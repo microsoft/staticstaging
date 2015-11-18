@@ -105,14 +105,22 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
     },
 
     visit_assign(tree: AssignNode, param: void): string {
+      // TODO Prevent assignment to nonlocal variables.
       let vs = (id:number) => shadervarsym(nearest_quote(ir, tree.id), id);
       return emit_assign(ir, fself, tree, vs);
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
       return emit_lookup(ir, fself, emit_extern, tree, function (id:number) {
-        ir.scopes[id]; XXX;
-        return shadervarsym(nearest_quote(ir, tree.id), id);
+        if (_is_cpu_scope(ir, nearest_quote(ir, id))) {
+          // References to variables defined on the CPU ("uniforms") get a
+          // special naming convention so they can be shared between multiple
+          // shaders in the same program.
+          return varsym(id);
+        } else {
+          // Ordinary shader-scoped variable.
+          return shadervarsym(nearest_quote(ir, tree.id), id);
+        }
       });
     },
 
