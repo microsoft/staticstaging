@@ -110,8 +110,10 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
     },
 
     visit_lookup(tree: LookupNode, param: void): string {
-      let vs = (id:number) => shadervarsym(nearest_quote(ir, tree.id), id);
-      return emit_lookup(ir, fself, emit_extern, tree, vs);
+      return emit_lookup(ir, fself, emit_extern, tree, function (id:number) {
+        ir.scopes[id]; XXX;
+        return shadervarsym(nearest_quote(ir, tree.id), id);
+      });
     },
 
     visit_unary(tree: UnaryNode, param: void): string {
