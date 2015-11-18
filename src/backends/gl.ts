@@ -258,13 +258,6 @@ export interface Glue {
 export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   let glue: Glue[] = [];
 
-  let kind = prog_kind(ir, prog.id);
-  if (kind === ProgKind.vertex) {
-  } else if (kind == ProgKind.fragment) {
-  } else {
-    throw "error: incorrect program kind";
-  }
-
   // Get glue for the persists.
   for (let esc of prog.persist) {
     let [type,] = ir.type_table[esc.body.id];
@@ -332,7 +325,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       // then they are available for free when they are declared with the same
       // name in other shaders.
       g.name = varsym(fv);  // TODO Fix up references.
-      if (_is_cpu_scope(ir, prog.parent)) {
+      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
         // Get the value from the host.
         g.value_name = varsym(fv);
       }

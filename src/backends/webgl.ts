@@ -248,9 +248,11 @@ function get_compile(emitter: Emitter): Compile {
   return f;
 }
 
-// Our WebGL emitter also has a function to emit GLSL code.
+// Our WebGL emitter also has a function to emit GLSL code and a special
+// summary of the cross-stage communication.
 interface Emitter extends Backends.Emitter {
   glsl_compile: Compile,
+  glue: Glue[][],
 }
 
 function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
@@ -289,12 +291,23 @@ function emit_prog(emitter: Emitter, prog: Prog): string {
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 export function emit(ir: CompilerIR): string {
+  // Make some additional decisions about communication between shader stages.
+  let glue: Glue[][] = [];
+  for (let prog of ir.progs) {
+    if (prog !== undefined) {
+      if (prog.annotation === "s") {
+        glue[prog.id] = get_glue(ir, prog);
+      }
+    }
+  }
+
   let emitter: Emitter = {
     ir: ir,
     compile: null,
     glsl_compile: null,
     emit_proc: JS.emit_proc,
     emit_prog: emit_prog,
+    glue: glue,
   };
   emitter.compile = get_compile(emitter);
   emitter.glsl_compile = GLSL.get_compile(ir);
