@@ -165,7 +165,7 @@ $(MADOKO): node_modules/madoko/package.json
 docs: docs/build/index.html docs/build/docs.js
 
 docs/build/index.html: docs/index.md $(MADOKO)
-	$(MADOKO) --odir=docs/build $<
+	cd docs; ../$(MADOKO) --odir=build ../$<
 
 docs/build/docs.js: docs/docs.ts $(TSC)
 	$(TSC) $(TSCARGS) --out $@ $<
