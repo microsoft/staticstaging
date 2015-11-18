@@ -281,6 +281,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
         // We do not own the escape, so it is not computed. Instead, just get
         // the value from the previous shader stage.
         g.value_name = shadervarsym(prog.parent, esc.id);
+        g.from_host = false;
       }
 
     } else if (esc.prog === prog.id) {
@@ -319,6 +320,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       } else {
         // The value has already decayed; just get its value from the parent.
         g.value_name = shadervarsym(prog.parent, fv);
+        g.from_host = false;
       }
 
     } else if (g.from_host) {

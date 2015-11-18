@@ -206,10 +206,10 @@ export function compile_prog(compile: Compile,
   let decls: string[] = [];
   for (let g of glue[progid]) {
     let qual: string;
-    if (g.from_host) {
-      qual = "uniform";
-    } else if (g.attribute) {
+    if (g.attribute) {
       qual = "attribute";
+    } else if (g.from_host) {
+      qual = "uniform";
     } else {
       qual = "varying";
     }
