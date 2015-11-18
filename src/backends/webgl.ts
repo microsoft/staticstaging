@@ -127,38 +127,33 @@ function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
 // Emit a single WebGL binding call for a uniform or attribute. Takes the
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
-function emit_param_binding(ir: CompilerIR, scopeid: number, valueid: number,
-    varid: number, value: string): string
+function emit_param_binding(scopeid: number, type: Type, varid: number,
+    value: string, attribute: boolean): string
 {
-  let [type, _] = ir.type_table[valueid];
+  if (!attribute) {
+    if (type instanceof PrimitiveType) {
+      let fname = GL_UNIFORM_FUNCTIONS[type.name];
+      if (fname === undefined) {
+        throw "error: unsupported uniform type " + type.name;
+      }
 
-  // Primitive types are bound as uniforms.
-  if (type instanceof PrimitiveType) {
-    let fname = GL_UNIFORM_FUNCTIONS[type.name];
-    if (fname === undefined) {
-      throw "error: unsupported uniform type " + type.name;
+      // Construct the call to gl.uniformX.
+      let is_matrix = fname.indexOf("Matrix") !== -1;
+      let locname = locsym(scopeid, varid);
+      let out = `gl.${fname}(${locname}`;
+      if (is_matrix) {
+        // Transpose parameter.
+        out += ", false";
+      }
+      out += `, ${paren(value)})`;
+      return out;
+    } else {
+      throw "error: uniforms must be primitive types";
     }
-
-    // Determine where the uniform goes: to the vertex shader or to the
-    // fragment shader? This depends on the *containing* (rather than
-    // *owning*) scope for the reference/escape.
-    let containing_scope = nearest_quote(ir, varid);
-    let locname = locsym(containing_scope, varid);
-
-    // Construct the call to gl.uniformX.
-    let is_matrix = fname.indexOf("Matrix") !== -1;
-    let out = `gl.${fname}(${locname}`;
-    if (is_matrix) {
-      // Transpose parameter.
-      out += ", false";
-    }
-    out += `, ${paren(value)})`;
-    return out;
 
   // Array types are bound as attributes.
-  } else if (type instanceof InstanceType && type.cons === ARRAY) {
-    let t = type.arg;
-    if (t instanceof PrimitiveType) {
+  } else {
+    if (type instanceof PrimitiveType) {
       // Call our runtime function to bind the attribute. The parameters are
       // the WebGL context, the attribute location, and the buffer.
       return `bind_attribute(gl, ${locsym(scopeid, varid)}, ${paren(value)})`;
@@ -166,30 +161,29 @@ function emit_param_binding(ir: CompilerIR, scopeid: number, valueid: number,
     } else {
       throw "error: attributes must be primitive types";
     }
-
-  } else {
-    throw "error: persisted values must be primitive or array types";
   }
 }
 
 // Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
 // shader). This includes both the `useProgram` call and the `bindX` calls to
 // set up the uniforms and attributes.
-function emit_shader_binding(compile: Compile, ir: CompilerIR,
+function emit_shader_binding(compile: Compile, ir: CompilerIR, glue: Glue[][],
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
   // Bind the shader program.
   let out = `gl.useProgram(${shadersym(vertex_prog.id)})`;
 
-  // Emit and bind the uniforms and attributes. First for explicit persists,
-  // and then for free variables.
-  for (let esc of vertex_prog.persist) {
-    let value = compile(esc.body);
-    out += ",\n" + emit_param_binding(ir, progid, esc.body.id, esc.id, value);
-  }
-  for (let fv of vertex_prog.free) {
-    out += ",\n" + emit_param_binding(ir, progid, fv, fv, varsym(fv));
+  // Emit and bind the uniforms and attributes.
+  for (let g of glue[progid]) {
+    let value: string;
+    if (g.value_name) {
+      value = g.value_name;
+    } else {
+      value = paren(compile(g.value_expr));
+    }
+    out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
+        g.attribute);
   }
 
   return out;
@@ -209,7 +203,7 @@ function compile_rules(fself: Compile, emitter: Emitter, ir: CompilerIR):
         // emit the bindings.
         if (tree.args[0].tag === "quote") {
           let quote = tree.args[0] as QuoteNode;
-          return emit_shader_binding(fself, ir, quote.id);
+          return emit_shader_binding(fself, ir, emitter.glue, quote.id);
         } else {
           throw "dynamic `vtx` calls unimplemented";
         }
