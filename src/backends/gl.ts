@@ -234,6 +234,9 @@ export function _unwrap_array(t: Type): Type {
 
 // Represents a single value as it is communicated *into* a stage.
 export interface Glue {
+  // Uniquely identify the original value.
+  id: number,
+
   // The GLSL variable name that stores the value as used in this stage.
   name: string,
 
@@ -263,6 +266,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   for (let esc of prog.persist) {
     let [type,] = ir.type_table[esc.body.id];
     let g: Glue = {
+      id: esc.id,
       name: shadervarsym(prog.id, esc.id),
       type: _unwrap_array(type),
       from_host: _is_cpu_scope(ir, nearest_quote(ir, esc.body.id)),
@@ -304,6 +308,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   for (let fv of prog.free) {
     let [type,] = ir.type_table[fv];
     let g: Glue = {
+      id: fv,
       name: shadervarsym(prog.id, fv),
       type: _unwrap_array(type),
       from_host: _is_cpu_scope(ir, nearest_quote(ir, fv)),

@@ -89,25 +89,13 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 
 // Emit the JavaScript variable declaration for a *location value* pointing to
 // a shader variable. The `scopeid` is the ID of the quote for the shader
-// where the variable is located. `valueid` indicates the value being
-// communicated, and `varid` is the ID of the variable as the shader sees it.
-// These are equal for free variables (cross-stage references), but correspond
-// to the quote body and the quote for explicit persists.
-function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
-    varid: number): string
+// where the variable is located.
+function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
+    varid: number):
+  string
 {
-  let [type, _] = ir.type_table[valueid];
-  let element_type = _unwrap_array(type);
-  let attribute = false;  // As opposed to uniform.
-  if (element_type != type) {
-    // An array type indicates an attribute.
-    attribute = true;
-  }
-
-  // Emit the WebGL call to get the location.
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid);
-  let varname = shadervarsym(scopeid, varid);
   return JS.emit_var(
     locsym(scopeid, varid),
     `gl.${func}(${shader}, ${JS.emit_string(varname)})`
@@ -116,7 +104,9 @@ function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
 
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
-function emit_shader_setup(ir: CompilerIR, progid: number): string {
+function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
+    progid: number): string
+{
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
   // Compile and link the shader program.
@@ -127,11 +117,8 @@ function emit_shader_setup(ir: CompilerIR, progid: number): string {
 
   // Get the variable locations, for both explicit persists and for free
   // variables.
-  for (let esc of vertex_prog.persist) {
-    out += emit_loc_var(ir, vertex_prog.id, esc.body.id, esc.id) + "\n";
-  }
-  for (let fv of vertex_prog.free) {
-    out += emit_loc_var(ir, vertex_prog.id, fv, fv) + "\n";
+  for (let g of glue[vertex_prog.id]) {
+    out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id);
   }
 
   return out;
@@ -275,7 +262,7 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
   if (prog_kind(emitter.ir, prog.id) === ProgKind.vertex) {
-    out += emit_shader_setup(emitter.ir, prog.id);
+    out += emit_shader_setup(emitter.ir, emitter.glue, prog.id);
   }
 
   return out;
