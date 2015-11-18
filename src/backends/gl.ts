@@ -214,7 +214,7 @@ export function shadervarsym(scopeid: number, varid: number) {
 
 // Check whether the type of a value implies that it needs to be passed as an
 // attribute: i.e., it is an array type.
-function _attribute_type(t: Type) {
+export function _attribute_type(t: Type) {
   if (t instanceof InstanceType) {
     return t.cons === ARRAY;
   }

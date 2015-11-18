@@ -112,7 +112,8 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
 
     visit_lookup(tree: LookupNode, param: void): string {
       return emit_lookup(ir, fself, emit_extern, tree, function (id:number) {
-        if (_is_cpu_scope(ir, nearest_quote(ir, id))) {
+        let [type,] = ir.type_table[id];
+        if (_is_cpu_scope(ir, nearest_quote(ir, id)) && !_attribute_type(type)) {
           // References to variables defined on the CPU ("uniforms") get a
           // special naming convention so they can be shared between multiple
           // shaders in the same program.

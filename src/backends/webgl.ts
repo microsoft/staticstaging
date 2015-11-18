@@ -118,7 +118,7 @@ function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
   // Get the variable locations, for both explicit persists and for free
   // variables.
   for (let g of glue[vertex_prog.id]) {
-    out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id);
+    out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id) + "\n";
   }
 
   return out;
