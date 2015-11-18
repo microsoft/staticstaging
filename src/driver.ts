@@ -32,7 +32,7 @@ export interface Config {
 
 function _intrinsics(config: Config): TypeMap {
   if (config.webgl) {
-    return Backends.WebGL.INTRINSICS;
+    return Backends.GL.INTRINSICS;
   } else {
     return BUILTIN_OPERATORS;
   }
@@ -41,14 +41,14 @@ function _intrinsics(config: Config): TypeMap {
 function _runtime(config: Config): string {
   let runtime = Backends.JS.RUNTIME + "\n";
   if (config.webgl) {
-    runtime += Backends.WebGL.RUNTIME + "\n";
+    runtime += Backends.GL.WebGL.RUNTIME + "\n";
   }
   return runtime;
 }
 
 function _types(config: Config): TypeMap {
   if (config.webgl) {
-    return assign({}, BUILTIN_TYPES, GL_TYPES);
+    return assign({}, BUILTIN_TYPES, Backends.GL.GL_TYPES);
   } else {
     return BUILTIN_TYPES;
   }
@@ -57,7 +57,7 @@ function _types(config: Config): TypeMap {
 function _check(config: Config): Gen<TypeCheck> {
   let check = gen_check;
   if (config.webgl) {
-    check = compose(Backends.GLSL.type_mixin, check);
+    check = compose(Backends.GL.GLSL.type_mixin, check);
   }
   return check;
 }
@@ -119,7 +119,7 @@ export function compile(config: Config, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      jscode = Backends.WebGL.emit(ir);
+      jscode = Backends.GL.WebGL.emit(ir);
     } else {
       jscode = Backends.JS.emit(ir);
     }

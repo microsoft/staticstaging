@@ -2,8 +2,9 @@
 /// <reference path="emitter.ts" />
 /// <reference path="js.ts" />
 /// <reference path="glsl.ts" />
+/// <reference path="gl.ts" />
 
-module Backends.WebGL {
+module Backends.GL.WebGL {
 
 export const RUNTIME = `
 // Shader management.
@@ -48,69 +49,6 @@ function vec3(x, y, z) {
   return out;
 }
 `.trim();
-
-const _GL_UNARY_TYPE = new OverloadedType([
-  new FunType([INT], INT),
-  new FunType([FLOAT], FLOAT),
-  new FunType([FLOAT3], FLOAT3),
-  new FunType([FLOAT4], FLOAT4),
-]);
-const _GL_BINARY_TYPE = new OverloadedType([
-  new FunType([INT, INT], INT),
-  new FunType([FLOAT, FLOAT], FLOAT),
-  new FunType([FLOAT3, FLOAT3], FLOAT3),
-  new FunType([FLOAT4, FLOAT4], FLOAT4),
-  new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
-  new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
-]);
-const _GL_UNARY_BINARY_TYPE = new OverloadedType(
-  _GL_UNARY_TYPE.types.concat(_GL_BINARY_TYPE.types)
-);
-const _GL_MUL_TYPE = new OverloadedType([
-  new FunType([INT, INT], INT),
-  new FunType([FLOAT, FLOAT], FLOAT),
-  new FunType([FLOAT3, FLOAT3], FLOAT3),
-  new FunType([FLOAT4, FLOAT4], FLOAT4),
-  new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
-  new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
-
-  // Multiplication gets special type cases for matrix-vector multiply.
-  new FunType([FLOAT3X3, FLOAT3], FLOAT3),
-  new FunType([FLOAT4X4, FLOAT4], FLOAT4),
-]);
-export const INTRINSICS: TypeMap = {
-  render: new FunType([new CodeType(ANY, "f")], VOID),
-  vtx: new FunType([new CodeType(ANY, "s")], VOID),
-  frag: new FunType([new CodeType(ANY, "s")], VOID),
-  gl_Position: FLOAT4,
-  gl_FragColor: FLOAT4,
-  vec4: new OverloadedType([
-    new FunType([FLOAT3, FLOAT], FLOAT4),
-    new FunType([FLOAT, FLOAT, FLOAT, FLOAT], FLOAT4),
-    new FunType([FLOAT], FLOAT4),
-  ]),
-  vec3: new OverloadedType([
-    new FunType([FLOAT4], FLOAT3),
-    new FunType([FLOAT, FLOAT, FLOAT], FLOAT3),
-    new FunType([FLOAT], FLOAT3),
-  ]),
-  abs: _GL_UNARY_TYPE,
-  normalize: _GL_UNARY_TYPE,
-  pow: _GL_BINARY_TYPE,
-  reflect: _GL_BINARY_TYPE,
-  dot: new OverloadedType([
-    new FunType([FLOAT3, FLOAT3], FLOAT),
-    new FunType([FLOAT4, FLOAT4], FLOAT),
-  ]),
-  min: _GL_BINARY_TYPE,
-  max: _GL_BINARY_TYPE,
-
-  // Binary operators.
-  '+': _GL_UNARY_BINARY_TYPE,
-  '-': _GL_UNARY_BINARY_TYPE,
-  '*': _GL_MUL_TYPE,
-  '/': _GL_BINARY_TYPE,
-};
 
 const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
   "Int": "uniform1i",
@@ -169,7 +107,7 @@ function emit_loc_var(ir: CompilerIR, scopeid: number, valueid: number,
   // Emit the WebGL call to get the location.
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid);
-  let varname = GLSL.shadervarsym(scopeid, varid);
+  let varname = shadervarsym(scopeid, varid);
   return JS.emit_var(
     locsym(scopeid, varid),
     `gl.${func}(${shader}, ${JS.emit_string(varname)})`
@@ -270,14 +208,6 @@ function emit_shader_binding(compile: Compile, ir: CompilerIR,
   return out;
 }
 
-// Check for our intrinsics.
-function vtx_expr(tree: ExpressionNode) {
-  return GLSL.is_intrinsic_call(tree, "vtx");
-}
-function render_expr(tree: ExpressionNode) {
-  return GLSL.is_intrinsic_call(tree, "render");
-}
-
 // Extend the JavaScript compiler with some WebGL specifics.
 function compile_rules(fself: Compile, emitter: Emitter, ir: CompilerIR):
   ASTVisit<void, string>
@@ -341,7 +271,7 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
-  if (GLSL.prog_kind(emitter.ir, prog.id) === GLSL.ProgKind.vertex) {
+  if (prog_kind(emitter.ir, prog.id) === ProgKind.vertex) {
     out += emit_shader_setup(emitter.ir, prog.id);
   }
 

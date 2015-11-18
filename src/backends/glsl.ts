@@ -3,94 +3,9 @@
 /// <reference path="../compile/compile.ts" />
 /// <reference path="emitutil.ts" />
 /// <reference path="emitter.ts" />
-/// <reference path="../type.ts" />
+/// <reference path="gl.ts" />
 
-// Special GLSL matrix and vector types.
-// Someday, a more structured notion of generic vector and matrix types would
-// be better. For now, we just support a handful of common types.
-const FLOAT3 = new PrimitiveType("Float3");
-const FLOAT4 = new PrimitiveType("Float4");
-const FLOAT3X3 = new PrimitiveType("Float3x3");
-const FLOAT4X4 = new PrimitiveType("Float4x4");
-const ARRAY = new ConstructorType("Array");
-const INT3 = new PrimitiveType("Int3");
-const INT4 = new PrimitiveType("Int4");
-
-const GL_TYPES: TypeMap = {
-  "Float3": FLOAT3,
-  "Float4": FLOAT4,
-  "Vec3": FLOAT3,  // Convenient OpenGL-esque names.
-  "Vec4": FLOAT4,
-  "Float3x3": FLOAT3X3,
-  "Float4x4": FLOAT4X4,
-  "Mat3": FLOAT3X3,
-  "Mat4": FLOAT4X4,
-  "Int3": INT3,
-  "Int4": INT4,
-  "Array": ARRAY,
-
-  // TODO This Mesh type is used by the dingus. It is an opaque type. It would
-  // be nice if the dingus could declare the Mesh type itself rather than
-  // needing to bake it in here.
-  "Mesh": new PrimitiveType("Mesh"),
-};
-
-module Backends.GLSL {
-
-const NUMERIC_TYPES: Type[] = [
-  FLOAT3, FLOAT4,
-  FLOAT3X3, FLOAT4X4,
-  INT3, INT4,
-];
-
-const TYPE_NAMES: { [_: string]: string } = {
-  "Int": "int",
-  "Int3": "ivec3",
-  "Int4": "ivec4",
-  "Float": "float",
-  "Float3": "vec3",
-  "Float4": "vec4",
-  "Float3x3": "mat3",
-  "Float4x4": "mat4",
-};
-
-// A naming convention for global communication (uniform/attribute/varying)
-// variables in shaders. The `scopeid` is the ID of the quote where the
-// variable is used. `exprid` is the ID of the variable or persist scape
-// expression.
-export function shadervarsym(scopeid: number, varid: number) {
-  return "s" + scopeid + "v" + varid;
-}
-
-
-// Checking for our magic `vtx` and `frag` intrinsics, which indicate the
-// structure of shader programs.
-// This could be more efficient by using the ID of the extern. For now, we
-// just match on the name.
-
-function is_intrinsic(tree: CallNode, name: string) {
-  if (tree.fun.tag === "lookup") {
-    let fun = <LookupNode> tree.fun;
-    return fun.ident === name;
-  }
-  return false;
-}
-
-export function is_intrinsic_call(tree: ExpressionNode, name: string) {
-  if (tree.tag === "call") {
-    return is_intrinsic(tree as CallNode, name);
-  }
-  return false;
-}
-
-function frag_expr(tree: ExpressionNode) {
-  return is_intrinsic_call(tree, "frag");
-}
-
-function emit_extern(name: string, type: Type): string {
-  return name;
-}
-
+module Backends.GL.GLSL {
 
 // Type checking for uniforms, which are automatically demoted from arrays to
 // individual values when they persist.
@@ -147,6 +62,27 @@ export function type_mixin(fsuper: TypeCheck): TypeCheck {
 
 
 // The core compiler rules for emitting GLSL code.
+
+function emit_extern(name: string, type: Type): string {
+  return name;
+}
+
+function emit_decl(qualifier: string, type: string, name: string) {
+  return qualifier + " " + type + " " + name + ";";
+}
+
+function emit_type(type: Type): string {
+  if (type instanceof PrimitiveType) {
+    let name = TYPE_NAMES[type.name];
+    if (name === undefined) {
+      throw "error: primitive type " + type.name + " unsupported in GLSL";
+    } else {
+      return name;
+    }
+  } else {
+    throw "error: type unsupported in GLSL: " + type;
+  }
+}
 
 export function compile_rules(fself: Compile, ir: CompilerIR):
   ASTVisit<void, string>
@@ -262,22 +198,8 @@ export function get_compile(ir: CompilerIR): Compile {
   return f;
 }
 
-function emit_decl(qualifier: string, type: string, name: string) {
-  return qualifier + " " + type + " " + name + ";";
-}
 
-function emit_type(type: Type): string {
-  if (type instanceof PrimitiveType) {
-    let name = TYPE_NAMES[type.name];
-    if (name === undefined) {
-      throw "error: primitive type " + type.name + " unsupported in GLSL";
-    } else {
-      return name;
-    }
-  } else {
-    throw "error: type unsupported in GLSL: " + type;
-  }
-}
+// Emitting the surrounding machinery for communicating between stages.
 
 // Check whether the type of a value implies that it needs to be passed as an
 // attribute: i.e., it is an array type.
@@ -432,39 +354,6 @@ export function compile_prog(compile: Compile,
   }
   out += main;
   return out;
-}
-
-// Determine the stage kind of a Prog: render, vertex, or fragment. Uses these
-// definitions, which are based on containment and annotations:
-// - A fragment program is a shader program contained in another shader
-//   program.
-// - A vertex program is a shader program that is either not nested in any
-//   other program or whose containing program is a function program.
-// - A render program is any function program.
-// - Anything else is an ordinary program.
-export enum ProgKind {
-  ordinary,
-  render,
-  vertex,
-  fragment,
-}
-export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
-  let prog = ir.progs[progid];
-  if (prog.annotation === "f") {
-    return ProgKind.render;
-  } else if (prog.annotation === "s") {
-    if (prog.quote_parent === null) {
-      return ProgKind.vertex;
-    }
-    let parprog = ir.progs[prog.quote_parent];
-    if (parprog.annotation === "f") {
-      return ProgKind.vertex;
-    } else {
-      return ProgKind.fragment;
-    }
-  } else {
-    return ProgKind.ordinary;
-  }
 }
 
 }
