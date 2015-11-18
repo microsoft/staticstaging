@@ -142,10 +142,13 @@ export function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
   let statements: string[] = [];
   for (let i = 0; i < exprs.length; ++i) {
     let expr = exprs[i];
-    if (i === exprs.length - 1) {
-      statements.push(ret + emit(expr));
-    } else if (pred(expr)) {
-      statements.push(emit(expr));
+    let s = emit(expr);
+    if (s.length) {
+      if (i === exprs.length - 1) {
+        statements.push(ret + emit(expr));
+      } else if (pred(expr)) {
+        statements.push(emit(expr));
+      }
     }
   }
   return statements.join(sep + "\n") + sep;
