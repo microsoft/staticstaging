@@ -136,6 +136,29 @@ You'll get a type error if the annotations don't match:
       !c;
     runit(f<2>)
 
+## N-Level Escapes
+
+Alltheworld generalizes escapes to move across multiple stages at once. You can write a number after a splice `[e]` or persist `%[e]` escape to indicate the number of stages to look through:
+
+    var c = <5>;
+    !< 2 + !< 8 * [c]2 > >
+
+The escape `[c]2` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote. (The syntax is intended to call to mind a subscript in math, as in $[ e ]_2$.)
+
+At first glance, it might look like `[e]n` or `%[e]n` is just syntactic sugar for $n$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
+
+Take another look at the splicing example above. It uses a form like `< ... < [e]2 > ... >` to splice code from the main stage *directly* into a nested program. That is, the expression $e$ is evaluated when the outer quote expression is evaluated, and the resulting program should do *no further splicing* when it is executed. In other words, if we inspect the program that the splice generates:
+
+    var c = <5>;
+    < 2 + !< 8 * [c]2 > >
+
+we'll see a splice-free nested program, `< 2 + !< 8 * 5 > >`. (You may need to switch the tool's mode to "interpreter" to see this pretty-printed code.) That's in contrast to this similar program that uses nested splices:
+
+    var c = <<5>>;
+    < 2 + !< 8 * [[c]] > >
+
+which produces `< 2 + !< 8 * [<5>] > >`, a program that will splice the number 5 into the inner quote when it eventually executes. Nesting a persist inside a splice, as in `[%[c]]`, has a similar drawback. In fact, it is impossible to implement $n$-level escapes as syntactic sugar: they are required to splice directly into nested quotes. We'll also see below that they model certain CPU--GPU communication channels that can skip stages.
+
 
 # Graphics { data-mode=webgl }
 
@@ -268,5 +291,4 @@ If you keep playing with Alltheworld and SHFL, you'll quickly notice that this i
 
 The major missing features, which I'm working on now, are:
 
-- It's not yet possible to communicate *directly* from the CPU to the fragment stage using a fragment uniform. This will require a multi-stage escape construct.
-- We need constructs for compile-time metaprogramming of later stages. This also depends on multi-stage escapes.
+- We need constructs for compile-time metaprogramming of later stages.
