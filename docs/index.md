@@ -3,6 +3,7 @@ heading base: 2
 script: docs.js
 embed: 0
 section depth: 1
+toc depth: 2
 
 ~Pre:
   class=example
@@ -25,6 +26,8 @@ section depth: 1
 [TITLE]
 
 This is an example-based introduction to the Alltheworld compiler and its graphics-centric language, SHFL.
+
+[TOC]
 
 # The Basics { #basics }
 
@@ -240,7 +243,7 @@ While sharing data between stages is straightforward in Alltheworld's homogeneou
 
 In the example above, we use cross-stage persistence to share data between the CPU and GPU. For example, the `model` matrix is initialized in the setup stage but used in the vertex shader. When a host communicates a value to a shader like this, it is traditionally called a [uniform variable][uniform], because the value is constant across invocations of the shader body. In the compiled code for the above example, you'll see several calls like `gl.uniformMatrix4fv(...)`. That's [the WebGL function for binding uniforms][uniformMatrix4fv] of the appropriate type.
 
-It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][multiescape]. You can use explicit two-level escapes like `[ e ]2` or implicit cross-stage references to get this effect.
+It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][#multiescape]. You can use explicit two-level escapes like `[ e ]2` or implicit cross-stage references to get this effect.
 
 If different stages use the same uniform variable, SHFL only needs to bind it once.
 
