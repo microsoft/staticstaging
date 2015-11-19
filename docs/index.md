@@ -136,7 +136,7 @@ You'll get a type error if the annotations don't match:
       !c;
     runit(f<2>)
 
-## N-Level Escapes
+## N-Level Escapes { #multiescape }
 
 Alltheworld generalizes escapes to move across multiple stages at once. You can write a number after a splice `[e]` or persist `%[e]` escape to indicate the number of stages to look through:
 
@@ -240,11 +240,15 @@ While sharing data between stages is straightforward in Alltheworld's homogeneou
 
 In the example above, we use cross-stage persistence to share data between the CPU and GPU. For example, the `model` matrix is initialized in the setup stage but used in the vertex shader. When a host communicates a value to a shader like this, it is traditionally called a [uniform variable][uniform], because the value is constant across invocations of the shader body. In the compiled code for the above example, you'll see several calls like `gl.uniformMatrix4fv(...)`. That's [the WebGL function for binding uniforms][uniformMatrix4fv] of the appropriate type.
 
+It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][multiescape]. You can use explicit two-level escapes like `[ e ]2` or implicit cross-stage references to get this effect.
+
 ### Vertex Attributes
 
 Graphics APIs have a second mechanism for sending data to shaders that differs per vertex, called *vertex attributes*. In our above example, the `position` variable is an array of vectors indicating the location of each vertex. We don't want to pass the entire array to every invocation of the vertex shader---instead, each invocation should get a different vector, as if we had called `map` on the array.
 
 To this end, SHFL handles cross-stage persistence specially when sharing arrays from the host to a shader. If an expression `e` has type `T Array`, then in a shader quote, the persist-escape expression `%[e]` has the element type `T`. The compile code uses WebGL's APIs to bind the array as an attribute instead of a uniform.
+
+When a program uses an attribute at the fragment stage, OpenGL can't communicate the value directly. (There is no such thing as a "fragment attribute.") Instead, SHFL implements the communication by generated code at the vertex stage to pass the current value to the fragment stage.
 
 [uniform]: https://www.opengl.org/wiki/Uniform_(GLSL)
 [uniformMatrix4fv]: https://msdn.microsoft.com/en-us/library/dn302458(v=vs.85).aspx
