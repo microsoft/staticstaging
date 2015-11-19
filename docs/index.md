@@ -195,7 +195,7 @@ The render stage needs to be a function quote (annotated with `f`), and you pass
       # Bind the shader program.
       vtx s<
         # Compute the final position of the model's vertex. The `projection`
-        # and `view` matrices are provided # by the runtime context.
+        # and `view` matrices are provided by the runtime context.
         gl_Position = projection * view * vec4(position, 1.0);
 
         frag s<
