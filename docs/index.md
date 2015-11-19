@@ -242,6 +242,8 @@ In the example above, we use cross-stage persistence to share data between the C
 
 It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][multiescape]. You can use explicit two-level escapes like `[ e ]2` or implicit cross-stage references to get this effect.
 
+If different stages use the same uniform variable, SHFL only needs to bind it once.
+
 ### Vertex Attributes
 
 Graphics APIs have a second mechanism for sending data to shaders that differs per vertex, called *vertex attributes*. In our above example, the `position` variable is an array of vectors indicating the location of each vertex. We don't want to pass the entire array to every invocation of the vertex shader---instead, each invocation should get a different vector, as if we had called `map` on the array.
@@ -285,7 +287,7 @@ If you keep playing with Alltheworld and SHFL, you'll quickly notice that this i
 - Parse errors are frequently useless: they'll point you toward a seemingly irrelevant part of the code. In SHFL mode, the line number also reflects the (hidden) preamble code.
 - Type errors are often vague and don't have source position information.
 - Missing control flow constructs: `if`, `while`, and `for`.
-- Shaders and their parameters are currently coupled: you can't bind a single shader and reuse it with multiple sets of uniforms and attributes.
+- Shaders and their parameters are currently coupled: you can't bind a single shader and reuse it with multiple sets of uniforms and attributes without re-binding.
 - The set of exposed WebGL and GLSL features is small and ad hoc. We should expand our coverage of the built-ins.
 - These intrinsics are not currently "world-specific." For example, you won't get a type error when trying to use [the GLSL function `normalize`][normalize] in host code or the [JavaScript function `Date.now`][Date.now] in shader code---things will just break silently.
 - Functions defined in shader code are not supported. You should also be able to share functions defined at the host stage inside shaders; this is also not implemented.
