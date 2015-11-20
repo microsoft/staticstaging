@@ -1,5 +1,6 @@
 /// <reference path="typings/node/node.d.ts" />
 /// <reference path="typings/minimist/minimist.d.ts" />
+/// <reference path="typings/es6-promise/es6-promise.d.ts" />
 
 /// <reference path="src/driver.ts" />
 
@@ -39,7 +40,7 @@ function check_output(filename: string, source: string, result: string): boolean
 function run(filename: string, source: string, config: Driver.Config,
     compile: boolean, execute: boolean, test: boolean)
 {
-  let success: boolean = true;
+  let success = true;
 
   Driver.frontend(config, source, filename, function (tree, types) {
     if (compile) {
@@ -135,14 +136,19 @@ function main() {
 
   // Read each source file and run the driver.
   let success = true;
-  filenames.forEach(function (fn) {
-    read_string(fn, function (source) {
-      success = run(fn, source, config, compile, execute, test) && success;
+  let promises = filenames.map(function (fn) {
+    return new Promise(function (resolve, reject) {
+      read_string(fn, function (source) {
+        success = run(fn, source, config, compile, execute, test) && success;
+        resolve();
+      });
     });
   });
-  if (!success) {
-    process.exit(1);
-  }
+  Promise.all(promises).then(function() {
+    if (!success) {
+      process.exit(1);
+    }
+  });
 }
 
 main();

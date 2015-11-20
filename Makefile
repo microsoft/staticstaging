@@ -42,6 +42,7 @@ node_modules/%/package.json:
 NODE_D := typings/node/node.d.ts
 MINIMIST_D := typings/minimist/minimist.d.ts
 CODEMIRROR_D := typings/codemirror/codemirror.d.ts
+PROMISE_D := typings/es6-promise/es6-promise.d.ts
 
 typings/%.d.ts: $(TSD)
 	$(TSD) install $(firstword $(subst /, ,$*))
@@ -50,7 +51,7 @@ typings/%.d.ts: $(TSD)
 
 # The command-line Node tool.
 
-CLI_SRCS := $(SRC_FILES) atw.ts $(NODE_D) $(MINIMIST_D)
+CLI_SRCS := $(SRC_FILES) atw.ts $(NODE_D) $(MINIMIST_D) $(PROMISE_D)
 atw.js: $(TSC) $(CLI_SRCS) $(MINIMIST)
 	$(TSC) $(TSCARGS) --out $@ $(CLI_SRCS)
 
