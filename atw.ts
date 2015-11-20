@@ -28,7 +28,14 @@ function check_output(filename: string, source: string, result: string): boolean
   expected = expected.trim();
   result = result.trim();
 
-  if (expected === result) {
+  let match: boolean;
+  if (expected === "type error") {
+    match = result.indexOf(expected) === 0;
+  } else {
+    match = expected === result;
+  }
+
+  if (match) {
     console.log(`${name} ✓`);
     return true;
   } else {
@@ -37,11 +44,32 @@ function check_output(filename: string, source: string, result: string): boolean
   }
 }
 
-function run(filename: string, source: string, config: Driver.Config,
-    compile: boolean, execute: boolean, test: boolean)
+function run(filename: string, source: string, webgl: boolean,
+    compile: boolean, execute: boolean, test: boolean,
+    log: (...msg: any[]) => void)
 {
   let success = true;
 
+  // Configure the driver.
+  let config: Driver.Config = {
+    parser: parser,
+    webgl: webgl,
+
+    log: log,
+    error (e: string) {
+      if (test) {
+        success = check_output(filename, source, e);
+      } else {
+        console.error(e);
+        success = false;
+      }
+    },
+
+    parsed: (_ => void 0),
+    typed: (_ => void 0),
+  };
+
+  // Run the driver.
   Driver.frontend(config, source, filename, function (tree, types) {
     if (compile) {
       // Compiler.
@@ -119,27 +147,12 @@ function main() {
     log = (_ => void 0);
   }
 
-  // Configure the driver.
-  let config: Driver.Config = {
-    parser: parser,
-    webgl: webgl,
-
-    log: log,
-    error (e: string) {
-      console.error(e);
-      process.exit(1);
-    },
-
-    parsed: (_ => void 0),
-    typed: (_ => void 0),
-  };
-
   // Read each source file and run the driver.
   let success = true;
   let promises = filenames.map(function (fn) {
     return new Promise(function (resolve, reject) {
       read_string(fn, function (source) {
-        success = run(fn, source, config, compile, execute, test) && success;
+        success = run(fn, source, webgl, compile, execute, test, log) && success;
         resolve();
       });
     });
