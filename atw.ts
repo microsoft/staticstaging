@@ -5,6 +5,7 @@
 
 let fs = require('fs');
 let util = require('util');
+let path = require('path');
 let minimist = require('minimist');
 let parser = require('./parser.js');
 
@@ -18,16 +19,39 @@ function read_string(filename: string, f: (s: string) => void) {
   });
 }
 
+// Check the output of a test. Return a success flag.
+function check_output(filename: string, source: string, result: string): boolean {
+  let name = path.basename(filename, '.atw');
+
+  let [,expected] = source.split('# -> ');
+  expected = expected.trim();
+  result = result.trim();
+
+  if (expected === result) {
+    console.log(`${name} ✓`);
+    return true;
+  } else {
+    console.log(`${name} ✘: ${result} (${expected})`);
+    return false;
+  }
+}
+
 function run(filename: string, source: string, config: Driver.Config,
-    compile: boolean, execute: boolean)
+    compile: boolean, execute: boolean, test: boolean)
 {
+  let success: boolean = true;
+
   Driver.frontend(config, source, filename, function (tree, types) {
     if (compile) {
       // Compiler.
       Driver.compile(config, tree, types, function (code) {
         if (execute) {
           Driver.execute(config, code, function (res) {
-            console.log(res);
+            if (test) {
+              success = check_output(filename, source, res);
+            } else {
+              console.log(res);
+            }
           });
         } else {
           console.log(code);
@@ -37,16 +61,22 @@ function run(filename: string, source: string, config: Driver.Config,
     } else {
       // Interpreter.
       Driver.interpret(config, tree, types, function (res) {
-        console.log(res);
+        if (test) {
+          success = check_output(filename, source, res);
+        } else {
+          console.log(res);
+        }
       });
     }
   });
+
+  return success;
 }
 
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
-    boolean: ['v', 'c', 'x', 'w'],
+    boolean: ['v', 'c', 'x', 'w', 't'],
   });
 
   // The flags: -v, -c, and -x.
@@ -54,6 +84,7 @@ function main() {
   let compile: boolean = args.c;
   let execute: boolean = args.x;
   let webgl: boolean = args.w;
+  let test: boolean = args.t;
 
   // Get the filename.
   let filenames: string[] = args._;
@@ -103,11 +134,15 @@ function main() {
   };
 
   // Read each source file and run the driver.
+  let success = true;
   filenames.forEach(function (fn) {
     read_string(fn, function (source) {
-      run(fn, source, config, compile, execute);
+      success = run(fn, source, config, compile, execute, test) && success;
     });
   });
+  if (!success) {
+    process.exit(1);
+  }
 }
 
 main();
