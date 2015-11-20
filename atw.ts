@@ -18,6 +18,31 @@ function read_string(filename: string, f: (s: string) => void) {
   });
 }
 
+function run(filename: string, source: string, config: Driver.Config,
+    compile: boolean, execute: boolean)
+{
+  Driver.frontend(config, source, filename, function (tree, types) {
+    if (compile) {
+      // Compiler.
+      Driver.compile(config, tree, types, function (code) {
+        if (execute) {
+          Driver.execute(config, code, function (res) {
+            console.log(res);
+          });
+        } else {
+          console.log(code);
+        }
+      });
+
+    } else {
+      // Interpreter.
+      Driver.interpret(config, tree, types, function (res) {
+        console.log(res);
+      });
+    }
+  });
+}
+
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
@@ -31,8 +56,8 @@ function main() {
   let webgl: boolean = args.w;
 
   // Get the filename.
-  let fn = args._[0];
-  if (!fn) {
+  let filenames: string[] = args._;
+  if (!filenames.length) {
     console.error("usage: " + process.argv[1] + " [-vcx] PROGRAM");
     process.exit(1);
   }
@@ -77,27 +102,10 @@ function main() {
     typed: (_ => void 0),
   };
 
-  // Read the source file and run the driver.
-  read_string(fn, function (source) {
-    Driver.frontend(config, source, fn, function (tree, types) {
-      if (compile) {
-        // Compiler.
-        Driver.compile(config, tree, types, function (code) {
-          if (execute) {
-            Driver.execute(config, code, function (res) {
-              console.log(res);
-            });
-          } else {
-            console.log(code);
-          }
-        });
-
-      } else {
-        // Interpreter.
-        Driver.interpret(config, tree, types, function (res) {
-          console.log(res);
-        });
-      }
+  // Read each source file and run the driver.
+  filenames.forEach(function (fn) {
+    read_string(fn, function (source) {
+      run(fn, source, config, compile, execute);
     });
   });
 }
