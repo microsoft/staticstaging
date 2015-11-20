@@ -5,6 +5,10 @@ dependencies:
         - node_modules
         - typings
 
+machine:
+    node:
+        version: 4.1.0
+
 test:
     override:
         - make test
