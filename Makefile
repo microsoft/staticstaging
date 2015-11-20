@@ -112,42 +112,31 @@ done
 endef
 
 TESTS_BASIC := $(wildcard test/basic/*.atw)
-TESTS_COMPILE := $(TESTS_BASIC) $(wildcard tests/compile/*.atw)
-TESTS_INTERP := $(TESTS_BASIC) $(wildcard tests/static/*.atw) \
-	$(wildcard tests/interp/*.atw)
-
-TEST_COMPILE := $(call run_tests,$(TESTS_COMPILE),-cx)
-TEST_INTERP := $(call run_tests,$(TESTS_INTERP),)
-TEST_FAIL := [ ! $$failed ]
+TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.atw)
+TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.atw) \
+	$(wildcard test/interp/*.atw)
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
-	@ $(TEST_COMPILE) ; \
-	$(TEST_FAIL)
+	@ node atw.js -t -cx $(TESTS_COMPILE)
 
 .PHONY: test-interp
 test-interp: $(CLI_JS)
-	@ $(TEST_INTERP) ; \
-	$(TEST_FAIL)
+	@ node atw.js -t $(TESTS_INTERP)
 
 .PHONY: test
 test: $(CLI_JS)
 	@ echo "interpreter" ; \
-	$(TEST_INTERP) ; \
+	node atw.js -t $(TESTS_INTERP) || failed=1 ; \
 	echo ; \
 	echo "compiler" ; \
-	$(TEST_COMPILE) ; \
-	$(TEST_FAIL)
+	node atw.js -t -cx $(TESTS_COMPILE) || failed=1 ; \
+	[ ! $$failed ]
 
 # Just dump the output code for the WebGL examples.
 .PHONY: dump-gl
 dump-gl: $(CLI_JS)
-	@for name in $(wildcard test/webgl/*.atw) ; do \
-		basename $$name .atw ; \
-		node atw.js -cw $$name ; \
-		if [ $$? -ne 0 ] ; then failed=1 ; fi ; \
-	done ; \
-	$(TEST_FAIL)
+	@ node atw.js -cw $(wildcard test/webgl/*.atw)
 
 
 # An asset-munging utility.
