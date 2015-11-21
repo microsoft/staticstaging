@@ -31,7 +31,8 @@ class FunType extends Type {
 class CodeType extends Type {
   constructor(
     public inner: Type,
-    public annotation: string
+    public annotation: string,
+    public snippet_escape: number = null
   ) { super() };
   _brand_CodeType: void;
 };

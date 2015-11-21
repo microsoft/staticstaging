@@ -155,7 +155,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
       // Push an empty stack frame.
-      let [stack, anns, externs, named,] = env;
+      let [stack, anns, externs, named, snip] = env;
       let inner_env: TypeEnv =
         [cons(<TypeMap> {}, stack), cons(tree.annotation, anns),
          externs, named, null];
@@ -163,9 +163,13 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // Check inside the quote using the empty frame.
       let [t, e] = check(tree.expr, inner_env);
 
-      // Move the result type "down" to a code type. Ignore any changes to the
-      // environment.
-      return [new CodeType(t, tree.annotation), env];
+      // Move the result type "down" to a code type. If this is a snippet
+      // quote, record the ID from the environment in the type.
+      let code_type = new CodeType(t, tree.annotation,
+          tree.snippet ? snip : null);
+
+      // Ignore any changes to the environment.
+      return [code_type, env];
     },
 
     visit_escape(tree: EscapeNode, env: TypeEnv): [Type, TypeEnv] {
