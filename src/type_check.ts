@@ -75,14 +75,14 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_assign(tree: AssignNode, env: TypeEnv): [Type, TypeEnv] {
-      let [stack, _, externs, __] = env;
+      let [stack, , externs,] = env;
 
       // Check the value expression.
       let [expr_t, e] = check(tree.expr, env);
 
       // Check that the new value is compatible with the variable's type.
       // Try a normal variable first.
-      let [var_t, ___] = stack_lookup(stack, tree.ident);
+      let [var_t,] = stack_lookup(stack, tree.ident);
       if (var_t === undefined) {
         var_t = externs[tree.ident];
         if (var_t === undefined) {
@@ -100,10 +100,10 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
-      let [stack, _, externs, __] = env;
+      let [stack, , externs,] = env;
 
       // Try a normal variable first.
-      let [t, ___] = stack_lookup(stack, tree.ident);
+      let [t,] = stack_lookup(stack, tree.ident);
       if (t !== undefined) {
         return [t, env];
       }
@@ -124,7 +124,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // the operator. Currently, these can *only* be defined as externs; for
       // more flexible operator overloading, we could eventually also look at
       // ordinary variable.
-      let [_, __, externs, ___] = env;
+      let [, , externs,] = env;
       let fun = externs[tree.op];
       let ret = check_call(fun, [t]);
       if (ret instanceof Type) {
@@ -140,7 +140,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let [t2, e2] = check(tree.rhs, e1);
 
       // Use extern functions, as with unary operators.
-      let [_, __, externs, ___] = env;
+      let [, , externs,] = env;
       let fun = externs[tree.op];
       let ret = check_call(fun, [t1, t2]);
       if (ret instanceof Type) {
@@ -217,7 +217,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       let param_types : Type[] = [];
       let body_env_hd = overlay(hd(stack));
       for (let param of tree.params) {
-        let [ptype, _] = check(param, env);
+        let [ptype,] = check(param, env);
         param_types.push(ptype);
         body_env_hd[param.name] = ptype;
       }
@@ -225,7 +225,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
       // Check the body and get the return type.
       let body_env: TypeEnv =
         [cons(body_env_hd, tl(stack)), anns, externs, named];
-      let [ret_type, _] = check(tree.body, body_env);
+      let [ret_type,] = check(tree.body, body_env);
 
       // Construct the function type.
       let fun_type = new FunType(param_types, ret_type);
@@ -233,7 +233,7 @@ let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_param(tree: ParamNode, env: TypeEnv): [Type, TypeEnv] {
-      let [_, __, ___, named] = env;
+      let [, , , named] = env;
       return [get_type(tree.type, named), env];
     },
 
