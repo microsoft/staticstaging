@@ -37,7 +37,10 @@ function gen_desugar(type_table: TypeTable, check: Gen<TypeCheck>):
           // persist escape that looks up `index` stages.
           let lookup : LookupNode = { tag: "lookup", ident: tree.ident };
           let escape : EscapeNode = {
-            tag: "escape", kind: "persist", expr: lookup, count: index
+            tag: "escape",
+            kind: "persist",
+            expr: lookup,
+            count: index,
           };
 
           // Now we elaborate the subtree to preserve the restrictions of the

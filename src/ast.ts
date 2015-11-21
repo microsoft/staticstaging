@@ -44,11 +44,12 @@ interface BinaryNode extends ExpressionNode {
 interface QuoteNode extends ExpressionNode {
   expr: ExpressionNode;
   annotation: string;
+  snippet: boolean;
 }
 
 interface EscapeNode extends ExpressionNode {
   expr: ExpressionNode;
-  kind: string;  // splice or persist
+  kind: string;  // splice, persist, or snippet
   count: number;
 }
 

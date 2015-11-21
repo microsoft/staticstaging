@@ -32,13 +32,19 @@ let Pretty : ASTVisit<void, string> = {
   },
 
   visit_quote(tree: QuoteNode, _: void): string {
-    return "< " + pretty(tree.expr) + " >";
+    let out = "< " + pretty(tree.expr) + " >";
+    if (tree.snippet) {
+      out = "$" + out;
+    }
+    return out;
   },
 
   visit_escape(tree: EscapeNode, _: void): string {
     let out = "[ " + pretty(tree.expr) + " ]";
     if (tree.kind === "persist") {
       out = "%" + out;
+    } else if (tree.kind === "snippet") {
+      out = "$" + out;
     }
     if (tree.count > 1) {
       out += tree.count;

@@ -21,7 +21,7 @@ SeqExpr
 
 TermExpr
   = Quote / FloatLiteral / IntLiteral / CCall / Lookup / Splice / Persist /
-  Run / Paren
+  Snippet / Run / Paren
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -62,8 +62,8 @@ MulBinary
   { return {tag: "binary", lhs: lhs, rhs: rhs, op: op}; }
 
 Quote "quote"
-  = a:ident? quote_open _ e:SeqExpr _ quote_close
-  { return {tag: "quote", expr: e, annotation: a || ""}; }
+  = s:snippet_marker? a:ident? quote_open _ e:SeqExpr _ quote_close
+  { return {tag: "quote", expr: e, annotation: a || "", snippet: !!s}; }
 
 Splice "splice escape"
   = escape_open _ e:SeqExpr _ escape_close n:int?
@@ -72,6 +72,10 @@ Splice "splice escape"
 Persist "persist escape"
   = persist_marker escape_open _ e:SeqExpr _ escape_close n:int?
   { return {tag: "escape", expr: e, count: n || 1, kind: "persist"}; }
+
+Snippet "snippet escape"
+  = snippet_marker escape_open _ e:SeqExpr _ escape_close n:int?
+  { return {tag: "escape", expr: e, count: n || 1, kind: "snippet"}; }
 
 Run "run"
   = run _ e:TermExpr
@@ -242,6 +246,10 @@ def
 
 quote
   = ["]
+
+snippet_marker
+  = "$"
+
 
 // Empty space.
 
