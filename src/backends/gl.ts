@@ -316,6 +316,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     };
 
     if (_attribute_type(type)) {
+      console.log(prog, prog.parent);
       // An attribute, originally.
       if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
         // As above, the variable is defined in the containing program. The
@@ -332,7 +333,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       // A uniform. Uniforms only need to be *bound* for the top-level shader,
       // then they are available for free when they are declared with the same
       // name in other shaders.
-      g.name = varsym(fv);  // TODO Fix up references.
+      g.name = varsym(fv);
       if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
         // Get the value from the host.
         g.value_name = varsym(fv);

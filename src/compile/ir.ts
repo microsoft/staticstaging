@@ -78,6 +78,11 @@ interface CompilerIR {
 // Find the nearest containing quote to the syntax node. If the syntax node is
 // already a quote, it is returned.
 function nearest_quote(ir: CompilerIR, id: number): number {
+  // Is this the top-level scope already?
+  if (id === null) {
+    return null;
+  }
+
   // Is this a quote itself?
   if (ir.progs[id]) {
     return id;
