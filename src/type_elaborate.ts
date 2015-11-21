@@ -81,7 +81,7 @@ function elaborate(tree: SyntaxNode, externs: TypeMap = BUILTIN_TYPES,
   [SyntaxNode, TypeTable]
 {
   let table : TypeTable = [];
-  let env: TypeEnv = [[{}], [null], externs, named_types];
+  let env: TypeEnv = [[{}], [null], externs, named_types, null];
   let elaborated = elaborate_subtree(tree, env, table, check);
   return [elaborated, table];
 }

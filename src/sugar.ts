@@ -21,7 +21,7 @@ function gen_desugar(type_table: TypeTable, check: Gen<TypeCheck>):
     return function (tree: SyntaxNode): SyntaxNode {
       if (is_lookup(tree)) {
         let [type, env] = type_table[tree.id];
-        let [stack, , externs,] = env;
+        let [stack, , externs, ,] = env;
         if (tree.ident in externs) {
           // Extern accesses are not desugared.
           return fsuper(tree);
