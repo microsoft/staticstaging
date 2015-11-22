@@ -14,7 +14,8 @@ function is_lookup(tree: SyntaxNode): tree is LookupNode {
 
 // An inheritance layer on ASTTranslate that desugars auto-persists. This
 // *updates* the type_table with information about any newly generated nodes.
-function gen_desugar(type_table: TypeTable, check: Gen<TypeCheck>):
+function gen_desugar(type_table: Types.Elaborate.TypeTable,
+    check: Gen<Types.Check.TypeCheck>):
   Gen<ASTTranslate>
 {
   return function (fsuper: ASTTranslate): ASTTranslate {
@@ -45,7 +46,8 @@ function gen_desugar(type_table: TypeTable, check: Gen<TypeCheck>):
 
           // Now we elaborate the subtree to preserve the restrictions of the
           // IR.
-          let elaborated = elaborate_subtree(escape, env, type_table, check);
+          let elaborated =
+            Types.Elaborate.elaborate_subtree(escape, env, type_table, check);
 
           return elaborated;
         }
@@ -59,8 +61,8 @@ function gen_desugar(type_table: TypeTable, check: Gen<TypeCheck>):
 // Get a copy of the *elaborated* AST with syntactic sugar removed. For now,
 // the only sugar is "auto-persists", i.e., references to variables from other
 // stages.
-function desugar(tree: SyntaxNode, type_table: TypeTable,
-    check: Gen<TypeCheck>): SyntaxNode
+function desugar(tree: SyntaxNode, type_table: Types.Elaborate.TypeTable,
+    check: Gen<Types.Check.TypeCheck>): SyntaxNode
 {
   let _desugar = fix(compose(gen_desugar(type_table, check), gen_translate));
   return _desugar(tree);

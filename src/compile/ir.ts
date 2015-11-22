@@ -66,7 +66,7 @@ interface CompilerIR {
   progs: Prog[];
 
   // Type elaboration.
-  type_table: TypeTable;
+  type_table: Types.Elaborate.TypeTable;
 
   // Names of externs, indexed by the `extern` expression ID.
   externs: string[];

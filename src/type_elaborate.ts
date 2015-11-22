@@ -2,8 +2,14 @@
 /// <reference path="type_check.ts" />
 /// <reference path="util.ts" />
 
+module Types.Elaborate {
+
+import TypeCheck = Check.TypeCheck;
+import TypeEnv = Check.TypeEnv;
+import gen_check = Check.gen_check;
+
 // A container for elaborated type information.
-type TypeTable = [Type, TypeEnv][];
+export type TypeTable = [Type, Check.TypeEnv][];
 
 function _is_fun(tree: SyntaxNode): tree is FunNode {
   return tree.tag === "fun";
@@ -13,7 +19,7 @@ function _is_fun(tree: SyntaxNode): tree is FunNode {
 // on the side. The AST must be stamped with IDs.
 function elaborate_mixin(type_table : TypeTable): Gen<TypeCheck> {
   return function(fsuper: TypeCheck): TypeCheck {
-    return function(tree: SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
+    return function(tree: SyntaxNode, env: Check.TypeEnv): [Type, TypeEnv] {
       let [t, e] = fsuper(tree, env);
       type_table[tree.id] = [t, e];
       return [t, e];
@@ -56,14 +62,14 @@ function stamp <T> (o: T, start: number = 0): T & { id: number } {
 // Get a recursive check-and-elaborate function. By default, this uses the
 // ordinary `gen_check` rules, but clients can compose it with their own type
 // for custom behavior.
-function get_elaborate(type_table: TypeTable, f: Gen<TypeCheck> = gen_check) {
+function get_elaborate(type_table: TypeTable, f: Gen<TypeCheck> = Check.gen_check) {
   return fix(compose(elaborate_mixin(type_table), f));
 }
 
 // A helper for elaboration that works on subtrees. You can start with an
 // initial environment and a type table for other nodes; this will assign
 // fresh IDs to the subtree and *append* to the type table.
-function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
+export function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
   type_table: TypeTable, check: Gen<TypeCheck> = gen_check): SyntaxNode
 {
   let stamped_tree = stamp(tree, type_table.length);
@@ -76,7 +82,7 @@ function elaborate_subtree(tree: SyntaxNode, initial_env: TypeEnv,
 // maps the IDs to type information. You can optionally provide:
 // - An initial type mapping for externs (for implementing intrinsics).
 // - The set of named types.
-function elaborate(tree: SyntaxNode, externs: TypeMap = BUILTIN_TYPES,
+export function elaborate(tree: SyntaxNode, externs: TypeMap = BUILTIN_TYPES,
   named_types: TypeMap = BUILTIN_TYPES, check: Gen<TypeCheck> = gen_check):
   [SyntaxNode, TypeTable]
 {
@@ -84,4 +90,6 @@ function elaborate(tree: SyntaxNode, externs: TypeMap = BUILTIN_TYPES,
   let env: TypeEnv = [[{}], [null], externs, named_types, null];
   let elaborated = elaborate_subtree(tree, env, table, check);
   return [elaborated, table];
+}
+
 }

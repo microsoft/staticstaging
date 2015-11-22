@@ -93,7 +93,7 @@ export function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
 // A helper for emitting lookups. Also handles both externs and ordinary
 // variables.
 export function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
-    emit_extern: (name: string, type: Type) => string,
+    emit_extern: (name: string, type: Types.Type) => string,
     tree: LookupNode,
     get_varsym=varsym): string {
   let defid = ir.defuse[tree.id];

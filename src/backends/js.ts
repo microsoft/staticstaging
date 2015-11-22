@@ -51,17 +51,17 @@ function run(code) {
 
 // Code-generation utilities.
 
-function _is_fun_type(type: Type): boolean {
-  if (type instanceof FunType) {
+function _is_fun_type(type: Types.Type): boolean {
+  if (type instanceof Types.FunType) {
     return true;
-  } else if (type instanceof OverloadedType) {
+  } else if (type instanceof Types.OverloadedType) {
     return _is_fun_type(type.types[0]);
   } else {
     return false;
   }
 }
 
-function emit_extern(name: string, type: Type) {
+function emit_extern(name: string, type: Types.Type) {
   if (_is_fun_type(type)) {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
@@ -221,7 +221,7 @@ export function compile_rules(fself: Compile, emitter: Emitter,
       let progex = fself(tree.expr);
 
       let [t, _] = ir.type_table[tree.expr.id];
-      if (t instanceof CodeType) {
+      if (t instanceof Types.CodeType) {
         // Invoke the appropriate runtime function for executing code values.
         // We use a simple call wrapper for "progfuncs" and a more complex
         // `eval` trick for ordinary string code.

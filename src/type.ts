@@ -1,9 +1,11 @@
-abstract class Type {
+module Types {
+
+export abstract class Type {
   _brand_Type: void;
 }
 
 // Primitive types are singular instances.
-class PrimitiveType extends Type {
+export class PrimitiveType extends Type {
   constructor(public name: string) { super() };
 
   // A workaround to compensate for TypeScript's structural subtyping:
@@ -12,23 +14,23 @@ class PrimitiveType extends Type {
 };
 
 // Simple top and bottom types.
-class AnyType extends Type {
+export class AnyType extends Type {
   _brand_AnyType: void;
 };
-class VoidType extends Type {
+export class VoidType extends Type {
   _brand_AnyType: void;
 };
-const ANY = new AnyType();
-const VOID = new VoidType();
+export const ANY = new AnyType();
+export const VOID = new VoidType();
 
 // Function types are more complicated. Really wishing for ADTs here.
-class FunType extends Type {
+export class FunType extends Type {
   constructor(public params: Type[], public ret: Type) { super() };
   _brand_FunType: void;
 };
 
 // Same with code types.
-class CodeType extends Type {
+export class CodeType extends Type {
   constructor(
     public inner: Type,
     public annotation: string,
@@ -38,30 +40,30 @@ class CodeType extends Type {
 };
 
 // Type constructors: the basic element of parametricity.
-class ConstructorType extends Type {
+export class ConstructorType extends Type {
   constructor(public name: string) { super() };
   instance(arg: Type) {
     return new InstanceType(this, arg);
   };
   _brand_ConstructorType: void;
 }
-class InstanceType extends Type {
+export class InstanceType extends Type {
   constructor(public cons: ConstructorType, public arg: Type) { super() };
   _brand_InstanceType: void;
 }
 
 // Slightly more general parametricity with a universal quantifier.
-class QuantifiedType extends Type {
+export class QuantifiedType extends Type {
   constructor(public variable: VariableType, public inner: Type) { super() };
   _brand_QuantifiedType: void;
 }
-class VariableType extends Type {
+export class VariableType extends Type {
   constructor(public name: string) { super() };
   _brand_VariableType: void;
 }
 
 // Simple overloading.
-class OverloadedType extends Type {
+export class OverloadedType extends Type {
   constructor(public types: Type[]) { super() };
   _brand_OverloadedType: void;
 }
@@ -71,14 +73,14 @@ class OverloadedType extends Type {
 
 // Type maps are used all over the place: most urgently, as "frames" in the
 // type checker's environment.
-interface TypeMap {
+export interface TypeMap {
   [name: string]: Type;
 }
 
 // The built-in primitive types.
-const INT = new PrimitiveType("Int");
-const FLOAT = new PrimitiveType("Float");
-const BUILTIN_TYPES: TypeMap = {
+export const INT = new PrimitiveType("Int");
+export const FLOAT = new PrimitiveType("Float");
+export const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
   "Void": VOID,
@@ -87,7 +89,7 @@ const BUILTIN_TYPES: TypeMap = {
 
 // Visiting type trees.
 
-interface TypeVisit<P, R> {
+export interface TypeVisit<P, R> {
   visit_primitive(type: PrimitiveType, param: P): R;
   visit_fun(type: FunType, param: P): R;
   visit_code(type: CodeType, param: P): R;
@@ -99,7 +101,7 @@ interface TypeVisit<P, R> {
   visit_variable(type: VariableType, param: P): R;
 }
 
-function type_visit<P, R>(visitor: TypeVisit<P, R>,
+export function type_visit<P, R>(visitor: TypeVisit<P, R>,
                           type: Type, param: P): R {
   if (type instanceof PrimitiveType) {
     return visitor.visit_primitive(type, param);
@@ -122,4 +124,50 @@ function type_visit<P, R>(visitor: TypeVisit<P, R>,
   } else {
     throw "error: unknown type kind " + typeof(type);
   }
+}
+
+// Format a type as a string.
+let pretty_type_rules: TypeVisit<void, string> = {
+  visit_primitive(type: PrimitiveType, param: void): string {
+    return type.name;
+  },
+  visit_fun(type: FunType, param: void): string {
+    let s = "";
+    for (let pt of type.params) {
+      s += pretty_type(pt) + " ";
+    }
+    s += "-> " + pretty_type(type.ret);
+    return s;
+  },
+  visit_code(type: CodeType, param: void): string {
+    let out = "<" + pretty_type(type.inner) + ">";
+    if (type.annotation) {
+      out = type.annotation + out;
+    }
+    return out;
+  },
+  visit_any(type: AnyType, param: void): string {
+    return "Any";
+  },
+  visit_void(type: VoidType, param: void): string {
+    return "Void";
+  },
+  visit_constructor(type: ConstructorType, param: void): string {
+    return type.name;
+  },
+  visit_instance(type: InstanceType, param: void): string {
+    return pretty_type(type.arg) + " " + type.cons.name;
+  },
+  visit_quantified(type: QuantifiedType, param: void): string {
+    return pretty_type(type.inner);
+  },
+  visit_variable(type: VariableType, param: void): string {
+    return type.name;
+  },
+}
+
+export function pretty_type(type: Type) {
+  return type_visit(pretty_type_rules, type, null);
+}
+
 }

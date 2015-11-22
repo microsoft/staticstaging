@@ -6,6 +6,20 @@
 // General OpenGL-related backend components.
 module Backends.GL {
 
+import Type = Types.Type;
+import TypeMap = Types.TypeMap;
+
+import PrimitiveType = Types.PrimitiveType;
+import FunType = Types.FunType;
+import OverloadedType = Types.OverloadedType;
+import ConstructorType = Types.ConstructorType;
+import InstanceType = Types.InstanceType;
+import CodeType = Types.CodeType;
+import INT = Types.INT;
+import FLOAT = Types.FLOAT;
+import ANY = Types.ANY;
+import VOID = Types.VOID;
+
 // Special GLSL matrix and vector types.
 // Someday, a more structured notion of generic vector and matrix types would
 // be better. For now, we just support a handful of common types.

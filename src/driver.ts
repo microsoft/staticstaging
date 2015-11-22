@@ -30,11 +30,11 @@ export interface Config {
   log: (...msg: any[]) => void,
 }
 
-function _intrinsics(config: Config): TypeMap {
+function _intrinsics(config: Config): Types.TypeMap {
   if (config.webgl) {
     return Backends.GL.INTRINSICS;
   } else {
-    return BUILTIN_OPERATORS;
+    return Types.Check.BUILTIN_OPERATORS;
   }
 }
 
@@ -46,16 +46,16 @@ function _runtime(config: Config): string {
   return runtime;
 }
 
-function _types(config: Config): TypeMap {
+function _types(config: Config): Types.TypeMap {
   if (config.webgl) {
-    return assign({}, BUILTIN_TYPES, Backends.GL.GL_TYPES);
+    return assign({}, Types.BUILTIN_TYPES, Backends.GL.GL_TYPES);
   } else {
-    return BUILTIN_TYPES;
+    return Types.BUILTIN_TYPES;
   }
 }
 
-function _check(config: Config): Gen<TypeCheck> {
-  let check = gen_check;
+function _check(config: Config): Gen<Types.Check.TypeCheck> {
+  let check = Types.Check.gen_check;
   if (config.webgl) {
     check = compose(Backends.GL.GLSL.type_mixin, check);
   }
@@ -64,7 +64,7 @@ function _check(config: Config): Gen<TypeCheck> {
 
 export function frontend(config: Config, source: string,
     filename: string,
-    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
+    checked: (tree: SyntaxNode, type_table: Types.Elaborate.TypeTable) => void)
 {
   // Parse.
   let tree: SyntaxNode;
@@ -88,12 +88,13 @@ export function frontend(config: Config, source: string,
 
   // Check and elaborate types.
   let elaborated: SyntaxNode;
-  let type_table: TypeTable;
+  let type_table: Types.Elaborate.TypeTable;
   try {
     [elaborated, type_table] =
-      elaborate(tree, _intrinsics(config), _types(config), _check(config));
+      Types.Elaborate.elaborate(tree, _intrinsics(config), _types(config),
+          _check(config));
     let [type, _] = type_table[elaborated.id];
-    config.typed(pretty_type(type));
+    config.typed(Types.pretty_type(type));
   } catch (e) {
     config.error(e);
     return;
@@ -104,7 +105,7 @@ export function frontend(config: Config, source: string,
 }
 
 export function compile(config: Config, tree: SyntaxNode,
-    type_table: TypeTable, compiled: (code: string) => void)
+    type_table: Types.Elaborate.TypeTable, compiled: (code: string) => void)
 {
   let ir: CompilerIR;
   ir = semantically_analyze(tree, type_table, _intrinsics(config));
@@ -136,7 +137,7 @@ export function compile(config: Config, tree: SyntaxNode,
 }
 
 export function interpret(config: Config, tree: SyntaxNode,
-    type_table: TypeTable, executed: (result: string) => void)
+    type_table: Types.Elaborate.TypeTable, executed: (result: string) => void)
 {
   // Remove syntactic sugar.
   let sugarfree = desugar(tree, type_table, _check(config));

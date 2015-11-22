@@ -3,6 +3,7 @@
 /// <reference path="visit.ts" />
 /// <reference path="pretty.ts" />
 
+module Types.Check {
 
 // An environment consists of:
 // - A map stack with the current stage at the front of the list. Prior
@@ -16,7 +17,7 @@
 //   represents a *type*, not a variable.
 // - The ID of the current *snippet escape* (or null if there is none).
 //   Snippet quotes should be associated with this escape.
-type TypeEnv = [TypeMap[], string[], TypeMap, TypeMap, number];
+export type TypeEnv = [TypeMap[], string[], TypeMap, TypeMap, number];
 
 
 // The built-in operator types. These can be extended by providing custom
@@ -32,7 +33,7 @@ const _BINARY_TYPE = new OverloadedType([
 const _UNARY_BINARY_TYPE = new OverloadedType(
   _UNARY_TYPE.types.concat(_BINARY_TYPE.types)
 );
-const BUILTIN_OPERATORS: TypeMap = {
+export const BUILTIN_OPERATORS: TypeMap = {
   '+': _UNARY_BINARY_TYPE,
   '-': _UNARY_BINARY_TYPE,
   '*': _BINARY_TYPE,
@@ -45,8 +46,8 @@ const BUILTIN_OPERATORS: TypeMap = {
 // fixed point to get an ordinary type checker function (of type `TypeCheck`,
 // below).
 
-type TypeCheck = (tree: SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
-let gen_check : Gen<TypeCheck> = function(check) {
+export type TypeCheck = (tree: SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
+export let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
     visit_literal(tree: LiteralNode, env: TypeEnv): [Type, TypeEnv] {
       if (tree.type === "int") {
@@ -490,4 +491,6 @@ function apply_type(type: Type, tvar: VariableType, targ: Type): Type {
 
 function apply_quantified_type(type: QuantifiedType, arg: Type): Type {
   return apply_type(type.inner, type.variable, arg);
+}
+
 }

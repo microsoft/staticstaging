@@ -7,6 +7,10 @@
 
 module Backends.GL.GLSL {
 
+import Type = Types.Type;
+import TypeCheck = Types.Check.TypeCheck;
+import TypeEnv = Types.Check.TypeEnv;
+
 // Type checking for uniforms, which are automatically demoted from arrays to
 // individual values when they persist.
 
@@ -61,7 +65,7 @@ function emit_decl(qualifier: string, type: string, name: string) {
 }
 
 function emit_type(type: Type): string {
-  if (type instanceof PrimitiveType) {
+  if (type instanceof Types.PrimitiveType) {
     let name = TYPE_NAMES[type.name];
     if (name === undefined) {
       throw "error: primitive type " + type.name + " unsupported in GLSL";
@@ -79,9 +83,9 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
   return {
     visit_literal(tree: LiteralNode, param: void): string {
       let [t,] = ir.type_table[tree.id];
-      if (t === INT) {
+      if (t === Types.INT) {
         return tree.value.toString();
-      } else if (t === FLOAT) {
+      } else if (t === Types.FLOAT) {
         // Make sure that even whole numbers are emitting as floating-point
         // literals.
         let out = tree.value.toString();

@@ -127,11 +127,11 @@ function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
 // Emit a single WebGL binding call for a uniform or attribute. Takes the
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
-function emit_param_binding(scopeid: number, type: Type, varid: number,
+function emit_param_binding(scopeid: number, type: Types.Type, varid: number,
     value: string, attribute: boolean): string
 {
   if (!attribute) {
-    if (type instanceof PrimitiveType) {
+    if (type instanceof Types.PrimitiveType) {
       let fname = GL_UNIFORM_FUNCTIONS[type.name];
       if (fname === undefined) {
         throw "error: unsupported uniform type " + type.name;
@@ -153,7 +153,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
 
   // Array types are bound as attributes.
   } else {
-    if (type instanceof PrimitiveType) {
+    if (type instanceof Types.PrimitiveType) {
       // Call our runtime function to bind the attribute. The parameters are
       // the WebGL context, the attribute location, and the buffer.
       return `bind_attribute(gl, ${locsym(scopeid, varid)}, ${paren(value)})`;
