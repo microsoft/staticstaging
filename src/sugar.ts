@@ -22,13 +22,12 @@ function gen_desugar(type_table: Types.Elaborate.TypeTable,
     return function (tree: SyntaxNode): SyntaxNode {
       if (is_lookup(tree)) {
         let [type, env] = type_table[tree.id];
-        let [stack, , externs, ,] = env;
-        if (tree.ident in externs) {
+        if (tree.ident in env.externs) {
           // Extern accesses are not desugared.
           return fsuper(tree);
         }
 
-        let [, index] = stack_lookup(stack, tree.ident);
+        let [, index] = stack_lookup(env.stack, tree.ident);
 
         if (index === 0) {
           // A variable from the current stage. This is a normal access.
