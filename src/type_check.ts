@@ -222,7 +222,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       // If this is a snippet escape, record it. Otherwise, the nearest
       // snippet is null.
       let snip_id: number = null;
-      if (tree.kind === "snipppet") {
+      if (tree.kind === "snippet") {
         snip_id = tree.id;
       }
 
