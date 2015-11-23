@@ -161,33 +161,50 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
-      // Push an empty stack frame.
-      let inner_env: TypeEnv = merge(env, {
-        stack: cons(<TypeMap> {}, env.stack),
-        anns: cons(tree.annotation, env.anns),
-        snip: null,
-      });
+      // If this is a snippet quote, we need to "resume" type context from the
+      // escape point. Also, we'll record the ID from the environment in the
+      // type.
+      let snippet: number = null;
+      let inner_env: TypeEnv;
+      if (tree.snippet) {
+        if (env.snip === null) {
+          throw "type error: snippet quote without matching snippet escape";
+        }
+        let [snip_id, snip_stack, snip_anns] = env.snip;
+        snippet = snip_id;
+
+        // "Resume" context for the quote.
+        inner_env = merge(env, {
+          stack: snip_stack,
+          anns: snip_anns,
+          snip: null,
+        });
+
+      } else {
+        // Ordinary, independent quote. Push an empty stack frame.
+        inner_env = merge(env, {
+          stack: cons(<TypeMap> {}, env.stack),
+          anns: cons(tree.annotation, env.anns),
+          snip: null,
+        });
+      }
 
       // Check inside the quote using the empty frame.
       let [t, e] = check(tree.expr, inner_env);
-
-      // If this is a snippet quote, record the ID from the environment in the
-      // type.
-      let snippet: number = null;
-      if (tree.snippet) {
-        if (env.snip) {
-          let [snip_id, snip_stack, snip_anns] = env.snip;
-          snippet = snip_id;
-        } else {
-          throw "type error: snippet quote without matching snippet escape";
-        }
-      }
 
       // Move the result type "down" to a code type.
       let code_type = new CodeType(t, tree.annotation, snippet);
 
       // Ignore any changes to the environment.
-      return [code_type, env];
+      let out_env = env;
+      if (tree.snippet) {
+        // Store away the updated context for any subsequent snippets.
+        out_env = merge(out_env, {
+            snip: [snippet, e.stack, e.anns],
+        });
+      }
+
+      return [code_type, out_env];
     },
 
     visit_escape(tree: EscapeNode, env: TypeEnv): [Type, TypeEnv] {
