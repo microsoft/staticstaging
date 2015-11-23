@@ -104,9 +104,20 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
-      // Traverse inside the quote using a new, empty name map stack.
-      let ns = cons(<NameMap> {}, state.ns);
-      let [_, t] = fold_rules.visit_quote(tree, [merge(state, {ns}), table]);
+      let ns: NameStack;
+      if (tree.snippet) {
+        // A snippet escape. Resume the old environment.
+        if (state.snip === null) {
+          throw "error: missing snippet state";
+        }
+        ns = state.snip;
+      } else {
+        // Ordinary escape. Use a new, empty name map stack.
+        ns = cons(<NameMap> {}, state.ns);
+      }
+
+      // Traverse inside the quote.
+      let [, t] = fold_rules.visit_quote(tree, [merge(state, {ns, snip: null}), table]);
       // Then throw away the name map stack but preserve the updated table.
       return [state, t];
     },
@@ -118,11 +129,14 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     {
       // Temporarily pop the current quote's scope.
       let ns = tl(state.ns);
-      // TODO Technically, we should probably do something to "pop" the
-      // externs here so that externs declared in a quote aren't visible in an
-      // escape. But the type system should take care of this for us, and
-      // there can really only be one extern per name!
-      let [_, t] = fold_rules.visit_escape(tree, [merge(state, {ns}), table]);
+
+      // If this is a snippet escape, preserve it for snippet quotes.
+      let snip: NameStack = null;
+      if (tree.kind === "snippet") {
+        snip = state.ns;
+      }
+
+      let [_, t] = fold_rules.visit_escape(tree, [merge(state, {ns, snip}), table]);
       // Then restore the old scope and return the updated table.
       return [state, t];
     },
