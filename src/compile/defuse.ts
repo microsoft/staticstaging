@@ -17,17 +17,24 @@ function head_overlay <T> (a: T[]): T[] {
   return cons(hm, tl(a));
 }
 
+// The state structure for the DefUse analysis.
+interface State {
+  ns: NameStack,  // Variable mapping.
+  externs: NameMap,  // Extern mapping.
+  snip: NameStack,  // Snippet environment (or null).
+}
+
 // The def/use analysis case for uses: both lookup and assignment nodes work
 // the same way.
 function handle_use(tree: LookupNode | AssignNode,
-    [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-    [[NameStack, NameMap], DefUseTable]
+    [state, table]: [State, DefUseTable]):
+    [State, DefUseTable]
 {
   // Try an ordinary variable lookup.
-  let [def_id, _] = stack_lookup(ns, tree.ident);
+  let [def_id, _] = stack_lookup(state.ns, tree.ident);
   if (def_id === undefined) {
     // Try an extern.
-    def_id = externs[tree.ident];
+    def_id = state.externs[tree.ident];
     if (def_id  === undefined) {
       throw "error: variable " + tree.ident + " not in name map";
     }
@@ -35,107 +42,107 @@ function handle_use(tree: LookupNode | AssignNode,
 
   let t = table.slice(0);
   t[tree.id] = def_id;
-  return [[ns, externs], t];
+  return [state, t];
 }
 
 // Here's the core def/use analysis. It threads through the ordinary NameStack
 // and a special NameMap for externs.
-type FindDefUse = ASTFold<[[NameStack, NameMap], DefUseTable]>;
+type FindDefUse = ASTFold<[State, DefUseTable]>;
 function gen_find_def_use(fself: FindDefUse): FindDefUse {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     // The "let" case defines a variable in a map to refer to the "let" node.
     visit_let(tree: LetNode,
-      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-      [[NameStack, NameMap], DefUseTable]
+      [state, table]: [State, DefUseTable]):
+      [State, DefUseTable]
     {
-      let [[n1, e1], t1] = fself(tree.expr, [[ns, externs], table]);
-      let n2 = head_overlay(n1);
-      hd(n2)[tree.ident] = tree.id;
-      return [[n2, e1], t1];
+      let [s1, t1] = fself(tree.expr, [state, table]);
+      let ns = head_overlay(state.ns);
+      hd(ns)[tree.ident] = tree.id;
+      return [merge(s1, {ns}), t1];
     },
 
     // Similarly, "fun" defines variables in the map for its parameters.
     visit_fun(tree: FunNode,
-      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-      [[NameStack, NameMap], DefUseTable]
+      [state, table]: [State, DefUseTable]):
+      [State, DefUseTable]
     {
       // Update the top map with the function parameters.
-      let n = head_overlay(ns);
+      let ns = head_overlay(state.ns);
       for (let param of tree.params) {
-        hd(n)[param.name] = param.id;
+        hd(ns)[param.name] = param.id;
       }
 
       // Traverse the body with this new map.
-      let [[n2, e2], t2] = fself(tree.body, [[n, externs], table]);
+      let [, t2] = fself(tree.body, [merge(state, {ns}), table]);
       // Then continue outside of the `fun` with the old maps.
-      return [[ns, externs], t2];
+      return [state, t2];
     },
 
     // Lookup (i.e., a use) populates the def/use table based on the name map.
     visit_lookup(tree: LookupNode,
-      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-      [[NameStack, NameMap], DefUseTable]
+      [state, table]: [State, DefUseTable]):
+      [State, DefUseTable]
     {
-      return handle_use(tree, [[ns, externs], table]);
+      return handle_use(tree, [state, table]);
     },
 
     // A mutation is another kind of use.
     visit_assign(tree: AssignNode,
-      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-      [[NameStack, NameMap], DefUseTable]
+      [state, table]: [State, DefUseTable]):
+      [State, DefUseTable]
     {
       // Recurse into the RHS expression.
-      let [[n, e], t] = fself(tree.expr, [[ns, externs], table]);
+      let [s, t] = fself(tree.expr, [state, table]);
 
       // Record the use.
-      return handle_use(tree, [[n, e], t]);
+      return handle_use(tree, [s, t]);
     },
 
     // On quote, push an empty name map stack.
     visit_quote(tree: QuoteNode,
-      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-      [[NameStack, NameMap], DefUseTable]
+      [state, table]: [State, DefUseTable]):
+      [State, DefUseTable]
     {
       // Traverse inside the quote using a new, empty name map stack.
-      let n = cons(<NameMap> {}, ns);
-      let [_, t] = fold_rules.visit_quote(tree, [[n, externs], table]);
+      let ns = cons(<NameMap> {}, state.ns);
+      let [_, t] = fold_rules.visit_quote(tree, [merge(state, {ns}), table]);
       // Then throw away the name map stack but preserve the updated table.
-      return [[ns, externs], t];
+      return [state, t];
     },
 
     // And pop on escape.
     visit_escape(tree: EscapeNode,
-      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-      [[NameStack, NameMap], DefUseTable]
+      [state, table]: [State, DefUseTable]):
+      [State, DefUseTable]
     {
       // Temporarily pop the current quote's scope.
-      let n = tl(ns);
+      let ns = tl(state.ns);
       // TODO Technically, we should probably do something to "pop" the
       // externs here so that externs declared in a quote aren't visible in an
       // escape. But the type system should take care of this for us, and
       // there can really only be one extern per name!
-      let [_, t] = fold_rules.visit_escape(tree, [[n, externs], table]);
+      let [_, t] = fold_rules.visit_escape(tree, [merge(state, {ns}), table]);
       // Then restore the old scope and return the updated table.
-      return [[ns, externs], t];
+      return [state, t];
     },
 
     // Insert extern definitions.
     visit_extern(tree: ExternNode,
-      [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-      [[NameStack, NameMap], DefUseTable]
+      [state, table]: [State, DefUseTable]):
+      [State, DefUseTable]
     {
-      let e = overlay(externs);
-      e[tree.name] = tree.id;
-      return [[ns, e], table];
+      let externs = overlay(state.externs);
+      externs[tree.name] = tree.id;
+      return [merge(state, {externs}), table];
     },
   });
 
   return function (tree: SyntaxNode,
-    [[ns, externs], table]: [[NameStack, NameMap], DefUseTable]):
-    [[NameStack, NameMap], DefUseTable]
+    [state, table]: [State, DefUseTable]):
+    [State, DefUseTable]
   {
-    return ast_visit(rules, tree, [[ns, externs], table]);
+    return ast_visit(rules, tree, [state, table]);
   };
 };
 
@@ -145,7 +152,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 // intrinsics).
 let _find_def_use = fix(gen_find_def_use);
 export function find_def_use(tree: SyntaxNode, externs: NameMap): DefUseTable {
-  let [_, t] = _find_def_use(tree, [[[{}], externs], []]);
+  let [_, t] = _find_def_use(tree, [{ ns: [{}], externs, snip: null }, []]);
   return t;
 }
 
