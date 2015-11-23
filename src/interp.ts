@@ -53,32 +53,38 @@ function unwrap_extern(v: Value): Value {
 
 // Dynamic semantics rules.
 
+// The state tuple for the dynamic semantics.
+interface State {
+  env: Env,
+  pers: Pers,
+}
+
 // This first set of rules applies at the "top level", for ordinary execution.
 // Escapes are not allowed at this level. At a quote, we transition to a
 // different set of rules.
-let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
-  visit_literal(tree: LiteralNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    return [tree.value, env];
+let Interp : ASTVisit<State, [Value, Env]> = {
+  visit_literal(tree: LiteralNode, state: State): [Value, Env] {
+    return [tree.value, state.env];
   },
 
-  visit_seq(tree: SeqNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    let [v, e] = interp(tree.lhs, env, pers);
-    return interp(tree.rhs, e, pers);
+  visit_seq(tree: SeqNode, state: State): [Value, Env] {
+    let [v, e] = interp(tree.lhs, state);
+    return interp(tree.rhs, {env: e, pers: state.pers});
   },
 
-  visit_let(tree: LetNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    let [v, e] = interp(tree.expr, env, pers);
+  visit_let(tree: LetNode, state: State): [Value, Env] {
+    let [v, e] = interp(tree.expr, state);
     let e2 = overlay(e);  // Update the value in an overlay.
     e2[tree.ident] = v;
     return [v, e2];
   },
 
-  visit_assign(tree: AssignNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    let [v, e] = interp(tree.expr, env, pers);
+  visit_assign(tree: AssignNode, state: State): [Value, Env] {
+    let [v, e] = interp(tree.expr, state);
 
     // Check whether we have an extern or a normal variable by looking at the
     // current value.
-    let old_value = env[tree.ident];
+    let old_value = state.env[tree.ident];
     if (old_value instanceof Extern) {
       // Update the external value.
       let f = eval("(function(value) { " + old_value.name + " = value })");
@@ -92,40 +98,40 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     }
   },
 
-  visit_lookup(tree: LookupNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    let v = env[tree.ident];
+  visit_lookup(tree: LookupNode, state: State): [Value, Env] {
+    let v = state.env[tree.ident];
     if (v === undefined) {
       throw "error: undefined variable " + tree.ident;
     }
-    return [v, env];
+    return [v, state.env];
   },
 
-  visit_quote(tree: RunNode, [env, pers]: [Env, Pers]): [Value, Env] {
+  visit_quote(tree: RunNode, state: State): [Value, Env] {
     // Jump to any escapes and execute them.
-    let [t, e, p] = quote_interp(tree.expr, 1, env, [], pers);
+    let [t, e, p] = quote_interp(tree.expr, 1, state.env, [], state.pers);
     // Wrap the resulting AST as a code value.
     return [new Code(t, p), e];
   },
 
-  visit_escape(tree: EscapeNode, [env, pers]: [Env, Pers]): [Value, Env] {
+  visit_escape(tree: EscapeNode, state: State): [Value, Env] {
     throw "error: top-level escape";
   },
 
-  visit_run(tree: RunNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    let [v, e] = interp(tree.expr, env, pers);
+  visit_run(tree: RunNode, state: State): [Value, Env] {
+    let [v, e] = interp(tree.expr, state);
     if (v instanceof Code) {
       // Execute the code. In order to carry along the `extern` intrinsics, we
       // include the current environment even though quoted code is
       // *ordinarily* prohibited from looking up values in it.
       let res = interpret(v.expr, e, v.pers);
-      return [res, env];
+      return [res, state.env];
     } else {
       throw "error: tried to run non-code value";
     }
   },
 
-  visit_unary(tree: UnaryNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    let [v, e] = interp(tree.expr, env, pers);
+  visit_unary(tree: UnaryNode, state: State): [Value, Env] {
+    let [v, e] = interp(tree.expr, state);
     v = unwrap_extern(v);
     if (typeof v === 'number') {
       let out: Value;
@@ -143,9 +149,9 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     }
   },
 
-  visit_binary(tree: BinaryNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    let [v1, e1] = interp(tree.lhs, env, pers);
-    let [v2, e2] = interp(tree.rhs, e1, pers);
+  visit_binary(tree: BinaryNode, state: State): [Value, Env] {
+    let [v1, e1] = interp(tree.lhs, state);
+    let [v2, e2] = interp(tree.rhs, {env: e1, pers: state.pers});
     v1 = unwrap_extern(v1);
     v2 = unwrap_extern(v2);
     if (typeof v1 === 'number' && typeof v2 === 'number') {
@@ -168,7 +174,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     }
   },
 
-  visit_fun(tree: FunNode, [env, pers]: [Env, Pers]): [Value, Env] {
+  visit_fun(tree: FunNode, state: State): [Value, Env] {
     // Extract the parameter names.
     let param_names : string[] = [];
     for (let param of tree.params) {
@@ -176,20 +182,20 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     }
 
     // Construct a function value.
-    let fun = new Fun(param_names, tree.body, env, pers);
-    return [fun, env];
+    let fun = new Fun(param_names, tree.body, state.env, state.pers);
+    return [fun, state.env];
   },
 
-  visit_call(tree: CallNode, [env, pers]: [Env, Pers]): [Value, Env] {
+  visit_call(tree: CallNode, state: State): [Value, Env] {
     // Evaluate the target expression to a function value.
-    let [target, e] = interp(tree.fun, env, pers);
+    let [target, e] = interp(tree.fun, state);
 
     // Evaluate the arguments.
     let args: Value[] = [];
     for (let i = 0; i < tree.args.length; ++i) {
       let arg_expr = tree.args[i];
       let arg: Value;
-      [arg, e] = interp(arg_expr, e, pers);
+      [arg, e] = interp(arg_expr, {env: e, pers: state.pers});
       args.push(arg);
     }
 
@@ -205,7 +211,7 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
 
       // Evaluate the function body. Throw away any updates it makes to its
       // environment.
-      let [ret, _] = interp(target.body, call_env, target.pers);
+      let [ret, _] = interp(target.body, {env: call_env, pers: target.pers});
 
       return [ret, e];
 
@@ -224,29 +230,29 @@ let Interp : ASTVisit<[Env, Pers], [Value, Env]> = {
     }
   },
 
-  visit_extern(tree: ExternNode, [env, pers]: [Env, Pers]): [Value, Env] {
+  visit_extern(tree: ExternNode, state: State): [Value, Env] {
     // Add the placeholder value to the environment. It may seem a little
     // messy to mix together normal variables and externs, but the type system
     // keeps them straight so we don't have to.
     let extern = new Extern(tree.expansion || tree.name);
-    let e = overlay(env);
+    let e = overlay(state.env);
     e[tree.name] = extern;
 
     return [extern, e];
   },
 
-  visit_persist(tree: PersistNode, [env, pers]: [Env, Pers]): [Value, Env] {
-    if (tree.index < 0 || tree.index >= pers.length) {
+  visit_persist(tree: PersistNode, state: State): [Value, Env] {
+    if (tree.index < 0 || tree.index >= state.pers.length) {
       throw "error: persist index (" + tree.index +
-            ") out of range (" + pers.length + ")";
+            ") out of range (" + state.pers.length + ")";
     }
-    let value = pers[tree.index];
-    return [value, env];
+    let value = state.pers[tree.index];
+    return [value, state.env];
   },
 }
 
-function interp(tree: SyntaxNode, env: Env, pers: Pers): [Value, Env] {
-  return ast_visit(Interp, tree, [env, pers]);
+function interp(tree: SyntaxNode, state: State): [Value, Env] {
+  return ast_visit(Interp, tree, state);
 }
 
 // Add a number to every persis node in an AST. This is used when splicing
@@ -302,7 +308,7 @@ let QuoteInterp : ASTVisit<[number, Env, Pers, Pers],
     if (s == 0) {
       // Escaped back out of the top-level quote! Evaluate it and integrate it
       // with the quote, either by splicing or persisting.
-      let [v, e] = interp(tree.expr, env, opers);
+      let [v, e] = interp(tree.expr, {env: env, pers: opers});
 
       if (tree.kind === "splice") {
         // The resulting expression must be a quote we can splice.
@@ -444,7 +450,7 @@ function quote_interp(tree: SyntaxNode, stage: number, env: Env, pers: Pers,
 export function interpret(program: SyntaxNode, e: Env = {}, p: Pers = []):
   Value
 {
-  let [v, _] = interp(program, e, p);
+  let [v, _] = interp(program, {env: e, pers: p});
   return v;
 }
 
