@@ -25,9 +25,11 @@ export interface TypeEnv {
   // represents a *type*, not a variable.
   named: TypeMap,
 
-  // The ID of the current *snippet escape* (or null if there is none).
-  // Snippet quotes should be associated with this escape.
-  snip: number,
+  // The current *snippet escape* (or null if there is none). The tuple
+  // consists of the ID of the escape and two pieces of the environment at
+  // that point that should be "resumed" on quote: the `stack` and `anns`
+  // stacks.
+  snip: [number, TypeMap[], string[]],
 };
 
 
@@ -169,10 +171,20 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       // Check inside the quote using the empty frame.
       let [t, e] = check(tree.expr, inner_env);
 
-      // Move the result type "down" to a code type. If this is a snippet
-      // quote, record the ID from the environment in the type.
-      let code_type = new CodeType(t, tree.annotation,
-          tree.snippet ? env.snip : null);
+      // If this is a snippet quote, record the ID from the environment in the
+      // type.
+      let snippet: number = null;
+      if (tree.snippet) {
+        if (env.snip) {
+          let [snip_id, snip_stack, snip_anns] = env.snip;
+          snippet = snip_id;
+        } else {
+          throw "type error: snippet quote without matching snippet escape";
+        }
+      }
+
+      // Move the result type "down" to a code type.
+      let code_type = new CodeType(t, tree.annotation, snippet);
 
       // Ignore any changes to the environment.
       return [code_type, env];
@@ -192,16 +204,16 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       // If this is a snippet escape, record it. Otherwise, the nearest
       // snippet is null.
-      let snip: number = null;
+      let snip_id: number = null;
       if (tree.kind === "snipppet") {
-        snip = tree.id;
+        snip_id = tree.id;
       }
 
       // Check the contents of the escape.
       let inner_env: TypeEnv = merge(env, {
         stack: stack_inner,
         anns: anns_inner,
-        snip: snip,
+        snip: [snip_id, env.stack, env.anns],
       });
       let [t, e] = check(tree.expr, inner_env);
 
