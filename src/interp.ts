@@ -310,7 +310,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       // with the quote, either by splicing or persisting.
       let [v, s] = interp(tree.expr, state);
 
-      if (tree.kind === "splice") {
+      if (tree.kind === "splice" || tree.kind === "snippet") {
         // The resulting expression must be a quote we can splice.
         if (v instanceof Code) {
           // Renumber the persist expressions in the code to reflect its
