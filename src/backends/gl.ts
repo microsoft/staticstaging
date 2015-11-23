@@ -330,7 +330,6 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     };
 
     if (_attribute_type(type)) {
-      console.log(prog, prog.parent);
       // An attribute, originally.
       if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
         // As above, the variable is defined in the containing program. The
