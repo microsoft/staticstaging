@@ -62,25 +62,25 @@ interface State {
 // This first set of rules applies at the "top level", for ordinary execution.
 // Escapes are not allowed at this level. At a quote, we transition to a
 // different set of rules.
-let Interp : ASTVisit<State, [Value, Env]> = {
-  visit_literal(tree: LiteralNode, state: State): [Value, Env] {
-    return [tree.value, state.env];
+let Interp : ASTVisit<State, [Value, State]> = {
+  visit_literal(tree: LiteralNode, state: State): [Value, State] {
+    return [tree.value, state];
   },
 
-  visit_seq(tree: SeqNode, state: State): [Value, Env] {
-    let [v, e] = interp(tree.lhs, state);
-    return interp(tree.rhs, {env: e, pers: state.pers});
+  visit_seq(tree: SeqNode, state: State): [Value, State] {
+    let [v, s] = interp(tree.lhs, state);
+    return interp(tree.rhs, s);
   },
 
-  visit_let(tree: LetNode, state: State): [Value, Env] {
-    let [v, e] = interp(tree.expr, state);
-    let e2 = overlay(e);  // Update the value in an overlay.
-    e2[tree.ident] = v;
-    return [v, e2];
+  visit_let(tree: LetNode, state: State): [Value, State] {
+    let [v, s] = interp(tree.expr, state);
+    let env = overlay(s.env);  // Update the value in an overlay.
+    env[tree.ident] = v;
+    return [v, merge(s, {env})];
   },
 
-  visit_assign(tree: AssignNode, state: State): [Value, Env] {
-    let [v, e] = interp(tree.expr, state);
+  visit_assign(tree: AssignNode, state: State): [Value, State] {
+    let [v, s] = interp(tree.expr, state);
 
     // Check whether we have an extern or a normal variable by looking at the
     // current value.
@@ -89,49 +89,49 @@ let Interp : ASTVisit<State, [Value, Env]> = {
       // Update the external value.
       let f = eval("(function(value) { " + old_value.name + " = value })");
       f(v);
-      return [v, e];
+      return [v, s];
     } else {
       // Ordinary variable assignment.
-      let e2 = overlay(e);
-      e2[tree.ident] = v;
-      return [v, e2];
+      let env = overlay(s.env);
+      env[tree.ident] = v;
+      return [v, merge(s, {env})];
     }
   },
 
-  visit_lookup(tree: LookupNode, state: State): [Value, Env] {
+  visit_lookup(tree: LookupNode, state: State): [Value, State] {
     let v = state.env[tree.ident];
     if (v === undefined) {
       throw "error: undefined variable " + tree.ident;
     }
-    return [v, state.env];
+    return [v, state];
   },
 
-  visit_quote(tree: RunNode, state: State): [Value, Env] {
+  visit_quote(tree: RunNode, state: State): [Value, State] {
     // Jump to any escapes and execute them.
     let [t, s, p] = quote_interp(tree.expr, 1, state, []);
     // Wrap the resulting AST as a code value.
-    return [new Code(t, p), s.env];
+    return [new Code(t, p), s];
   },
 
-  visit_escape(tree: EscapeNode, state: State): [Value, Env] {
+  visit_escape(tree: EscapeNode, state: State): [Value, State] {
     throw "error: top-level escape";
   },
 
-  visit_run(tree: RunNode, state: State): [Value, Env] {
-    let [v, e] = interp(tree.expr, state);
+  visit_run(tree: RunNode, state: State): [Value, State] {
+    let [v, s] = interp(tree.expr, state);
     if (v instanceof Code) {
       // Execute the code. In order to carry along the `extern` intrinsics, we
       // include the current environment even though quoted code is
       // *ordinarily* prohibited from looking up values in it.
-      let res = interpret(v.expr, e, v.pers);
-      return [res, state.env];
+      let res = interpret(v.expr, s.env, v.pers);
+      return [res, s];
     } else {
       throw "error: tried to run non-code value";
     }
   },
 
-  visit_unary(tree: UnaryNode, state: State): [Value, Env] {
-    let [v, e] = interp(tree.expr, state);
+  visit_unary(tree: UnaryNode, state: State): [Value, State] {
+    let [v, s] = interp(tree.expr, state);
     v = unwrap_extern(v);
     if (typeof v === 'number') {
       let out: Value;
@@ -143,15 +143,15 @@ let Interp : ASTVisit<State, [Value, Env]> = {
         default:
           throw "error: unknown unary operator " + tree.op;
       }
-      return [out, e];
+      return [out, s];
     } else {
       throw "error: non-numeric operand to unary operator";
     }
   },
 
-  visit_binary(tree: BinaryNode, state: State): [Value, Env] {
-    let [v1, e1] = interp(tree.lhs, state);
-    let [v2, e2] = interp(tree.rhs, {env: e1, pers: state.pers});
+  visit_binary(tree: BinaryNode, state: State): [Value, State] {
+    let [v1, s1] = interp(tree.lhs, state);
+    let [v2, s2] = interp(tree.rhs, state);
     v1 = unwrap_extern(v1);
     v2 = unwrap_extern(v2);
     if (typeof v1 === 'number' && typeof v2 === 'number') {
@@ -168,13 +168,13 @@ let Interp : ASTVisit<State, [Value, Env]> = {
         default:
           throw "error: unknown binary operator " + tree.op;
       }
-      return [v, e2];
+      return [v, s2];
     } else {
       throw "error: non-numeric operands to binary operator";
     }
   },
 
-  visit_fun(tree: FunNode, state: State): [Value, Env] {
+  visit_fun(tree: FunNode, state: State): [Value, State] {
     // Extract the parameter names.
     let param_names : string[] = [];
     for (let param of tree.params) {
@@ -183,19 +183,19 @@ let Interp : ASTVisit<State, [Value, Env]> = {
 
     // Construct a function value.
     let fun = new Fun(param_names, tree.body, state.env, state.pers);
-    return [fun, state.env];
+    return [fun, state];
   },
 
-  visit_call(tree: CallNode, state: State): [Value, Env] {
+  visit_call(tree: CallNode, state: State): [Value, State] {
     // Evaluate the target expression to a function value.
-    let [target, e] = interp(tree.fun, state);
+    let [target, s] = interp(tree.fun, state);
 
     // Evaluate the arguments.
     let args: Value[] = [];
     for (let i = 0; i < tree.args.length; ++i) {
       let arg_expr = tree.args[i];
       let arg: Value;
-      [arg, e] = interp(arg_expr, {env: e, pers: state.pers});
+      [arg, s] = interp(arg_expr, s);
       args.push(arg);
     }
 
@@ -213,7 +213,7 @@ let Interp : ASTVisit<State, [Value, Env]> = {
       // environment.
       let [ret, _] = interp(target.body, {env: call_env, pers: target.pers});
 
-      return [ret, e];
+      return [ret, s];
 
     // Call a "native" JavaScript function.
     } else if (target instanceof Extern) {
@@ -223,35 +223,35 @@ let Interp : ASTVisit<State, [Value, Env]> = {
         unwrapped_args.push(unwrap_extern(arg));
       }
       let ret = fun(...unwrapped_args);
-      return [ret, e];
+      return [ret, s];
 
     } else {
       throw "error: call of non-function value";
     }
   },
 
-  visit_extern(tree: ExternNode, state: State): [Value, Env] {
+  visit_extern(tree: ExternNode, state: State): [Value, State] {
     // Add the placeholder value to the environment. It may seem a little
     // messy to mix together normal variables and externs, but the type system
     // keeps them straight so we don't have to.
     let extern = new Extern(tree.expansion || tree.name);
-    let e = overlay(state.env);
-    e[tree.name] = extern;
+    let env = overlay(state.env);
+    env[tree.name] = extern;
 
-    return [extern, e];
+    return [extern, merge(state, {env})];
   },
 
-  visit_persist(tree: PersistNode, state: State): [Value, Env] {
+  visit_persist(tree: PersistNode, state: State): [Value, State] {
     if (tree.index < 0 || tree.index >= state.pers.length) {
       throw "error: persist index (" + tree.index +
             ") out of range (" + state.pers.length + ")";
     }
     let value = state.pers[tree.index];
-    return [value, state.env];
+    return [value, state];
   },
 }
 
-function interp(tree: SyntaxNode, state: State): [Value, Env] {
+function interp(tree: SyntaxNode, state: State): [Value, State] {
   return ast_visit(Interp, tree, state);
 }
 
@@ -308,7 +308,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
     if (inner_stage == 0) {
       // Escaped back out of the top-level quote! Evaluate it and integrate it
       // with the quote, either by splicing or persisting.
-      let [v, e] = interp(tree.expr, state);
+      let [v, s] = interp(tree.expr, state);
 
       if (tree.kind === "splice") {
         // The resulting expression must be a quote we can splice.
@@ -320,7 +320,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
           // Combine the spliced code's persists with ours.
           let p = pers.concat(v.pers);
 
-          return [spliced, {env: e, pers: state.pers}, p];
+          return [spliced, s, p];
         } else {
           throw "error: escape produced non-code value " + v;
         }
@@ -328,7 +328,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       } else if (tree.kind === "persist") {
         let p = pers.concat([v]);
         let expr : PersistNode = {tag: "persist", index: p.length - 1};
-        return [expr, {env: e, pers: state.pers}, p];
+        return [expr, s, p];
 
       } else {
         throw "error: unknown persist kind";
