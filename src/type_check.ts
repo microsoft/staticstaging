@@ -250,7 +250,11 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       } else if (tree.kind === "snippet") {
         if (t instanceof CodeType) {
-          // TODO: Check that the snippet ID matches.
+          if (t.snippet === null) {
+            throw "type error: non-snippet code in snippet splice";
+          } else if (t.snippet !== tree.id) {
+            throw "type error: mismatched snippet splice";
+          }
           return [t.inner, env];
         } else {
           throw "type error: snippet escape produced non-code value";
@@ -409,7 +413,8 @@ function compatible(ltype: Type, rtype: Type): boolean {
 
   } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
     return compatible(ltype.inner, rtype.inner) &&
-      ltype.annotation === rtype.annotation;
+      ltype.annotation === rtype.annotation &&
+      ltype.snippet === rtype.snippet;
 
   }
 

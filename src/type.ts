@@ -34,7 +34,7 @@ export class CodeType extends Type {
   constructor(
     public inner: Type,
     public annotation: string,
-    public snippet_escape: number = null
+    public snippet: number = null  // Corresponding escape ID.
   ) { super() };
   _brand_CodeType: void;
 };
