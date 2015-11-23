@@ -221,16 +221,16 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       // If this is a snippet escape, record it. Otherwise, the nearest
       // snippet is null.
-      let snip_id: number = null;
+      let snip_inner: [number, TypeMap[], string[]] = null;
       if (tree.kind === "snippet") {
-        snip_id = tree.id;
+        snip_inner = [tree.id, env.stack, env.anns];
       }
 
       // Check the contents of the escape.
       let inner_env: TypeEnv = merge(env, {
         stack: stack_inner,
         anns: anns_inner,
-        snip: [snip_id, env.stack, env.anns],
+        snip: snip_inner,
       });
       let [t, e] = check(tree.expr, inner_env);
 
@@ -238,6 +238,9 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         // The result of the escape's expression must be code, so it can be
         // spliced.
         if (t instanceof CodeType) {
+          if (t.snippet !== null) {
+            throw "type error: snippet escape in non-snippet splice";
+          }
           // The result type is the type that was quoted.
           return [t.inner, env];
         } else {

@@ -144,6 +144,9 @@ let pretty_type_rules: TypeVisit<void, string> = {
     if (type.annotation) {
       out = type.annotation + out;
     }
+    if (type.snippet) {
+      out = "$" + type.snippet + out;
+    }
     return out;
   },
   visit_any(type: AnyType, param: void): string {
