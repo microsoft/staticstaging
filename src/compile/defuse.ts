@@ -106,13 +106,13 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     {
       let ns: NameStack;
       if (tree.snippet) {
-        // A snippet escape. Resume the old environment.
+        // A snippet quote. Resume the old environment.
         if (state.snip === null) {
           throw "error: missing snippet state";
         }
         ns = state.snip;
       } else {
-        // Ordinary escape. Use a new, empty name map stack.
+        // Ordinary, independent quote. Use a new, empty name map stack.
         ns = cons(<NameMap> {}, state.ns);
       }
 
