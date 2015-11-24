@@ -147,6 +147,8 @@ export function compile_rules(fself: Compile, ir: CompilerIR):
         return splicesym(tree.id);
       } else if (tree.kind === "persist") {
         return shadervarsym(nearest_quote(ir, tree.id), tree.id);
+      } else if (tree.kind === "snippet") {
+        return splicesym(tree.id);  // SNIPPET TODO
       } else {
         throw "error: unknown escape kind";
       }

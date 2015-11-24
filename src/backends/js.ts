@@ -211,6 +211,8 @@ export function compile_rules(fself: Compile, emitter: Emitter,
         return splicesym(tree.id);
       } else if (tree.kind === "persist") {
         return persistsym(tree.id);
+      } else if (tree.kind === "snippet") {
+        return splicesym(tree.id);  // SNIPPET TODO
       } else {
         throw "error: unknown escape kind";
       }
