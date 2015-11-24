@@ -49,7 +49,7 @@ function semantically_analyze(tree: SyntaxNode,
 
   // Lambda- and quote-lifting.
   let containers = FindScopes.find_scopes(tree);
-  let [procs, main, progs] = Lift.lift(tree, defuse, containers);
+  let [procs, main, progs] = Lift.lift(tree, defuse, containers, type_table);
 
   return {
     defuse: defuse,

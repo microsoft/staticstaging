@@ -6,6 +6,7 @@ module Lift {
 // A simple, imperative walk that indexes *all* the syntax nodes in a tree by
 // their ID. We use this to build Procs and Progs by looking up the
 // corresponding quote, function, and escape nodes.
+
 type IndexTree = ASTFold<void>;
 function gen_index_tree(table: SyntaxNode[]): Gen<IndexTree> {
   return function(fself: IndexTree): IndexTree {
@@ -28,12 +29,54 @@ function gen_index_tree(table: SyntaxNode[]): Gen<IndexTree> {
     };
   };
 }
+
 function index_tree(tree: SyntaxNode): SyntaxNode[] {
   let table: ExpressionNode[] = [];
   let _index_tree = fix(gen_index_tree(table));
   _index_tree(tree, null);
   return table;
 }
+
+
+// Find the snippet escape ID for every snippet quote. This is recorded in the
+// type, so we just reuse that.
+
+type AssocSnippets = ASTFold<number[]>;
+function gen_assoc_snippets(type_table: Types.Elaborate.TypeTable): Gen<AssocSnippets> {
+  return function (fself: AssocSnippets): AssocSnippets {
+    let fold_rules = ast_fold_rules(fself);
+    let rules = compose_visit(fold_rules, {
+      visit_quote(tree: QuoteNode, escids: number[]): number[]
+      {
+        if (tree.snippet) {
+          escids = escids.slice(0);
+          let [t,] = type_table[tree.id];
+          if (t instanceof Types.CodeType) {
+            if (t.snippet === null) {
+              throw "error: snippet quote without snippet ID";
+            }
+            escids[tree.id] = t.snippet;
+          } else {
+            throw "error: quote without code type";
+          }
+        }
+        return escids;
+      },
+    });
+
+    return function (tree: SyntaxNode, escids: number[]): number[] {
+      return ast_visit(rules, tree, escids);
+    };
+  };
+}
+
+function assoc_snippets(tree: SyntaxNode, type_table: Types.Elaborate.TypeTable): number[] {
+  let _assoc_snippets = fix(gen_assoc_snippets(type_table));
+  return _assoc_snippets(tree, []);
+};
+
+
+// A few AST type tests we'll need.
 
 function _is_quote(tree: SyntaxNode): tree is QuoteNode {
   return tree.tag === "quote";
@@ -57,7 +100,7 @@ function _is_let(tree: SyntaxNode): tree is EscapeNode {
 // - the program table (Progs)
 // - a combined table containing both Procs and Progs
 function skeleton_scopes(tree: SyntaxNode, containers: number[],
-  index: SyntaxNode[]):
+  index: SyntaxNode[], snippet_escs: number[]):
   [Proc[], Proc, Prog[], Scope[]]
 {
   let procs: Proc[] = [];
@@ -89,6 +132,7 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
             annotation: node.annotation,
             owned_persist: [],
             owned_splice: [],
+            snippet_escape: node.snippet ? snippet_escs[node.id] : null
           });
           progs[node.id] = prog;
           scopes[node.id] = prog;
@@ -237,7 +281,7 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
         // Attribute the unique "owner" of this escape.
         if (node.kind === "persist") {
           progs[quote_id].owned_persist.push(esc);
-        } else if (node.kind === "splice") {
+        } else if (node.kind === "splice" || node.kind === "snippet") {
           progs[quote_id].owned_splice.push(esc);
         } else {
           throw "error: unknown escape kind";
@@ -252,7 +296,7 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
         while (1) {
           if (node.kind === "persist") {
             scopes[cur_scope].persist.push(esc);
-          } else if (node.kind === "splice") {
+          } else if (node.kind === "splice" || node.kind === "snippet") {
             scopes[cur_scope].splice.push(esc);
           } else {
             throw "error: unknown escape kind";
@@ -269,13 +313,16 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
   }
 }
 
-export function lift(tree: SyntaxNode, defuse: DefUseTable, containers: number[]):
+export function lift(tree: SyntaxNode, defuse: DefUseTable, containers: number[],
+  type_table: Types.Elaborate.TypeTable):
   [Proc[], Proc, Prog[]]
 {
   let index = index_tree(tree);
+  let snippet_escs = assoc_snippets(tree, type_table);
 
   // Construct "empty" Proc and Prog nodes.
-  let [procs, main, progs, scopes] = skeleton_scopes(tree, containers, index);
+  let [procs, main, progs, scopes] =
+    skeleton_scopes(tree, containers, index, snippet_escs);
 
   // Fill in children.
   assign_children(scopes, main, progs, containers);
