@@ -211,7 +211,7 @@ function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
 
 // Attribute variables definitions and uses to scopes' bound and free
 // variables, respectively.
-function attribute_uses(scopes: Scope[], containers: number[],
+function attribute_uses(scopes: Scope[], progs: Prog[], containers: number[],
     defuse: DefUseTable, index: SyntaxNode[])
 {
   for (let use_id in defuse) {
@@ -232,6 +232,27 @@ function attribute_uses(scopes: Scope[], containers: number[],
     // scope until our defining scope.
     let cur_scope = containers[use_id];
     while (cur_scope != def_scope_id && cur_scope != null) {
+      // First, try traversing from snippet escapes to their owners. If the
+      // variable was defined in a different quote that's part of the same
+      // "snippet aggregate" as this one, it is *not* a free variable here.
+      let cur_prog = cur_scope;
+      let found_via_snippet = false;
+      while (1) {
+        let prog = progs[cur_scope];
+        if (prog === undefined || prog.snippet_escape === null) {
+          break;
+        }
+        cur_prog = _nearest_quote(containers, progs, prog.snippet_escape);
+        if (cur_prog === def_scope_id) {
+          found_via_snippet = true;
+          break;
+        }
+      }
+      if (found_via_snippet) {
+        break;
+      }
+
+      // Mark the variable as free here.
       let scope = scopes[cur_scope];
       scope.free = set_add(scope.free, def_id);
 
@@ -329,7 +350,7 @@ export function lift(tree: SyntaxNode, defuse: DefUseTable, containers: number[]
   assign_children(scopes, main, progs, containers);
 
   // Fill in free and bound variables.
-  attribute_uses(scopes, containers, defuse, index);
+  attribute_uses(scopes, progs, containers, defuse, index);
   attribute_defs(scopes, main, containers, index);
 
   // Fill in the escapes (`persist` and `splice`).

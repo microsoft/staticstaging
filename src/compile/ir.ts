@@ -50,6 +50,10 @@ interface Prog extends Scope {
   // evaluated.
   owned_persist: Escape[],
   owned_splice: Escape[],
+
+  // If this is a snippet program, the associated escape expression ID.
+  // Otherwise, null.
+  snippet_escape: number,
 }
 
 // The mid-level IR structure.
