@@ -48,19 +48,20 @@ function gen_assoc_snippets(type_table: Types.Elaborate.TypeTable): Gen<AssocSni
     let rules = compose_visit(fold_rules, {
       visit_quote(tree: QuoteNode, escids: number[]): number[]
       {
+        let ei = fold_rules.visit_quote(tree, escids);
         if (tree.snippet) {
-          escids = escids.slice(0);
+          ei = ei.slice(0);
           let [t,] = type_table[tree.id];
           if (t instanceof Types.CodeType) {
             if (t.snippet === null) {
               throw "error: snippet quote without snippet ID";
             }
-            escids[tree.id] = t.snippet;
+            ei[tree.id] = t.snippet;
           } else {
             throw "error: quote without code type";
           }
         }
-        return escids;
+        return ei;
       },
     });
 
