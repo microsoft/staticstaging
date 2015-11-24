@@ -163,6 +163,69 @@ we'll see a splice-free nested program, `< 2 + !< 8 * 5 > >`. (You may need to s
 which produces `< 2 + !< 8 * [<5>] > >`, a program that will splice the number 5 into the inner quote when it eventually executes. Nesting a persist inside a splice, as in `[%[c]]`, has a similar drawback. In fact, it is impossible to implement $n$-level escapes as syntactic sugar: they are required to splice directly into nested quotes. We'll also see below that they model certain CPU--GPU communication channels that can skip stages.
 
 
+# Metaprogramming
+
+Splicing is the basis of Alltheworld's metaprogramming tools.
+This section describes extensions beyond the basic splices we've already seen to make metaprogramming more powerful.
+
+## Snippets
+
+So far, each quote has had its own independent scope. No two quotes get to share the same set of local variables, and that includes quotes nested inside escapes. It's important to prohibit programs like this, for example:
+
+    <
+      var x = 5;
+      [ x ]
+    >
+
+because the reference to `x` would run before `x` is defined. Prohibiting this example seems less intuitive, but it's illegal for the same reason:
+
+    <
+      var x = 5;
+      [
+        var y = 2;
+        < x * y >
+      ]
+    >
+
+The reference to `x` won't typecheck because it wasn't defined in the inner quote's enclosing scope---which doesn't include variables from the outer quote.
+
+But for metaprogramming, scopes that span multiple quotes can be important. **TK:** Non-contrived example forthcoming.
+
+Alltheworld supports special kinds of escape and quote that preserves scopes. They're called *splices*, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
+
+    !<
+      var x = 5;
+      $[
+        $< x * 2 >
+      ]
+    >
+
+When a quote is annotated with `$`, it shares the scope from the nearest containing escape---if it is also annotated with `$`. (Syntax mnemonic: `$` is for \$plicing \$nippets.)
+
+Snippets' scope sharing is in tension with the self-contained, reusable nature of garden-variety quotes. In fact, confusing self-contained programs like `<e>` with snippets like `$<e>` causes lots of problems in other work on multi-stage programming. Since snippets can contain variables referenced elsewhere, it would be meaningless to run them independently or to splice them anywhere other than their one true intended splicing point.
+
+Alltheworld's type system rules out both pitfalls: snippets are given a special, one-off type that identifies their splice points. This sneaky program, for example:
+
+    var c = <0>;
+    <
+      var x = 5;
+      $[ c = $<x> ]
+    >;
+    !c
+
+tries to squirrel away a snippet that refers to a variable from the outer quote. Alltheworld will helpfully complain that the `$<x>` expression can't be assigned into a variable with type `<Int>`. That type has only one purpose: to be spliced into one specific point in one specific program.
+
+## Pre-Splicing
+
+Aside from giving you scope-spanning, snippets can also be compiled more efficiently. The key factor is the same property that lets them span scopes: they can be spliced into exactly one other program point.
+
+**TK:** Compiler flag and examples.
+
+## Macros
+
+**TK:** Macros are forthcoming.
+
+
 # Graphics { data-mode=webgl }
 
 Alltheworld has a graphics-oriented extension called SHFL, for *shader family language*. In SHFL mode, the compiler targets a combination of JavaScript with WebGL API calls and [GLSL][], the associated low-level shading language.
