@@ -271,6 +271,9 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_run(tree: RunNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = check(tree.expr, env);
       if (t instanceof CodeType) {
+        if (t.snippet) {
+          throw "type error: cannot run splice quotes individually";
+        }
         return [t.inner, e];
       } else {
         throw "type error: running a non-code type " + pretty_type(t);
