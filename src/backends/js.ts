@@ -297,7 +297,7 @@ function _persists(emitter: Emitter, prog: Prog): [string, string][] {
     let value: string;
     if (esc.prog === prog.id) {
       // We own this persist. Compute the expression.
-      value = paren(emitter.compile(esc.body, emitter));
+      value = paren(emit(emitter, esc.body));
     } else {
       // Just pass along the pre-computed value.
       value = key;
@@ -341,7 +341,7 @@ function emit_quote_func(emitter: Emitter, scopeid: number):
 // invokes the runtime to splice the result into the base program value, given
 // as `code`.
 function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
-  let esc_expr = emitter.compile(esc.body, emitter);
+  let esc_expr = emit(emitter, esc.body);
 
   // Determine how many levels of *eval* quotes are between the owning
   // quotation and the place where the expression needs to be inserted. This

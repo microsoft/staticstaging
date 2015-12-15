@@ -180,7 +180,7 @@ function emit_shader_binding(emitter: Emitter,
     if (g.value_name) {
       value = g.value_name;
     } else {
-      value = paren(emitter.compile(g.value_expr, emitter));
+      value = paren(emit(emitter, g.value_expr));
     }
     out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
         g.attribute);

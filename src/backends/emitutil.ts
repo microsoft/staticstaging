@@ -67,10 +67,10 @@ export function emit_seq(emitter: Emitter, seq: SeqNode, sep: string,
   let e1 = pred(seq.lhs);
   let out = "";
   if (pred(seq.lhs)) {
-    out += emitter.compile(seq.lhs, emitter);
+    out += emit(emitter, seq.lhs);
     out += sep;
   }
-  out += emitter.compile(seq.rhs, emitter);
+  out += emit(emitter, seq.rhs);
   return out;
 }
 
@@ -82,11 +82,11 @@ export function emit_assign(emitter: Emitter,
   let extern = emitter.ir.externs[defid];
   if (extern !== undefined) {
     // Extern assignment.
-    return extern + " = " + paren(emitter.compile(tree.expr, emitter));
+    return extern + " = " + paren(emit(emitter, tree.expr));
   } else {
     // Ordinary variable assignment.
     let jsvar = get_varsym(defid);
-    return jsvar + " = " + paren(emitter.compile(tree.expr, emitter));
+    return jsvar + " = " + paren(emit(emitter, tree.expr));
   }
 }
 
@@ -142,12 +142,12 @@ export function emit_body(emitter: Emitter, tree: SyntaxNode,
   let statements: string[] = [];
   for (let i = 0; i < exprs.length; ++i) {
     let expr = exprs[i];
-    let s = emitter.compile(expr, emitter);
+    let s = emit(emitter, expr);
     if (s.length) {
       if (i === exprs.length - 1) {
-        statements.push(ret + emitter.compile(expr, emitter));
+        statements.push(ret + emit(emitter, expr));
       } else if (pred(expr)) {
-        statements.push(emitter.compile(expr, emitter));
+        statements.push(emit(emitter, expr));
       }
     }
   }
