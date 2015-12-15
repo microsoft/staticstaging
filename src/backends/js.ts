@@ -529,7 +529,7 @@ export function emit_prog(emitter: Emitter,
 // Top-level compilation.
 
 // Compile the IR to a complete JavaScript program.
-export function emit(ir: CompilerIR): string {
+export function codegen(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
     compile: compile,
@@ -538,7 +538,7 @@ export function emit(ir: CompilerIR): string {
   };
 
   // Emit and invoke the main (anonymous) function.
-  return emit_main_wrapper(Backends.emit(emitter));
+  return emit_main_wrapper(Backends.emit_main(emitter));
 }
 
 }

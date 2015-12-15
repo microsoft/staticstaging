@@ -261,7 +261,7 @@ function emit_prog(emitter: Emitter, prog: Prog): string {
 }
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
-export function emit(ir: CompilerIR): string {
+export function codegen(ir: CompilerIR): string {
   // Make some additional decisions about communication between shader stages.
   let glue: Glue[][] = [];
   for (let prog of ir.progs) {
@@ -281,7 +281,7 @@ export function emit(ir: CompilerIR): string {
   };
 
   // Wrap up the setup code with the main function(s).
-  return JS.emit_main_wrapper(Backends.emit(emitter), false);
+  return JS.emit_main_wrapper(Backends.emit_main(emitter), false);
 }
 
 }

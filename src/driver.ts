@@ -120,9 +120,9 @@ export function compile(config: Config, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      jscode = Backends.GL.WebGL.emit(ir);
+      jscode = Backends.GL.WebGL.codegen(ir);
     } else {
-      jscode = Backends.JS.emit(ir);
+      jscode = Backends.JS.codegen(ir);
     }
   } catch (e) {
     if (typeof(e) === "string") {

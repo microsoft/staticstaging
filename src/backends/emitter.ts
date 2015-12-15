@@ -22,7 +22,7 @@ export interface Emitter {
 }
 
 // Compile the main function.
-export function emit(emitter: Emitter) {
+export function emit_main(emitter: Emitter) {
   return emitter.emit_proc(emitter, emitter.ir.main);
 }
 
