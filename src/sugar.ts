@@ -3,6 +3,8 @@
 /// <reference path="type_elaborate.ts" />
 /// <reference path="visit.ts" />
 
+module Sugar {
+
 // Another type test for the specific kind of node we're interested in. We'll
 // use this to follow one piece of advice from the "Scrap Your Boilerplate"
 // paper: when you're interested in one kind of node, first write a function
@@ -14,7 +16,7 @@ function is_lookup(tree: SyntaxNode): tree is LookupNode {
 
 // An inheritance layer on ASTTranslate that desugars auto-persists. This
 // *updates* the type_table with information about any newly generated nodes.
-function gen_desugar(type_table: Types.Elaborate.TypeTable,
+function gen_desugar_cross_stage(type_table: Types.Elaborate.TypeTable,
     check: Gen<Types.Check.TypeCheck>):
   Gen<ASTTranslate>
 {
@@ -57,12 +59,15 @@ function gen_desugar(type_table: Types.Elaborate.TypeTable,
   }
 }
 
-// Get a copy of the *elaborated* AST with syntactic sugar removed. For now,
-// the only sugar is "auto-persists", i.e., references to variables from other
-// stages.
-function desugar(tree: SyntaxNode, type_table: Types.Elaborate.TypeTable,
+// Get a copy of the *elaborated* AST with cross-stage references (a.k.a.
+// "auto-persists") desugared into explicit persist escapes.
+export function desugar_cross_stage(tree: SyntaxNode,
+    type_table: Types.Elaborate.TypeTable,
     check: Gen<Types.Check.TypeCheck>): SyntaxNode
 {
-  let _desugar = fix(compose(gen_desugar(type_table, check), gen_translate));
+  let _desugar = fix(compose(gen_desugar_cross_stage(type_table, check),
+        gen_translate));
   return _desugar(tree);
+}
+
 }

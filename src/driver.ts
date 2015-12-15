@@ -139,8 +139,8 @@ export function compile(config: Config, tree: SyntaxNode,
 export function interpret(config: Config, tree: SyntaxNode,
     type_table: Types.Elaborate.TypeTable, executed: (result: string) => void)
 {
-  // Remove syntactic sugar.
-  let sugarfree = desugar(tree, type_table, _check(config));
+  // Remove cross-stage references.
+  let sugarfree = Sugar.desugar_cross_stage(tree, type_table, _check(config));
   config.log('sugar-free', sugarfree);
 
   let val = Interp.interpret(sugarfree);
