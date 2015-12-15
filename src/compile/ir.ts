@@ -79,9 +79,9 @@ interface CompilerIR {
   // A mapping from every AST node ID to the containing scope ID.
   containers: number[],
 
-  // For presplicing, a set of variants (escape -> quote maps) for each
+  // For presplicing, a set of variants (escape ID -> code maps) for each
   // program that has snippet escapes.
-  presplice_variants: number[][][],
+  presplice_variants: SyntaxNode[][][],
 }
 
 // Find the nearest containing quote to the syntax node. If the syntax node is

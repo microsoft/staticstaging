@@ -2,7 +2,7 @@
 
 module PreSplice {
 
-type Variant = number[];
+type Variant = SyntaxNode[];
 
 // Given a list of N sets of values, generate the cross product of these sets.
 // That is, each array in the returned set will have length N, where the ith
@@ -35,10 +35,10 @@ function cross_product<T> (sets: T[][]): T[][] {
 // indicate that backends should not do variant selection.
 function get_variants(progs: Prog[], prog: Prog): Variant[] {
   // Get the space of possible options for each snippet escape.
-  let options: number[][] = [];
+  let options: SyntaxNode[][] = [];
   let i = 0;
   for (let esc of prog.owned_snippet) {
-    let esc_options: number[] = [];
+    let esc_options: SyntaxNode[] = [];
     options[i] = esc_options;
     ++i;
 
@@ -46,7 +46,7 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
     for (let other_prog of progs) {
       if (other_prog !== undefined) {
         if (other_prog.snippet_escape === esc.id) {
-          esc_options.push(other_prog.id);
+          esc_options.push(other_prog.body);
         }
       }
     }
@@ -58,8 +58,8 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
   }
 
   // The configurations are lists of resolutions (i.e., quote IDs) for each
-  // snippet escape in a program. We now format these as ID -> ID maps, called
-  // `Variant`s.
+  // snippet escape in a program. We now format these as ID -> SyntaxNode
+  // maps, called `Variant`s.
   let out: Variant[] = [];
   for (let config of cross_product(options)) {
     let variant: Variant = [];
