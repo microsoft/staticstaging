@@ -212,12 +212,12 @@ let compile_rules: ASTVisit<Emitter, string> =
       }
 
       // An ordinary function call.
-      return ast_visit(JS.compile_rules, tree, null);
+      return ast_visit(JS.compile_rules, tree, emitter);
     },
   });
 
 function compile(tree: SyntaxNode, emitter: Emitter): string {
-  return ast_visit(compile_rules, tree, null);
+  return ast_visit(compile_rules, tree, emitter);
 };
 
 // Our WebGL emitter also has a function to emit GLSL code and a special
