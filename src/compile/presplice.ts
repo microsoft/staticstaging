@@ -30,15 +30,16 @@ function cross_product<T> (sets: T[][]): T[][] {
   return out;
 }
 
+// Compute all the possible Variants for a given program. If the program has
+// no snippet splices, the result is `null` (rather than a single variant) to
+// indicate that backends should not do variant selection.
 function get_variants(progs: Prog[], prog: Prog): Variant[] {
   // Get the space of possible options for each snippet escape.
   let options: number[][] = [];
-  let indices: number[] = [];
   let i = 0;
   for (let esc of prog.owned_snippet) {
     let esc_options: number[] = [];
     options[i] = esc_options;
-    indices[esc.id] = i;
     ++i;
 
     // Find all the snippet quotes corresponding to this snippet escape.
@@ -51,23 +52,37 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
     }
   }
 
-  // The "configurations" are lists of resolutions (i.e., quote IDs) for each
-  // snippet escape in a program.
-  let configs = cross_product(options);
+  // No snippet escapes? Then the variant list is null.
+  if (options.length === 0) {
+    return null;
+  }
 
-  console.log('options', options);
-  console.log('indices', indices);
-  console.log('configs', configs);
+  // The configurations are lists of resolutions (i.e., quote IDs) for each
+  // snippet escape in a program. We now format these as ID -> ID maps, called
+  // `Variant`s.
+  let out: Variant[] = [];
+  for (let config of cross_product(options)) {
+    let variant: Variant = [];
+    out.push(variant);
 
-  return null;
-}
-
-export function presplice(progs: Prog[]) {
-  for (let prog of progs) {
-    if (prog !== undefined) {
-      get_variants(progs, prog);
+    let i = 0;
+    for (let esc of prog.owned_snippet) {
+      variant[esc.id] = config[i];
+      ++i;
     }
   }
+  return out;
+}
+
+// Get the sets of variants for all programs.
+export function presplice(progs: Prog[]): Variant[][] {
+  let variants: Variant[][] = [];
+  for (let prog of progs) {
+    if (prog !== undefined) {
+      variants[prog.id] = get_variants(progs, prog);
+    }
+  }
+  return variants;
 }
 
 }
