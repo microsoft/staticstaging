@@ -2,6 +2,7 @@
 /// <reference path="defuse.ts" />
 /// <reference path="lift.ts" />
 /// <reference path="scope.ts" />
+/// <reference path="presplice.ts" />
 
 // Find all the `extern`s in a program.
 type FindExterns = ASTFold<string[]>;
@@ -50,6 +51,10 @@ function semantically_analyze(tree: SyntaxNode,
   // Lambda- and quote-lifting.
   let containers = FindScopes.find_scopes(tree);
   let [procs, main, progs] = Lift.lift(tree, defuse, containers, type_table);
+
+  // Presplicing pass.
+  // TODO
+  PreSplice.presplice(progs);
 
   return {
     defuse: defuse,
