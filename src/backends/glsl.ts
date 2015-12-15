@@ -100,7 +100,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
 
   visit_let(tree: LetNode, emitter: Emitter): string {
     let varname = shadervarsym(nearest_quote(emitter.ir, tree.id), tree.id);
-    return varname + " = " + paren(compile(tree.expr, emitter));
+    return varname + " = " + paren(emit(emitter, tree.expr));
   },
 
   visit_assign(tree: AssignNode, emitter: Emitter): string {
@@ -125,14 +125,14 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_unary(tree: UnaryNode, emitter: Emitter): string {
-    let p = compile(tree.expr, emitter);
+    let p = emit(emitter, tree.expr);
     return tree.op + paren(p);
   },
 
   visit_binary(tree: BinaryNode, emitter: Emitter): string {
-    return paren(compile(tree.lhs, emitter)) + " " +
+    return paren(emit(emitter, tree.lhs)) + " " +
            tree.op + " " +
-           paren(compile(tree.rhs, emitter));
+           paren(emit(emitter, tree.rhs));
   },
 
   visit_quote(tree: QuoteNode, emitter: Emitter): string {
@@ -167,10 +167,10 @@ let compile_rules: ASTVisit<Emitter, string> = {
 
     // Check that it's a static call.
     if (tree.fun.tag === "lookup") {
-      let fun = compile(tree.fun, emitter);
+      let fun = emit(emitter, tree.fun);
       let args: string[] = [];
       for (let arg of tree.args) {
-        args.push(compile(arg, emitter));
+        args.push(emit(emitter, arg));
       }
       return fun + "(" + args.join(", ") + ")";
     }
@@ -201,6 +201,7 @@ export function compile_prog(ir: CompilerIR,
 {
   let emitter: Emitter = {
     ir: ir,
+    substitutions: [],
     compile: compile,
     emit_proc: null,
     emit_prog: null,
@@ -247,7 +248,7 @@ export function compile_prog(ir: CompilerIR,
         if (g.value_name) {
           value = g.value_name;
         } else {
-          value = paren(compile(g.value_expr, emitter));
+          value = paren(emit(emitter, g.value_expr));
         }
         varying_asgts.push(`${g.name} = ${value}`);
       }

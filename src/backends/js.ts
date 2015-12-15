@@ -176,7 +176,7 @@ export let compile_rules = {
 
   visit_let(tree: LetNode, emitter: Emitter): string {
     let jsvar = varsym(tree.id);
-    return jsvar + " = " + paren(compile(tree.expr, emitter));
+    return jsvar + " = " + paren(emit(emitter, tree.expr));
   },
 
   visit_assign(tree: LetNode, emitter: Emitter): string {
@@ -188,13 +188,13 @@ export let compile_rules = {
   },
 
   visit_unary(tree: UnaryNode, emitter: Emitter): string {
-    let p = compile(tree.expr, emitter);
+    let p = emit(emitter, tree.expr);
     return tree.op + paren(p);
   },
 
   visit_binary(tree: BinaryNode, emitter: Emitter): string {
-    let p1 = compile(tree.lhs, emitter);
-    let p2 = compile(tree.rhs, emitter);
+    let p1 = emit(emitter, tree.lhs);
+    let p2 = emit(emitter, tree.rhs);
     return paren(p1) + " " + tree.op + " " + paren(p2);
   },
 
@@ -216,7 +216,7 @@ export let compile_rules = {
 
   visit_run(tree: RunNode, emitter: Emitter): string {
     // Compile the expression producing the program we need to invoke.
-    let progex = compile(tree.expr, emitter);
+    let progex = emit(emitter, tree.expr);
 
     let [t, _] = emitter.ir.type_table[tree.expr.id];
     if (t instanceof Types.CodeType) {
@@ -242,10 +242,10 @@ export let compile_rules = {
   // with its normal arguments and its free variables.
   visit_call(tree: CallNode, emitter: Emitter): string {
     // Compile the function and arguments.
-    let func = compile(tree.fun, emitter);
+    let func = emit(emitter, tree.fun);
     let args: string[] = [];
     for (let arg of tree.args) {
-      args.push(paren(compile(arg, emitter)));
+      args.push(paren(emit(emitter, arg)));
     }
 
     // Invoke our runtime to complete the closure call.
@@ -532,6 +532,7 @@ export function emit_prog(emitter: Emitter,
 export function codegen(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
+    substitutions: [],
     compile: compile,
     emit_proc: emit_proc,
     emit_prog: emit_prog,

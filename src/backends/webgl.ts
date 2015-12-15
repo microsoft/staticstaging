@@ -208,7 +208,7 @@ let compile_rules: ASTVisit<Emitter, string> =
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
         // Pass through the code argument.
-        return compile(tree.args[0], emitter);
+        return emit(emitter, tree.args[0]);
       }
 
       // An ordinary function call.
@@ -274,6 +274,7 @@ export function codegen(ir: CompilerIR): string {
 
   let emitter: Emitter = {
     ir: ir,
+    substitutions: [],
     compile: compile,
     emit_proc: JS.emit_proc,
     emit_prog: emit_prog,
