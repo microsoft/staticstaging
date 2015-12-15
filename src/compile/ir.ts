@@ -15,6 +15,7 @@ interface Scope {
   // inside the scope, regardless of the escape's level.
   persist: Escape[],
   splice: Escape[],
+  snippet: Escape[],
 
   // Containing and contained scopes.
   parent: number,
@@ -44,12 +45,12 @@ interface Escape {
 interface Prog extends Scope {
   annotation: string,
 
-  // Subsets of the overall `persist` and `splice` lists for which this quote
-  // is the "owner" of the escape. The owner is the quote at the level that
-  // matches the escape's level count---the point at which the expression is
-  // evaluated.
+  // Subsets of the overall escape lists for which this quote is the "owner"
+  // of the escape. The owner is the quote at the level that matches the
+  // escape's level count---the point at which the expression is evaluated.
   owned_persist: Escape[],
   owned_splice: Escape[],
+  owned_snippet: Escape[],
 
   // If this is a snippet program, the associated escape expression ID.
   // Otherwise, null.

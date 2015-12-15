@@ -120,6 +120,7 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
           bound: [],
           persist: [],
           splice: [],
+          snippet: [],
 
           parent: parent,
           children: [],
@@ -133,6 +134,7 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
             annotation: node.annotation,
             owned_persist: [],
             owned_splice: [],
+            owned_snippet: [],
             snippet_escape: node.snippet ? snippet_escs[node.id] : null
           });
           progs[node.id] = prog;
@@ -166,6 +168,7 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
     bound: [],
     persist: [],
     splice: [],
+    snippet: [],
 
     parent: null,
     children: [],
@@ -303,8 +306,10 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
         // Attribute the unique "owner" of this escape.
         if (node.kind === "persist") {
           progs[quote_id].owned_persist.push(esc);
-        } else if (node.kind === "splice" || node.kind === "snippet") {
+        } else if (node.kind === "splice") {
           progs[quote_id].owned_splice.push(esc);
+        } else if (node.kind === "snippet") {
+          progs[quote_id].owned_snippet.push(esc);
         } else {
           throw "error: unknown escape kind";
         }
@@ -318,8 +323,10 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
         while (1) {
           if (node.kind === "persist") {
             scopes[cur_scope].persist.push(esc);
-          } else if (node.kind === "splice" || node.kind === "snippet") {
+          } else if (node.kind === "splice") {
             scopes[cur_scope].splice.push(esc);
+          } else if (node.kind === "snippet") {
+            scopes[cur_scope].snippet.push(esc);
           } else {
             throw "error: unknown escape kind";
           }

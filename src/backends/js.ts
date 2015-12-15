@@ -345,6 +345,30 @@ function emit_quote_func(emitter: Emitter, scopeid: number):
   return _emit_closure(progsym(scopeid), args);
 }
 
+// Generate code for a splice escape. This first generates the code to
+// evaluate the expression inside the escape, producing a code value. Then, it
+// invokes the runtime to splice the result into the base program value, given
+// as `code`.
+function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
+  let esc_expr = emitter.compile(esc.body);
+
+  // Determine how many levels of *eval* quotes are between the owning
+  // quotation and the place where the expression needs to be inserted. This
+  // is the number of string-escaping rounds we need.
+  let eval_quotes = 0;
+  let cur_quote = nearest_quote(emitter.ir, esc.id);
+  for (let i = 0; i < esc.count - 1; ++i) {
+    let prog = emitter.ir.progs[cur_quote];
+    if (prog.annotation !== "f") {
+      ++eval_quotes;
+    }
+    cur_quote = prog.quote_parent;
+  }
+
+  // Emit the call to the `splice` runtime function.
+  return `splice(${code}, ${esc.id}, ${paren(esc_expr)}, ${eval_quotes})`;
+}
+
 // Emit a quote as a full code value (which supports splicing).
 function emit_quote_eval(emitter: Emitter, scopeid: number):
   string
@@ -364,27 +388,15 @@ function emit_quote_eval(emitter: Emitter, scopeid: number):
   let pers_list = `{ ${persist_pairs.join(", ")} }`;
   let code_expr = `{ prog: ${progsym(scopeid)}, persist: ${pers_list} }`;
 
-  // Compile each spliced escape expression. Then, call our runtime to
-  // splice it into the code value.
+  // Compile each spliced escape expression and call our runtime to splice it
+  // into the code value.
   for (let esc of emitter.ir.progs[scopeid].owned_splice) {
-    let esc_expr = emitter.compile(esc.body);
+    code_expr = emit_splice(emitter, esc, code_expr);
+  }
 
-    // Determine how many levels of *eval* quotes are between the owning
-    // quotation and the place where the expression needs to be inserted. This
-    // is the number of string-escaping rounds we need.
-    let eval_quotes = 0;
-    let cur_quote = nearest_quote(emitter.ir, esc.id);
-    for (let i = 0; i < esc.count - 1; ++i) {
-      let prog = emitter.ir.progs[cur_quote];
-      if (prog.annotation !== "f") {
-        ++eval_quotes;
-      }
-      cur_quote = prog.quote_parent;
-    }
-
-    // Emit the call to the `splice` runtime function.
-    code_expr =
-      `splice(${code_expr}, ${esc.id}, ${paren(esc_expr)}, ${eval_quotes})`;
+  // The same for snippet escapes (for now).
+  for (let esc of emitter.ir.progs[scopeid].owned_snippet) {
+    code_expr = emit_splice(emitter, esc, code_expr);
   }
 
   return code_expr;
