@@ -196,15 +196,22 @@ export function compile(tree: SyntaxNode, emitter: Emitter): string {
 
 // Emitting the surrounding machinery for communicating between stages.
 
-export function compile_prog(emitter: Emitter,
+export function compile_prog(ir: CompilerIR,
   glue: Glue[][], progid: number): string
 {
+  let emitter: Emitter = {
+    ir: ir,
+    compile: compile,
+    emit_proc: null,
+    emit_prog: null,
+  };
+
   // TODO compile the functions
 
-  let prog = emitter.ir.progs[progid];
+  let prog = ir.progs[progid];
 
   // Check whether this is a vertex or fragment shader.
-  let kind = prog_kind(emitter.ir, progid);
+  let kind = prog_kind(ir, progid);
   if (kind !== ProgKind.vertex && kind !== ProgKind.fragment) {
     throw "error: unexpected program kind";
   }
@@ -231,7 +238,7 @@ export function compile_prog(emitter: Emitter,
   if (prog.quote_children.length > 1) {
     throw "error: too many subprograms";
   } else if (prog.quote_children.length === 1) {
-    let subprog = emitter.ir.progs[prog.quote_children[0]];
+    let subprog = ir.progs[prog.quote_children[0]];
     for (let g of glue[subprog.id]) {
       if (!g.from_host) {
         decls.push(emit_decl("varying", emit_type(g.type), g.name));
@@ -250,7 +257,7 @@ export function compile_prog(emitter: Emitter,
   // Emit the bound variable declarations.
   let local_decls: string[] = [];
   for (let id of prog.bound) {
-    let [t,] = emitter.ir.type_table[id];
+    let [t,] = ir.type_table[id];
     local_decls.push(`${emit_type(t)} ${shadervarsym(progid, id)};\n`);
   }
   let local_decls_s = local_decls.join("");

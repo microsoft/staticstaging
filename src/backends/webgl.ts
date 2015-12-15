@@ -223,7 +223,6 @@ function compile(tree: SyntaxNode, emitter: Emitter): string {
 // Our WebGL emitter also has a function to emit GLSL code and a special
 // summary of the cross-stage communication.
 interface Emitter extends Backends.Emitter {
-  glsl_compile: Compile,
   glue: Glue[][],
 }
 
@@ -240,7 +239,7 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
   }
 
   // Emit the shader program.
-  let code = GLSL.compile_prog(emitter, emitter.glue, prog.id);
+  let code = GLSL.compile_prog(emitter.ir, emitter.glue, prog.id);
   out += JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
@@ -276,7 +275,6 @@ export function emit(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
     compile: compile,
-    glsl_compile: GLSL.compile,
     emit_proc: JS.emit_proc,
     emit_prog: emit_prog,
     glue: glue,
