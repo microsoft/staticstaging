@@ -167,20 +167,20 @@ function emit_param_binding(scopeid: number, type: Types.Type, varid: number,
 // Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
 // shader). This includes both the `useProgram` call and the `bindX` calls to
 // set up the uniforms and attributes.
-function emit_shader_binding(compile: Compile, ir: CompilerIR, glue: Glue[][],
+function emit_shader_binding(emitter: Emitter,
     progid: number) {
-  let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
+  let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
   let out = `gl.useProgram(${shadersym(vertex_prog.id)})`;
 
   // Emit and bind the uniforms and attributes.
-  for (let g of glue[progid]) {
+  for (let g of emitter.glue[progid]) {
     let value: string;
     if (g.value_name) {
       value = g.value_name;
     } else {
-      value = paren(compile(g.value_expr));
+      value = paren(emitter.compile(g.value_expr, emitter));
     }
     out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
         g.attribute);
@@ -190,20 +190,17 @@ function emit_shader_binding(compile: Compile, ir: CompilerIR, glue: Glue[][],
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
-function compile_rules(fself: Compile, emitter: Emitter, ir: CompilerIR):
-  ASTVisit<void, string>
-{
-  let js_rules = JS.compile_rules(fself, emitter, ir);
-  return compose_visit(js_rules, {
+let compile_rules: ASTVisit<Emitter, string> =
+  compose_visit(JS.compile_rules, {
     // Compile calls to our intrinsics for binding shaders.
-    visit_call(tree: CallNode, p: void): string {
+    visit_call(tree: CallNode, emitter: Emitter): string {
       // Check for the intrinsic that indicates a shader invocation.
       if (vtx_expr(tree)) {
         // For the moment, we require a literal quote so we can statically
         // emit the bindings.
         if (tree.args[0].tag === "quote") {
           let quote = tree.args[0] as QuoteNode;
-          return emit_shader_binding(fself, ir, emitter.glue, quote.id);
+          return emit_shader_binding(emitter, quote.id);
         } else {
           throw "dynamic `vtx` calls unimplemented";
         }
@@ -211,23 +208,17 @@ function compile_rules(fself: Compile, emitter: Emitter, ir: CompilerIR):
       // And our intrinsic for indicating the rendering stage.
       } else if (render_expr(tree)) {
         // Pass through the code argument.
-        return fself(tree.args[0]);
+        return compile(tree.args[0], emitter);
       }
 
       // An ordinary function call.
-      return ast_visit(js_rules, tree, null);
+      return ast_visit(JS.compile_rules, tree, null);
     },
   });
-}
 
-// Tie the recursion knot.
-function get_compile(emitter: Emitter): Compile {
-  let rules = compile_rules(f, emitter, emitter.ir);
-  function f (tree: SyntaxNode): string {
-    return ast_visit(rules, tree, null);
-  };
-  return f;
-}
+function compile(tree: SyntaxNode, emitter: Emitter): string {
+  return ast_visit(compile_rules, tree, null);
+};
 
 // Our WebGL emitter also has a function to emit GLSL code and a special
 // summary of the cross-stage communication.
@@ -249,8 +240,7 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
   }
 
   // Emit the shader program.
-  let code = GLSL.compile_prog(emitter.glsl_compile, emitter.ir, emitter.glue,
-      prog.id);
+  let code = GLSL.compile_prog(emitter, emitter.glue, prog.id);
   out += JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
@@ -285,14 +275,12 @@ export function emit(ir: CompilerIR): string {
 
   let emitter: Emitter = {
     ir: ir,
-    compile: null,
-    glsl_compile: null,
+    compile: compile,
+    glsl_compile: GLSL.compile,
     emit_proc: JS.emit_proc,
     emit_prog: emit_prog,
     glue: glue,
   };
-  emitter.compile = get_compile(emitter);
-  emitter.glsl_compile = GLSL.get_compile(ir);
 
   // Wrap up the setup code with the main function(s).
   return JS.emit_main_wrapper(Backends.emit(emitter), false);

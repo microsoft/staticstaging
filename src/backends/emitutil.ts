@@ -1,4 +1,5 @@
 /// <reference path="../compile/ir.ts" />
+/// <reference path="emitter.ts" />
 
 module Backends {
 
@@ -60,46 +61,45 @@ export function indent(s: string, first=false, spaces=2): string {
 }
 
 // A helper for emitting sequence expressions without emitting unneeded code.
-export function emit_seq(seq: SeqNode, sep: string,
-    emit: (_:ExpressionNode) => string,
+export function emit_seq(emitter: Emitter, seq: SeqNode, sep: string,
     pred: (_:ExpressionNode) => boolean = useful_pred): string
 {
   let e1 = pred(seq.lhs);
   let out = "";
   if (pred(seq.lhs)) {
-    out += emit(seq.lhs);
+    out += emitter.compile(seq.lhs, emitter);
     out += sep;
   }
-  out += emit(seq.rhs);
+  out += emitter.compile(seq.rhs, emitter);
   return out;
 }
 
 // A helper for emitting assignments. Handles both externs and normal
 // variables.
-export function emit_assign(ir: CompilerIR, emit: (_:ExpressionNode) => string,
+export function emit_assign(emitter: Emitter,
     tree: AssignNode, get_varsym=varsym): string {
-  let defid = ir.defuse[tree.id];
-  let extern = ir.externs[defid];
+  let defid = emitter.ir.defuse[tree.id];
+  let extern = emitter.ir.externs[defid];
   if (extern !== undefined) {
     // Extern assignment.
-    return extern + " = " + paren(emit(tree.expr));
+    return extern + " = " + paren(emitter.compile(tree.expr, emitter));
   } else {
     // Ordinary variable assignment.
     let jsvar = get_varsym(defid);
-    return jsvar + " = " + paren(emit(tree.expr));
+    return jsvar + " = " + paren(emitter.compile(tree.expr, emitter));
   }
 }
 
 // A helper for emitting lookups. Also handles both externs and ordinary
 // variables.
-export function emit_lookup(ir: CompilerIR, emit: (_:ExpressionNode) => string,
+export function emit_lookup(emitter: Emitter,
     emit_extern: (name: string, type: Types.Type) => string,
     tree: LookupNode,
     get_varsym=varsym): string {
-  let defid = ir.defuse[tree.id];
-  let name = ir.externs[defid];
+  let defid = emitter.ir.defuse[tree.id];
+  let name = emitter.ir.externs[defid];
   if (name !== undefined) {
-    let [type, _] = ir.type_table[tree.id];
+    let [type, _] = emitter.ir.type_table[tree.id];
     return emit_extern(name, type);
   } else {
     // An ordinary variable lookup.
@@ -134,7 +134,7 @@ function useful_pred(tree: ExpressionNode): boolean {
 // Compile a top-level expression for the body of a function. The emitted code
 // returns value of the function. The optional `pred` function can decide
 // whether to emit (non-terminal) expressions.
-export function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
+export function emit_body(emitter: Emitter, tree: SyntaxNode,
     ret="return ", sep=";",
     pred: (_:ExpressionNode) => boolean = useful_pred): string
 {
@@ -142,12 +142,12 @@ export function emit_body(emit: (_: ExpressionNode) => string, tree: SyntaxNode,
   let statements: string[] = [];
   for (let i = 0; i < exprs.length; ++i) {
     let expr = exprs[i];
-    let s = emit(expr);
+    let s = emitter.compile(expr, emitter);
     if (s.length) {
       if (i === exprs.length - 1) {
-        statements.push(ret + emit(expr));
+        statements.push(ret + emitter.compile(expr, emitter));
       } else if (pred(expr)) {
-        statements.push(emit(expr));
+        statements.push(emitter.compile(expr, emitter));
       }
     }
   }

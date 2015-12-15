@@ -3,7 +3,8 @@
 
 module Backends {
 
-export type Compile = (tree: SyntaxNode) => string;
+// A type for core code-generation functions.
+export type Compile = (tree: SyntaxNode, emitter: Emitter) => string;
 
 // A structure containing everything needed to generate code.
 export interface Emitter {

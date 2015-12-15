@@ -165,115 +165,106 @@ export function pretty_value(v: any): string {
 
 // The core recursive compiler rules.
 
-export function compile_rules(fself: Compile, emitter: Emitter,
-    ir: CompilerIR):
-  ASTVisit<void, string>
-{
-  return {
-    visit_literal(tree: LiteralNode, param: void): string {
-      return tree.value.toString();
-    },
+export let compile_rules = {
+  visit_literal(tree: LiteralNode, emitter: Emitter): string {
+    return tree.value.toString();
+  },
 
-    visit_seq(tree: SeqNode, param: void): string {
-      return emit_seq(tree, ",\n", fself);
-    },
+  visit_seq(tree: SeqNode, emitter: Emitter): string {
+    return emit_seq(emitter, tree, ",\n");
+  },
 
-    visit_let(tree: LetNode, param: void): string {
-      let jsvar = varsym(tree.id);
-      return jsvar + " = " + paren(fself(tree.expr));
-    },
+  visit_let(tree: LetNode, emitter: Emitter): string {
+    let jsvar = varsym(tree.id);
+    return jsvar + " = " + paren(compile(tree.expr, emitter));
+  },
 
-    visit_assign(tree: LetNode, param: void): string {
-      return emit_assign(ir, fself, tree);
-    },
+  visit_assign(tree: LetNode, emitter: Emitter): string {
+    return emit_assign(emitter, tree);
+  },
 
-    visit_lookup(tree: LookupNode, param: void): string {
-      return emit_lookup(ir, fself, emit_extern, tree);
-    },
+  visit_lookup(tree: LookupNode, emitter: Emitter): string {
+    return emit_lookup(emitter, emit_extern, tree);
+  },
 
-    visit_unary(tree: UnaryNode, param: void): string {
-      let p = fself(tree.expr);
-      return tree.op + paren(p);
-    },
+  visit_unary(tree: UnaryNode, emitter: Emitter): string {
+    let p = compile(tree.expr, emitter);
+    return tree.op + paren(p);
+  },
 
-    visit_binary(tree: BinaryNode, param: void): string {
-      let p1 = fself(tree.lhs);
-      let p2 = fself(tree.rhs);
-      return paren(p1) + " " + tree.op + " " + paren(p2);
-    },
+  visit_binary(tree: BinaryNode, emitter: Emitter): string {
+    let p1 = compile(tree.lhs, emitter);
+    let p2 = compile(tree.rhs, emitter);
+    return paren(p1) + " " + tree.op + " " + paren(p2);
+  },
 
-    visit_quote(tree: QuoteNode, param: void): string {
-      return emit_quote(emitter, tree.id);
-    },
+  visit_quote(tree: QuoteNode, emitter: Emitter): string {
+    return emit_quote(emitter, tree.id);
+  },
 
-    visit_escape(tree: EscapeNode, param: void): string {
-      if (tree.kind === "splice") {
-        return splicesym(tree.id);
-      } else if (tree.kind === "persist") {
-        return persistsym(tree.id);
-      } else if (tree.kind === "snippet") {
-        return splicesym(tree.id);  // SNIPPET TODO
+  visit_escape(tree: EscapeNode, emitter: Emitter): string {
+    if (tree.kind === "splice") {
+      return splicesym(tree.id);
+    } else if (tree.kind === "persist") {
+      return persistsym(tree.id);
+    } else if (tree.kind === "snippet") {
+      return splicesym(tree.id);  // SNIPPET TODO
+    } else {
+      throw "error: unknown escape kind";
+    }
+  },
+
+  visit_run(tree: RunNode, emitter: Emitter): string {
+    // Compile the expression producing the program we need to invoke.
+    let progex = compile(tree.expr, emitter);
+
+    let [t, _] = emitter.ir.type_table[tree.expr.id];
+    if (t instanceof Types.CodeType) {
+      // Invoke the appropriate runtime function for executing code values.
+      // We use a simple call wrapper for "progfuncs" and a more complex
+      // `eval` trick for ordinary string code.
+      if (t.annotation === "f") {
+        return `call((${progex}), [])`;
       } else {
-        throw "error: unknown escape kind";
+        return `run(${paren(progex)})`;
       }
-    },
+    } else {
+      throw "error: running non-code type";
+    }
+  },
 
-    visit_run(tree: RunNode, param: void): string {
-      // Compile the expression producing the program we need to invoke.
-      let progex = fself(tree.expr);
+  // A function expression produces a closure value.
+  visit_fun(tree: FunNode, emitter: Emitter): string {
+    return emit_func(emitter, tree.id);
+  },
 
-      let [t, _] = ir.type_table[tree.expr.id];
-      if (t instanceof Types.CodeType) {
-        // Invoke the appropriate runtime function for executing code values.
-        // We use a simple call wrapper for "progfuncs" and a more complex
-        // `eval` trick for ordinary string code.
-        if (t.annotation === "f") {
-          return `call((${progex}), [])`;
-        } else {
-          return `run(${paren(progex)})`;
-        }
-      } else {
-        throw "error: running non-code type";
-      }
-    },
+  // An invocation unpacks the closure environment and calls the function
+  // with its normal arguments and its free variables.
+  visit_call(tree: CallNode, emitter: Emitter): string {
+    // Compile the function and arguments.
+    let func = compile(tree.fun, emitter);
+    let args: string[] = [];
+    for (let arg of tree.args) {
+      args.push(paren(compile(arg, emitter)));
+    }
 
-    // A function expression produces a closure value.
-    visit_fun(tree: FunNode, param: void): string {
-      return emit_func(emitter, tree.id);
-    },
+    // Invoke our runtime to complete the closure call.
+    return "call(" + paren(func) + ", [" + args.join(", ") + "])";
+  },
 
-    // An invocation unpacks the closure environment and calls the function
-    // with its normal arguments and its free variables.
-    visit_call(tree: CallNode, param: void): string {
-      // Compile the function and arguments.
-      let func = fself(tree.fun);
-      let args: string[] = [];
-      for (let arg of tree.args) {
-        args.push(paren(fself(arg)));
-      }
+  visit_extern(tree: ExternNode, emitter: Emitter): string {
+    let name = emitter.ir.externs[tree.id];
+    let [type, _] = emitter.ir.type_table[tree.id];
+    return emit_extern(name, type);
+  },
 
-      // Invoke our runtime to complete the closure call.
-      return "call(" + paren(func) + ", [" + args.join(", ") + "])";
-    },
+  visit_persist(tree: PersistNode, emitter: Emitter): string {
+    throw "error: persist cannot appear in source";
+  },
+};
 
-    visit_extern(tree: ExternNode, param: void): string {
-      let name = ir.externs[tree.id];
-      let [type, _] = ir.type_table[tree.id];
-      return emit_extern(name, type);
-    },
-
-    visit_persist(tree: PersistNode, param: void): string {
-      throw "error: persist cannot appear in source";
-    },
-  };
-}
-
-function get_compile(emitter: Emitter): Compile {
-  let rules = compile_rules(f, emitter, emitter.ir);
-  function f (tree: SyntaxNode): string {
-    return ast_visit(rules, tree, null);
-  };
-  return f;
+function compile(tree: SyntaxNode, emitter: Emitter) {
+  return ast_visit(compile_rules, tree, emitter);
 }
 
 
@@ -306,7 +297,7 @@ function _persists(emitter: Emitter, prog: Prog): [string, string][] {
     let value: string;
     if (esc.prog === prog.id) {
       // We own this persist. Compute the expression.
-      value = paren(emitter.compile(esc.body));
+      value = paren(emitter.compile(esc.body, emitter));
     } else {
       // Just pass along the pre-computed value.
       value = key;
@@ -350,7 +341,7 @@ function emit_quote_func(emitter: Emitter, scopeid: number):
 // invokes the runtime to splice the result into the base program value, given
 // as `code`.
 function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
-  let esc_expr = emitter.compile(esc.body);
+  let esc_expr = emitter.compile(esc.body, emitter);
 
   // Determine how many levels of *eval* quotes are between the owning
   // quotation and the place where the expression needs to be inserted. This
@@ -442,7 +433,7 @@ function _emit_scope_func(emitter: Emitter, name: string,
 
   // Emit the target function code.
   let localnames = _bound_vars(scope);
-  let body = emit_body(emitter.compile, scope.body);
+  let body = emit_body(emitter, scope.body);
 
   let func = emit_fun(name, argnames, localnames, body);
   return subscopes + func;
@@ -541,11 +532,10 @@ export function emit_prog(emitter: Emitter,
 export function emit(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
-    compile: null,
+    compile: compile,
     emit_proc: emit_proc,
     emit_prog: emit_prog,
   };
-  emitter.compile = get_compile(emitter);
 
   // Emit and invoke the main (anonymous) function.
   return emit_main_wrapper(Backends.emit(emitter));
