@@ -249,13 +249,18 @@ let Interp : ASTVisit<State, [Value, State]> = {
     let value = state.pers[tree.index];
     return [value, state];
   },
+
+  visit_if(tree: IfNode, state: State): [Value, State] {
+    let [flag, s] = interp(tree.cond, state);
+    return interp(flag ? tree.truex : tree.falsex, s);
+  },
 }
 
 function interp(tree: SyntaxNode, state: State): [Value, State] {
   return ast_visit(Interp, tree, state);
 }
 
-// Add a number to every persis node in an AST. This is used when splicing
+// Add a number to every persist node in an AST. This is used when splicing
 // quotes into other quotes.
 function increment_persists(amount: number) {
   function fself(tree: SyntaxNode): SyntaxNode {
@@ -437,6 +442,15 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
     let p = pers.concat([value]);
     let expr: PersistNode = {tag: "persist", index: p.length - 1};
     return [expr, state, p];
+  },
+
+  visit_if(tree: IfNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [SyntaxNode, State, Pers] {
+    let [c, s1, p1] = quote_interp(tree.cond, stage, state, pers);
+    let [t, s2, p2] = quote_interp(tree.truex, stage, s1, p1);
+    let [f, s3, p3] = quote_interp(tree.falsex, stage, s2, p2);
+    return [merge(tree, { cond: c, truex: t, falsex: f }), s3, p3];
   },
 }
 

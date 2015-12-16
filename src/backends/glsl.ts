@@ -187,6 +187,10 @@ let compile_rules: ASTVisit<Emitter, string> = {
   visit_persist(tree: PersistNode, emitter: Emitter): string {
     throw "error: persist cannot appear in source";
   },
+
+  visit_if(tree: IfNode, emitter: Emitter): string {
+    return emit_if(emitter, tree);
+  },
 };
 
 export function compile(tree: SyntaxNode, emitter: Emitter): string {

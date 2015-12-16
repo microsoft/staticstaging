@@ -14,7 +14,7 @@ Program
 
 Expr "expression"
   = Var / Extern / Fun / CDef / Binary / Unary / Assign / CCall / Call /
-  TermExpr
+  If / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -133,6 +133,10 @@ Assign "assignment"
   = i:ident _ eq _ e:Expr
   { return {tag: "assign", ident: i, expr: e}; }
 
+If "if/then/else"
+  = if c:TermExpr t:TermExpr f:TermExpr
+  { return {tag: "if", cond: c, truex: t, falsex: f}; }
+
 
 // Type syntax.
 
@@ -249,6 +253,9 @@ quote
 
 snippet_marker
   = "$"
+
+if
+  = "if"
 
 
 // Empty space.

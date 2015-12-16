@@ -342,6 +342,21 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_persist(tree: PersistNode, env: TypeEnv): [Type, TypeEnv] {
       throw "error: persist cannot be type-checked in source code";
     },
+
+    visit_if(tree: IfNode, env: TypeEnv): [Type, TypeEnv] {
+      let [cond_type, e] = check(tree.cond, env);
+      if (cond_type !== INT) {
+        throw "type error: conditions must be integers";
+      }
+
+      let [true_type,] = check(tree.truex, e);
+      let [false_type,] = check(tree.falsex, e);
+      if (true_type !== false_type) {
+        throw "type error: condition branches must have same type";
+      }
+
+      return [true_type, e];
+    }
   };
 
   // The entry point for the recursion.

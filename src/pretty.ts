@@ -83,6 +83,11 @@ let Pretty : ASTVisit<void, string> = {
   visit_persist(tree: PersistNode, _: void): string {
     return "%" + tree.index;
   },
+
+  visit_if(tree: IfNode, _: void): string {
+    return "if " + pretty(tree.cond) + " " + pretty(tree.truex) + " " +
+      pretty(tree.falsex);
+  }
 }
 
 // Format an AST as a string.

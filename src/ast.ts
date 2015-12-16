@@ -78,6 +78,12 @@ interface ExternNode extends ExpressionNode {
   expansion: string;  // Or null, if it should expand to the name itself.
 }
 
+interface IfNode extends ExpressionNode {
+  cond: ExpressionNode,
+  truex: ExpressionNode,
+  falsex: ExpressionNode,
+}
+
 interface TypeNode extends SyntaxNode {
 }
 

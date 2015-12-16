@@ -262,6 +262,10 @@ export let compile_rules = {
   visit_persist(tree: PersistNode, emitter: Emitter): string {
     throw "error: persist cannot appear in source";
   },
+
+  visit_if(tree: IfNode, emitter: Emitter): string {
+    return emit_if(emitter, tree);
+  },
 };
 
 function compile(tree: SyntaxNode, emitter: Emitter) {

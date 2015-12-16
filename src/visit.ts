@@ -17,6 +17,7 @@ interface ASTVisit<P, R> {
   visit_call(tree: CallNode, param: P): R;
   visit_extern(tree: ExternNode, param: P): R;
   visit_persist(tree: PersistNode, param: P): R;
+  visit_if(tree: IfNode, param: P): R;
   visit_param?(tree: ParamNode, param: P): R;
 }
 
@@ -53,6 +54,8 @@ function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_extern(<ExternNode> tree, param);
     case "persist":
       return visitor.visit_persist(<PersistNode> tree, param);
+    case "if":
+      return visitor.visit_if(<IfNode> tree, param);
     case "param":
       return visitor.visit_param(<ParamNode> tree, param);
 
@@ -78,6 +81,7 @@ interface PartialASTVisit<P, R> {
   visit_call? (tree: CallNode, param: P): R;
   visit_extern? (tree: ExternNode, param: P): R;
   visit_persist? (tree: PersistNode, param: P): R;
+  visit_if? (tree: IfNode, param: P): R;
   visit_param? (tree: ParamNode, param: P): R;
 }
 
@@ -199,6 +203,14 @@ function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, SyntaxNode> {
     visit_persist(tree: PersistNode, param: void): SyntaxNode {
       return merge(tree);
     },
+
+    visit_if(tree: IfNode, param: void): SyntaxNode {
+      return merge(tree, {
+        cond: fself(tree.cond),
+        truex: fself(tree.truex),
+        falsex: fself(tree.falsex),
+      });
+    },
   };
 }
 function gen_translate(fself: ASTTranslate): ASTTranslate {
@@ -302,6 +314,13 @@ function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
 
     visit_persist(tree: PersistNode, p: T): T {
       return p;
+    },
+
+    visit_if(tree: IfNode, p: T): T {
+      let p1 = fself(tree.cond, p);
+      let p2 = fself(tree.truex, p1);
+      let p3 = fself(tree.falsex, p2);
+      return p3;
     },
   };
 }

@@ -58,6 +58,9 @@ let GetChildren : ASTVisit<void, SyntaxNode[]> = {
   visit_persist(tree: PersistNode, _: void): SyntaxNode[] {
     return [];
   },
+  visit_if(tree: IfNode, _: void): SyntaxNode[] {
+    return [tree.cond, tree.truex, tree.falsex];
+  },
 };
 
 function get_children(tree: SyntaxNode): SyntaxNode[] {
@@ -114,6 +117,9 @@ let GetName : ASTVisit<void, string> = {
   },
   visit_persist(tree: PersistNode, _: void): string {
     return "%" + tree.index;
+  },
+  visit_if(tree: IfNode, _: void): string {
+    return "if";
   },
 }
 

@@ -118,6 +118,14 @@ export function emit_lookup(emitter: Emitter,
   }
 }
 
+// A helper for emitting if/then/else.
+export function emit_if(emitter: Emitter, tree: IfNode): string {
+  let cond = emit(emitter, tree.cond);
+  let truex = emit(emitter, tree.truex);
+  let falsex = emit(emitter, tree.falsex);
+  return `${paren(cond)} ? ${paren(truex)} : ${paren(falsex)}`;
+}
+
 // Flatten sequence trees. This is used at the top level of a function, where
 // we want to emit a sequence of statements followed by a `return`.
 function flatten_seq(tree: SyntaxNode): ExpressionNode[] {
