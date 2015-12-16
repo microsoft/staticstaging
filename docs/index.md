@@ -188,16 +188,35 @@ because the reference to `x` would run before `x` is defined. Prohibiting this m
 
 The reference to `x` won't typecheck because it wasn't defined in the inner quote's enclosing scope, which doesn't include variables from the outer quote.
 
-But for metaprogramming, scopes that span multiple quotes can be important. **TK:** Non-contrived example forthcoming.
+But for metaprogramming, scopes that span multiple quotes can be important. Say, for example, that you want to compute either the surface area or the volume of a sphere given its diameter:
 
-Alltheworld supports special kinds of escape and quote that can preserve scopes. They're called *splices*, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
+    var pi = 3.14;
+    def sphere(d: Float, volume: Int)
+      <
+        var r = d / 2.0;
+        pi * r * r * [
+          if volume
+            < 4.0 / 3.0 * r >
+            < 4.0 >
+        ]
+      >;
+    !sphere(4.0, 1)
 
-    !<
-      var x = 5;
-      $[
-        $< x * 2 >
-      ]
-    >
+You need to share the value of `r` between the outer quote and the first inner quote (to compute the volume as $\frac{4}{3} \pi r^3$).
+
+To make this work, Alltheworld supports special kinds of escape and quote that can preserve scopes. They're called *splices*, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
+
+    var pi = 3.14;
+    def sphere(d: Float, volume: Int)
+      <
+        var r = d / 2.0;
+        pi * r * r * $[
+          if volume
+            $< 4.0 / 3.0 * r >
+            $< 4.0 >
+        ]
+      >;
+    !sphere(4.0, 1)
 
 When a quote is marked with a `$`, it inherits its scope from the nearest containing escape---if it is also marked with a `$`. (Syntax mnemonic: `$` is for \$plicing \$nippets.)
 
