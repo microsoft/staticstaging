@@ -111,7 +111,8 @@ for name in $1 ; do \
 done
 endef
 
-TESTS_BASIC := $(wildcard test/basic/*.atw) $(wildcard test/snippet/*.atw)
+TESTS_BASIC := $(wildcard test/basic/*.atw) $(wildcard test/snippet/*.atw) \
+	$(wildcard test/if/*.atw)
 TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.atw)
 TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.atw) \
 	$(wildcard test/interp/*.atw)
