@@ -41,16 +41,10 @@ export function vartablesym(progid: number) {
   return "vt" + progid;
 }
 
-// Given a presplicing variant (an ID -> expression map), generate a string
-// that uniquely identifies the variant.
-export function variant_id(variant: SyntaxNode[]) {
-  let ids: number[] = [];
-  for (let tree of variant) {
-    if (tree !== undefined) {
-      ids.push(tree.id);
-    }
-  }
-  return ids.join("_");
+// Given a presplicing variant (an ID -> ID), generate a string that uniquely
+// identifies the variant.
+export function variant_id(config: number[]) {
+  return config.join("_");
 }
 
 // Parenthesize an expression.

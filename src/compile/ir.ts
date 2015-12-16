@@ -57,6 +57,10 @@ interface Prog extends Scope {
   snippet_escape: number,
 }
 
+// A Variant consists of a list of IDs that uniquely identifies the variant
+// and an ID-to-code map that can be used to resolve the variant.
+type Variant = [number[], SyntaxNode[]];
+
 // The mid-level IR structure.
 interface CompilerIR {
   // The def/use table.
@@ -81,7 +85,7 @@ interface CompilerIR {
 
   // For presplicing, a set of variants (escape ID -> code maps) for each
   // program that has snippet escapes.
-  presplice_variants: SyntaxNode[][][],
+  presplice_variants: Variant[][],
 }
 
 // Find the nearest containing quote to the syntax node. If the syntax node is
