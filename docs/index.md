@@ -241,6 +241,22 @@ Aside from giving you scope-spanning, snippets can also be compiled more efficie
 
 Check out the JavaScript code generated from the sphere example above. Unlike previous examples that used splicing, the code here has no magical `__SPLICE_N__` tokens and no runtime `splice` calls. There is no run-time code generation at all. Instead, the two choices for completing the program have been *inlined*. To decide how the quote should behave, the program just chooses between the two complete program variants stored in two different JavaScript strings (called `q10_25` and `q10_31` as of this writing).
 
+In fact, unlike ordinary splicing, you can use snippet splicing with `f<...>` function-backed quotes. Look at the code generated for this version of our example:
+
+    var pi = 3.14;
+    def sphere(d: Float, volume: Int)
+      f<
+        var r = d / 2.0;
+        pi * r * r * $[
+          if volume
+            $< 4.0 / 3.0 * r >
+            $< 4.0 >
+        ]
+      >;
+    !sphere(4.0, 1)
+
+There are two specialized variants of the function for the quote. There's no code in string literals and no `eval` monkey business to be seen.
+
 Pre-splicing is important because it lets you use staging to express *compile-time* metaprogramming in the same way that you can write *run-time* metaprogramming. Snippets and pre-splicing are necessarily more restrictive, but they let you avoid the costs of more general run-time splicing.
 
 ## Macros
