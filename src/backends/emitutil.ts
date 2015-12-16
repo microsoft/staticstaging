@@ -130,16 +130,17 @@ export function emit_if(emitter: Emitter, tree: IfNode): string {
 // we want to emit a sequence of statements followed by a `return`.
 function flatten_seq(tree: SyntaxNode): ExpressionNode[] {
   let rules = complete_visit(
-  function (tree: SyntaxNode) {
-    return [tree];
-  },
-  {
-    visit_seq(tree: SeqNode, p: void): ExpressionNode[] {
-      let lhs = flatten_seq(tree.lhs);
-      let rhs = flatten_seq(tree.rhs);
-      return lhs.concat(rhs);
+    function (tree: SyntaxNode) {
+      return [tree];
+    },
+    {
+      visit_seq(tree: SeqNode, p: void): ExpressionNode[] {
+        let lhs = flatten_seq(tree.lhs);
+        let rhs = flatten_seq(tree.rhs);
+        return lhs.concat(rhs);
+      }
     }
-  });
+  );
   return ast_visit(rules, tree, null);
 };
 
