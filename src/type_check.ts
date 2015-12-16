@@ -351,7 +351,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       let [true_type,] = check(tree.truex, e);
       let [false_type,] = check(tree.falsex, e);
-      if (true_type !== false_type) {
+      if (compatible(true_type, false_type) &&
+          compatible(false_type, true_type)) {
         throw "type error: condition branches must have same type";
       }
 
