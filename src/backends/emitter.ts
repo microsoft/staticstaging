@@ -57,4 +57,20 @@ export function emit(emitter: Emitter, tree: SyntaxNode) {
   return emitter.compile(tree, emitter);
 }
 
+// Add some substitutions to an Emitter, returning a new Emitter.
+export function emitter_with_subs(emitter: Emitter, subs: SyntaxNode[]):
+  Emitter
+{
+  // Overlay the `subs` map on the existing substitutions.
+  let combined_subs = emitter.substitutions.slice(0);
+  for (let i = 0; i < subs.length; ++i) {
+    if (subs[i] !== undefined) {
+      combined_subs[i] = subs[i];
+    }
+  }
+
+  // Construct a new Emitter.
+  return assign({}, emitter, { substitutions: combined_subs }) as Emitter;
+}
+
 }

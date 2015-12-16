@@ -477,20 +477,18 @@ export function emit_proc(emitter: Emitter, proc: Proc):
 
 // Compile a quotation (a.k.a. Prog) to a string constant. Also compiles the
 // Procs that appear inside this quotation.
-function emit_prog_eval(emitter: Emitter,
-    prog: Prog): string
+function emit_prog_eval(emitter: Emitter, prog: Prog, name: string): string
 {
   // Emit (and invoke) the main function for the program.
   let code = emit_main_wrapper(_emit_scope_func(emitter, 'main', [], prog));
 
   // Wrap the whole thing in a variable declaration.
-  return emit_var(progsym(prog.id), emit_string(code), true);
+  return emit_var(name, emit_string(code), true);
 }
 
 // Emit a program as a JavaScript function declaration. This works when the
 // program has no splices, and it avoids the overhead of `eval`.
-function emit_prog_func(emitter: Emitter,
-    prog: Prog): string
+function emit_prog_func(emitter: Emitter, prog: Prog, name: string): string
 {
   // The must be no splices.
   if (prog.owned_splice.length) {
@@ -508,21 +506,52 @@ function emit_prog_func(emitter: Emitter,
     argnames.push(persistsym(esc.id));
   }
 
-  return _emit_scope_func(emitter, progsym(prog.id), argnames, prog);
+  return _emit_scope_func(emitter, name, argnames, prog);
 }
 
-// Emit a JavaScript Prog. The backend depends on the annotation.
-export function emit_prog(emitter: Emitter,
-    prog: Prog): string
-{
+// Emit a JavaScript Prog (a single variant). The backend depends on the
+// annotation.
+function emit_prog_decl(emitter: Emitter, prog: Prog, name: string): string {
   if (prog.annotation === "f") {
     // A function quote. Compile to a JavaScript function.
-    return emit_prog_func(emitter, prog);
-
+    return emit_prog_func(emitter, prog, name);
   } else {
     // An ordinary quote. Compile to a string.
-    return emit_prog_eval(emitter, prog);
+    return emit_prog_eval(emitter, prog, name);
   }
+}
+
+// Emit a JavaScript Prog, possibly including multiple variants.
+export function emit_prog(emitter: Emitter, prog: Prog): string
+{
+  let variants = emitter.ir.presplice_variants[prog.id];
+  if (variants === null) {
+    // A single variant. Just emit the program.
+    return emit_prog_decl(emitter, prog, progsym(prog.id));
+
+  } else {
+    // Multiple variants. Compile each.
+    let out = "";
+    let table: { [name: string]: string } = {};
+    for (let variant of variants) {
+      let varid = variant_id(variant);
+      let name = progsym(prog.id) + "_" + varid;
+      let subemitter = emitter_with_subs(emitter, variant);
+      out += emit_prog_decl(subemitter, prog, name) + "\n";
+      table[varid] = name;
+    }
+
+    // Emit a table mapping names to programs.
+    let table_str = "{\n";
+    for (let key in table) {
+      let value = table[key];
+      table_str += `  ${emit_string(key)}: ${value},\n`;
+    }
+    table_str += "}";
+    out += emit_var(vartablesym(prog.id), table_str, false);
+    return out;
+  }
+
 }
 
 

@@ -36,6 +36,23 @@ export function persistsym(escid: number) {
   return "p" + escid;
 }
 
+// Get a variable name for the *variance table* for a pre-spliced program.
+export function vartablesym(progid: number) {
+  return "vt" + progid;
+}
+
+// Given a presplicing variant (an ID -> expression map), generate a string
+// that uniquely identifies the variant.
+export function variant_id(variant: SyntaxNode[]) {
+  let ids: number[] = [];
+  for (let tree of variant) {
+    if (tree !== undefined) {
+      ids.push(tree.id);
+    }
+  }
+  return ids.join("_");
+}
+
 // Parenthesize an expression.
 export function paren(e: string) {
   return "(" + e + ")";
