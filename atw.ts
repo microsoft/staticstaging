@@ -118,7 +118,7 @@ function main() {
   // Get the filename.
   let filenames: string[] = args._;
   if (!filenames.length) {
-    console.error("usage: " + process.argv[1] + " [-vcx] PROGRAM");
+    console.error("usage: " + process.argv[1] + " [-vcxwt] PROGRAM");
     process.exit(1);
   }
 
