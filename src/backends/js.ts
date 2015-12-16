@@ -208,7 +208,8 @@ export let compile_rules = {
     } else if (tree.kind === "persist") {
       return persistsym(tree.id);
     } else if (tree.kind === "snippet") {
-      return splicesym(tree.id);  // SNIPPET TODO
+      // We should only see this when pre-splicing is disabled.
+      return splicesym(tree.id);
     } else {
       throw "error: unknown escape kind";
     }
@@ -375,18 +376,31 @@ function emit_quote_eval(emitter: Emitter, scopeid: number):
     persist_pairs.push(varsym(fv) + ": " + varsym(fv));
   }
 
-  // Create a pre-spliced code value.
+  // If this program has variants, use the snippet escapes to look up the
+  // appropriate pre-spliced program. Otherwise, just use the unique program
+  // ID.
+  let prog_expr: string;
+  if (emitter.ir.presplice_variants[scopeid] === null) {
+    // No snippets to pre-splice.
+    prog_expr = progsym(scopeid);
+  } else {
+    // Emit code for each snippet escape to generate the name of the variant
+    // to select.
+    let id_exprs: string[] = [];
+    for (let esc of emitter.ir.progs[scopeid].owned_snippet) {
+      id_exprs.push(paren(emit(emitter, esc.body)));
+    }
+    let name_expr = `[${id_exprs.join(", ")}].join("_")`;
+    prog_expr = `${vartablesym(scopeid)}[${name_expr}]`;
+  }
+
+  // Create the initial program.
   let pers_list = `{ ${persist_pairs.join(", ")} }`;
-  let code_expr = `{ prog: ${progsym(scopeid)}, persist: ${pers_list} }`;
+  let code_expr = `{ prog: ${prog_expr}, persist: ${pers_list} }`;
 
   // Compile each spliced escape expression and call our runtime to splice it
   // into the code value.
   for (let esc of emitter.ir.progs[scopeid].owned_splice) {
-    code_expr = emit_splice(emitter, esc, code_expr);
-  }
-
-  // The same for snippet escapes (for now).
-  for (let esc of emitter.ir.progs[scopeid].owned_snippet) {
     code_expr = emit_splice(emitter, esc, code_expr);
   }
 
@@ -396,9 +410,16 @@ function emit_quote_eval(emitter: Emitter, scopeid: number):
 // Emit a quote. The kind of JavaScript value depends on the annotation.
 function emit_quote(emitter: Emitter, scopeid: number): string
 {
-  if (emitter.ir.progs[scopeid].annotation === "f") {
+  if (emitter.ir.progs[scopeid].snippet_escape !== null) {
+    // A snippet quote. Just produce the ID.
+    return scopeid.toString();
+
+  } else if (emitter.ir.progs[scopeid].annotation === "f") {
+    // A function quote.
     return emit_quote_func(emitter, scopeid);
+
   } else {
+    // An eval (string) quote.
     return emit_quote_eval(emitter, scopeid);
   }
 }
