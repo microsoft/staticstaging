@@ -13,8 +13,8 @@ Program
 // Expression syntax.
 
 Expr "expression"
-  = Var / Extern / Fun / CDef / Binary / Unary / Assign / CCall / Call /
-  If / TermExpr
+  = Var / Extern / Fun / CDef / If / Binary / Unary / Assign / CCall / Call /
+  TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -134,7 +134,7 @@ Assign "assignment"
   { return {tag: "assign", ident: i, expr: e}; }
 
 If "if/then/else"
-  = if c:TermExpr t:TermExpr f:TermExpr
+  = if _ c:TermExpr _ t:TermExpr _ f:TermExpr
   { return {tag: "if", cond: c, truex: t, falsex: f}; }
 
 
