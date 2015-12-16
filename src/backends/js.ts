@@ -435,7 +435,10 @@ function emit_quote(emitter: Emitter, scopeid: number): string
 function _emit_subscopes(emitter: Emitter, scope: Scope) {
   let out = "";
   for (let id of scope.children) {
-    out += emit_scope(emitter, id) + "\n";
+    let res = emit_scope(emitter, id);
+    if (res !== "") {
+      out += res + "\n";
+    }
   }
   return out;
 }
@@ -549,35 +552,39 @@ function emit_prog_decl(emitter: Emitter, prog: Prog, name: string): string {
 // Emit a JavaScript Prog, possibly including multiple variants.
 export function emit_prog(emitter: Emitter, prog: Prog): string
 {
-  let variants = emitter.ir.presplice_variants[prog.id];
-  if (variants === null) {
-    // A single variant. Just emit the program.
-    return emit_prog_decl(emitter, prog, progsym(prog.id));
-
-  } else {
-    // Multiple variants. Compile each.
-    let out = "";
-    let table: { [name: string]: string } = {};
-    for (let variant of variants) {
-      let [config, subs] = variant;
-      let varid = variant_id(config);
-      let name = progsym(prog.id) + "_" + varid;
-      let subemitter = emitter_with_subs(emitter, subs);
-      out += emit_prog_decl(subemitter, prog, name) + "\n";
-      table[varid] = name;
-    }
-
-    // Emit a table mapping names to programs.
-    let table_str = "{\n";
-    for (let key in table) {
-      let value = table[key];
-      table_str += `  ${emit_string(key)}: ${value},\n`;
-    }
-    table_str += "}";
-    out += emit_var(vartablesym(prog.id), table_str, false);
-    return out;
+  // Check whether this is a snippet, in which case we don't emit it at all.
+  if (prog.snippet_escape !== null) {
+    return "";
   }
 
+  // Check for a single variant.
+  let variants = emitter.ir.presplice_variants[prog.id];
+  if (variants === null) {
+    // Just emit the program.
+    return emit_prog_decl(emitter, prog, progsym(prog.id));
+  }
+
+  // Multiple variants. Compile each.
+  let out = "";
+  let table: { [name: string]: string } = {};
+  for (let variant of variants) {
+    let [config, subs] = variant;
+    let varid = variant_id(config);
+    let name = progsym(prog.id) + "_" + varid;
+    let subemitter = emitter_with_subs(emitter, subs);
+    out += emit_prog_decl(subemitter, prog, name) + "\n";
+    table[varid] = name;
+  }
+
+  // Emit a table mapping names to programs.
+  let table_str = "{\n";
+  for (let key in table) {
+    let value = table[key];
+    table_str += `  ${emit_string(key)}: ${value},\n`;
+  }
+  table_str += "}";
+  out += emit_var(vartablesym(prog.id), table_str, false);
+  return out;
 }
 
 
