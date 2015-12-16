@@ -255,7 +255,7 @@ In fact, unlike ordinary splicing, you can use snippet splicing with `f<...>` fu
       >;
     !sphere(4.0, 1)
 
-There are two specialized variants of the function for the quote. There's no code in string literals and no `eval` monkey business to be seen.
+There are two specialized variants of the function for the quote. There's no code in string literals and no `eval` monkey business in sight.
 
 Pre-splicing is important because it lets you use staging to express *compile-time* metaprogramming in the same way that you can write *run-time* metaprogramming. Snippets and pre-splicing are necessarily more restrictive, but they let you avoid the costs of more general run-time splicing.
 
