@@ -44,25 +44,25 @@ TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.atw) \
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
-	@ node atw.js -t -cx $(TESTS_COMPILE)
+	@ node $(CLI_JS) -t -cx $(TESTS_COMPILE)
 
 .PHONY: test-interp
 test-interp: $(CLI_JS)
-	@ node atw.js -t $(TESTS_INTERP)
+	@ node $(CLI_JS) -t $(TESTS_INTERP)
 
 .PHONY: test
 test: $(CLI_JS)
 	@ echo "interpreter" ; \
-	node atw.js -t $(TESTS_INTERP) || failed=1 ; \
+	node $(CLI_JS) -t $(TESTS_INTERP) || failed=1 ; \
 	echo ; \
 	echo "compiler" ; \
-	node atw.js -t -cx $(TESTS_COMPILE) || failed=1 ; \
+	node $(CLI_JS) -t -cx $(TESTS_COMPILE) || failed=1 ; \
 	[ ! $$failed ]
 
 # Just dump the output code for the WebGL examples.
 .PHONY: dump-gl
 dump-gl: $(CLI_JS)
-	@ node atw.js -cw $(wildcard test/webgl/*.atw)
+	@ node $(CLI_JS) -cw $(wildcard test/webgl/*.atw)
 
 
 # An asset-munging tool.
