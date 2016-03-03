@@ -2,7 +2,7 @@ DINGUS_JS := build/dingus/atw.js
 GENERATED := examples.js preambles.js atw.bundle.js codemirror.css
 
 .PHONY: all clean
-all: atw.bundle.js
+all: atw.bundle.js codemirror.css
 clean:
 	rm -rf build/ node_modules/ $(GENERATED)
 
