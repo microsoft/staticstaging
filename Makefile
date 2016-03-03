@@ -67,7 +67,7 @@ dingus/parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 
 dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 	cd dingus ; npm install
-	cd dingus ; npm run-script build
+	cd dingus ; npm run build
 
 D3 := dingus/bower_components/d3/d3.min.js
 $(D3):
