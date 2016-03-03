@@ -68,22 +68,19 @@ dump-gl: $(CLI_JS)
 # An asset-munging tool.
 
 tool/munge.js: tool/munge.ts $(TSC) $(TYPINGS_MAIN)
-	$(TSC) $(TSCARGS) --out $@ $<
+	$(TSC) --out $@ $<
 
 
 # Documentation.
 
-MADOKO := node_modules/.bin/madoko
-$(MADOKO): node_modules/madoko/package.json
-
 .PHONY: docs
 docs: docs/build/index.html docs/build/docs.js
 
-docs/build/index.html: docs/index.md $(MADOKO)
-	cd docs; ../$(MADOKO) --odir=build ../$<
+docs/build/index.html: docs/index.md $(call npmdep,madoko)
+	cd docs; $(call npmbin,madoko) --odir=build ../$<
 
 docs/build/docs.js: docs/docs.ts $(TSC)
-	$(TSC) $(TSCARGS) --out $@ $<
+	$(TSC) --out $@ $<
 
 
 # Deploy the dingus and docs.
