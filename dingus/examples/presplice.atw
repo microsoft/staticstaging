@@ -4,6 +4,7 @@
 
 var flag = 1;
 
+# Try annotating this quote with an `f`; it still works.
 !<
   var x = 4;
   var y = 5;
