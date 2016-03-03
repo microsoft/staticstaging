@@ -1,4 +1,4 @@
-/// <reference path="typings/node/node.d.ts" />
+/// <reference path="typings/main.d.ts" />
 
 let fs = require('fs');
 let path = require('path');

@@ -1,5 +1,5 @@
 /// <reference path="../src/driver.ts" />
-/// <reference path="../typings/codemirror/codemirror.d.ts" />
+/// <reference path="../typings/browser.d.ts" />
 
 declare var parser : any;
 declare function tree_canvas (
@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Event handler for changes to the code.
-  let tid: number = null;
+  let tid: any = null;
   function handle_code () {
     if (tid) {
       clearTimeout(tid);

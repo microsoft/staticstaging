@@ -25,33 +25,27 @@ clean:
 
 PEGJS := node_modules/pegjs/bin/pegjs
 TSC := node_modules/typescript/bin/tsc
-TSD := node_modules/tsd/build/cli.js
+TYPINGS := node_modules/.bin/typings
 MINIMIST := node_modules/minimist/package.json
 
 $(PEGJS): node_modules/pegjs/package.json
 $(TSC): node_modules/typescript/package.json
-$(TSD): node_modules/tsd/package.json
+$(TYPINGS): node_modules/typings/package.json
 
 node_modules/%/package.json:
 	npm install $*
 	@touch $@
 
 
-# Typings from tsd.
+# Typings.
 
-NODE_D := typings/node/node.d.ts
-MINIMIST_D := typings/minimist/minimist.d.ts
-CODEMIRROR_D := typings/codemirror/codemirror.d.ts
-PROMISE_D := typings/es6-promise/es6-promise.d.ts
-
-typings/%.d.ts: $(TSD)
-	$(TSD) install $(firstword $(subst /, ,$*))
-	@touch $@
+typings/%.d.ts: typings.json $(TYPINGS)
+	$(TYPINGS) install
 
 
 # The command-line Node tool.
 
-CLI_SRCS := $(SRC_FILES) atw.ts $(NODE_D) $(MINIMIST_D) $(PROMISE_D)
+CLI_SRCS := $(SRC_FILES) atw.ts typings/main.d.ts
 atw.js: $(TSC) $(CLI_SRCS) $(MINIMIST)
 	$(TSC) $(TSCARGS) --out $@ $(CLI_SRCS)
 
@@ -64,7 +58,7 @@ parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
 dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/d3.js dingus/examples.js \
 	dingus/codemirror dingus/preambles.js
 
-WEB_SRCS := $(SRC_FILES) dingus/atw.ts $(CODEMIRROR_D)
+WEB_SRCS := $(SRC_FILES) dingus/atw.ts typings/browser.d.ts
 dingus/atw.js: $(TSC) $(WEB_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
 
@@ -143,7 +137,7 @@ dump-gl: $(CLI_JS)
 # An asset-munging utility.
 
 # Compile the example-munging script.
-munge.js: munge.ts $(TSC) $(NODE_D)
+munge.js: munge.ts $(TSC) typings/main.d.ts
 	$(TSC) $(TSCARGS) --out $@ $<
 
 
