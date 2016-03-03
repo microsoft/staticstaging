@@ -2,11 +2,6 @@ node_modules
 parser.js
 atw.js
 typings
-dingus/gl.bundle.js
-dingus/d3.js
-dingus/bower_components/
-dingus/examples.js
-dingus/preambles.js
-dingus/codemirror
 munge.js
+build/
 docs/build

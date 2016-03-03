@@ -1,6 +1,8 @@
 {
     "compilerOptions": {
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "allowJs": true,
+        "outDir": "build"
     },
     "files": [
         "atw.ts"

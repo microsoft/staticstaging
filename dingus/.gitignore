@@ -2,8 +2,6 @@ build/
 atw.bundle.js
 gl.bundle.js
 
-d3.js
-bower_components/
 examples.js
 preambles.js
 codemirror

@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as minimist from 'minimist';
 
 import * as driver from "./src/driver";
-const parser = require('./parser.js');
+import parser = require('./parser');
 
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
