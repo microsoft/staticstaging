@@ -1,7 +1,7 @@
 // Adapted from the D3 example at:
 // http://www.d3noob.org/2014/01/tree-diagrams-in-d3js_11.html
 
-function tree_canvas(where, get_name, get_children) {
+exports.tree_canvas = function (d3, where, get_name, get_children) {
   var diagonal = d3.svg.diagonal()
    .projection(function(d) { return [d.y, d.x]; });
 

@@ -1,5 +1,7 @@
 {
-  "dependencies": {},
+  "dependencies": {
+    "d3": "github:typed-typings/npm-d3#8bb38bb0ef0a48ac273f6045c26753260ea089df"
+  },
   "devDependencies": {},
   "ambientDependencies": {
     "codemirror": "github:DefinitelyTyped/DefinitelyTyped/codemirror/codemirror.d.ts#ec01eef9f19cfd0f2b22458a12b063c1a5ce6e25"

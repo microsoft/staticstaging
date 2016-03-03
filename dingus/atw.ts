@@ -5,12 +5,9 @@ import * as ast from '../src/ast';
 import { ASTVisit, ast_visit } from '../src/visit';
 
 import parser = require('../parser');
-
-declare function tree_canvas (
-  where: string,
-  get_name: (_:any) => string,
-  get_children: (_:any) => any[]
-): (tree_data: any) => void;
+import CodeMirror = require('codemirror');
+import { tree_canvas } from './tree';
+import d3 = require('d3');
 
 declare function start_gl(container: HTMLElement, fps_element: HTMLElement):
   (code: string) => void;
@@ -381,7 +378,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!draw_tree) {
           // Lazily initialize the drawing code to avoid D3 invocations when
           // we don't need them.
-          draw_tree = tree_canvas('#tree', get_name, get_children);
+          draw_tree = tree_canvas(d3, '#tree', get_name, get_children);
         }
         draw_tree(tree);
         show(null, compiledbox);
