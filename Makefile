@@ -3,10 +3,12 @@ CLI_JS := build/atw.js
 .PHONY: cli dingus all
 cli: $(CLI_JS)
 all: cli dingus
+dingus:
+	make -C dingus
 
 .PHONY: clean
 clean:
-	rm -rf parser.js build/ node_modules typings
+	rm -rf parser.js munge.js build/ node_modules typings
 	make -C dingus clean
 
 include ts.mk
