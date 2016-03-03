@@ -47,9 +47,10 @@ interface QuoteNode extends ExpressionNode {
   snippet: boolean;
 }
 
+type EscapeKind = "splice" | "persist" | "snippet";
 interface EscapeNode extends ExpressionNode {
   expr: ExpressionNode;
-  kind: string;  // splice, persist, or snippet
+  kind: EscapeKind;
   count: number;
 }
 

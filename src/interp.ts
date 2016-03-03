@@ -417,7 +417,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       [SyntaxNode, State, Pers] {
     let [fun_tree, s, p] = quote_interp(tree.fun, stage, state, pers);
     let arg_trees : SyntaxNode[] = [];
-    for (let arg in tree.args) {
+    for (let arg of tree.args) {
       let arg_tree : SyntaxNode;
       [arg_tree, s, p] = quote_interp(arg, stage, state, p);
       arg_trees.push(arg_tree);
