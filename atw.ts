@@ -6,7 +6,6 @@ import * as path from 'path';
 import * as minimist from 'minimist';
 
 import * as driver from "./src/driver";
-import parser = require('./parser');
 
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
@@ -50,7 +49,6 @@ function run(filename: string, source: string, webgl: boolean,
 
   // Configure the driver.
   let config: driver.Config = {
-    parser: parser,
     webgl: webgl,
 
     log: log,

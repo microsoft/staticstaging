@@ -11,6 +11,7 @@ import * as glsl from './backends/glsl';
 import * as js from './backends/js';
 import { CompilerIR } from './compile/ir';
 import { semantically_analyze } from './compile/compile';
+import parser = require('../parser');
 
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the
@@ -25,7 +26,6 @@ import { semantically_analyze } from './compile/compile';
 //   result as the interpreter would.
 
 export interface Config {
-  parser: any,  // The parser object from PEG.js.
   webgl: boolean,
 
   parsed: (tree: SyntaxNode) => void,
@@ -73,9 +73,9 @@ export function frontend(config: Config, source: string,
   // Parse.
   let tree: SyntaxNode;
   try {
-    tree = config.parser.parse(source);
+    tree = parser.parse(source);
   } catch (e) {
-    if (e instanceof config.parser.SyntaxError) {
+    if (e instanceof parser.SyntaxError) {
       let loc = e.location.start;
       let err = 'parse error at ';
       if (filename) {

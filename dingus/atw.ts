@@ -4,7 +4,6 @@ import * as driver from '../src/driver';
 import * as ast from '../src/ast';
 import { ASTVisit, ast_visit } from '../src/visit';
 
-import parser = require('../parser');
 import CodeMirror = require('codemirror');
 import { tree_canvas } from './tree';
 import d3 = require('d3');
@@ -142,7 +141,6 @@ function atw_run(code: string, mode: string)
   let error: string = null;
   let type: string = null;
   let config: driver.Config = {
-    parser: parser,
     webgl: mode === "webgl",
 
     log(...msg: any[]) {
