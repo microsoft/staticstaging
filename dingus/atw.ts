@@ -14,7 +14,7 @@ import ATW_PREAMBLES = require('./preambles');
 
 const RUN_DELAY_MS = 200;
 
-let GetChildren : ASTVisit<void, ast.SyntaxNode[]> = {
+let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
   visit_literal(tree: ast.LiteralNode, _: void): ast.SyntaxNode[] {
     return [];
   },
@@ -66,7 +66,7 @@ function get_children(tree: ast.SyntaxNode): ast.SyntaxNode[] {
   return ast_visit(GetChildren, tree, null);
 };
 
-let GetName : ASTVisit<void, string> = {
+let GetName: ASTVisit<void, string> = {
   visit_literal(tree: ast.LiteralNode, _: void): string {
     return tree.value.toString();
   },

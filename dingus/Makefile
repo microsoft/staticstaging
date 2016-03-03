@@ -39,7 +39,7 @@ $(MUNGE):
 	make -C .. tool/munge.js
 
 EXAMPLES := basics splice persist progfunc extern \
-	normcolor objects phong
+	presplice normcolor objects phong
 EXAMPLE_FILES := $(EXAMPLES:%=examples/%.atw)
 examples.js: $(MUNGE) $(EXAMPLE_FILES)
 	printf "module.exports = " > $@
