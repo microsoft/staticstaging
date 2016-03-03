@@ -1,16 +1,4 @@
-SRCDIR := src
-SOURCES := interp.ts ast.ts visit.ts pretty.ts util.ts driver.ts \
-	type.ts type_check.ts type_elaborate.ts sugar.ts \
-	compile/compile.ts compile/ir.ts compile/defuse.ts \
-	compile/scope.ts compile/lift.ts compile/presplice.ts \
-	backends/emitutil.ts backends/js.ts backends/glsl.ts backends/webgl.ts \
-	backends/emitter.ts backends/gl.ts
-TSCARGS := --noImplicitAny
-
-SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
-CLI_JS := parser.js atw.js
-DINGUS_JS := dingus/atw.js parser.js
-GENERATED := $(CLI_JS) $(DINGUS_JS)
+CLI_JS := build/atw.js
 
 .PHONY: cli dingus all
 cli: $(CLI_JS)
@@ -18,39 +6,38 @@ all: cli dingus
 
 .PHONY: clean
 clean:
-	rm -rf $(GENERATED) node_modules typings
+	rm -rf parser.js build/ node_modules typings
+	make -C dingus clean
 
 
 # Tools and dependencies from npm.
 
-PEGJS := node_modules/pegjs/bin/pegjs
-TSC := node_modules/typescript/bin/tsc
-TYPINGS := node_modules/.bin/typings
-MINIMIST := node_modules/minimist/package.json
-
-$(PEGJS): node_modules/pegjs/package.json
-$(TSC): node_modules/typescript/package.json
-$(TYPINGS): node_modules/typings/package.json
+.PHONY: deps
+deps: package.json
+	npm install
 
 node_modules/%/package.json:
 	npm install $*
 	@touch $@
 
 
-# Typings.
+# Build the parser from the grammar.
 
-typings/%.d.ts: typings.json $(TYPINGS)
-	$(TYPINGS) install
+parser.js: src/grammar.pegjs deps
+	`npm bin`/pegjs --cache < $< > $@
+
+
+# Fetch TypeScript typing headers.
+
+typings/%.d.ts: typings.json deps
+	`npm bin`/typings install
 
 
 # The command-line Node tool.
 
-CLI_SRCS := $(SRC_FILES) atw.ts typings/main.d.ts
-atw.js: $(TSC) $(CLI_SRCS) $(MINIMIST)
-	$(TSC) $(TSCARGS) --out $@ $(CLI_SRCS)
-
-parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
-	$(PEGJS) --cache < $(<) > $@
+TS_SRC := $(shell find src/ -type f -name '*.ts')
+$(CLI_JS): $(TS_SRC) atw.ts typings/main.d.ts deps
+	`npm bin`/tsc
 
 
 # The Web dingus.
