@@ -9,7 +9,7 @@ TSCARGS := --noImplicitAny
 
 SRC_FILES := $(SOURCES:%=$(SRCDIR)/%)
 CLI_JS := parser.js atw.js
-DINGUS_JS := dingus/atw.js dingus/parser.js
+DINGUS_JS := dingus/atw.js parser.js
 GENERATED := $(CLI_JS) $(DINGUS_JS)
 
 .PHONY: cli dingus all
@@ -61,9 +61,6 @@ dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/d3.js dingus/examples.js \
 WEB_SRCS := $(SRC_FILES) dingus/atw.ts typings/browser.d.ts
 dingus/atw.js: $(TSC) $(WEB_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
-
-dingus/parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
-	$(PEGJS) --cache < $(<) > $@
 
 dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 	cd dingus ; npm install
