@@ -1,0 +1,17 @@
+{
+  "name": "alltheworld",
+  "version": "1.0.0",
+  "author": "Adrian Sampson <asampson@cornell.edu>",
+  "license": "MIT",
+  "private": true,
+
+  "dependencies": {
+    "minimist": "^1.2.0"
+  },
+  "devDependencies": {
+    "madoko": "^0.9.15-beta",
+    "typings": "^0.6.9",
+    "typescript": "^1.6.2",
+    "pegjs": "^0.9.0"
+  }
+}
