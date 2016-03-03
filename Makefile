@@ -9,75 +9,20 @@ clean:
 	rm -rf parser.js build/ node_modules typings
 	make -C dingus clean
 
-
-# Tools and dependencies from npm.
-
-.PHONY: deps
-deps: package.json
-	npm install
-
-node_modules/%/package.json:
-	npm install $*
-	@touch $@
+include ts.mk
 
 
 # Build the parser from the grammar.
 
-parser.js: src/grammar.pegjs deps
-	`npm bin`/pegjs --cache < $< > $@
-
-
-# Fetch TypeScript typing headers.
-
-typings/%.d.ts: typings.json deps
-	`npm bin`/typings install
+parser.js: src/grammar.pegjs $(call npmdep,pegjs)
+	$(call npmbin,pegjs) --cache < $< > $@
 
 
 # The command-line Node tool.
 
 TS_SRC := $(shell find src/ -type f -name '*.ts')
-$(CLI_JS): $(TS_SRC) atw.ts typings/main.d.ts deps
-	`npm bin`/tsc
-
-
-# The Web dingus.
-
-dingus: $(DINGUS_JS) dingus/gl.bundle.js dingus/d3.js dingus/examples.js \
-	dingus/codemirror dingus/preambles.js
-
-WEB_SRCS := $(SRC_FILES) dingus/atw.ts typings/browser.d.ts
-dingus/atw.js: $(TSC) $(WEB_SRCS)
-	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
-
-dingus/gl.bundle.js: dingus/gl.js dingus/package.json
-	cd dingus ; npm install
-	cd dingus ; npm run build
-
-D3 := dingus/bower_components/d3/d3.min.js
-$(D3):
-	cd dingus ; bower install d3
-	@touch $@
-dingus/d3.js: $(D3)
-	cp $< $@
-
-CODEMIRROR := dingus/bower_components/codemirror/lib
-$(CODEMIRROR):
-	cd dingus ; bower install codemirror
-	@touch $@
-dingus/codemirror: $(CODEMIRROR)
-	cp -r $< $@
-
-# Munge the examples and preamble files.
-DINGUS_EXAMPLES := basics splice persist progfunc extern \
-	normcolor objects phong
-DINGUS_EXAMPLE_FILES := $(DINGUS_EXAMPLES:%=dingus/examples/%.atw)
-dingus/examples.js: munge.js $(DINGUS_EXAMPLE_FILES)
-	printf "module.exports = " > $@
-	node $< $(DINGUS_EXAMPLE_FILES) >> $@
-
-dingus/preambles.js: munge.js dingus/gl_preamble.atw
-	printf "module.exports = " > $@
-	node $< dingus/gl_preamble.atw >> $@
+$(CLI_JS): $(TS_SRC) atw.ts parser.js $(TYPINGS_MAIN) $(TSC)
+	$(TSC)
 
 
 # Running tests.
@@ -121,7 +66,7 @@ dump-gl: $(CLI_JS)
 # An asset-munging utility.
 
 # Compile the example-munging script.
-munge.js: munge.ts $(TSC) typings/main.d.ts
+munge.js: munge.ts $(TSC) $(TYPINGS_MAIN)
 	$(TSC) $(TSCARGS) --out $@ $<
 
 

@@ -1,7 +1,6 @@
 node_modules
-parser.js
-atw.js
 typings
-munge.js
+
 build/
-docs/build
+parser.js
+munge.js
