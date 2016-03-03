@@ -9,9 +9,7 @@ import CodeMirror = require('codemirror');
 import { tree_canvas } from './tree';
 import d3 = require('d3');
 
-declare function start_gl(container: HTMLElement, fps_element: HTMLElement):
-  (code: string) => void;
-
+import start_gl = require('./gl');
 import ATW_EXAMPLES = require('./examples');
 import ATW_PREAMBLES = require('./preambles');
 
