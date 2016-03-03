@@ -8,7 +8,7 @@ dingus:
 
 .PHONY: clean
 clean:
-	rm -rf parser.js munge.js build/ node_modules typings
+	rm -rf parser.js build/ tool/munge.js node_modules typings
 	make -C dingus clean
 
 include ts.mk
@@ -65,10 +65,9 @@ dump-gl: $(CLI_JS)
 	@ node atw.js -cw $(wildcard test/webgl/*.atw)
 
 
-# An asset-munging utility.
+# An asset-munging tool.
 
-# Compile the example-munging script.
-munge.js: munge.ts $(TSC) $(TYPINGS_MAIN)
+tool/munge.js: tool/munge.ts $(TSC) $(TYPINGS_MAIN)
 	$(TSC) $(TSCARGS) --out $@ $<
 
 

@@ -3,4 +3,4 @@ typings
 
 build/
 parser.js
-munge.js
+tool/munge.js

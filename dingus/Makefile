@@ -34,13 +34,17 @@ codemirror.css: $(call npmdep,codemirror)
 
 # Munge the examples and preamble files.
 
+MUNGE := ../tool/munge.js
+$(MUNGE):
+	make -C .. tool/munge.js
+
 EXAMPLES := basics splice persist progfunc extern \
 	normcolor objects phong
 EXAMPLE_FILES := $(EXAMPLES:%=examples/%.atw)
-examples.js: ../munge.js $(EXAMPLE_FILES)
+examples.js: $(MUNGE) $(EXAMPLE_FILES)
 	printf "module.exports = " > $@
 	node $< $(EXAMPLE_FILES) >> $@
 
-preambles.js: ../munge.js gl_preamble.atw
+preambles.js: $(MUNGE) gl_preamble.atw
 	printf "module.exports = " > $@
 	node $< gl_preamble.atw >> $@

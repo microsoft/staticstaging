@@ -1,4 +1,8 @@
-/// <reference path="typings/main.d.ts" />
+/// <reference path="../typings/main.d.ts" />
+
+/**
+ * Turn a list of plain-text files into a single JSON document.
+ */
 
 let fs = require('fs');
 let path = require('path');
