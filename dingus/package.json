@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run build_gl && npm run build_atw",
     "build_gl": "browserify gl.js --standalone start_gl -o gl.bundle.js",
-    "build_atw": "webpack atw.js atw.bundle.js"
+    "build_atw": "webpack build/dingus/atw.js atw.bundle.js"
   },
 
   "dependencies": {

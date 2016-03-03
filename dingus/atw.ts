@@ -4,7 +4,8 @@ import * as driver from '../src/driver';
 import * as ast from '../src/ast';
 import { ASTVisit, ast_visit } from '../src/visit';
 
-declare var parser : any;
+import parser = require('../parser');
+
 declare function tree_canvas (
   where: string,
   get_name: (_:any) => string,

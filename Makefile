@@ -63,7 +63,7 @@ dingus/atw.js: $(TSC) $(WEB_SRCS)
 	$(TSC) $(TSCARGS) --out $@ $(WEB_SRCS)
 
 dingus/parser.js: $(SRCDIR)/grammar.pegjs $(PEGJS)
-	$(PEGJS) --export-var parser < $(<) > $@
+	$(PEGJS) --cache < $(<) > $@
 
 dingus/gl.bundle.js: dingus/gl.js dingus/package.json
 	cd dingus ; npm install
