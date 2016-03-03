@@ -1,4 +1,4 @@
-/// <reference path="../typings/browser.d.ts" />
+/// <reference path="typings/browser.d.ts" />
 
 import * as driver from '../src/driver';
 import * as ast from '../src/ast';

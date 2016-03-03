@@ -2,7 +2,6 @@
   "dependencies": {},
   "devDependencies": {},
   "ambientDependencies": {
-    "codemirror": "github:DefinitelyTyped/DefinitelyTyped/codemirror/codemirror.d.ts#ec01eef9f19cfd0f2b22458a12b063c1a5ce6e25",
     "es6-promise": "github:DefinitelyTyped/DefinitelyTyped/es6-promise/es6-promise.d.ts#830e8ebd9ef137d039d5c7ede24a421f08595f83",
     "minimist": "github:DefinitelyTyped/DefinitelyTyped/minimist/minimist.d.ts#5974b1be295ed7f61ff611459bc06a56cb35fd0c",
     "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#48c1e3c1d6baefa4f1a126f188c27c4fefd36bff"
