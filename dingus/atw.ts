@@ -1,5 +1,8 @@
-/// <reference path="../src/driver.ts" />
 /// <reference path="../typings/browser.d.ts" />
+
+import * as driver from '../src/driver';
+import * as ast from '../src/ast';
+import { ASTVisit, ast_visit } from '../src/visit';
 
 declare var parser : any;
 declare function tree_canvas (
@@ -15,115 +18,115 @@ declare const ATW_PREAMBLES: { [key: string]: string }[];
 
 const RUN_DELAY_MS = 200;
 
-let GetChildren : ASTVisit<void, SyntaxNode[]> = {
-  visit_literal(tree: LiteralNode, _: void): SyntaxNode[] {
+let GetChildren : ASTVisit<void, ast.SyntaxNode[]> = {
+  visit_literal(tree: ast.LiteralNode, _: void): ast.SyntaxNode[] {
     return [];
   },
-  visit_seq(tree: SeqNode, _: void): SyntaxNode[] {
+  visit_seq(tree: ast.SeqNode, _: void): ast.SyntaxNode[] {
     return [tree.lhs, tree.rhs];
   },
-  visit_let(tree: LetNode, _: void): SyntaxNode[] {
+  visit_let(tree: ast.LetNode, _: void): ast.SyntaxNode[] {
     return [tree.expr];
   },
-  visit_assign(tree: LetNode, _: void): SyntaxNode[] {
+  visit_assign(tree: ast.LetNode, _: void): ast.SyntaxNode[] {
     return [tree.expr];
   },
-  visit_lookup(tree: LookupNode, _: void): SyntaxNode[] {
+  visit_lookup(tree: ast.LookupNode, _: void): ast.SyntaxNode[] {
     return [];
   },
-  visit_unary(tree: UnaryNode, _: void): SyntaxNode[] {
+  visit_unary(tree: ast.UnaryNode, _: void): ast.SyntaxNode[] {
     return [tree.expr];
   },
-  visit_binary(tree: BinaryNode, _: void): SyntaxNode[] {
+  visit_binary(tree: ast.BinaryNode, _: void): ast.SyntaxNode[] {
     return [tree.lhs, tree.rhs];
   },
-  visit_quote(tree: QuoteNode, _: void): SyntaxNode[] {
+  visit_quote(tree: ast.QuoteNode, _: void): ast.SyntaxNode[] {
     return [tree.expr];
   },
-  visit_escape(tree: EscapeNode, _: void): SyntaxNode[] {
+  visit_escape(tree: ast.EscapeNode, _: void): ast.SyntaxNode[] {
     return [tree.expr];
   },
-  visit_run(tree: RunNode, _: void): SyntaxNode[] {
+  visit_run(tree: ast.RunNode, _: void): ast.SyntaxNode[] {
     return [tree.expr];
   },
-  visit_fun(tree: FunNode, _: void): SyntaxNode[] {
+  visit_fun(tree: ast.FunNode, _: void): ast.SyntaxNode[] {
     return [tree.body];
   },
-  visit_call(tree: CallNode, _: void): SyntaxNode[] {
+  visit_call(tree: ast.CallNode, _: void): ast.SyntaxNode[] {
     return [tree.fun].concat(tree.args);
   },
-  visit_extern(tree: ExternNode, _: void): SyntaxNode[] {
+  visit_extern(tree: ast.ExternNode, _: void): ast.SyntaxNode[] {
     return [];
   },
-  visit_persist(tree: PersistNode, _: void): SyntaxNode[] {
+  visit_persist(tree: ast.PersistNode, _: void): ast.SyntaxNode[] {
     return [];
   },
-  visit_if(tree: IfNode, _: void): SyntaxNode[] {
+  visit_if(tree: ast.IfNode, _: void): ast.SyntaxNode[] {
     return [tree.cond, tree.truex, tree.falsex];
   },
 };
 
-function get_children(tree: SyntaxNode): SyntaxNode[] {
+function get_children(tree: ast.SyntaxNode): ast.SyntaxNode[] {
   return ast_visit(GetChildren, tree, null);
 };
 
 let GetName : ASTVisit<void, string> = {
-  visit_literal(tree: LiteralNode, _: void): string {
+  visit_literal(tree: ast.LiteralNode, _: void): string {
     return tree.value.toString();
   },
-  visit_seq(tree: SeqNode, _: void): string {
+  visit_seq(tree: ast.SeqNode, _: void): string {
     return "seq";
   },
-  visit_let(tree: LetNode, _: void): string {
+  visit_let(tree: ast.LetNode, _: void): string {
     return "var " + tree.ident;
   },
-  visit_assign(tree: LetNode, _: void): string {
+  visit_assign(tree: ast.LetNode, _: void): string {
     return tree.ident + " =";
   },
-  visit_lookup(tree: LookupNode, _: void): string {
+  visit_lookup(tree: ast.LookupNode, _: void): string {
     return tree.ident;
   },
-  visit_unary(tree: UnaryNode, _: void): string {
+  visit_unary(tree: ast.UnaryNode, _: void): string {
     return tree.op;
   },
-  visit_binary(tree: BinaryNode, _: void): string {
+  visit_binary(tree: ast.BinaryNode, _: void): string {
     return tree.op;
   },
-  visit_quote(tree: QuoteNode, _: void): string {
+  visit_quote(tree: ast.QuoteNode, _: void): string {
     return "quote";
   },
-  visit_escape(tree: EscapeNode, _: void): string {
+  visit_escape(tree: ast.EscapeNode, _: void): string {
     if (tree.kind === "persist") {
       return "persist";
     } else {
       return "escape";
     }
   },
-  visit_run(tree: RunNode, _: void): string {
+  visit_run(tree: ast.RunNode, _: void): string {
     return "run";
   },
-  visit_fun(tree: FunNode, _: void): string {
+  visit_fun(tree: ast.FunNode, _: void): string {
     let params = "";
     for (let param of tree.params) {
       params += " " + param.name;
     }
     return "fun" + params;
   },
-  visit_call(tree: CallNode, _: void): string {
+  visit_call(tree: ast.CallNode, _: void): string {
     return "call";
   },
-  visit_extern(tree: ExternNode, _: void): string {
+  visit_extern(tree: ast.ExternNode, _: void): string {
     return "extern " + tree.name;
   },
-  visit_persist(tree: PersistNode, _: void): string {
+  visit_persist(tree: ast.PersistNode, _: void): string {
     return "%" + tree.index;
   },
-  visit_if(tree: IfNode, _: void): string {
+  visit_if(tree: ast.IfNode, _: void): string {
     return "if";
   },
 }
 
-function get_name(tree: SyntaxNode): string {
+function get_name(tree: ast.SyntaxNode): string {
   return ast_visit(GetName, tree, null);
 };
 
@@ -136,12 +139,12 @@ function get_name(tree: SyntaxNode): string {
 // - the complete WebGL code (if in WebGL mode)
 // The mode can be "interp", "compile", or "webgl".
 function atw_run(code: string, mode: string)
-  : [string, SyntaxNode, string, string, string, string]
+  : [string, ast.SyntaxNode, string, string, string, string]
 {
   // Configure the driver to store a bunch of results.
   let error: string = null;
   let type: string = null;
-  let config: Driver.Config = {
+  let config: driver.Config = {
     parser: parser,
     webgl: mode === "webgl",
 
@@ -168,25 +171,25 @@ function atw_run(code: string, mode: string)
   // Run the driver.
   let res: string = null;
   let jscode: string = null;
-  let ast: SyntaxNode = null;
+  let ast: ast.SyntaxNode = null;
   let glcode: string = null;
-  Driver.frontend(config, code, null, function (tree, types) {
+  driver.frontend(config, code, null, function (tree, types) {
     ast = tree;
 
     if (mode === "interp") {
       // Interpreter.
-      Driver.interpret(config, tree, types, function (r) {
+      driver.interpret(config, tree, types, function (r) {
         res = r;
       });
 
     } else {
       // Compiler.
-      Driver.compile(config, tree, types, function (code) {
+      driver.compile(config, tree, types, function (code) {
         jscode = code;
         if (mode === "webgl") {
-          glcode = Driver.full_code(config, jscode);
+          glcode = driver.full_code(config, jscode);
         } else {
-          Driver.execute(config, code, function (r) {
+          driver.execute(config, code, function (r) {
             res = r;
           });
         }
