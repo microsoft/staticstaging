@@ -1,11 +1,12 @@
 /// <reference path="typings/main.d.ts" />
-/// <reference path="src/driver.ts" />
 
-let fs = require('fs');
-let util = require('util');
-let path = require('path');
-let minimist = require('minimist');
-let parser = require('./parser.js');
+import * as fs from 'fs';
+import * as util from 'util';
+import * as path from 'path';
+import * as minimist from 'minimist';
+
+import * as driver from "./src/driver";
+const parser = require('./parser.js');
 
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
@@ -48,7 +49,7 @@ function run(filename: string, source: string, webgl: boolean,
   let success = true;
 
   // Configure the driver.
-  let config: Driver.Config = {
+  let config: driver.Config = {
     parser: parser,
     webgl: webgl,
 
@@ -67,12 +68,12 @@ function run(filename: string, source: string, webgl: boolean,
   };
 
   // Run the driver.
-  Driver.frontend(config, source, filename, function (tree, types) {
+  driver.frontend(config, source, filename, function (tree, types) {
     if (compile) {
       // Compiler.
-      Driver.compile(config, tree, types, function (code) {
+      driver.compile(config, tree, types, function (code) {
         if (execute) {
-          Driver.execute(config, code, function (res) {
+          driver.execute(config, code, function (res) {
             if (test) {
               success = check_output(filename, source, res);
             } else {
@@ -86,7 +87,7 @@ function run(filename: string, source: string, webgl: boolean,
 
     } else {
       // Interpreter.
-      Driver.interpret(config, tree, types, function (res) {
+      driver.interpret(config, tree, types, function (res) {
         if (test) {
           success = check_output(filename, source, res);
         } else {
@@ -106,11 +107,11 @@ function main() {
   });
 
   // The flags: -v, -c, and -x.
-  let verbose: boolean = args.v;
-  let compile: boolean = args.c;
-  let execute: boolean = args.x;
-  let webgl: boolean = args.w;
-  let test: boolean = args.t;
+  let verbose: boolean = args['v'];
+  let compile: boolean = args['c'];
+  let execute: boolean = args['x'];
+  let webgl: boolean = args['w'];
+  let test: boolean = args['t'];
 
   // Get the filename.
   let filenames: string[] = args._;

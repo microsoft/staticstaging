@@ -6,8 +6,6 @@
 /// <reference path="backends/js.ts" />
 /// <reference path="backends/webgl.ts" />
 
-module Driver {
-
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the
 // steps using a configuration object that handles certain events. The steps
@@ -163,6 +161,4 @@ export function execute(config: Config, jscode: string,
 
   // Pass a formatted value.
   executed(Backends.JS.pretty_value(res));
-}
-
 }
