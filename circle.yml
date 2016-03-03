@@ -4,6 +4,8 @@ dependencies:
     cache_directories:
         - node_modules
         - typings
+        - dingus/node_modules
+        - dingus/typings
 
 machine:
     node:
