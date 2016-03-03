@@ -11,8 +11,9 @@ import d3 = require('d3');
 
 declare function start_gl(container: HTMLElement, fps_element: HTMLElement):
   (code: string) => void;
-declare const ATW_EXAMPLES: { [key: string]: string }[];
-declare const ATW_PREAMBLES: { [key: string]: string }[];
+
+import ATW_EXAMPLES = require('./examples');
+import ATW_PREAMBLES = require('./preambles');
 
 const RUN_DELAY_MS = 200;
 

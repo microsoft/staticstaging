@@ -88,11 +88,11 @@ DINGUS_EXAMPLES := basics splice persist progfunc extern \
 	normcolor objects phong
 DINGUS_EXAMPLE_FILES := $(DINGUS_EXAMPLES:%=dingus/examples/%.atw)
 dingus/examples.js: munge.js $(DINGUS_EXAMPLE_FILES)
-	printf "ATW_EXAMPLES = " > $@
+	printf "module.exports = " > $@
 	node $< $(DINGUS_EXAMPLE_FILES) >> $@
 
 dingus/preambles.js: munge.js dingus/gl_preamble.atw
-	printf "ATW_PREAMBLES = " > $@
+	printf "module.exports = " > $@
 	node $< dingus/gl_preamble.atw >> $@
 
 
