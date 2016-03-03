@@ -1,9 +1,8 @@
-/// <reference path="ast.ts" />
-/// <reference path="visit.ts" />
-/// <reference path="util.ts" />
-/// <reference path="pretty.ts" />
-
-module Interp {
+import * as ast from './ast';
+import { ASTVisit, ast_visit, compose_visit,
+  ast_translate_rules } from './visit';
+import { pretty } from './pretty';
+import { overlay, merge } from './util';
 
 // Dynamic syntax.
 
@@ -16,7 +15,7 @@ interface Env {
 type Pers = Value[];
 class Code {
   constructor(
-    public expr: ExpressionNode,
+    public expr: ast.ExpressionNode,
     // The Pers is a Code value's equivalent of a closure's environment. It is
     // a list of values associated with the Persist nodes in the expression.
     public pers: Pers
@@ -26,7 +25,7 @@ class Code {
 class Fun {
   constructor(
     public params: string[],
-    public body: ExpressionNode,
+    public body: ast.ExpressionNode,
     public env: Env,
     public pers: Pers  // In case the function was defined in a quote.
   ) {}
@@ -63,23 +62,23 @@ interface State {
 // Escapes are not allowed at this level. At a quote, we transition to a
 // different set of rules.
 let Interp : ASTVisit<State, [Value, State]> = {
-  visit_literal(tree: LiteralNode, state: State): [Value, State] {
+  visit_literal(tree: ast.LiteralNode, state: State): [Value, State] {
     return [tree.value, state];
   },
 
-  visit_seq(tree: SeqNode, state: State): [Value, State] {
+  visit_seq(tree: ast.SeqNode, state: State): [Value, State] {
     let [v, s] = interp(tree.lhs, state);
     return interp(tree.rhs, s);
   },
 
-  visit_let(tree: LetNode, state: State): [Value, State] {
+  visit_let(tree: ast.LetNode, state: State): [Value, State] {
     let [v, s] = interp(tree.expr, state);
     let env = overlay(s.env);  // Update the value in an overlay.
     env[tree.ident] = v;
     return [v, merge(s, {env})];
   },
 
-  visit_assign(tree: AssignNode, state: State): [Value, State] {
+  visit_assign(tree: ast.AssignNode, state: State): [Value, State] {
     let [v, s] = interp(tree.expr, state);
 
     // Check whether we have an extern or a normal variable by looking at the
@@ -98,7 +97,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
     }
   },
 
-  visit_lookup(tree: LookupNode, state: State): [Value, State] {
+  visit_lookup(tree: ast.LookupNode, state: State): [Value, State] {
     let v = state.env[tree.ident];
     if (v === undefined) {
       throw "error: undefined variable " + tree.ident;
@@ -106,18 +105,18 @@ let Interp : ASTVisit<State, [Value, State]> = {
     return [v, state];
   },
 
-  visit_quote(tree: RunNode, state: State): [Value, State] {
+  visit_quote(tree: ast.RunNode, state: State): [Value, State] {
     // Jump to any escapes and execute them.
     let [t, s, p] = quote_interp(tree.expr, 1, state, []);
     // Wrap the resulting AST as a code value.
     return [new Code(t, p), s];
   },
 
-  visit_escape(tree: EscapeNode, state: State): [Value, State] {
+  visit_escape(tree: ast.EscapeNode, state: State): [Value, State] {
     throw "error: top-level escape";
   },
 
-  visit_run(tree: RunNode, state: State): [Value, State] {
+  visit_run(tree: ast.RunNode, state: State): [Value, State] {
     let [v, s] = interp(tree.expr, state);
     if (v instanceof Code) {
       // Execute the code. In order to carry along the `extern` intrinsics, we
@@ -130,7 +129,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
     }
   },
 
-  visit_unary(tree: UnaryNode, state: State): [Value, State] {
+  visit_unary(tree: ast.UnaryNode, state: State): [Value, State] {
     let [v, s] = interp(tree.expr, state);
     v = unwrap_extern(v);
     if (typeof v === 'number') {
@@ -149,7 +148,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
     }
   },
 
-  visit_binary(tree: BinaryNode, state: State): [Value, State] {
+  visit_binary(tree: ast.BinaryNode, state: State): [Value, State] {
     let [v1, s1] = interp(tree.lhs, state);
     let [v2, s2] = interp(tree.rhs, state);
     v1 = unwrap_extern(v1);
@@ -174,7 +173,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
     }
   },
 
-  visit_fun(tree: FunNode, state: State): [Value, State] {
+  visit_fun(tree: ast.FunNode, state: State): [Value, State] {
     // Extract the parameter names.
     let param_names : string[] = [];
     for (let param of tree.params) {
@@ -186,7 +185,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
     return [fun, state];
   },
 
-  visit_call(tree: CallNode, state: State): [Value, State] {
+  visit_call(tree: ast.CallNode, state: State): [Value, State] {
     // Evaluate the target expression to a function value.
     let [target, s] = interp(tree.fun, state);
 
@@ -230,7 +229,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
     }
   },
 
-  visit_extern(tree: ExternNode, state: State): [Value, State] {
+  visit_extern(tree: ast.ExternNode, state: State): [Value, State] {
     // Add the placeholder value to the environment. It may seem a little
     // messy to mix together normal variables and externs, but the type system
     // keeps them straight so we don't have to.
@@ -241,7 +240,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
     return [extern, merge(state, {env})];
   },
 
-  visit_persist(tree: PersistNode, state: State): [Value, State] {
+  visit_persist(tree: ast.PersistNode, state: State): [Value, State] {
     if (tree.index < 0 || tree.index >= state.pers.length) {
       throw "error: persist index (" + tree.index +
             ") out of range (" + state.pers.length + ")";
@@ -250,22 +249,22 @@ let Interp : ASTVisit<State, [Value, State]> = {
     return [value, state];
   },
 
-  visit_if(tree: IfNode, state: State): [Value, State] {
+  visit_if(tree: ast.IfNode, state: State): [Value, State] {
     let [flag, s] = interp(tree.cond, state);
     return interp(flag ? tree.truex : tree.falsex, s);
   },
 }
 
-function interp(tree: SyntaxNode, state: State): [Value, State] {
+function interp(tree: ast.SyntaxNode, state: State): [Value, State] {
   return ast_visit(Interp, tree, state);
 }
 
 // Add a number to every persist node in an AST. This is used when splicing
 // quotes into other quotes.
 function increment_persists(amount: number) {
-  function fself(tree: SyntaxNode): SyntaxNode {
+  function fself(tree: ast.SyntaxNode): ast.SyntaxNode {
     let rules = compose_visit(ast_translate_rules(fself), {
-      visit_persist(tree: PersistNode, param: void): SyntaxNode {
+      visit_persist(tree: ast.PersistNode, param: void): ast.SyntaxNode {
         return merge(tree, { index: tree.index + amount });
       },
     });
@@ -289,24 +288,24 @@ function increment_persists(amount: number) {
 // values produced by each *persistent* escape. The Persist nodes in the code
 // contain indices into this array.
 let QuoteInterp : ASTVisit<[number, State, Pers],
-                           [SyntaxNode, State, Pers]> = {
+                           [ast.SyntaxNode, State, Pers]> = {
   // The `quote` and `escape` cases are the only interesting ones. We
   // increment/decrement the stage number and (when the stage gets back down
   // to zero) swap back to normal interpretation.
 
   // Just increment the stage further.
-  visit_quote(tree: QuoteNode,
+  visit_quote(tree: ast.QuoteNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let inner_stage = stage + 1;  // Recurse at a deeper stage.
     let [t, s, p] = quote_interp(tree.expr, inner_stage, state, pers);
     return [merge(tree, { expr: t }), s, p];
   },
 
   // Decrement the stage and either swap back or just keep recursing.
-  visit_escape(tree: EscapeNode,
+  visit_escape(tree: ast.EscapeNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     // The escape moves us "up" `count` stages.
     let inner_stage = stage - tree.count;
 
@@ -332,7 +331,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
 
       } else if (tree.kind === "persist") {
         let p = pers.concat([v]);
-        let expr : PersistNode = {tag: "persist", index: p.length - 1};
+        let expr : ast.PersistNode = {tag: "persist", index: p.length - 1};
         return [expr, s, p];
 
       } else {
@@ -349,104 +348,104 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   // while threading through the stage and environment parameters.
   // TODO Use the Translate machinery from the desugaring step.
 
-  visit_literal(tree: LiteralNode,
+  visit_literal(tree: ast.LiteralNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     return [merge(tree), state, pers];
   },
 
-  visit_seq(tree: SeqNode,
+  visit_seq(tree: ast.SeqNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [t1, s1, p1] = quote_interp(tree.lhs, stage, state, pers);
     let [t2, s2, p2] = quote_interp(tree.rhs, stage, s1, p1);
     return [merge(tree, { lhs: t1, rhs: t2 }), s2, p2];
   },
 
-  visit_let(tree: LetNode,
+  visit_let(tree: ast.LetNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [t, s, p] = quote_interp(tree.expr, stage, state, pers);
     return [merge(tree, { expr: t }), s, p];
   },
 
-  visit_assign(tree: AssignNode,
+  visit_assign(tree: ast.AssignNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [t, s, p] = quote_interp(tree.expr, stage, state, pers);
     return [merge(tree, { expr: t }), s, p];
   },
 
-  visit_lookup(tree: LookupNode,
+  visit_lookup(tree: ast.LookupNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     return [merge(tree), state, pers];
   },
 
-  visit_unary(tree: UnaryNode,
+  visit_unary(tree: ast.UnaryNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [t, s, p] = quote_interp(tree.expr, stage, state, pers);
     return [merge(tree, { expr: t }), s, p];
   },
 
-  visit_binary(tree: BinaryNode,
+  visit_binary(tree: ast.BinaryNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [t1, s1, p1] = quote_interp(tree.lhs, stage, state, pers);
     let [t2, s2, p2] = quote_interp(tree.rhs, stage, s1, p1);
     return [merge(tree, { lhs: t1, rhs: t2 }), s2, p2];
   },
 
-  visit_run(tree: RunNode,
+  visit_run(tree: ast.RunNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [t, s, p] = quote_interp(tree.expr, stage, state, pers);
     return [merge(tree, { expr: t }), s, p];
   },
 
-  visit_fun(tree: FunNode,
+  visit_fun(tree: ast.FunNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [t, s, p] = quote_interp(tree.body, stage, state, pers);
     return [merge(tree, { body: t }), s, p];
   },
 
-  visit_call(tree: CallNode,
+  visit_call(tree: ast.CallNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [fun_tree, s, p] = quote_interp(tree.fun, stage, state, pers);
-    let arg_trees : SyntaxNode[] = [];
+    let arg_trees : ast.SyntaxNode[] = [];
     for (let arg of tree.args) {
-      let arg_tree : SyntaxNode;
+      let arg_tree : ast.SyntaxNode;
       [arg_tree, s, p] = quote_interp(arg, stage, state, p);
       arg_trees.push(arg_tree);
     }
     return [merge(tree, { fun: fun_tree, args: arg_trees }), s, p];
   },
 
-  visit_extern(tree: ExternNode,
+  visit_extern(tree: ast.ExternNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     return [merge(tree), state, pers];
   },
 
-  visit_persist(tree: PersistNode,
+  visit_persist(tree: ast.PersistNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     // Take the persist from the current quote and retain it as a persist for
     // this quote. (This arises in multi-stage escapes: the Persist gets
     // created for the outer quote, and the inner quote needs to keep it as a
     // persist.)
     let value = state.pers[tree.index];
     let p = pers.concat([value]);
-    let expr: PersistNode = {tag: "persist", index: p.length - 1};
+    let expr: ast.PersistNode = {tag: "persist", index: p.length - 1};
     return [expr, state, p];
   },
 
-  visit_if(tree: IfNode,
+  visit_if(tree: ast.IfNode,
       [stage, state, pers]: [number, State, Pers]):
-      [SyntaxNode, State, Pers] {
+      [ast.SyntaxNode, State, Pers] {
     let [c, s1, p1] = quote_interp(tree.cond, stage, state, pers);
     let [t, s2, p2] = quote_interp(tree.truex, stage, s1, p1);
     let [f, s3, p3] = quote_interp(tree.falsex, stage, s2, p2);
@@ -454,14 +453,14 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   },
 }
 
-function quote_interp(tree: SyntaxNode, stage: number, state: State,
-    pers: Pers): [SyntaxNode, State, Pers]
+function quote_interp(tree: ast.SyntaxNode, stage: number, state: State,
+    pers: Pers): [ast.SyntaxNode, State, Pers]
 {
   return ast_visit(QuoteInterp, tree, [stage, state, pers]);
 }
 
 // State to execute to a value in an (optionally) empty initial environment.
-export function interpret(program: SyntaxNode, e: Env = {}, p: Pers = []):
+export function interpret(program: ast.SyntaxNode, e: Env = {}, p: Pers = []):
   Value
 {
   let [v, _] = interp(program, {env: e, pers: p});
@@ -481,6 +480,4 @@ export function pretty_value(v: Value): string {
   } else {
     throw "error: unknown value kind " + typeof(v);
   }
-}
-
 }

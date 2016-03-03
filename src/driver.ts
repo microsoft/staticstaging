@@ -1,10 +1,16 @@
-/// <reference path="interp.ts" />
-/// <reference path="pretty.ts" />
-/// <reference path="type_elaborate.ts" />
-/// <reference path="sugar.ts" />
-/// <reference path="compile/compile.ts" />
-/// <reference path="backends/js.ts" />
-/// <reference path="backends/webgl.ts" />
+import { SyntaxNode } from './ast';
+import { TypeMap, BUILTIN_TYPES, pretty_type } from './type';
+import { BUILTIN_OPERATORS, TypeCheck, gen_check } from './type_check';
+import { desugar_cross_stage } from './sugar';
+import * as interp from './interp';
+import { compose, assign, Gen, scope_eval } from './util';
+import { TypeTable, elaborate } from './type_elaborate';
+import * as webgl from './backends/webgl';
+import * as gl from './backends/gl';
+import * as glsl from './backends/glsl';
+import * as js from './backends/js';
+import { CompilerIR } from './compile/ir';
+import { semantically_analyze } from './compile/compile';
 
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the
@@ -28,41 +34,41 @@ export interface Config {
   log: (...msg: any[]) => void,
 }
 
-function _intrinsics(config: Config): Types.TypeMap {
+function _intrinsics(config: Config): TypeMap {
   if (config.webgl) {
-    return Backends.GL.INTRINSICS;
+    return gl.INTRINSICS;
   } else {
-    return Types.Check.BUILTIN_OPERATORS;
+    return BUILTIN_OPERATORS;
   }
 }
 
 function _runtime(config: Config): string {
-  let runtime = Backends.JS.RUNTIME + "\n";
+  let runtime = js.RUNTIME + "\n";
   if (config.webgl) {
-    runtime += Backends.GL.WebGL.RUNTIME + "\n";
+    runtime += webgl.RUNTIME + "\n";
   }
   return runtime;
 }
 
-function _types(config: Config): Types.TypeMap {
+function _types(config: Config): TypeMap {
   if (config.webgl) {
-    return assign({}, Types.BUILTIN_TYPES, Backends.GL.GL_TYPES);
+    return assign({}, BUILTIN_TYPES, gl.GL_TYPES);
   } else {
-    return Types.BUILTIN_TYPES;
+    return BUILTIN_TYPES;
   }
 }
 
-function _check(config: Config): Gen<Types.Check.TypeCheck> {
-  let check = Types.Check.gen_check;
+function _check(config: Config): Gen<TypeCheck> {
+  let check = gen_check;
   if (config.webgl) {
-    check = compose(Backends.GL.GLSL.type_mixin, check);
+    check = compose(glsl.type_mixin, check);
   }
   return check;
 }
 
 export function frontend(config: Config, source: string,
     filename: string,
-    checked: (tree: SyntaxNode, type_table: Types.Elaborate.TypeTable) => void)
+    checked: (tree: SyntaxNode, type_table: TypeTable) => void)
 {
   // Parse.
   let tree: SyntaxNode;
@@ -86,13 +92,13 @@ export function frontend(config: Config, source: string,
 
   // Check and elaborate types.
   let elaborated: SyntaxNode;
-  let type_table: Types.Elaborate.TypeTable;
+  let type_table: TypeTable;
   try {
     [elaborated, type_table] =
-      Types.Elaborate.elaborate(tree, _intrinsics(config), _types(config),
+      elaborate(tree, _intrinsics(config), _types(config),
           _check(config));
     let [type, _] = type_table[elaborated.id];
-    config.typed(Types.pretty_type(type));
+    config.typed(pretty_type(type));
   } catch (e) {
     config.error(e);
     return;
@@ -103,7 +109,7 @@ export function frontend(config: Config, source: string,
 }
 
 export function compile(config: Config, tree: SyntaxNode,
-    type_table: Types.Elaborate.TypeTable, compiled: (code: string) => void)
+    type_table: TypeTable, compiled: (code: string) => void)
 {
   let ir: CompilerIR;
   ir = semantically_analyze(tree, type_table, _intrinsics(config));
@@ -118,9 +124,9 @@ export function compile(config: Config, tree: SyntaxNode,
   let jscode: string;
   try {
     if (config.webgl) {
-      jscode = Backends.GL.WebGL.codegen(ir);
+      jscode = webgl.codegen(ir);
     } else {
-      jscode = Backends.JS.codegen(ir);
+      jscode = js.codegen(ir);
     }
   } catch (e) {
     if (typeof(e) === "string") {
@@ -135,14 +141,14 @@ export function compile(config: Config, tree: SyntaxNode,
 }
 
 export function interpret(config: Config, tree: SyntaxNode,
-    type_table: Types.Elaborate.TypeTable, executed: (result: string) => void)
+    type_table: TypeTable, executed: (result: string) => void)
 {
   // Remove cross-stage references.
-  let sugarfree = Sugar.desugar_cross_stage(tree, type_table, _check(config));
+  let sugarfree = desugar_cross_stage(tree, type_table, _check(config));
   config.log('sugar-free', sugarfree);
 
-  let val = Interp.interpret(sugarfree);
-  executed(Interp.pretty_value(val));
+  let val = interp.interpret(sugarfree);
+  executed(interp.pretty_value(val));
 }
 
 // Get the complete, `eval`-able JavaScript program, including the runtime
@@ -160,5 +166,5 @@ export function execute(config: Config, jscode: string,
   }
 
   // Pass a formatted value.
-  executed(Backends.JS.pretty_value(res));
+  executed(js.pretty_value(res));
 }

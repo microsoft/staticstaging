@@ -1,10 +1,9 @@
-/// <reference path="ir.ts" />
-/// <reference path="../visit.ts" />
-/// <reference path="../util.ts" />
+import { hd, tl, cons, overlay, stack_lookup, merge, fix } from '../util';
+import { DefUseTable } from './ir';
+import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
+import * as ast from '../ast';
 
-type NameMap = { [name: string]: number };
-
-module DefUse {
+export type NameMap = { [name: string]: number };
 
 // The intermediate data structure for def/use analysis is a *stack of stack
 // of maps*. The map assigns a defining node ID for names. We need a stack to
@@ -26,7 +25,7 @@ interface State {
 
 // The def/use analysis case for uses: both lookup and assignment nodes work
 // the same way.
-function handle_use(tree: LookupNode | AssignNode,
+function handle_use(tree: ast.LookupNode | ast.AssignNode,
     [state, table]: [State, DefUseTable]):
     [State, DefUseTable]
 {
@@ -52,7 +51,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
     // The "let" case defines a variable in a map to refer to the "let" node.
-    visit_let(tree: LetNode,
+    visit_let(tree: ast.LetNode,
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
@@ -63,7 +62,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
 
     // Similarly, "fun" defines variables in the map for its parameters.
-    visit_fun(tree: FunNode,
+    visit_fun(tree: ast.FunNode,
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
@@ -80,7 +79,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
 
     // Lookup (i.e., a use) populates the def/use table based on the name map.
-    visit_lookup(tree: LookupNode,
+    visit_lookup(tree: ast.LookupNode,
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
@@ -88,7 +87,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
 
     // A mutation is another kind of use.
-    visit_assign(tree: AssignNode,
+    visit_assign(tree: ast.AssignNode,
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
@@ -100,7 +99,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
 
     // On quote, push an empty name map stack.
-    visit_quote(tree: QuoteNode,
+    visit_quote(tree: ast.QuoteNode,
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
@@ -123,7 +122,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
 
     // And pop on escape.
-    visit_escape(tree: EscapeNode,
+    visit_escape(tree: ast.EscapeNode,
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
@@ -142,7 +141,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
 
     // Insert extern definitions.
-    visit_extern(tree: ExternNode,
+    visit_extern(tree: ast.ExternNode,
       [state, table]: [State, DefUseTable]):
       [State, DefUseTable]
     {
@@ -152,7 +151,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     },
   });
 
-  return function (tree: SyntaxNode,
+  return function (tree: ast.SyntaxNode,
     [state, table]: [State, DefUseTable]):
     [State, DefUseTable]
   {
@@ -165,9 +164,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
 // You can provide an initial NameMap of externs (for implementing
 // intrinsics).
 let _find_def_use = fix(gen_find_def_use);
-export function find_def_use(tree: SyntaxNode, externs: NameMap): DefUseTable {
+export function find_def_use(tree: ast.SyntaxNode, externs: NameMap): DefUseTable {
   let [_, t] = _find_def_use(tree, [{ ns: [{}], externs, snip: null }, []]);
   return t;
-}
-
 }

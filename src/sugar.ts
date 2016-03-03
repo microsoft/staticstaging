@@ -1,27 +1,26 @@
-/// <reference path="util.ts" />
-/// <reference path="ast.ts" />
-/// <reference path="type_elaborate.ts" />
-/// <reference path="visit.ts" />
-
-module Sugar {
+import { TypeCheck } from './type_check';
+import { TypeTable, elaborate_subtree } from './type_elaborate';
+import * as ast from './ast';
+import { ASTTranslate, gen_translate } from './visit';
+import { Gen, stack_lookup, fix, compose } from './util';
 
 // Another type test for the specific kind of node we're interested in. We'll
 // use this to follow one piece of advice from the "Scrap Your Boilerplate"
 // paper: when you're interested in one kind of node, first write a function
 // that dynamically tests for that kind and does its action. Then use separate
 // code to lift it to a recursive traversal.
-function is_lookup(tree: SyntaxNode): tree is LookupNode {
+function is_lookup(tree: ast.SyntaxNode): tree is ast.LookupNode {
   return tree.tag === "lookup";
 }
 
 // An inheritance layer on ASTTranslate that desugars auto-persists. This
 // *updates* the type_table with information about any newly generated nodes.
-function gen_desugar_cross_stage(type_table: Types.Elaborate.TypeTable,
-    check: Gen<Types.Check.TypeCheck>):
+function gen_desugar_cross_stage(type_table: TypeTable,
+    check: Gen<TypeCheck>):
   Gen<ASTTranslate>
 {
   return function (fsuper: ASTTranslate): ASTTranslate {
-    return function (tree: SyntaxNode): SyntaxNode {
+    return function (tree: ast.SyntaxNode): ast.SyntaxNode {
       if (is_lookup(tree)) {
         let [type, env] = type_table[tree.id];
         if (tree.ident in env.externs) {
@@ -37,8 +36,8 @@ function gen_desugar_cross_stage(type_table: Types.Elaborate.TypeTable,
         } else {
           // A variable from any other stage is an auto-persist. Construct a
           // persist escape that looks up `index` stages.
-          let lookup : LookupNode = { tag: "lookup", ident: tree.ident };
-          let escape : EscapeNode = {
+          let lookup : ast.LookupNode = { tag: "lookup", ident: tree.ident };
+          let escape : ast.EscapeNode = {
             tag: "escape",
             kind: "persist",
             expr: lookup,
@@ -48,7 +47,7 @@ function gen_desugar_cross_stage(type_table: Types.Elaborate.TypeTable,
           // Now we elaborate the subtree to preserve the restrictions of the
           // IR.
           let elaborated =
-            Types.Elaborate.elaborate_subtree(escape, env, type_table, check);
+            elaborate_subtree(escape, env, type_table, check);
 
           return elaborated;
         }
@@ -61,13 +60,11 @@ function gen_desugar_cross_stage(type_table: Types.Elaborate.TypeTable,
 
 // Get a copy of the *elaborated* AST with cross-stage references (a.k.a.
 // "auto-persists") desugared into explicit persist escapes.
-export function desugar_cross_stage(tree: SyntaxNode,
-    type_table: Types.Elaborate.TypeTable,
-    check: Gen<Types.Check.TypeCheck>): SyntaxNode
+export function desugar_cross_stage(tree: ast.SyntaxNode,
+    type_table: TypeTable,
+    check: Gen<TypeCheck>): ast.SyntaxNode
 {
   let _desugar = fix(compose(gen_desugar_cross_stage(type_table, check),
         gen_translate));
   return _desugar(tree);
-}
-
 }

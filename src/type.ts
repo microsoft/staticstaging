@@ -1,5 +1,3 @@
-module Types {
-
 export abstract class Type {
   _brand_Type: void;
 }
@@ -171,6 +169,4 @@ let pretty_type_rules: TypeVisit<void, string> = {
 
 export function pretty_type(type: Type) {
   return type_visit(pretty_type_rules, type, null);
-}
-
 }

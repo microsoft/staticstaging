@@ -1,108 +1,108 @@
-interface SyntaxNode {
+export interface SyntaxNode {
   tag: string;  // The node type.
   id?: number;  // Used in IRs to add computed information.
 }
 
-interface ExpressionNode extends SyntaxNode {
+export interface ExpressionNode extends SyntaxNode {
 }
 
-interface LiteralNode extends ExpressionNode {
+export interface LiteralNode extends ExpressionNode {
   value: number;
   type: string;  // int or float
 }
 
-interface SeqNode extends ExpressionNode {
+export interface SeqNode extends ExpressionNode {
   lhs: ExpressionNode;
   rhs: ExpressionNode;
 }
 
-interface LetNode extends ExpressionNode {
+export interface LetNode extends ExpressionNode {
   ident: string;
   expr: ExpressionNode;
 }
 
-interface AssignNode extends ExpressionNode {
+export interface AssignNode extends ExpressionNode {
   ident: string;
   expr: ExpressionNode;
 }
 
-interface LookupNode extends ExpressionNode {
+export interface LookupNode extends ExpressionNode {
   ident: string;
 }
 
-interface UnaryNode extends ExpressionNode {
+export interface UnaryNode extends ExpressionNode {
   op: string;
   expr: ExpressionNode;
 }
 
-interface BinaryNode extends ExpressionNode {
+export interface BinaryNode extends ExpressionNode {
   op: string;
   lhs: ExpressionNode;
   rhs: ExpressionNode;
 }
 
-interface QuoteNode extends ExpressionNode {
+export interface QuoteNode extends ExpressionNode {
   expr: ExpressionNode;
   annotation: string;
   snippet: boolean;
 }
 
-type EscapeKind = "splice" | "persist" | "snippet";
-interface EscapeNode extends ExpressionNode {
+export type EscapeKind = "splice" | "persist" | "snippet";
+export interface EscapeNode extends ExpressionNode {
   expr: ExpressionNode;
   kind: EscapeKind;
   count: number;
 }
 
-interface RunNode extends ExpressionNode {
+export interface RunNode extends ExpressionNode {
   expr: ExpressionNode;
 }
 
-interface FunNode extends ExpressionNode {
+export interface FunNode extends ExpressionNode {
   params: ParamNode[];
   body: ExpressionNode;
 }
 
-interface ParamNode extends SyntaxNode {
+export interface ParamNode extends SyntaxNode {
   name: string;
   type: TypeNode;
 }
 
-interface CallNode extends ExpressionNode {
+export interface CallNode extends ExpressionNode {
   fun: ExpressionNode;
   args: ExpressionNode[];
 }
 
-interface ExternNode extends ExpressionNode {
+export interface ExternNode extends ExpressionNode {
   name: string;
   type: TypeNode;
   expansion: string;  // Or null, if it should expand to the name itself.
 }
 
-interface IfNode extends ExpressionNode {
+export interface IfNode extends ExpressionNode {
   cond: ExpressionNode,
   truex: ExpressionNode,
   falsex: ExpressionNode,
 }
 
-interface TypeNode extends SyntaxNode {
+export interface TypeNode extends SyntaxNode {
 }
 
-interface PrimitiveTypeNode extends TypeNode {
+export interface PrimitiveTypeNode extends TypeNode {
   name: string;
 }
 
-interface InstanceTypeNode extends TypeNode {
+export interface InstanceTypeNode extends TypeNode {
   name: string;
   arg: TypeNode;
 }
 
-interface FunTypeNode extends TypeNode {
+export interface FunTypeNode extends TypeNode {
   params: TypeNode[];
   ret: TypeNode;
 }
 
-interface CodeTypeNode extends TypeNode {
+export interface CodeTypeNode extends TypeNode {
   inner: TypeNode;
   annotation: string;
 }
@@ -111,6 +111,6 @@ interface CodeTypeNode extends TypeNode {
 // escapes when they are evaluated. A `Persist` has an index into the value list
 // (called a `Pers` in the interpreter) associated with the `Code` that it
 // appears inside.
-interface PersistNode extends ExpressionNode {
+export interface PersistNode extends ExpressionNode {
   index: number,
 }

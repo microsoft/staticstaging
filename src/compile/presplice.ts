@@ -1,6 +1,6 @@
-/// <reference path="ir.ts" />
-
-module PreSplice {
+import { SyntaxNode } from '../ast';
+import { hd, tl, cons } from '../util';
+import { Prog, Variant } from './ir';
 
 // Given a list of N sets of values, generate the cross product of these sets.
 // That is, each array in the returned set will have length N, where the ith
@@ -82,6 +82,4 @@ export function presplice(progs: Prog[]): Variant[][] {
     }
   }
   return variants;
-}
-
 }

@@ -1,10 +1,10 @@
-/// <reference path="../visit.ts" />
-/// <reference path="../util.ts" />
-/// <reference path="../compile/compile.ts" />
-/// <reference path="emitutil.ts" />
-/// <reference path="emitter.ts" />
-
-module Backends.JS {
+import { Type, OverloadedType, FunType, CodeType } from '../type';
+import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
+  paren, splicesym, persistsym, procsym, progsym, vartablesym, variant_id } from './emitutil';
+import { Emitter, emit, emit_scope, emit_main, emitter_with_subs } from './emitter';
+import * as ast from '../ast';
+import { ast_visit } from '../visit';
+import { CompilerIR, Scope, Proc, Prog, Escape, nearest_quote } from '../compile/ir';
 
 export const RUNTIME = `
 function assign() {
@@ -51,17 +51,17 @@ function run(code) {
 
 // Code-generation utilities.
 
-function _is_fun_type(type: Types.Type): boolean {
-  if (type instanceof Types.FunType) {
+function _is_fun_type(type: Type): boolean {
+  if (type instanceof FunType) {
     return true;
-  } else if (type instanceof Types.OverloadedType) {
+  } else if (type instanceof OverloadedType) {
     return _is_fun_type(type.types[0]);
   } else {
     return false;
   }
 }
 
-function emit_extern(name: string, type: Types.Type) {
+function emit_extern(name: string, type: Type) {
   if (_is_fun_type(type)) {
     // The extern is a function. Wrap it in the clothing of our closure
     // format (with no environment).
@@ -166,43 +166,43 @@ export function pretty_value(v: any): string {
 // The core recursive compiler rules.
 
 export let compile_rules = {
-  visit_literal(tree: LiteralNode, emitter: Emitter): string {
+  visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
     return tree.value.toString();
   },
 
-  visit_seq(tree: SeqNode, emitter: Emitter): string {
+  visit_seq(tree: ast.SeqNode, emitter: Emitter): string {
     return emit_seq(emitter, tree, ",\n");
   },
 
-  visit_let(tree: LetNode, emitter: Emitter): string {
+  visit_let(tree: ast.LetNode, emitter: Emitter): string {
     let jsvar = varsym(tree.id);
     return jsvar + " = " + paren(emit(emitter, tree.expr));
   },
 
-  visit_assign(tree: LetNode, emitter: Emitter): string {
+  visit_assign(tree: ast.LetNode, emitter: Emitter): string {
     return emit_assign(emitter, tree);
   },
 
-  visit_lookup(tree: LookupNode, emitter: Emitter): string {
+  visit_lookup(tree: ast.LookupNode, emitter: Emitter): string {
     return emit_lookup(emitter, emit_extern, tree);
   },
 
-  visit_unary(tree: UnaryNode, emitter: Emitter): string {
+  visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
     let p = emit(emitter, tree.expr);
     return tree.op + paren(p);
   },
 
-  visit_binary(tree: BinaryNode, emitter: Emitter): string {
+  visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
     let p1 = emit(emitter, tree.lhs);
     let p2 = emit(emitter, tree.rhs);
     return paren(p1) + " " + tree.op + " " + paren(p2);
   },
 
-  visit_quote(tree: QuoteNode, emitter: Emitter): string {
+  visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {
     return emit_quote(emitter, tree.id);
   },
 
-  visit_escape(tree: EscapeNode, emitter: Emitter): string {
+  visit_escape(tree: ast.EscapeNode, emitter: Emitter): string {
     if (tree.kind === "splice") {
       return splicesym(tree.id);
     } else if (tree.kind === "persist") {
@@ -215,12 +215,12 @@ export let compile_rules = {
     }
   },
 
-  visit_run(tree: RunNode, emitter: Emitter): string {
+  visit_run(tree: ast.RunNode, emitter: Emitter): string {
     // Compile the expression producing the program we need to invoke.
     let progex = emit(emitter, tree.expr);
 
     let [t, _] = emitter.ir.type_table[tree.expr.id];
-    if (t instanceof Types.CodeType) {
+    if (t instanceof CodeType) {
       // Invoke the appropriate runtime function for executing code values.
       // We use a simple call wrapper for "progfuncs" and a more complex
       // `eval` trick for ordinary string code.
@@ -235,13 +235,13 @@ export let compile_rules = {
   },
 
   // A function expression produces a closure value.
-  visit_fun(tree: FunNode, emitter: Emitter): string {
+  visit_fun(tree: ast.FunNode, emitter: Emitter): string {
     return emit_func(emitter, tree.id);
   },
 
   // An invocation unpacks the closure environment and calls the function
   // with its normal arguments and its free variables.
-  visit_call(tree: CallNode, emitter: Emitter): string {
+  visit_call(tree: ast.CallNode, emitter: Emitter): string {
     // Compile the function and arguments.
     let func = emit(emitter, tree.fun);
     let args: string[] = [];
@@ -253,22 +253,22 @@ export let compile_rules = {
     return "call(" + paren(func) + ", [" + args.join(", ") + "])";
   },
 
-  visit_extern(tree: ExternNode, emitter: Emitter): string {
+  visit_extern(tree: ast.ExternNode, emitter: Emitter): string {
     let name = emitter.ir.externs[tree.id];
     let [type, _] = emitter.ir.type_table[tree.id];
     return emit_extern(name, type);
   },
 
-  visit_persist(tree: PersistNode, emitter: Emitter): string {
+  visit_persist(tree: ast.PersistNode, emitter: Emitter): string {
     throw "error: persist cannot appear in source";
   },
 
-  visit_if(tree: IfNode, emitter: Emitter): string {
+  visit_if(tree: ast.IfNode, emitter: Emitter): string {
     return emit_if(emitter, tree);
   },
 };
 
-function compile(tree: SyntaxNode, emitter: Emitter) {
+function compile(tree: ast.SyntaxNode, emitter: Emitter) {
   return ast_visit(compile_rules, tree, emitter);
 }
 
@@ -605,7 +605,5 @@ export function codegen(ir: CompilerIR): string {
   };
 
   // Emit and invoke the main (anonymous) function.
-  return emit_main_wrapper(Backends.emit_main(emitter));
-}
-
+  return emit_main_wrapper(emit_main(emitter));
 }

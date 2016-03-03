@@ -1,7 +1,6 @@
-/// <reference path="../ast.ts" />
-/// <reference path="../compile/ir.ts" />
-
-module Backends {
+import { SyntaxNode } from '../ast';
+import { Proc, Prog, CompilerIR } from '../compile/ir';
+import { assign } from '../util';
 
 // A type for core code-generation functions.
 export type Compile = (tree: SyntaxNode, emitter: Emitter) => string;
@@ -71,6 +70,4 @@ export function emitter_with_subs(emitter: Emitter, subs: SyntaxNode[]):
 
   // Construct a new Emitter.
   return assign({}, emitter, { substitutions: combined_subs }) as Emitter;
-}
-
 }

@@ -1,10 +1,12 @@
-/// <reference path="../util.ts" />
-/// <reference path="emitter.ts" />
-/// <reference path="js.ts" />
-/// <reference path="glsl.ts" />
-/// <reference path="gl.ts" />
-
-module Backends.GL.WebGL {
+import { CompilerIR, Prog } from '../compile/ir';
+import * as js from './js';
+import * as glsl from './glsl';
+import { Glue, get_glue, vtx_expr, render_expr, ProgKind, prog_kind } from './gl';
+import { progsym, paren } from './emitutil';
+import { Type, PrimitiveType } from '../type';
+import { Emitter, emit, emit_main } from './emitter';
+import { ASTVisit, ast_visit, compose_visit } from '../visit';
+import * as ast from '../ast';
 
 export const RUNTIME = `
 // Shader management.
@@ -96,9 +98,9 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
 {
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid);
-  return JS.emit_var(
+  return js.emit_var(
     locsym(scopeid, varid),
-    `gl.${func}(${shader}, ${JS.emit_string(varname)})`
+    `gl.${func}(${shader}, ${js.emit_string(varname)})`
   );
 }
 
@@ -110,7 +112,7 @@ function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
   let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
 
   // Compile and link the shader program.
-  let out = JS.emit_var(
+  let out = js.emit_var(
     shadersym(vertex_prog.id),
     `get_shader(gl, ${progsym(vertex_prog.id)}, ${progsym(fragment_prog.id)})`
   ) + "\n";
@@ -127,11 +129,11 @@ function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
 // Emit a single WebGL binding call for a uniform or attribute. Takes the
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
-function emit_param_binding(scopeid: number, type: Types.Type, varid: number,
+function emit_param_binding(scopeid: number, type: Type, varid: number,
     value: string, attribute: boolean): string
 {
   if (!attribute) {
-    if (type instanceof Types.PrimitiveType) {
+    if (type instanceof PrimitiveType) {
       let fname = GL_UNIFORM_FUNCTIONS[type.name];
       if (fname === undefined) {
         throw "error: unsupported uniform type " + type.name;
@@ -153,7 +155,7 @@ function emit_param_binding(scopeid: number, type: Types.Type, varid: number,
 
   // Array types are bound as attributes.
   } else {
-    if (type instanceof Types.PrimitiveType) {
+    if (type instanceof PrimitiveType) {
       // Call our runtime function to bind the attribute. The parameters are
       // the WebGL context, the attribute location, and the buffer.
       return `bind_attribute(gl, ${locsym(scopeid, varid)}, ${paren(value)})`;
@@ -167,7 +169,7 @@ function emit_param_binding(scopeid: number, type: Types.Type, varid: number,
 // Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
 // shader). This includes both the `useProgram` call and the `bindX` calls to
 // set up the uniforms and attributes.
-function emit_shader_binding(emitter: Emitter,
+function emit_shader_binding(emitter: GLEmitter,
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
@@ -190,16 +192,16 @@ function emit_shader_binding(emitter: Emitter,
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
-let compile_rules: ASTVisit<Emitter, string> =
-  compose_visit(JS.compile_rules, {
+let compile_rules: ASTVisit<GLEmitter, string> =
+  compose_visit(js.compile_rules, {
     // Compile calls to our intrinsics for binding shaders.
-    visit_call(tree: CallNode, emitter: Emitter): string {
+    visit_call(tree: ast.CallNode, emitter: GLEmitter): string {
       // Check for the intrinsic that indicates a shader invocation.
       if (vtx_expr(tree)) {
         // For the moment, we require a literal quote so we can statically
         // emit the bindings.
         if (tree.args[0].tag === "quote") {
-          let quote = tree.args[0] as QuoteNode;
+          let quote = tree.args[0] as ast.QuoteNode;
           return emit_shader_binding(emitter, quote.id);
         } else {
           throw "dynamic `vtx` calls unimplemented";
@@ -212,21 +214,21 @@ let compile_rules: ASTVisit<Emitter, string> =
       }
 
       // An ordinary function call.
-      return ast_visit(JS.compile_rules, tree, emitter);
+      return ast_visit(js.compile_rules, tree, emitter);
     },
   });
 
-function compile(tree: SyntaxNode, emitter: Emitter): string {
+function compile(tree: ast.SyntaxNode, emitter: GLEmitter): string {
   return ast_visit(compile_rules, tree, emitter);
 };
 
 // Our WebGL emitter also has a function to emit GLSL code and a special
 // summary of the cross-stage communication.
-interface Emitter extends Backends.Emitter {
+interface GLEmitter extends Emitter {
   glue: Glue[][],
 }
 
-function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
+function emit_glsl_prog(emitter: GLEmitter, prog: Prog): string {
   let out = "";
 
   // Emit subprograms.
@@ -239,8 +241,8 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
   }
 
   // Emit the shader program.
-  let code = GLSL.compile_prog(emitter.ir, emitter.glue, prog.id);
-  out += JS.emit_var(progsym(prog.id), JS.emit_string(code), true) + "\n";
+  let code = glsl.compile_prog(emitter.ir, emitter.glue, prog.id);
+  out += js.emit_var(progsym(prog.id), js.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
@@ -252,11 +254,11 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
 }
 
 // Choose between emitting JavaScript and GLSL.
-function emit_prog(emitter: Emitter, prog: Prog): string {
+function emit_prog(emitter: GLEmitter, prog: Prog): string {
   if (prog.annotation == "s") {
     return emit_glsl_prog(emitter, prog);
   } else {
-    return JS.emit_prog(emitter, prog);
+    return js.emit_prog(emitter, prog);
   }
 }
 
@@ -272,17 +274,15 @@ export function codegen(ir: CompilerIR): string {
     }
   }
 
-  let emitter: Emitter = {
+  let emitter: GLEmitter = {
     ir: ir,
     substitutions: [],
     compile: compile,
-    emit_proc: JS.emit_proc,
+    emit_proc: js.emit_proc,
     emit_prog: emit_prog,
     glue: glue,
   };
 
   // Wrap up the setup code with the main function(s).
-  return JS.emit_main_wrapper(Backends.emit_main(emitter), false);
-}
-
+  return js.emit_main_wrapper(emit_main(emitter), false);
 }

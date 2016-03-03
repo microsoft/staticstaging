@@ -1,21 +1,26 @@
-/// <reference path="ir.ts" />
-/// <reference path="defuse.ts" />
-/// <reference path="lift.ts" />
-/// <reference path="scope.ts" />
-/// <reference path="presplice.ts" />
+import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
+import { fix } from '../util';
+import * as ast from '../ast';
+import { CompilerIR } from './ir';
+import { TypeTable } from '../type_elaborate';
+import { TypeMap } from '../type';
+import { find_def_use, NameMap } from './defuse';
+import { find_scopes } from './scope';
+import { lift } from './lift';
+import { presplice } from './presplice';
 
 // Find all the `extern`s in a program.
 type FindExterns = ASTFold<string[]>;
 function gen_find_externs(fself: FindExterns): FindExterns {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
-    visit_extern(tree: ExternNode, externs: string[]): string[] {
+    visit_extern(tree: ast.ExternNode, externs: string[]): string[] {
       let e = externs.slice(0);
       e[tree.id] = tree.expansion || tree.name;
       return e;
     }
   });
-  return function (tree: SyntaxNode, externs: string[]): string[] {
+  return function (tree: ast.SyntaxNode, externs: string[]): string[] {
     return ast_visit(rules, tree, externs);
   };
 }
@@ -23,9 +28,9 @@ let find_externs = fix(gen_find_externs);
 
 // This is the semantic analysis that produces our mid-level IR given an
 // elaborated, desugared AST.
-function semantically_analyze(tree: SyntaxNode,
-  type_table: Types.Elaborate.TypeTable,
-  intrinsics: Types.TypeMap = {}): CompilerIR
+export function semantically_analyze(tree: ast.SyntaxNode,
+  type_table: TypeTable,
+  intrinsics: TypeMap = {}): CompilerIR
 {
   // Give IDs to the intrinsics and add them to the type table.
   let intrinsics_map: NameMap = {};
@@ -38,7 +43,7 @@ function semantically_analyze(tree: SyntaxNode,
   // Use the current intrinsics to build the def/use table.
   // TODO It would be nicer if the def/use pass could just ignore the externs
   // since we find them separately, below.
-  let defuse = DefUse.find_def_use(tree, intrinsics_map);
+  let defuse = find_def_use(tree, intrinsics_map);
 
   // Find the "real" externs in the program, and add the intrinsics to the
   // map.
@@ -49,11 +54,11 @@ function semantically_analyze(tree: SyntaxNode,
   }
 
   // Lambda- and quote-lifting.
-  let containers = FindScopes.find_scopes(tree);
-  let [procs, main, progs] = Lift.lift(tree, defuse, containers, type_table);
+  let containers = find_scopes(tree);
+  let [procs, main, progs] = lift(tree, defuse, containers, type_table);
 
   // Find variants for presplicing pass.
-  let variants = PreSplice.presplice(progs);
+  let variants = presplice(progs);
 
   return {
     defuse: defuse,

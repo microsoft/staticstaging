@@ -1,24 +1,21 @@
-/// <reference path="../type.ts" />
-/// <reference path="../ast.ts" />
-/// <reference path="../compile/ir.ts" />
-/// <reference path="emitutil.ts" />
+import { Type, TypeMap } from '../type';
+import {
+  PrimitiveType,
+  FunType,
+  OverloadedType,
+  ConstructorType,
+  InstanceType,
+  CodeType,
+  INT,
+  FLOAT,
+  ANY,
+  VOID
+} from '../type';
+import * as ast from '../ast';
+import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
+import { varsym } from './emitutil';
 
 // General OpenGL-related backend components.
-module Backends.GL {
-
-import Type = Types.Type;
-import TypeMap = Types.TypeMap;
-
-import PrimitiveType = Types.PrimitiveType;
-import FunType = Types.FunType;
-import OverloadedType = Types.OverloadedType;
-import ConstructorType = Types.ConstructorType;
-import InstanceType = Types.InstanceType;
-import CodeType = Types.CodeType;
-import INT = Types.INT;
-import FLOAT = Types.FLOAT;
-import ANY = Types.ANY;
-import VOID = Types.VOID;
 
 // Special GLSL matrix and vector types.
 // Someday, a more structured notion of generic vector and matrix types would
@@ -136,30 +133,30 @@ export const INTRINSICS: TypeMap = {
 // This could be more efficient by using the ID of the extern. For now, we
 // just match on the name.
 
-function is_intrinsic(tree: CallNode, name: string) {
+function is_intrinsic(tree: ast.CallNode, name: string) {
   if (tree.fun.tag === "lookup") {
-    let fun = <LookupNode> tree.fun;
+    let fun = <ast.LookupNode> tree.fun;
     return fun.ident === name;
   }
   return false;
 }
 
-function is_intrinsic_call(tree: ExpressionNode, name: string) {
+function is_intrinsic_call(tree: ast.ExpressionNode, name: string) {
   if (tree.tag === "call") {
-    return is_intrinsic(tree as CallNode, name);
+    return is_intrinsic(tree as ast.CallNode, name);
   }
   return false;
 }
 
-export function frag_expr(tree: ExpressionNode) {
+export function frag_expr(tree: ast.ExpressionNode) {
   return is_intrinsic_call(tree, "frag");
 }
 
-export function vtx_expr(tree: ExpressionNode) {
+export function vtx_expr(tree: ast.ExpressionNode) {
   return is_intrinsic_call(tree, "vtx");
 }
 
-export function render_expr(tree: ExpressionNode) {
+export function render_expr(tree: ast.ExpressionNode) {
   return is_intrinsic_call(tree, "render");
 }
 
@@ -260,7 +257,7 @@ export interface Glue {
   // The value is either an expression (for escapes) or just another variable
   // name to carry through (for free variables). Only one of these may be
   // set.
-  value_expr?: ExpressionNode,
+  value_expr?: ast.ExpressionNode,
   value_name?: string,
 
   // Whether this variable comes from the host directly (a WebGL binding) or
@@ -362,6 +359,4 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   }
 
   return glue;
-}
-
 }

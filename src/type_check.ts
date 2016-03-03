@@ -1,9 +1,9 @@
-/// <reference path="type.ts" />
-/// <reference path="ast.ts" />
-/// <reference path="visit.ts" />
-/// <reference path="pretty.ts" />
-
-module Types.Check {
+import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
+  ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
+  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit, type_visit } from './type';
+import * as ast from './ast';
+import { Gen, overlay, merge, hd, tl, cons, stack_lookup } from './util';
+import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 
 // A type environment contains all the state that threads through the type
 // checker.
@@ -59,10 +59,10 @@ export const BUILTIN_OPERATORS: TypeMap = {
 // fixed point to get an ordinary type checker function (of type `TypeCheck`,
 // below).
 
-export type TypeCheck = (tree: SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
+export type TypeCheck = (tree: ast.SyntaxNode, env: TypeEnv) => [Type, TypeEnv];
 export let gen_check : Gen<TypeCheck> = function(check) {
   let type_rules : ASTVisit<TypeEnv, [Type, TypeEnv]> = {
-    visit_literal(tree: LiteralNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_literal(tree: ast.LiteralNode, env: TypeEnv): [Type, TypeEnv] {
       if (tree.type === "int") {
         return [INT, env];
       } else if (tree.type === "float") {
@@ -72,12 +72,12 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_seq(tree: SeqNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_seq(tree: ast.SeqNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = check(tree.lhs, env);
       return check(tree.rhs, e);
     },
 
-    visit_let(tree: LetNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_let(tree: ast.LetNode, env: TypeEnv): [Type, TypeEnv] {
       // Check the assignment expression.
       let [t, e] = check(tree.expr, env);
 
@@ -89,7 +89,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       return [t, e2];
     },
 
-    visit_assign(tree: AssignNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_assign(tree: ast.AssignNode, env: TypeEnv): [Type, TypeEnv] {
       // Check the value expression.
       let [expr_t, e] = check(tree.expr, env);
 
@@ -112,7 +112,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       return [var_t, e];
     },
 
-    visit_lookup(tree: LookupNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_lookup(tree: ast.LookupNode, env: TypeEnv): [Type, TypeEnv] {
       // Try a normal variable first.
       let [t,] = stack_lookup(env.stack, tree.ident);
       if (t !== undefined) {
@@ -128,7 +128,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       throw "type error: undefined variable " + tree.ident;
     },
 
-    visit_unary(tree: UnaryNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_unary(tree: ast.UnaryNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = check(tree.expr, env);
 
       // Unary and binary operators use intrinsic functions whose names match
@@ -145,7 +145,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_binary(tree: BinaryNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_binary(tree: ast.BinaryNode, env: TypeEnv): [Type, TypeEnv] {
       let [t1, e1] = check(tree.lhs, env);
       let [t2, e2] = check(tree.rhs, e1);
 
@@ -160,7 +160,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_quote(tree: QuoteNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_quote(tree: ast.QuoteNode, env: TypeEnv): [Type, TypeEnv] {
       // If this is a snippet quote, we need to "resume" type context from the
       // escape point. Also, we'll record the ID from the environment in the
       // type.
@@ -207,7 +207,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       return [code_type, out_env];
     },
 
-    visit_escape(tree: EscapeNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_escape(tree: ast.EscapeNode, env: TypeEnv): [Type, TypeEnv] {
       // Make sure we don't escape "too far" beyond the top level.
       let level = env.stack.length;
       let count = tree.count;
@@ -268,7 +268,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_run(tree: RunNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_run(tree: ast.RunNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = check(tree.expr, env);
       if (t instanceof CodeType) {
         if (t.snippet) {
@@ -280,7 +280,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_fun(tree: FunNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_fun(tree: ast.FunNode, env: TypeEnv): [Type, TypeEnv] {
       // Get the list of declared parameter types and accumulate them in an
       // environment based on the top of the environment stack.
       let param_types : Type[] = [];
@@ -302,11 +302,11 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       return [fun_type, env];
     },
 
-    visit_param(tree: ParamNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_param(tree: ast.ParamNode, env: TypeEnv): [Type, TypeEnv] {
       return [get_type(tree.type, env.named), env];
     },
 
-    visit_call(tree: CallNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_call(tree: ast.CallNode, env: TypeEnv): [Type, TypeEnv] {
       // Check the type of the thing we're calling.
       let [target_type, e] = check(tree.fun, env);
 
@@ -327,7 +327,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
     },
 
-    visit_extern(tree: ExternNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_extern(tree: ast.ExternNode, env: TypeEnv): [Type, TypeEnv] {
       // Add the type to the extern map.
       let new_externs = overlay(env.externs);
       let type = get_type(tree.type, env.named);
@@ -339,11 +339,11 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       return [type, e];
     },
 
-    visit_persist(tree: PersistNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_persist(tree: ast.PersistNode, env: TypeEnv): [Type, TypeEnv] {
       throw "error: persist cannot be type-checked in source code";
     },
 
-    visit_if(tree: IfNode, env: TypeEnv): [Type, TypeEnv] {
+    visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
       if (cond_type !== INT) {
         throw "type error: conditions must be integers";
@@ -445,7 +445,7 @@ function compatible(ltype: Type, rtype: Type): boolean {
 
 // Get the Type denoted by the type syntax tree.
 let get_type_rules: TypeASTVisit<TypeMap, Type> = {
-  visit_primitive(tree: PrimitiveTypeNode, types: TypeMap) {
+  visit_primitive(tree: ast.PrimitiveTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
       if (t instanceof ConstructorType) {
@@ -458,7 +458,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     }
   },
 
-  visit_fun(tree: FunTypeNode, types: TypeMap) {
+  visit_fun(tree: ast.FunTypeNode, types: TypeMap) {
     let params: Type[] = [];
     for (let param_node of tree.params) {
       params.push(get_type(param_node, types));
@@ -468,12 +468,12 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     return new FunType(params, ret);
   },
 
-  visit_code(tree: CodeTypeNode, types: TypeMap) {
+  visit_code(tree: ast.CodeTypeNode, types: TypeMap) {
     let inner = get_type(tree.inner, types);
     return new CodeType(inner, tree.annotation);
   },
 
-  visit_instance(tree: InstanceTypeNode, types: TypeMap) {
+  visit_instance(tree: ast.InstanceTypeNode, types: TypeMap) {
     let t = types[tree.name];
     if (t !== undefined) {
       if (t instanceof ConstructorType) {
@@ -488,7 +488,7 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   },
 };
 
-function get_type(ttree: TypeNode, types: TypeMap): Type {
+function get_type(ttree: ast.TypeNode, types: TypeMap): Type {
   return type_ast_visit(get_type_rules, ttree, types);
 }
 
@@ -551,6 +551,4 @@ function apply_type(type: Type, tvar: VariableType, targ: Type): Type {
 
 function apply_quantified_type(type: QuantifiedType, arg: Type): Type {
   return apply_type(type.inner, type.variable, arg);
-}
-
 }

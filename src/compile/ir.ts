@@ -1,11 +1,11 @@
-/// <reference path="../ast.ts" />
-/// <reference path="../type_elaborate.ts" />
+import { SyntaxNode, ExpressionNode } from '../ast';
+import { TypeTable } from '../type_elaborate';
 
 // The def/use table: for every use node ID, the corresponding definition (let
 // or parameter) node ID.
-type DefUseTable = number[];
+export type DefUseTable = number[];
 
-interface Scope {
+export interface Scope {
   id: number,  // or null for top-level
   body: ExpressionNode,
   free: number[],  // variables referenced here, defined elsewhere
@@ -29,11 +29,11 @@ interface Scope {
 // A procedure is a lambda-lifted function. It includes the original body of
 // the function and the IDs of the parameters and the closed-over free
 // variables used in the function.
-interface Proc extends Scope {
+export interface Proc extends Scope {
   params: number[],
 };
 
-interface Escape {
+export interface Escape {
   id: number,
   body: ExpressionNode,
   count: number,
@@ -42,7 +42,7 @@ interface Escape {
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
 // Progs can have bound variables but not free variables.
-interface Prog extends Scope {
+export interface Prog extends Scope {
   annotation: string,
 
   // Subsets of the overall escape lists for which this quote is the "owner"
@@ -59,10 +59,10 @@ interface Prog extends Scope {
 
 // A Variant consists of a list of IDs that uniquely identifies the variant
 // and an ID-to-code map that can be used to resolve the variant.
-type Variant = [number[], SyntaxNode[]];
+export type Variant = [number[], SyntaxNode[]];
 
 // The mid-level IR structure.
-interface CompilerIR {
+export interface CompilerIR {
   // The def/use table.
   defuse: DefUseTable;
 
@@ -75,7 +75,7 @@ interface CompilerIR {
   progs: Prog[];
 
   // Type elaboration.
-  type_table: Types.Elaborate.TypeTable;
+  type_table: TypeTable;
 
   // Names of externs, indexed by the `extern` expression ID.
   externs: string[];
@@ -90,7 +90,7 @@ interface CompilerIR {
 
 // Find the nearest containing quote to the syntax node. If the syntax node is
 // already a quote, it is returned.
-function nearest_quote(ir: CompilerIR, id: number): number {
+export function nearest_quote(ir: CompilerIR, id: number): number {
   // Is this the top-level scope already?
   if (id === null) {
     return null;

@@ -1,18 +1,20 @@
-/// <reference path="ir.ts" />
-/// <reference path="../visit.ts" />
-
-module Lift {
+import * as ast from '../ast';
+import { assign, Gen, fix, set_add } from '../util';
+import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
+import { TypeTable } from '../type_elaborate';
+import { Scope, Prog, Proc, Escape, DefUseTable } from './ir';
+import { CodeType } from '../type';
 
 // A simple, imperative walk that indexes *all* the syntax nodes in a tree by
 // their ID. We use this to build Procs and Progs by looking up the
 // corresponding quote, function, and escape nodes.
 
 type IndexTree = ASTFold<void>;
-function gen_index_tree(table: SyntaxNode[]): Gen<IndexTree> {
+function gen_index_tree(table: ast.SyntaxNode[]): Gen<IndexTree> {
   return function(fself: IndexTree): IndexTree {
     let fold_rules = ast_fold_rules(fself);
     let rules = compose_visit(fold_rules, {
-      visit_fun(tree: FunNode, p: void): void
+      visit_fun(tree: ast.FunNode, p: void): void
       {
         // Visit the parameters (not expressions).
         for (let param of tree.params) {
@@ -22,7 +24,7 @@ function gen_index_tree(table: SyntaxNode[]): Gen<IndexTree> {
       },
     });
 
-    return function (tree: SyntaxNode, p: void): void
+    return function (tree: ast.SyntaxNode, p: void): void
     {
       table[tree.id] = tree;
       return ast_visit(rules, tree, null);
@@ -30,8 +32,8 @@ function gen_index_tree(table: SyntaxNode[]): Gen<IndexTree> {
   };
 }
 
-function index_tree(tree: SyntaxNode): SyntaxNode[] {
-  let table: ExpressionNode[] = [];
+function index_tree(tree: ast.SyntaxNode): ast.SyntaxNode[] {
+  let table: ast.ExpressionNode[] = [];
   let _index_tree = fix(gen_index_tree(table));
   _index_tree(tree, null);
   return table;
@@ -42,17 +44,17 @@ function index_tree(tree: SyntaxNode): SyntaxNode[] {
 // type, so we just reuse that.
 
 type AssocSnippets = ASTFold<number[]>;
-function gen_assoc_snippets(type_table: Types.Elaborate.TypeTable): Gen<AssocSnippets> {
+function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
   return function (fself: AssocSnippets): AssocSnippets {
     let fold_rules = ast_fold_rules(fself);
     let rules = compose_visit(fold_rules, {
-      visit_quote(tree: QuoteNode, escids: number[]): number[]
+      visit_quote(tree: ast.QuoteNode, escids: number[]): number[]
       {
         let ei = fold_rules.visit_quote(tree, escids);
         if (tree.snippet) {
           ei = ei.slice(0);
           let [t,] = type_table[tree.id];
-          if (t instanceof Types.CodeType) {
+          if (t instanceof CodeType) {
             if (t.snippet === null) {
               throw "error: snippet quote without snippet ID";
             }
@@ -65,13 +67,13 @@ function gen_assoc_snippets(type_table: Types.Elaborate.TypeTable): Gen<AssocSni
       },
     });
 
-    return function (tree: SyntaxNode, escids: number[]): number[] {
+    return function (tree: ast.SyntaxNode, escids: number[]): number[] {
       return ast_visit(rules, tree, escids);
     };
   };
 }
 
-function assoc_snippets(tree: SyntaxNode, type_table: Types.Elaborate.TypeTable): number[] {
+function assoc_snippets(tree: ast.SyntaxNode, type_table: TypeTable): number[] {
   let _assoc_snippets = fix(gen_assoc_snippets(type_table));
   return _assoc_snippets(tree, []);
 };
@@ -79,19 +81,19 @@ function assoc_snippets(tree: SyntaxNode, type_table: Types.Elaborate.TypeTable)
 
 // A few AST type tests we'll need.
 
-function _is_quote(tree: SyntaxNode): tree is QuoteNode {
+function _is_quote(tree: ast.SyntaxNode): tree is ast.QuoteNode {
   return tree.tag === "quote";
 }
 
-function _is_fun(tree: SyntaxNode): tree is FunNode {
+function _is_fun(tree: ast.SyntaxNode): tree is ast.FunNode {
   return tree.tag === "fun";
 }
 
-function _is_escape(tree: SyntaxNode): tree is EscapeNode {
+function _is_escape(tree: ast.SyntaxNode): tree is ast.EscapeNode {
   return tree.tag === "escape";
 }
 
-function _is_let(tree: SyntaxNode): tree is EscapeNode {
+function _is_let(tree: ast.SyntaxNode): tree is ast.EscapeNode {
   return tree.tag === "let";
 }
 
@@ -100,8 +102,8 @@ function _is_let(tree: SyntaxNode): tree is EscapeNode {
 // - the main Proc
 // - the program table (Progs)
 // - a combined table containing both Procs and Progs
-function skeleton_scopes(tree: SyntaxNode, containers: number[],
-  index: SyntaxNode[], snippet_escs: number[]):
+function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
+  index: ast.SyntaxNode[], snippet_escs: number[]):
   [Proc[], Proc, Prog[], Scope[]]
 {
   let procs: Proc[] = [];
@@ -114,7 +116,7 @@ function skeleton_scopes(tree: SyntaxNode, containers: number[],
         let parent = containers[node.id];
         let scope: Scope = {
           id: node.id,
-          body: _is_quote(node) ? node.expr : (node as FunNode).body,
+          body: _is_quote(node) ? node.expr : (node as ast.FunNode).body,
 
           free: [],
           bound: [],
@@ -215,7 +217,7 @@ function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
 // Attribute variables definitions and uses to scopes' bound and free
 // variables, respectively.
 function attribute_uses(scopes: Scope[], progs: Prog[], containers: number[],
-    defuse: DefUseTable, index: SyntaxNode[])
+    defuse: DefUseTable, index: ast.SyntaxNode[])
 {
   for (let use_id in defuse) {
     let def_id = defuse[use_id];
@@ -267,7 +269,7 @@ function attribute_uses(scopes: Scope[], progs: Prog[], containers: number[],
 
 // Attribute variables definitions and uses to scopes' bound variable sets.
 function attribute_defs(scopes: Scope[], main: Proc, containers: number[],
-    index: SyntaxNode[])
+    index: ast.SyntaxNode[])
 {
   for (let node of index) {
     if (node !== undefined) {
@@ -283,7 +285,7 @@ function attribute_defs(scopes: Scope[], main: Proc, containers: number[],
 // Finally, attribute every escape to its containing quote and every function
 // in between.
 function attribute_escapes(scopes: Scope[], progs: Prog[],
-    containers: number[], index: SyntaxNode[])
+    containers: number[], index: ast.SyntaxNode[])
 {
   for (let node of index) {
     if (node !== undefined) {
@@ -342,8 +344,8 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
   }
 }
 
-export function lift(tree: SyntaxNode, defuse: DefUseTable, containers: number[],
-  type_table: Types.Elaborate.TypeTable):
+export function lift(tree: ast.SyntaxNode, defuse: DefUseTable, containers: number[],
+  type_table: TypeTable):
   [Proc[], Proc, Prog[]]
 {
   let index = index_tree(tree);
@@ -364,6 +366,4 @@ export function lift(tree: SyntaxNode, defuse: DefUseTable, containers: number[]
   attribute_escapes(scopes, progs, containers, index);
 
   return [procs, main, progs];
-}
-
 }

@@ -1,7 +1,7 @@
-/// <reference path="../compile/ir.ts" />
-/// <reference path="emitter.ts" />
-
-module Backends {
+import { Emitter, emit } from './emitter';
+import * as ast from '../ast';
+import { Type } from '../type';
+import { complete_visit, ast_visit } from '../visit';
 
 // Utilities used by the various code-generation backends.
 
@@ -72,8 +72,8 @@ export function indent(s: string, first=false, spaces=2): string {
 }
 
 // A helper for emitting sequence expressions without emitting unneeded code.
-export function emit_seq(emitter: Emitter, seq: SeqNode, sep: string,
-    pred: (_:ExpressionNode) => boolean = useful_pred): string
+export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
+    pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
 {
   let e1 = pred(seq.lhs);
   let out = "";
@@ -88,7 +88,7 @@ export function emit_seq(emitter: Emitter, seq: SeqNode, sep: string,
 // A helper for emitting assignments. Handles both externs and normal
 // variables.
 export function emit_assign(emitter: Emitter,
-    tree: AssignNode, get_varsym=varsym): string {
+    tree: ast.AssignNode, get_varsym=varsym): string {
   let defid = emitter.ir.defuse[tree.id];
   let extern = emitter.ir.externs[defid];
   if (extern !== undefined) {
@@ -104,8 +104,8 @@ export function emit_assign(emitter: Emitter,
 // A helper for emitting lookups. Also handles both externs and ordinary
 // variables.
 export function emit_lookup(emitter: Emitter,
-    emit_extern: (name: string, type: Types.Type) => string,
-    tree: LookupNode,
+    emit_extern: (name: string, type: Type) => string,
+    tree: ast.LookupNode,
     get_varsym=varsym): string {
   let defid = emitter.ir.defuse[tree.id];
   let name = emitter.ir.externs[defid];
@@ -119,7 +119,7 @@ export function emit_lookup(emitter: Emitter,
 }
 
 // A helper for emitting if/then/else.
-export function emit_if(emitter: Emitter, tree: IfNode): string {
+export function emit_if(emitter: Emitter, tree: ast.IfNode): string {
   let cond = emit(emitter, tree.cond);
   let truex = emit(emitter, tree.truex);
   let falsex = emit(emitter, tree.falsex);
@@ -128,13 +128,13 @@ export function emit_if(emitter: Emitter, tree: IfNode): string {
 
 // Flatten sequence trees. This is used at the top level of a function, where
 // we want to emit a sequence of statements followed by a `return`.
-function flatten_seq(tree: SyntaxNode): ExpressionNode[] {
+function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
   let rules = complete_visit(
-    function (tree: SyntaxNode) {
+    function (tree: ast.SyntaxNode) {
       return [tree];
     },
     {
-      visit_seq(tree: SeqNode, p: void): ExpressionNode[] {
+      visit_seq(tree: ast.SeqNode, p: void): ast.ExpressionNode[] {
         let lhs = flatten_seq(tree.lhs);
         let rhs = flatten_seq(tree.rhs);
         return lhs.concat(rhs);
@@ -147,16 +147,16 @@ function flatten_seq(tree: SyntaxNode): ExpressionNode[] {
 // A simple predicate to decide whether an expression is worth emitting,
 // given a choice. This is used when emitting sequences to avoid generating
 // worthless code.
-function useful_pred(tree: ExpressionNode): boolean {
+function useful_pred(tree: ast.ExpressionNode): boolean {
   return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
 }
 
 // Compile a top-level expression for the body of a function. The emitted code
 // returns value of the function. The optional `pred` function can decide
 // whether to emit (non-terminal) expressions.
-export function emit_body(emitter: Emitter, tree: SyntaxNode,
+export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
     ret="return ", sep=";",
-    pred: (_:ExpressionNode) => boolean = useful_pred): string
+    pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
 {
   let exprs = flatten_seq(tree);
   let statements: string[] = [];
@@ -172,6 +172,4 @@ export function emit_body(emitter: Emitter, tree: SyntaxNode,
     }
   }
   return statements.join(sep + "\n") + sep;
-}
-
 }

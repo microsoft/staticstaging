@@ -1,8 +1,6 @@
-/// <reference path="ir.ts" />
-/// <reference path="../visit.ts" />
-/// <reference path="../util.ts" />
-
-module FindScopes {
+import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
+import * as ast from '../ast';
+import { hd, tl, cons, fix } from '../util';
 
 // A ScopeFrame marks the containing quote and function IDs for any node.
 // Either "coordinate" may be null if the tree is outside of a function (in
@@ -16,7 +14,7 @@ type FindScopesFun = ASTFold<[ScopeFrame[], number[]]>;
 function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
   let fold_rules = ast_fold_rules(fself);
   let rules = compose_visit(fold_rules, {
-    visit_quote(tree: QuoteNode,
+    visit_quote(tree: ast.QuoteNode,
       [frames, scopes]: [ScopeFrame[], number[]]):
       [ScopeFrame[], number[]]
     {
@@ -25,7 +23,7 @@ function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
       return [frames, s];
     },
 
-    visit_escape(tree: EscapeNode,
+    visit_escape(tree: ast.EscapeNode,
       [frames, scopes]: [ScopeFrame[], number[]]):
       [ScopeFrame[], number[]]
     {
@@ -33,7 +31,7 @@ function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
       return [frames, s];
     },
 
-    visit_fun(tree: FunNode,
+    visit_fun(tree: ast.FunNode,
       [frames, scopes]: [ScopeFrame[], number[]]):
       [ScopeFrame[], number[]]
     {
@@ -51,7 +49,7 @@ function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
     },
   });
 
-  return function (tree: SyntaxNode,
+  return function (tree: ast.SyntaxNode,
     [frames, scopes]: [ScopeFrame[], number[]]):
     [ScopeFrame[], number[]]
   {
@@ -64,9 +62,7 @@ function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
 }
 
 let _find_scopes = fix(gen_find_scopes);
-export function find_scopes(tree: SyntaxNode): number[] {
+export function find_scopes(tree: ast.SyntaxNode): number[] {
   let [_, scopes] = _find_scopes(tree, [[{ func: null, quote: null }], []]);
   return scopes;
-}
-
 }
