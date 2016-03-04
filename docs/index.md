@@ -290,6 +290,19 @@ $ echo 'var x = 5; < %[x] + 2>' | atw -g
 
 indicating that the resulting code value `< %0 + 2 >` can't be residualized.
 
+In compiler mode, the `-g` flag does not produce Atw source code; instead, it produces JavaScript code.
+You can execute this code by passing it into `node`, probably with the `-p` flag to print its output.
+For example:
+
+```sh
+$ echo 'var x = <5>; < [x] + 2>' | atw -cxg
+(... a bunch of JavaScript ...)
+$ echo 'var x = <5>; < [x] + 2>' | atw -cxg | node -p
+7
+```
+
+If you like, you can save this JavaScript code to a file to execute it later.
+
 
 # Graphics { data-mode=webgl }
 
