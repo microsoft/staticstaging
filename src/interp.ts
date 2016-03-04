@@ -482,10 +482,15 @@ export function pretty_value(v: Value): string {
   }
 }
 
-// Format a *code* value as raw ATW source code.
+// Format a *code* value as raw ATW source code. The value must be
+// residualizable: there can be no persists.
 export function pretty_code(v: Value): string {
   if (v instanceof Code) {
-    return pretty(v.expr);
+    if (v.pers.length) {
+      throw "error: code has persists";
+    } else {
+      return pretty(v.expr);
+    }
   } else {
     throw "error: this is not a code value";
   }
