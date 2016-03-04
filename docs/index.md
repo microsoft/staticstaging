@@ -264,6 +264,33 @@ Pre-splicing is important because it lets you use staging to express *compile-ti
 **TK:** Macros are forthcoming.
 
 
+# Code Generation
+
+This section describes how to invoke the Alltheworld compiler or interpreter to generate code.
+
+You can use the interpreter mode to generate Alltheworld code, which you can then feed back into the interpreter.
+Use the `-g` flag to the command-line tool to make it emit the *body* of a residualizable code value produced by the program.
+For example:
+
+```sh
+$ echo 'var x = <5>; < [x] + 2>' | atw
+< 5 + 2 >
+$ echo 'var x = <5>; < [x] + 2>' | atw -g
+5 + 2
+$ echo 'var x = <5>; < [x] + 2>' | atw -g | atw
+7
+```
+
+The code must be residualizable: it must not contain any persists.
+For example, this will produce an error:
+
+```sh
+$ echo 'var x = 5; < %[x] + 2>' | atw -g
+```
+
+indicating that the resulting code value `< %0 + 2 >` can't be residualized.
+
+
 # Graphics { data-mode=webgl }
 
 Alltheworld has a graphics-oriented extension called SHFL, for *shader family language*. In SHFL mode, the compiler targets a combination of JavaScript with WebGL API calls and [GLSL][], the associated low-level shading language.
