@@ -142,6 +142,7 @@ function atw_run(code: string, mode: string)
   let type: string = null;
   let config: driver.Config = {
     webgl: mode === "webgl",
+    generate: false,
 
     log(...msg: any[]) {
       // Work around a TypeScript limitation.

@@ -481,3 +481,12 @@ export function pretty_value(v: Value): string {
     throw "error: unknown value kind " + typeof(v);
   }
 }
+
+// Format a *code* value as raw ATW source code.
+export function pretty_code(v: Value): string {
+  if (v instanceof Code) {
+    return pretty(v.expr);
+  } else {
+    throw "error: this is not a code value";
+  }
+}

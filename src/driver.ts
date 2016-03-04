@@ -12,6 +12,7 @@ import * as js from './backends/js';
 import { CompilerIR } from './compile/ir';
 import { semantically_analyze } from './compile/compile';
 import parser = require('../parser');
+import { pretty } from './pretty';
 
 // This is a helper library that orchestrates all the parts of the compiler in
 // a configurable way. You invoke it by passing continuations through all the
@@ -27,6 +28,10 @@ import parser = require('../parser');
 
 export interface Config {
   webgl: boolean,
+
+  // Expect the program to produce a code value, and just produce the
+  // read-to-execute generated code.
+  generate: boolean,
 
   parsed: (tree: SyntaxNode) => void,
   typed: (type: string) => void,
@@ -148,7 +153,13 @@ export function interpret(config: Config, tree: SyntaxNode,
   config.log('sugar-free', sugarfree);
 
   let val = interp.interpret(sugarfree);
-  executed(interp.pretty_value(val));
+  if (config.generate) {
+    // Produce at ATW program.
+    executed(interp.pretty_code(val));
+  } else {
+    // Produce a readable value.
+    executed(interp.pretty_value(val));
+  }
 }
 
 // Get the complete, `eval`-able JavaScript program, including the runtime
@@ -165,6 +176,11 @@ export function execute(config: Config, jscode: string,
     throw "error: driver can't execute WebGL programs";
   }
 
-  // Pass a formatted value.
-  executed(js.pretty_value(res));
+  if (config.generate) {
+    // Produce a JavaScript program (?).
+    console.log(res.proc);
+  } else {
+    // Produce a formatted value.
+    executed(js.pretty_value(res));
+  }
 }

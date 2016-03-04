@@ -46,6 +46,7 @@ function check_output(filename: string, source: string, result: string): boolean
 
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
+    generate: boolean,
     log: (...msg: any[]) => void)
 {
   let success = true;
@@ -53,6 +54,7 @@ function run(filename: string, source: string, webgl: boolean,
   // Configure the driver.
   let config: driver.Config = {
     webgl: webgl,
+    generate: generate,
 
     log: log,
     error (e: string) {
@@ -104,7 +106,7 @@ function run(filename: string, source: string, webgl: boolean,
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
-    boolean: ['v', 'c', 'x', 'w', 't'],
+    boolean: ['v', 'c', 'x', 'w', 't', 'g'],
   });
 
   // The flags: -v, -c, and -x.
@@ -113,10 +115,17 @@ function main() {
   let execute: boolean = args['x'];
   let webgl: boolean = args['w'];
   let test: boolean = args['t'];
+  let generate: boolean = args['g'];
 
   // Help.
   if (args['h'] || args['help'] || args['?']) {
-    console.error("usage: " + process.argv[1] + " [-vcxwt] [PROGRAM...]");
+    console.error("usage: " + process.argv[1] + " [-vcxwtg] [PROGRAM...]");
+    console.error("  -v: verbose mode");
+    console.error("  -c: compile (as opposed to interpreting)");
+    console.error("  -x: execute the program (use with -c)");
+    console.error("  -w: use the WebGL language variant");
+    console.error("  -t: test mode (check for expected output)");
+    console.error("  -g: dump generated code");
     process.exit(1);
   }
 
@@ -156,7 +165,8 @@ function main() {
   let promises = filenames.map(function (fn) {
     return new Promise(function (resolve, reject) {
       let then = function (source: string) {
-        success = run(fn, source, webgl, compile, execute, test, log) && success;
+        success = run(fn, source, webgl, compile, execute, test,
+            generate, log) && success;
         resolve();
       };
       if (fn === STDIN_FILENAME) {
