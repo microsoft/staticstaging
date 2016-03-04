@@ -8,6 +8,8 @@ import * as minimist from 'minimist';
 
 import * as driver from "./src/driver";
 
+const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
+
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
     if (err) {
@@ -112,11 +114,16 @@ function main() {
   let webgl: boolean = args['w'];
   let test: boolean = args['t'];
 
-  // Get the filename.
+  // Help.
+  if (args['h'] || args['help'] || args['?']) {
+    console.error("usage: " + process.argv[1] + " [-vcxwt] [PROGRAM...]");
+    process.exit(1);
+  }
+
+  // Get the program filenames, or indicate that we'll read code from STDIN.
   let filenames: string[] = args._;
   if (!filenames.length) {
-    console.error("usage: " + process.argv[1] + " [-vcxwt] PROGRAM");
-    process.exit(1);
+    filenames = [STDIN_FILENAME];
   }
 
   // Log stuff, if in verbose mode.
@@ -148,10 +155,22 @@ function main() {
   let success = true;
   let promises = filenames.map(function (fn) {
     return new Promise(function (resolve, reject) {
-      read_string(fn, function (source) {
+      let then = function (source: string) {
         success = run(fn, source, webgl, compile, execute, test, log) && success;
         resolve();
-      });
+      };
+      if (fn === STDIN_FILENAME) {
+        // Read from stdin.
+        let chunks: string[] = [];
+        process.stdin.on("data", function (chunk: string) {
+          chunks.push(chunk);
+        }).on("end", function () {
+          then(chunks.join(""))
+        }).setEncoding("utf8");
+      } else {
+        // Read from a file.
+        read_string(fn, then);
+      }
     });
   });
   Promise.all(promises).then(function() {
