@@ -2,7 +2,7 @@ import * as ast from './ast';
 import { ASTVisit, ast_visit } from './visit';
 import { set_in } from './util';
 
-const TERM_TAGS = ["quote", "literal", "lookup", "escape", "run", "paren"];
+const TERM_TAGS = ["quote", "literal", "lookup", "escape", "run", "paren", "persist"];
 
 /**
  * Check whether an AST node is a "non-term" expression, meaning it needs
@@ -39,7 +39,16 @@ let Pretty : ASTVisit<void, string> = {
   },
 
   visit_binary(tree: ast.BinaryNode, _: void): string {
-    return pretty(tree.lhs) + " " + tree.op + " " + pretty(tree.rhs);
+    function pred(t: ast.SyntaxNode) {
+      // Don't parenthesize other binary expressions of the same kind.
+      if (t.tag === "binary" && (t as ast.BinaryNode).op === tree.op) {
+        return false;
+      }
+      return nonterm(t);
+    }
+    return pretty_paren(tree.lhs, pred) +
+      " " + tree.op +
+      " " + pretty_paren(tree.rhs, pred);
   },
 
   visit_quote(tree: ast.QuoteNode, _: void): string {
