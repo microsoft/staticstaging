@@ -178,7 +178,15 @@ export function execute(config: Config, jscode: string,
 
   if (config.generate) {
     // Produce a JavaScript program (?).
-    console.log(res.proc);
+    if (res.prog) {
+      if (res.persist.length) {
+        throw "error: code has persists";
+      } else {
+        executed(res.prog):
+      }
+    } else {
+      throw "error: program did not produce code";
+    }
   } else {
     // Produce a formatted value.
     executed(js.pretty_value(res));
