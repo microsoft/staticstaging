@@ -182,7 +182,7 @@ float "float"
   { return parseFloat(text()); }
 
 ident "identifier"
-  = (ALPHA / [_]) (ALPHA / DIGIT / [_.])*
+  = (ALPHA / [_]) (ALPHA / DIGIT / [_.])* SUFFIX*
   { return text(); }
 
 string "string"
@@ -275,4 +275,5 @@ _
 SPACE = [ \t\r\n\v\f]
 ALPHA = [A-Za-z]
 DIGIT = [0-9]
+SUFFIX = [\?\!]
 NEWLINE = [\r\n]
