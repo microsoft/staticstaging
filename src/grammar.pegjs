@@ -19,9 +19,14 @@ Expr "expression"
 SeqExpr
   = Seq / HalfSeq / Expr
 
+// Expressions that usually don't need parenthesization.
 TermExpr
   = Quote / FloatLiteral / IntLiteral / CCall / Lookup / Splice / Persist /
   Snippet / Run / Paren
+
+// Expressions that can be operands to binary/unary operators.
+Operand
+  = If / Call / TermExpr
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -49,16 +54,16 @@ Var "definition"
   { return {tag: "let", ident: i, expr: e}; }
 
 Unary "unary operation"
-  = op:unop _ e:TermExpr
+  = op:unop _ e:Operand
   { return {tag: "unary", expr: e, op: op}; }
 
 Binary
   = AddBinary / MulBinary
 AddBinary
-  = lhs:(MulBinary / TermExpr) _ op:addbinop _ rhs:(Binary / TermExpr)
+  = lhs:(MulBinary / Operand) _ op:addbinop _ rhs:(Binary / Operand)
   { return {tag: "binary", lhs: lhs, op: op, rhs: rhs}; }
 MulBinary
-  = lhs:TermExpr _ op:mulbinop _ rhs:(MulBinary / TermExpr)
+  = lhs:Operand _ op:mulbinop _ rhs:(MulBinary / Operand)
   { return {tag: "binary", lhs: lhs, rhs: rhs, op: op}; }
 
 Quote "quote"
