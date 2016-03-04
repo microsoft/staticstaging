@@ -18,6 +18,7 @@ export interface ASTVisit<P, R> {
   visit_extern(tree: ast.ExternNode, param: P): R;
   visit_persist(tree: ast.PersistNode, param: P): R;
   visit_if(tree: ast.IfNode, param: P): R;
+  visit_macro(tree: ast.MacroNode, param: P): R;
   visit_param?(tree: ast.ParamNode, param: P): R;
 }
 
@@ -56,6 +57,8 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_persist(<ast.PersistNode> tree, param);
     case "if":
       return visitor.visit_if(<ast.IfNode> tree, param);
+    case "macro":
+      return visitor.visit_macro(<ast.MacroNode> tree, param);
     case "param":
       return visitor.visit_param(<ast.ParamNode> tree, param);
 
@@ -82,6 +85,7 @@ interface PartialASTVisit<P, R> {
   visit_extern? (tree: ast.ExternNode, param: P): R;
   visit_persist? (tree: ast.PersistNode, param: P): R;
   visit_if? (tree: ast.IfNode, param: P): R;
+  visit_macro? (tree: ast.MacroNode, param: P): R;
   visit_param? (tree: ast.ParamNode, param: P): R;
 }
 
@@ -211,6 +215,12 @@ export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.Syn
         falsex: fself(tree.falsex),
       });
     },
+
+    visit_macro(tree: ast.MacroNode, param: void): ast.SyntaxNode {
+      return merge(tree, {
+        expr: fself(tree.expr),
+      });
+    },
   };
 }
 export function gen_translate(fself: ASTTranslate): ASTTranslate {
@@ -321,6 +331,10 @@ export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
       let p2 = fself(tree.truex, p1);
       let p3 = fself(tree.falsex, p2);
       return p3;
+    },
+
+    visit_macro(tree: ast.MacroNode, p: T): T {
+      return fself(tree.expr, p);
     },
   };
 }

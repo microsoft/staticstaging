@@ -13,8 +13,8 @@ Program
 // Expression syntax.
 
 Expr "expression"
-  = Var / Extern / Fun / CDef / If / Binary / Unary / Assign / CCall / Call /
-  TermExpr
+  = Var / Macro / Extern / Fun / CDef / If / Binary / Unary / Assign /
+  CCall / Call / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -52,6 +52,10 @@ Lookup "variable reference"
 Var "definition"
   = var _ i:ident _ eq _ e:Expr
   { return {tag: "let", ident: i, expr: e}; }
+
+Macro
+  = macro _ i:ident _ eq _ e:Expr
+  { return {tag: "macro", ident: i, expr: e}; }
 
 Unary "unary operation"
   = op:unop _ e:Operand
@@ -261,6 +265,9 @@ snippet_marker
 
 if
   = "if"
+
+macro
+  = "macro"
 
 
 // Empty space.
