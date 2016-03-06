@@ -26,11 +26,6 @@ export interface TypeEnv {
   anns: string[],
 
   /**
-   * A stack of *macro definition* maps.
-   */
-  macros: { [name: string]: FunType }[],
-
-  /**
    * A single frame for "extern" values, which are always available without
    * any persisting.
    */
@@ -53,13 +48,11 @@ export interface TypeEnv {
 /**
  * Push a scope onto a `TypeEnv`.
  */
-function te_push(env: TypeEnv, map: TypeMap = {}, ann: string,
-                 macros: TypeMap = {}): TypeEnv {
+function te_push(env: TypeEnv, map: TypeMap = {}, ann: string): TypeEnv {
   return merge(env, {
     // Push maps onto the front.
     stack: cons(map, env.stack),
     anns: cons(ann, env.anns),
-    macros: cons(macros, env.macros),
 
     // New scopes have a null snippet by default.
     snip: null,
@@ -75,7 +68,6 @@ function te_pop(env: TypeEnv, count: number = 1,
     // Pop one map off of each stack.
     stack: env.stack.slice(count),
     anns: env.anns.slice(count),
-    macros: env.macros.slice(count),
 
     // Optionally set the current snippet (if we're popping for a snippet
     // escape).
@@ -227,7 +219,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       } else {
         // Ordinary, independent quote. Push an empty stack frame.
-        inner_env = te_push(env, {}, tree.annotation, {});
+        inner_env = te_push(env, {}, tree.annotation);
       }
 
       // Check inside the quote using the empty frame.
@@ -392,7 +384,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_macrocall(tree: ast.MacroCallNode, env: TypeEnv): [Type, TypeEnv] {
       // Look for the macro definition.
-      let [macro_type, count] = stack_lookup(env.macros, tree.macro);
+      let [macro_type, count] = stack_lookup(env.stack, tree.macro);
       if (macro_type === undefined) {
         throw `type error: macro ${tree.macro} not defined`;
       }
@@ -401,7 +393,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
 
       // Check arguments in a fresh, quoted environment.
-      let arg_env = te_push(env, {}, "", {});
+      let arg_env = te_push(env, {}, "");
       let arg_types: Type[] = [];
       for (let arg of tree.args) {
         let [t,] = check(arg, arg_env);

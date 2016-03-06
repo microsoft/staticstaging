@@ -84,7 +84,7 @@ function _desugar_macros(type_table: TypeTable,
 
         // Find how many levels "away" the macro is. That's how many times
         // we'll need to escape.
-        let [, index] = stack_lookup(env.macros, tree.macro);
+        let [, index] = stack_lookup(env.stack, tree.macro);
 
         // Create the function call that invokes the macro.
         let call: ast.CallNode = {

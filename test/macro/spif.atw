@@ -1,11 +1,13 @@
-var _spif = fun c:<Int> t:<Int> f:<Int> -> if !c t f;
-macro spif = _spif;
+# Specialized `if`.
+var spif = fun c:<Int> t:<Int> f:<Int> -> if !c t f;
 
-var _myif = fun c:<Int> t:<Int> f:<Int> -> < if [c] [t] [f] >;
-macro myif = _myif;
+# Just for fun, we'll define a macro-like function that just duplicates
+# the built-in `if` expression.
+var myif = fun c:<Int> t:<Int> f:<Int> -> < if [c] [t] [f] >;
 
-macro spif? = fun s:<Int> c:<Int> t:<Int> f:<Int> ->
-    if !s (_spif c t f) (_myif c t f);
+# These functions can be invoked as normal, without the `@` prefix.
+var spif? = fun s:<Int> c:<Int> t:<Int> f:<Int> ->
+    if !s (spif c t f) (myif c t f);
 
 < @spif 1 2 3 +
   @myif 1 2 3 +
