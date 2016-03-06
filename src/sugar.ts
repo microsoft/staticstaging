@@ -1,7 +1,8 @@
 import { TypeCheck } from './type_check';
 import { TypeTable, elaborate_subtree } from './type_elaborate';
 import * as ast from './ast';
-import { ASTTranslate, gen_translate } from './visit';
+import { ASTTranslate, gen_translate, ast_translate_rules,
+  ast_visit, compose_visit } from './visit';
 import { Gen, stack_lookup, fix, compose } from './util';
 
 // Another type test for the specific kind of node we're interested in. We'll
@@ -67,4 +68,52 @@ export function desugar_cross_stage(tree: ast.SyntaxNode,
   let _desugar = fix(compose(gen_desugar_cross_stage(type_table, check),
         gen_translate));
   return _desugar(tree);
+}
+
+
+function _desugar_macros(type_table: TypeTable,
+                        check: Gen<TypeCheck>): ASTTranslate
+{
+  function fself(tree: ast.SyntaxNode): ast.SyntaxNode {
+    return ast_visit(compose_visit(ast_translate_rules(fself), {
+      // Translate macro invocations into escaped function calls.
+      visit_macrocall(tree: ast.MacroCallNode, param: void) {
+        // Get the environment at the point of the macro call.
+        console.log(tree, type_table);
+        let [, env] = type_table[tree.id];
+
+        // Find how many levels "away" the macro is. That's how many times
+        // we'll need to escape.
+        let [, index] = stack_lookup(env.macros, tree.macro);
+
+        // Create the function call that invokes the macro.
+        let call: ast.CallNode = {
+          tag: "call",
+          fun: { tag: "lookup", ident: tree.macro } as ast.LookupNode,
+          args: [],
+        };
+
+        // Wrap the call in an escape (unless it's the current level).
+        let out: ast.SyntaxNode = call;
+        if (index > 0) {
+          out = {
+            tag: "escape",
+            kind: "splice",
+            expr: call,
+            count: index,
+          } as ast.EscapeNode;
+        }
+
+        return elaborate_subtree(out, env, type_table, check);
+      }
+    }), tree, null);
+  }
+  return fself;
+}
+
+export function desugar_macros(tree: ast.SyntaxNode,
+    type_table: TypeTable,
+    check: Gen<TypeCheck>): ast.SyntaxNode
+{
+  return _desugar_macros(type_table, check)(tree);
 }

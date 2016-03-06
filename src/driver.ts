@@ -1,7 +1,7 @@
 import { SyntaxNode } from './ast';
 import { TypeMap, BUILTIN_TYPES, pretty_type } from './type';
 import { BUILTIN_OPERATORS, TypeCheck, gen_check } from './type_check';
-import { desugar_cross_stage } from './sugar';
+import { desugar_cross_stage, desugar_macros } from './sugar';
 import * as interp from './interp';
 import { compose, assign, Gen, scope_eval } from './util';
 import { TypeTable, elaborate } from './type_elaborate';
@@ -116,8 +116,11 @@ export function frontend(config: Config, source: string,
 export function compile(config: Config, tree: SyntaxNode,
     type_table: TypeTable, compiled: (code: string) => void)
 {
+  // Desugar macros.
+  let sugarfree = desugar_macros(tree, type_table, _check(config));
+
   let ir: CompilerIR;
-  ir = semantically_analyze(tree, type_table, _intrinsics(config));
+  ir = semantically_analyze(sugarfree, type_table, _intrinsics(config));
 
   // Log some intermediates.
   config.log('def/use', ir.defuse);
@@ -148,8 +151,9 @@ export function compile(config: Config, tree: SyntaxNode,
 export function interpret(config: Config, tree: SyntaxNode,
     type_table: TypeTable, executed: (result: string) => void)
 {
-  // Remove cross-stage references.
-  let sugarfree = desugar_cross_stage(tree, type_table, _check(config));
+  // Remove cross-stage references and macros.
+  let sugarfree = desugar_macros(tree, type_table, _check(config));
+  sugarfree = desugar_cross_stage(sugarfree, type_table, _check(config));
   config.log('sugar-free', sugarfree);
 
   let val = interp.interpret(sugarfree);
