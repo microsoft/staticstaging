@@ -79,7 +79,6 @@ function _desugar_macros(type_table: TypeTable,
       // Translate macro invocations into escaped function calls.
       visit_macrocall(tree: ast.MacroCallNode, param: void) {
         // Get the environment at the point of the macro call.
-        console.log(tree, type_table);
         let [, env] = type_table[tree.id];
 
         // Find how many levels "away" the macro is. That's how many times
@@ -87,10 +86,19 @@ function _desugar_macros(type_table: TypeTable,
         let [, index] = stack_lookup(env.stack, tree.macro);
 
         // Create the function call that invokes the macro.
+        let macro_args: ast.QuoteNode[] = [];
+        for (let arg of tree.args) {
+          macro_args.push({
+            tag: "quote",
+            expr: arg,
+            annotation: "",
+            snippet: false,
+          });
+        }
         let call: ast.CallNode = {
           tag: "call",
           fun: { tag: "lookup", ident: tree.macro } as ast.LookupNode,
-          args: [],
+          args: macro_args,
         };
 
         // Wrap the call in an escape (unless it's the current level).
