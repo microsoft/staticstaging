@@ -1,34 +1,52 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit, type_visit } from './type';
+  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit,
+  type_visit } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 
-// A type environment contains all the state that threads through the type
-// checker.
+/**
+ * A type environment contains all the state that threads through the type
+ * checker.
+ */
 export interface TypeEnv {
-  // A map stack with the current stage at the front of the list. Prior stages
-  // are to the right. Normal accesses must refer to the top environment
-  // frame; subsequent ones are "auto-persists".
+  /**
+   * A map stack with the current stage at the front of the list. Prior stages
+   * are to the right. Normal accesses must refer to the top environment
+   * frame; subsequent ones are "auto-persists".
+   */
   stack: TypeMap[],
 
-  // A stack of *quote annotations*, which allows type system extensions to be
-  // sensitive to the quote context.
+  /**
+   * A stack of *quote annotations*, which allows type system extensions to be
+   * sensitive to the quote context.
+   */
   anns: string[],
 
-  // A single frame for "extern" values, which are always available without
-  // any persisting.
+  /**
+   * A stack of *macro definition* maps.
+   */
+  macros: TypeMap[],
+
+  /**
+   * A single frame for "extern" values, which are always available without
+   * any persisting.
+   */
   externs: TypeMap,
 
-  // A map for *named types*. Unlike the other maps, each entry here
-  // represents a *type*, not a variable.
+  /**
+   * A map for *named types*. Unlike the other maps, each entry here
+   * represents a *type*, not a variable.
+   */
   named: TypeMap,
 
-  // The current *snippet escape* (or null if there is none). The tuple
-  // consists of the ID of the escape and two pieces of the environment at
-  // that point that should be "resumed" on quote: the `stack` and `anns`
-  // stacks.
+  /**
+   * The current *snippet escape* (or null if there is none). The tuple
+   * consists of the ID of the escape and two pieces of the environment at
+   * that point that should be "resumed" on quote: the `stack` and `anns`
+   * stacks.
+   */
   snip: [number, TypeMap[], string[]],
 };
 
@@ -200,7 +218,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (tree.snippet) {
         // Store away the updated context for any subsequent snippets.
         out_env = merge(out_env, {
-            snip: [snippet, e.stack, e.anns],
+          snip: [snippet, e.stack, e.anns],
         });
       }
 
@@ -358,7 +376,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       return [true_type, e];
     },
-    
+
     visit_macro(tree: ast.MacroNode, env: TypeEnv): [Type, TypeEnv] {
       throw "unimplemented";
     },

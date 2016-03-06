@@ -85,6 +85,7 @@ export function elaborate(tree: ast.SyntaxNode, externs: TypeMap = BUILTIN_TYPES
   let env: TypeEnv = {
     stack: [{}],
     anns: [null],
+    macros: [{}],
     externs: externs,
     named: named_types,
     snip: null,
