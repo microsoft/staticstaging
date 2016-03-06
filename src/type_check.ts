@@ -3,7 +3,8 @@ import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit,
   type_visit } from './type';
 import * as ast from './ast';
-import { Gen, overlay, merge, hd, tl, cons, stack_lookup } from './util';
+import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
+  stack_put } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 
 /**
@@ -48,6 +49,36 @@ export interface TypeEnv {
    */
   snip: [number, TypeEnv],
 };
+
+/**
+ * Push a scope onto a `TypeEnv`.
+ */
+function te_push(env: TypeEnv, map: TypeMap = {}, ann: string): TypeEnv {
+  return merge(env, {
+    // Push maps onto the front.
+    stack: cons(map, env.stack),
+    anns: cons(ann, env.anns),
+
+    // New scopes have a null snippet by default.
+    snip: null,
+  });
+}
+
+/**
+ * Pop a number of scopes off of a `TypeEnv`.
+ */
+function te_pop(env: TypeEnv, count: number = 1,
+                snip: [number, TypeEnv] = null): TypeEnv {
+  return merge(env, {
+    // Pop one map off of each stack.
+    stack: env.stack.slice(count),
+    anns: env.anns.slice(count),
+
+    // Optionally set the current snippet (if we're popping for a snippet
+    // escape).
+    snip: snip,
+  });
+}
 
 
 // The built-in operator types. These can be extended by providing custom
@@ -99,9 +130,9 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let [t, e] = check(tree.expr, env);
 
       // Insert the new type into the front of the map stack.
-      let head = overlay(hd(e.stack)); // Update type in an overlay environment.
-      head[tree.ident] = t;
-      let e2: TypeEnv = merge(e, { stack: cons(head, tl(e.stack)) });
+      let e2: TypeEnv = merge(e, {
+        stack: stack_put(e.stack, tree.ident, t)
+      });
 
       return [t, e2];
     },
@@ -187,17 +218,13 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         if (env.snip === null) {
           throw "type error: snippet quote without matching snippet escape";
         }
-        
+
         // "Resume" the environment for the snippet quote.
         [snippet, inner_env] = env.snip;
 
       } else {
         // Ordinary, independent quote. Push an empty stack frame.
-        inner_env = merge(env, {
-          stack: cons(<TypeMap> {}, env.stack),
-          anns: cons(tree.annotation, env.anns),
-          snip: null,
-        });
+        inner_env = te_push(env, {}, tree.annotation);
       }
 
       // Check inside the quote using the empty frame.
@@ -226,23 +253,13 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         throw `type error: can't escape ${count}x at level ${level}`;
       }
 
-      // Pop `count` quotation contexts off the stack.
-      let stack_inner = env.stack.slice(count);
-      let anns_inner = env.anns.slice(count);
-
-      // If this is a snippet escape, record it. Otherwise, the nearest
-      // snippet is null.
-      let snip_inner: [number, TypeEnv] = null;
-      if (tree.kind === "snippet") {
-        snip_inner = [tree.id, env];
-      }
+      // Construct the environment for checking the escape's body. If this is
+      // a snippet escape, record it. Otherwise, the nearest snippet is null.
+      let snip_inner: [number, TypeEnv] =
+        tree.kind === "snippet" ? [tree.id, env] : null;
+      let inner_env = te_pop(env, count, snip_inner);
 
       // Check the contents of the escape.
-      let inner_env: TypeEnv = merge(env, {
-        stack: stack_inner,
-        anns: anns_inner,
-        snip: snip_inner,
-      });
       let [t, e] = check(tree.expr, inner_env);
 
       if (tree.kind === "splice") {
@@ -344,7 +361,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let type = get_type(tree.type, env.named);
       new_externs[tree.name] = type;
       let e: TypeEnv = merge(env, {
-          externs: new_externs,
+        externs: new_externs,
       });
 
       return [type, e];

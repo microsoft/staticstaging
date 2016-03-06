@@ -67,10 +67,12 @@ export function compose <A, B, C> (g : (_:B) => C, f : (_:A) => B): (_:A) => C {
   }
 }
 
+type MapStack <T> = { [key: string]: T }[];
+
 // Look up a key in a stack of maps, from left to right. Return the value and
 // the position where it was found (or [undefined, undefined] if not found).
 export function stack_lookup <T> (
-  mapstack: { [key: string]: T }[],
+  mapstack: MapStack<T>,
   ident: string):
   [T, number]
 {
@@ -83,6 +85,18 @@ export function stack_lookup <T> (
     ++i;
   }
   return [undefined, undefined];
+}
+
+// Assign a value in the topmost map in a stack of maps.
+export function stack_put <T> (
+  mapstack: MapStack<T>,
+  key: string,
+  value: T):
+  MapStack<T>
+{
+  let head = overlay(hd(mapstack));
+  head[key] = value;
+  return cons(head, tl(mapstack));
 }
 
 // Treat an array as a set and insert into it. That is, do nothing if the
