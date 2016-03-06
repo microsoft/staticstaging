@@ -53,11 +53,13 @@ export interface TypeEnv {
 /**
  * Push a scope onto a `TypeEnv`.
  */
-function te_push(env: TypeEnv, map: TypeMap = {}, ann: string): TypeEnv {
+function te_push(env: TypeEnv, map: TypeMap = {}, ann: string,
+                 macros: TypeMap = {}): TypeEnv {
   return merge(env, {
     // Push maps onto the front.
     stack: cons(map, env.stack),
     anns: cons(ann, env.anns),
+    macros: cons(macros, env.macros),
 
     // New scopes have a null snippet by default.
     snip: null,
@@ -73,6 +75,7 @@ function te_pop(env: TypeEnv, count: number = 1,
     // Pop one map off of each stack.
     stack: env.stack.slice(count),
     anns: env.anns.slice(count),
+    macros: env.macros.slice(count),
 
     // Optionally set the current snippet (if we're popping for a snippet
     // escape).
@@ -224,7 +227,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       } else {
         // Ordinary, independent quote. Push an empty stack frame.
-        inner_env = te_push(env, {}, tree.annotation);
+        inner_env = te_push(env, {}, tree.annotation, {});
       }
 
       // Check inside the quote using the empty frame.
@@ -388,7 +391,19 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_macro(tree: ast.MacroNode, env: TypeEnv): [Type, TypeEnv] {
-      throw "unimplemented";
+      // Check the RHS expression.
+      let [t, e] = check(tree.expr, env);
+
+      if (!(t instanceof FunType)) {
+        throw "type error: macros must have function type";
+      }
+
+      // Insert the new binding.
+      let e2: TypeEnv = merge(e, {
+        macros: stack_put(e.macros, tree.ident, t)
+      });
+
+      return [t, e2];
     },
   };
 
