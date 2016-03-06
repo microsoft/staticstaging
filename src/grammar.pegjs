@@ -14,7 +14,7 @@ Program
 
 Expr "expression"
   = Var / Macro / Extern / Fun / CDef / If / Binary / Unary / Assign /
-  CCall / Call / TermExpr
+  CCall / Call / MacroCall / TermExpr
 
 SeqExpr
   = Seq / HalfSeq / Expr
@@ -26,7 +26,7 @@ TermExpr
 
 // Expressions that can be operands to binary/unary operators.
 Operand
-  = If / Call / TermExpr
+  = If / Call / MacroCall / TermExpr
 
 Seq
   = lhs:Expr _ seq _ rhs:SeqExpr
@@ -126,6 +126,10 @@ CArgList
 CArgMore
   = _ comma _ e:Expr
   { return e; }
+
+MacroCall
+  = macromark i:ident _ as:Arg+
+  { return {tag: "macrocall", macro: i, args: as}; }
 
 Extern "extern declaration"
   = extern _ i:ident _ typed _ t:Type e:ExternExpansion?
@@ -268,6 +272,9 @@ if
 
 macro
   = "macro"
+
+macromark
+  = "@"
 
 
 // Empty space.

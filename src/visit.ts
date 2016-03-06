@@ -19,6 +19,7 @@ export interface ASTVisit<P, R> {
   visit_persist(tree: ast.PersistNode, param: P): R;
   visit_if(tree: ast.IfNode, param: P): R;
   visit_macro(tree: ast.MacroNode, param: P): R;
+  visit_macrocall(tree: ast.MacroCallNode, param: P): R;
   visit_param?(tree: ast.ParamNode, param: P): R;
 }
 
@@ -59,6 +60,8 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_if(<ast.IfNode> tree, param);
     case "macro":
       return visitor.visit_macro(<ast.MacroNode> tree, param);
+    case "macrocall":
+      return visitor.visit_macrocall(<ast.MacroCallNode> tree, param);
     case "param":
       return visitor.visit_param(<ast.ParamNode> tree, param);
 
@@ -86,12 +89,13 @@ interface PartialASTVisit<P, R> {
   visit_persist? (tree: ast.PersistNode, param: P): R;
   visit_if? (tree: ast.IfNode, param: P): R;
   visit_macro? (tree: ast.MacroNode, param: P): R;
+  visit_macrocall? (tree: ast.MacroCallNode, param: P): R;
   visit_param? (tree: ast.ParamNode, param: P): R;
 }
 
 let AST_TYPES = ["literal", "seq", "let", "assign", "lookup", "unary",
                  "binary", "quote", "escape", "run", "fun", "call", "extern",
-                 "persist", "param", "if"];
+                 "persist", "param", "if", "macro", "macrocall"];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
 // is some messy run-time metaprogramming!
@@ -190,7 +194,7 @@ export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.Syn
     },
 
     visit_call(tree: ast.CallNode, param: void): ast.SyntaxNode {
-      let arg_trees : ast.SyntaxNode[] = [];
+      let arg_trees: ast.SyntaxNode[] = [];
       for (let arg of tree.args) {
         arg_trees.push(fself(arg));
       }
@@ -219,6 +223,16 @@ export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.Syn
     visit_macro(tree: ast.MacroNode, param: void): ast.SyntaxNode {
       return merge(tree, {
         expr: fself(tree.expr),
+      });
+    },
+
+    visit_macrocall(tree: ast.MacroCallNode, param: void): ast.SyntaxNode {
+      let arg_trees: ast.SyntaxNode[] = [];
+      for (let arg of tree.args) {
+        arg_trees.push(fself(arg));
+      }
+      return merge(tree, {
+        args: arg_trees,
       });
     },
   };
@@ -335,6 +349,14 @@ export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
 
     visit_macro(tree: ast.MacroNode, p: T): T {
       return fself(tree.expr, p);
+    },
+
+    visit_macrocall(tree: ast.MacroCallNode, p: T): T {
+      let p1 = p;
+      for (let arg of tree.args) {
+        p1 = fself(arg, p1);
+      }
+      return p1;
     },
   };
 }

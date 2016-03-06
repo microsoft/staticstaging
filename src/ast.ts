@@ -90,6 +90,11 @@ export interface MacroNode extends ExpressionNode {
   expr: ExpressionNode;
 }
 
+export interface MacroCallNode extends ExpressionNode {
+  macro: string;
+  args: ExpressionNode[];
+}
+
 export interface TypeNode extends SyntaxNode {
 }
 

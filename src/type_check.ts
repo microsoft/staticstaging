@@ -405,6 +405,10 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       return [t, e2];
     },
+
+    visit_macrocall(tree: ast.MacroCallNode, env: TypeEnv): [Type, TypeEnv] {
+      throw "unimplmented";
+    },
   };
 
   // The entry point for the recursion.

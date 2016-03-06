@@ -266,8 +266,12 @@ export let compile_rules = {
   visit_if(tree: ast.IfNode, emitter: Emitter): string {
     return emit_if(emitter, tree);
   },
-  
+
   visit_macro(tree: ast.MacroNode, emitter: Emitter): string {
+    throw "unimplmented";
+  },
+
+  visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {
     throw "unimplmented";
   },
 };
