@@ -1,7 +1,12 @@
-macro spif = fun c:<Int> t:<Int> f:<Int> -> if !c t f;
-macro myif = fun c:<Int> t:<Int> f:<Int> -> < if [c] [t] [f] >;
+var _spif = fun c:<Int> t:<Int> f:<Int> -> if !c t f;
+macro spif = _spif;
+
+var _myif = fun c:<Int> t:<Int> f:<Int> -> < if [c] [t] [f] >;
+macro myif = _myif;
+
 macro spif? = fun s:<Int> c:<Int> t:<Int> f:<Int> ->
-    if !s (@spif c t f) (@myif c t f);
+    if !s (_spif c t f) (_myif c t f);
+
 < @spif 1 2 3 +
   @myif 1 2 3 +
   @spif? 0 1 2 3 +
