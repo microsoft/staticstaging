@@ -43,11 +43,10 @@ export interface TypeEnv {
 
   /**
    * The current *snippet escape* (or null if there is none). The tuple
-   * consists of the ID of the escape and two pieces of the environment at
-   * that point that should be "resumed" on quote: the `stack` and `anns`
-   * stacks.
+   * consists of the ID of the escape and the environment at that point that
+   * should be "resumed" on quote.
    */
-  snip: [number, TypeMap[], string[]],
+  snip: [number, TypeEnv],
 };
 
 
@@ -188,15 +187,9 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         if (env.snip === null) {
           throw "type error: snippet quote without matching snippet escape";
         }
-        let [snip_id, snip_stack, snip_anns] = env.snip;
-        snippet = snip_id;
-
-        // "Resume" context for the quote.
-        inner_env = merge(env, {
-          stack: snip_stack,
-          anns: snip_anns,
-          snip: null,
-        });
+        
+        // "Resume" the environment for the snippet quote.
+        [snippet, inner_env] = env.snip;
 
       } else {
         // Ordinary, independent quote. Push an empty stack frame.
@@ -218,7 +211,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (tree.snippet) {
         // Store away the updated context for any subsequent snippets.
         out_env = merge(out_env, {
-          snip: [snippet, e.stack, e.anns],
+          snip: [snippet, e],
         });
       }
 
@@ -239,9 +232,9 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       // If this is a snippet escape, record it. Otherwise, the nearest
       // snippet is null.
-      let snip_inner: [number, TypeMap[], string[]] = null;
+      let snip_inner: [number, TypeEnv] = null;
       if (tree.kind === "snippet") {
-        snip_inner = [tree.id, env.stack, env.anns];
+        snip_inner = [tree.id, env];
       }
 
       // Check the contents of the escape.

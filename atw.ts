@@ -21,7 +21,9 @@ function read_string(filename: string, f: (s: string) => void) {
 }
 
 // Check the output of a test. Return a success flag.
-function check_output(filename: string, source: string, result: string): boolean {
+function check_output(filename: string, source: string, result: string):
+  boolean
+{
   let name = path.basename(filename, '.atw');
 
   let [,expected] = source.split('# -> ');
