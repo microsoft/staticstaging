@@ -1,0 +1,11 @@
+{
+	"files.exclude": {
+        "build": true,
+		"dingus/build": true,
+		"docs/build": true,
+        "typings": true,
+        "node_modules": true
+	},
+	"editor.wrappingColumn": 80,
+    "editor.tabSize": 2
+}
