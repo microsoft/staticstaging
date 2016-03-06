@@ -16,7 +16,8 @@ JS_SRC := gl.js examples.js preambles.js ../parser.js
 $(DINGUS_JS): $(TS_SRC) $(JS_SRC) atw.ts $(TYPINGS_BROWSER) $(TSC)
 	$(TSC)
 
-../parser.js:
+# It's a shame we have to duplicate this rule here.
+../parser.js: ../src/grammar.pegjs
 	make -C .. parser.js
 
 
