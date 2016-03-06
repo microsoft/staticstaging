@@ -357,7 +357,11 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
 
       return [true_type, e];
-    }
+    },
+    
+    visit_macro(tree: ast.MacroNode, env: TypeEnv): [Type, TypeEnv] {
+      throw "unimplemented";
+    },
   };
 
   // The entry point for the recursion.

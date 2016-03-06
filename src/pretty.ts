@@ -108,7 +108,11 @@ let Pretty : ASTVisit<void, string> = {
     return "if " + pretty_paren(tree.cond, nonterm) +
       " " + pretty_paren(tree.truex, nonterm) +
       " " + pretty_paren(tree.falsex, nonterm);
-  }
+  },
+
+  visit_macro(tree: ast.MacroNode, _: void): string {
+    return `macro ${tree.ident} = ${pretty(tree.expr)}`;
+  },
 }
 
 /**

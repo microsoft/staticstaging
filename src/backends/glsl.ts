@@ -190,6 +190,10 @@ let compile_rules: ASTVisit<Emitter, string> = {
   visit_if(tree: ast.IfNode, emitter: Emitter): string {
     return emit_if(emitter, tree);
   },
+  
+  visit_macro(tree: ast.MacroNode, emitter: Emitter): string {
+    throw "unimplemented";
+  },
 };
 
 export function compile(tree: ast.SyntaxNode, emitter: Emitter): string {

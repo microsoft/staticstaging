@@ -253,6 +253,10 @@ let Interp : ASTVisit<State, [Value, State]> = {
     let [flag, s] = interp(tree.cond, state);
     return interp(flag ? tree.truex : tree.falsex, s);
   },
+  
+  visit_macro(tree: ast.MacroNode, state: State): [Value, State] {
+    throw "unimplmented";
+  },
 }
 
 function interp(tree: ast.SyntaxNode, state: State): [Value, State] {
@@ -342,6 +346,13 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       let [t, s, p] = quote_interp(tree.expr, inner_stage, state, pers);
       return [merge(tree, { expr: t }), s, p];
     }
+  },
+  
+  visit_macro(tree: ast.MacroNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers]
+  {
+    throw "unimplmented";
   },
 
   // The rest of the cases are boring: just copy the input tree and recurse
