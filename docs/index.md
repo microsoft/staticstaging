@@ -261,7 +261,40 @@ Pre-splicing is important because it lets you use staging to express *compile-ti
 
 ## Macros
 
-**TK:** Macros are forthcoming.
+Alltheworld has macros.
+In fact, the staging concepts you already know are already enough to implement something very close to macros you know and love!
+The Atw just uses a little syntactic sugar to make them work.
+
+Fundamentally, a macro is just a function that takes code as arguments and produces code as its return value.
+In Alltheworld, that's exactly how you define a macro:
+
+    def add(lhs: <Int>, rhs: <Int>)
+      < [lhs] + [rhs] >;
+
+To use a macro, type its name prefixed with an `@` symbol:
+
+    @add 1 2
+
+Unlike an ordinary function call, like `add 1 2`, the arguments to a macro invocation are treated as *code*, as if you had wrapped them in angle brackets.
+Like this:
+
+    add <1> <2>
+
+A macro invocation also automatically escapes *to the point where the name was defined*.
+Specifically, this:
+
+    def add(lhs: <Int>, rhs: <Int>)
+      < [lhs] + [rhs] >;
+    < @add 1 2 >
+
+is syntactic sugar for this:
+
+    def add(lhs: <Int>, rhs: <Int>)
+      < [lhs] + [rhs] >;
+    < [ add <1> <2> ] >
+
+Intuitively, you can think of the `@` symbol as saying, "Escape out to where the macro was defined, invoke it with my arguments as unevaluated code, and then splice its result back in here."
+In other words, macros are just functions that run at an earlier stage.
 
 
 # Code Generation
