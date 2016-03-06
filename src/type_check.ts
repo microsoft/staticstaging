@@ -390,27 +390,14 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       return [true_type, e];
     },
 
-    visit_macro(tree: ast.MacroNode, env: TypeEnv): [Type, TypeEnv] {
-      // Check the RHS expression.
-      let [t, e] = check(tree.expr, env);
-
-      if (!(t instanceof FunType)) {
-        throw "type error: macros must have function type";
-      }
-
-      // Insert the new binding.
-      let e2: TypeEnv = merge(e, {
-        macros: stack_put(e.macros, tree.ident, t)
-      });
-
-      return [t, e2];
-    },
-
     visit_macrocall(tree: ast.MacroCallNode, env: TypeEnv): [Type, TypeEnv] {
       // Look for the macro definition.
       let [macro_type, count] = stack_lookup(env.macros, tree.macro);
       if (macro_type === undefined) {
         throw `type error: macro ${tree.macro} not defined`;
+      }
+      if (!(macro_type instanceof FunType)) {
+        throw "type error: macros must have function type";
       }
 
       // Check arguments in a fresh, quoted environment.

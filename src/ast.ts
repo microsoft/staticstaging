@@ -85,11 +85,6 @@ export interface IfNode extends ExpressionNode {
   falsex: ExpressionNode,
 }
 
-export interface MacroNode extends ExpressionNode {
-  ident: string;
-  expr: ExpressionNode;
-}
-
 export interface MacroCallNode extends ExpressionNode {
   macro: string;
   args: ExpressionNode[];

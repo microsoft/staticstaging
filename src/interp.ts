@@ -254,10 +254,6 @@ let Interp : ASTVisit<State, [Value, State]> = {
     return interp(flag ? tree.truex : tree.falsex, s);
   },
 
-  visit_macro(tree: ast.MacroNode, state: State): [Value, State] {
-    throw "unimplmented";
-  },
-
   visit_macrocall(tree: ast.MacroCallNode, state: State): [Value, State] {
     throw "unimplmented";
   },
@@ -350,13 +346,6 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       let [t, s, p] = quote_interp(tree.expr, inner_stage, state, pers);
       return [merge(tree, { expr: t }), s, p];
     }
-  },
-
-  visit_macro(tree: ast.MacroNode,
-      [stage, state, pers]: [number, State, Pers]):
-      [ast.SyntaxNode, State, Pers]
-  {
-    throw "unimplmented";
   },
 
   visit_macrocall(tree: ast.MacroCallNode,

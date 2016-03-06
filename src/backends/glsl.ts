@@ -191,10 +191,6 @@ let compile_rules: ASTVisit<Emitter, string> = {
     return emit_if(emitter, tree);
   },
 
-  visit_macro(tree: ast.MacroNode, emitter: Emitter): string {
-    throw "unimplemented";
-  },
-
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {
     throw "unimplemented";
   },

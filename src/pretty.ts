@@ -110,10 +110,6 @@ let Pretty : ASTVisit<void, string> = {
       " " + pretty_paren(tree.falsex, nonterm);
   },
 
-  visit_macro(tree: ast.MacroNode, _: void): string {
-    return `macro ${tree.ident} = ${pretty(tree.expr)}`;
-  },
-
   visit_macrocall(tree: ast.MacroCallNode, _: void): string {
     let s = tree.macro;
     for (let arg of tree.args) {
