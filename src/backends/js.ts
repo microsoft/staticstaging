@@ -268,7 +268,7 @@ export let compile_rules = {
   },
 
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {
-    throw "unimplmented";
+    throw "error: macro invocations are sugar";
   },
 };
 

@@ -255,7 +255,7 @@ let Interp : ASTVisit<State, [Value, State]> = {
   },
 
   visit_macrocall(tree: ast.MacroCallNode, state: State): [Value, State] {
-    throw "unimplmented";
+    throw "error: macro invocations are sugar";
   },
 }
 
@@ -352,7 +352,7 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       [stage, state, pers]: [number, State, Pers]):
       [ast.SyntaxNode, State, Pers]
   {
-    throw "unimplmented";
+    throw "error: macro invocations are sugar";
   },
 
   // The rest of the cases are boring: just copy the input tree and recurse

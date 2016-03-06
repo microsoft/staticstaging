@@ -192,7 +192,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {
-    throw "unimplemented";
+    throw "error: macro invocations are sugar";
   },
 };
 
