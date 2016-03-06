@@ -28,7 +28,7 @@ export interface TypeEnv {
   /**
    * A stack of *macro definition* maps.
    */
-  macros: TypeMap[],
+  macros: { [name: string]: FunType }[],
 
   /**
    * A single frame for "extern" values, which are always available without
@@ -407,7 +407,33 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     },
 
     visit_macrocall(tree: ast.MacroCallNode, env: TypeEnv): [Type, TypeEnv] {
-      throw "unimplmented";
+      // Look for the macro definition.
+      let [macro_type, count] = stack_lookup(env.macros, tree.macro);
+      if (macro_type === undefined) {
+        throw `type error: macro ${tree.macro} not defined`;
+      }
+
+      // Check arguments in a fresh, quoted environment.
+      let arg_env = te_push(env, {}, "", {});
+      let arg_types: Type[] = [];
+      for (let arg of tree.args) {
+        let [t,] = check(arg, arg_env);
+        let code_t = new CodeType(t, "", null);
+        arg_types.push(code_t);
+      }
+
+      // Get the return type of the macro function.
+      let ret = check_call(macro_type, arg_types);
+      if (ret instanceof Type) {
+        // Macros return code, and we splice in the result here.
+        if (ret instanceof CodeType) {
+          return [ret.inner, env];
+        } else {
+          throw "type error: macro must return code";
+        }
+      } else {
+        throw ret;
+      }
     },
   };
 
