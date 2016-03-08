@@ -27,6 +27,9 @@ function check_output(filename: string, source: string, result: string):
   let name = path.basename(filename, '.atw');
 
   let [,expected] = source.split('# -> ');
+  if (expected === undefined) {
+    throw `error: no expected result in test ${name}`;
+  }
   expected = expected.trim();
   result = result.trim();
 
