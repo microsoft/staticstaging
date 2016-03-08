@@ -528,8 +528,8 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_code(tree: ast.CodeTypeNode, types: TypeMap) {
     let inner = get_type(tree.inner, types);
     if (tree.snippet) {
-      // TODO
-      return new CodeType(inner, tree.annotation, null);
+      // Polymorphic snippet code type.
+      return new CodeType(inner, tree.annotation, null, new TypeVariable("id"));
     } else {
       return new CodeType(inner, tree.annotation);
     }
@@ -555,24 +555,36 @@ function get_type(ttree: ast.TypeNode, types: TypeMap): Type {
 }
 
 // Fill in a parameterized type.
-let apply_type_rules: TypeVisit<[TypeVariable, Type], Type> = {
-  // This is the only interesting rule: replace the requested variable with
-  // the argument.
-  visit_variable(type: VariableType, [tvar, targ]: [TypeVariable, Type]): Type {
+let apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
+  // Replace a type variable (used as a type) with the provided type.
+  visit_variable(type: VariableType, [tvar, targ]: [TypeVariable, any]): Type {
     if (type.variable === tvar) {
       return targ;
     } else {
-      return type;
+      return new VariableType(type.variable);
+    }
+  },
+
+  // In code types, variables can appear in the snippet.
+  visit_code(type: CodeType, [tvar, targ]: [TypeVariable, any]): Type {
+    if (type.snippet_var && type.snippet_var === tvar) {
+      // A match! Make this a concrete snippet type.
+      return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
+          targ);
+    } else {
+      // Reconstruct the type.
+      return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
+          type.snippet, type.snippet_var);
     }
   },
 
   // The remaining rules are just boring boilerplate: `map` for types.
   visit_primitive(type: PrimitiveType,
-      [tvar, targ]: [TypeVariable, Type]): Type
+      [tvar, targ]: [TypeVariable, any]): Type
   {
     return type;
   },
-  visit_fun(type: FunType, [tvar, targ]: [TypeVariable, Type]): Type {
+  visit_fun(type: FunType, [tvar, targ]: [TypeVariable, any]): Type {
     let params: Type[] = [];
     for (let param of type.params) {
       params.push(apply_type(param, tvar, targ));
@@ -580,38 +592,34 @@ let apply_type_rules: TypeVisit<[TypeVariable, Type], Type> = {
     let ret = apply_type(type.ret, tvar, targ);
     return new FunType(params, ret);
   },
-  visit_code(type: CodeType, [tvar, targ]: [TypeVariable, Type]): Type {
-    return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
-        type.snippet, type.snippet_var);
-  },
-  visit_any(type: AnyType, [tvar, targ]: [TypeVariable, Type]): Type {
+  visit_any(type: AnyType, [tvar, targ]: [TypeVariable, any]): Type {
     return type;
   },
-  visit_void(type: VoidType, [tvar, targ]: [TypeVariable, Type]): Type {
+  visit_void(type: VoidType, [tvar, targ]: [TypeVariable, any]): Type {
     return type;
   },
   visit_constructor(type: ConstructorType,
-      [tvar, targ]: [TypeVariable, Type]): Type
+      [tvar, targ]: [TypeVariable, any]): Type
   {
     return type;
   },
   visit_instance(type: InstanceType,
-      [tvar, targ]: [TypeVariable, Type]): Type
+      [tvar, targ]: [TypeVariable, any]): Type
   {
     return new InstanceType(type.cons, apply_type(type.arg, tvar, targ));
   },
   visit_quantified(type: QuantifiedType,
-      [tvar, targ]: [TypeVariable, Type]): Type
+      [tvar, targ]: [TypeVariable, any]): Type
   {
     return new QuantifiedType(type.variable,
         apply_type(type.inner, tvar, targ));
   },
 }
 
-function apply_type(type: Type, tvar: TypeVariable, targ: Type): Type {
+function apply_type(type: Type, tvar: TypeVariable, targ: any): Type {
   return type_visit(apply_type_rules, type, [tvar, targ]);
 }
 
-function apply_quantified_type(type: QuantifiedType, arg: Type): Type {
+function apply_quantified_type(type: QuantifiedType, arg: any): Type {
   return apply_type(type.inner, type.variable, arg);
 }
