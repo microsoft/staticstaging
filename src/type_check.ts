@@ -75,6 +75,16 @@ function te_pop(env: TypeEnv, count: number = 1,
   });
 }
 
+// A utility used here, in the type checker, and also during desugaring when
+// processing macro invocations.
+export function unquantified_type(type: Type): Type {
+  if (type instanceof QuantifiedType) {
+    return type.inner;
+  } else {
+    return type;
+  }
+}
+
 
 // The built-in operator types. These can be extended by providing custom
 // intrinsics.
@@ -390,12 +400,10 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
 
       // Get the function type (we need its arguments).
+      let unq_type = unquantified_type(macro_type);
       let fun_type: FunType;
-      if (macro_type instanceof FunType) {
-        fun_type = macro_type;
-      } else if (macro_type instanceof QuantifiedType &&
-                 macro_type.inner instanceof FunType) {
-        fun_type = macro_type.inner as FunType;
+      if (unq_type instanceof FunType) {
+        fun_type = unq_type;
       } else {
         throw "type error: macro must be a function";
       }

@@ -1,9 +1,10 @@
-import { TypeCheck } from './type_check';
+import { TypeCheck, unquantified_type } from './type_check';
 import { TypeTable, elaborate_subtree } from './type_elaborate';
 import * as ast from './ast';
 import { ASTTranslate, gen_translate, ast_translate_rules,
   ast_visit, compose_visit } from './visit';
-import { Gen, stack_lookup, fix, compose } from './util';
+import { Gen, stack_lookup, fix, compose, zip } from './util';
+import { FunType, CodeType } from './type';
 
 // Another type test for the specific kind of node we're interested in. We'll
 // use this to follow one piece of advice from the "Scrap Your Boilerplate"
@@ -83,16 +84,20 @@ function _desugar_macros(type_table: TypeTable,
 
         // Find how many levels "away" the macro is. That's how many times
         // we'll need to escape.
-        let [, index] = stack_lookup(env.stack, tree.macro);
+        let [macro_type, index] = stack_lookup(env.stack, tree.macro);
+        let fun_type = unquantified_type(macro_type) as FunType;
 
         // Create the function call that invokes the macro.
         let macro_args: ast.QuoteNode[] = [];
-        for (let arg of tree.args) {
+        let has_snippets = false;
+        for (let [param, arg] of zip(fun_type.params, tree.args)) {
+          let as_snippet = param instanceof CodeType && !!param.snippet_var;
+          has_snippets = has_snippets || as_snippet;
           macro_args.push({
             tag: "quote",
             expr: arg,
             annotation: "",
-            snippet: false,
+            snippet: as_snippet,
           });
         }
         let call: ast.CallNode = {
@@ -106,7 +111,7 @@ function _desugar_macros(type_table: TypeTable,
         if (index > 0) {
           out = {
             tag: "escape",
-            kind: "splice",
+            kind: has_snippets ? "snippet" : "splice",
             expr: call,
             count: index,
           } as ast.EscapeNode;
