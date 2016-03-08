@@ -492,14 +492,22 @@ function check_call(target: Type, args: Type[]): Type | string {
     // Special case for unifying polymorphic snippet function types with
     // snippet arguments.
     let snippet: number = null;
+    let snippet_var: TypeVariable = null;
     for (let arg of args) {
-      if (arg instanceof CodeType && arg.snippet) {
-        snippet = arg.snippet;
-        break;
+      if (arg instanceof CodeType) {
+        if (arg.snippet) {
+          snippet = arg.snippet;
+          break;
+        } else if (arg.snippet_var) {
+          snippet_var = arg.snippet_var;
+          break;
+        }
       }
     }
     if (snippet !== null) {
       return check_call(apply_quantified_type(target, snippet), args);
+    } else if (snippet_var !== null) {
+      return check_call(apply_quantified_type(target, snippet_var), args);
     } else {
       return "type error: unsupported polymorphism";
     }
@@ -670,9 +678,16 @@ let apply_type_rules: TypeVisit<[TypeVariable, any], Type> = {
   // In code types, variables can appear in the snippet.
   visit_code(type: CodeType, [tvar, targ]: [TypeVariable, any]): Type {
     if (type.snippet_var && type.snippet_var === tvar) {
-      // A match! Make this a concrete snippet type.
-      return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
-          targ);
+      // A match!
+      if (targ instanceof TypeVariable) {
+        // Replace the type variable.
+        return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
+            null, targ);
+      } else {
+        // Make this a concrete snippet type.
+        return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
+            targ);
+      }
     } else {
       // Reconstruct the type.
       return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
