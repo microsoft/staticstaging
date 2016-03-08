@@ -1,6 +1,6 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit, PolySnipCodeType,
+  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit,
   type_visit } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
@@ -528,7 +528,8 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_code(tree: ast.CodeTypeNode, types: TypeMap) {
     let inner = get_type(tree.inner, types);
     if (tree.snippet) {
-      return new PolySnipCodeType(inner, tree.annotation);
+      // TODO
+      return new CodeType(inner, tree.annotation, null);
     } else {
       return new CodeType(inner, tree.annotation);
     }
@@ -603,9 +604,6 @@ let apply_type_rules: TypeVisit<[VariableType, Type], Type> = {
   {
     return new QuantifiedType(type.variable,
         apply_type(type.inner, tvar, targ));
-  },
-  visit_polysnipcode(type: PolySnipCodeType, [tvar, targ]: [VariableType, Type]): Type {
-    return new PolySnipCodeType(apply_type(type.inner, tvar, targ), type.annotation);
   },
 }
 

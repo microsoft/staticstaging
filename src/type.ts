@@ -56,7 +56,7 @@ export class QuantifiedType extends Type {
   _brand_QuantifiedType: void;
 }
 export class VariableType extends Type {
-  constructor(public name: string) { super() };
+  constructor(public variable: TypeVariable<Type>) { super() };
   _brand_VariableType: void;
 }
 
@@ -66,18 +66,13 @@ export class OverloadedType extends Type {
   _brand_OverloadedType: void;
 }
 
-// Basic polymorphism for snippet code types. This very limited form of
-// polymorphism lets functions use one snippet code type without specifying
-// exactly *which* scope is involved (which would of course be impossible).
-// Eventually, if our language ever gets better polymorphism (i.e., type-level
-// variables don't just have to be types), this could be replaced with a
-// generic mechanism.
-export class PolySnipCodeType extends Type {
-  constructor(
-    public inner: Type,
-    public annotation: string
-  ) { super() };
-  _brand_polysnipcodetype: void;
+
+// Type variables.
+
+// `TypeVariable` represents type-level variables of *any* kind.
+export class TypeVariable<T> {
+  constructor(public name: string) {}
+  _brand_TypeVariable: void;
 }
 
 
@@ -111,7 +106,6 @@ export interface TypeVisit<P, R> {
   visit_instance(type: InstanceType, param: P): R;
   visit_quantified(type: QuantifiedType, param: P): R;
   visit_variable(type: VariableType, param: P): R;
-  visit_polysnipcode(type: PolySnipCodeType, param: P): R;
 }
 
 export function type_visit<P, R>(visitor: TypeVisit<P, R>,
@@ -134,8 +128,6 @@ export function type_visit<P, R>(visitor: TypeVisit<P, R>,
     return visitor.visit_quantified(type, param);
   } else if (type instanceof VariableType) {
     return visitor.visit_variable(type, param);
-  } else if (type instanceof PolySnipCodeType) {
-    return visitor.visit_polysnipcode(type, param);
   } else {
     throw "error: unknown type kind " + typeof(type);
   }
@@ -180,12 +172,7 @@ let pretty_type_rules: TypeVisit<void, string> = {
     return pretty_type(type.inner);
   },
   visit_variable(type: VariableType, param: void): string {
-    return type.name;
-  },
-  visit_polysnipcode(type: PolySnipCodeType, param: void): string {
-    return "$" +
-      type.annotation || "" +
-      "<" + pretty_type(type.inner) + ">";
+    return type.variable.name;
   },
 }
 
