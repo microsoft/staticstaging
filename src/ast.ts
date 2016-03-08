@@ -110,6 +110,7 @@ export interface FunTypeNode extends TypeNode {
 export interface CodeTypeNode extends TypeNode {
   inner: TypeNode;
   annotation: string;
+  snippet: boolean;
 }
 
 // An AST node that is not allowed to appear in source; it replaces persistent

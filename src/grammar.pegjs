@@ -172,8 +172,8 @@ FunType "function type"
   { return {tag: "type_fun", params: p, ret: r}; }
 
 CodeType "code type"
-  = a:ident? quote_open _ t:Type _ quote_close
-  { return {tag: "type_code", inner: t, annotation: a || ""}; }
+  = s:snippet_marker? a:ident? quote_open _ t:Type _ quote_close
+  { return {tag: "type_code", inner: t, annotation: a || "", snippet: !!s}; }
 
 FunTypeParam
   = t:TermType _
