@@ -323,6 +323,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         param_types.push(ptype);
         body_env_hd[param.name] = ptype;
       }
+      rectify_fun_params(param_types);
 
       // Check the body and get the return type.
       let body_env: TypeEnv = merge(env, {
@@ -331,7 +332,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let [ret_type,] = check(tree.body, body_env);
 
       // Construct the function type.
-      let fun_type = rectify_fun_type(new FunType(param_types, ret_type));
+      let fun_type = new FunType(param_types, ret_type);
       return [fun_type, env];
     },
 
@@ -539,7 +540,8 @@ function compatible(ltype: Type, rtype: Type): boolean {
   } else if (ltype instanceof CodeType && rtype instanceof CodeType) {
     return compatible(ltype.inner, rtype.inner) &&
       ltype.annotation === rtype.annotation &&
-      ltype.snippet === rtype.snippet;
+      ltype.snippet === rtype.snippet &&
+      ltype.snippet_var === rtype.snippet_var;
 
   }
 
@@ -553,20 +555,8 @@ function compatible(ltype: Type, rtype: Type): boolean {
  * different type variables for snippet code types.
  */
 function rectify_fun_type(type: FunType): Type {
-  let tvar: TypeVariable = null;
-
   // Rectify the parameters.
-  for (let param of type.params) {
-    if (param instanceof CodeType && param.snippet_var) {
-      if (tvar === null) {
-        // Take the first variable found.
-        tvar = param.snippet_var;
-      } else {
-        // Apply the same variable here.
-        param.snippet_var = tvar;
-      }
-    }
-  }
+  let tvar = rectify_fun_params(type.params);
 
   // Do the same for the return value.
   let ret = type.ret;
@@ -584,6 +574,28 @@ function rectify_fun_type(type: FunType): Type {
   } else {
     return type;
   }
+}
+
+/**
+ * As with `rectify_fun_type`, but just for the parameters. This is
+ * necessary when checking functions, where return types are not known yet.
+ */
+function rectify_fun_params(params: Type[]): TypeVariable {
+  let tvar: TypeVariable = null;
+
+  for (let param of params) {
+    if (param instanceof CodeType && param.snippet_var) {
+      if (tvar === null) {
+        // Take the first variable found.
+        tvar = param.snippet_var;
+      } else {
+        // Apply the same variable here.
+        param.snippet_var = tvar;
+      }
+    }
+  }
+
+  return tvar;
 }
 
 // Get the Type denoted by the type syntax tree.
