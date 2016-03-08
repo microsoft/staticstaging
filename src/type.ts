@@ -52,11 +52,11 @@ export class InstanceType extends Type {
 
 // Slightly more general parametricity with a universal quantifier.
 export class QuantifiedType extends Type {
-  constructor(public variable: VariableType, public inner: Type) { super() };
+  constructor(public variable: TypeVariable, public inner: Type) { super() };
   _brand_QuantifiedType: void;
 }
 export class VariableType extends Type {
-  constructor(public variable: TypeVariable<Type>) { super() };
+  constructor(public variable: TypeVariable) { super() };
   _brand_VariableType: void;
 }
 
@@ -70,7 +70,7 @@ export class OverloadedType extends Type {
 // Type variables.
 
 // `TypeVariable` represents type-level variables of *any* kind.
-export class TypeVariable<T> {
+export class TypeVariable {
   constructor(public name: string) {}
   _brand_TypeVariable: void;
 }

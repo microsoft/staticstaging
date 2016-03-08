@@ -1,6 +1,6 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit,
+  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit, TypeVariable,
   type_visit } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
@@ -555,11 +555,11 @@ function get_type(ttree: ast.TypeNode, types: TypeMap): Type {
 }
 
 // Fill in a parameterized type.
-let apply_type_rules: TypeVisit<[VariableType, Type], Type> = {
+let apply_type_rules: TypeVisit<[TypeVariable, Type], Type> = {
   // This is the only interesting rule: replace the requested variable with
   // the argument.
-  visit_variable(type: VariableType, [tvar, targ]: [VariableType, Type]): Type {
-    if (type === tvar) {
+  visit_variable(type: VariableType, [tvar, targ]: [TypeVariable, Type]): Type {
+    if (type.variable === tvar) {
       return targ;
     } else {
       return type;
@@ -568,11 +568,11 @@ let apply_type_rules: TypeVisit<[VariableType, Type], Type> = {
 
   // The remaining rules are just boring boilerplate: `map` for types.
   visit_primitive(type: PrimitiveType,
-      [tvar, targ]: [VariableType, Type]): Type
+      [tvar, targ]: [TypeVariable, Type]): Type
   {
     return type;
   },
-  visit_fun(type: FunType, [tvar, targ]: [VariableType, Type]): Type {
+  visit_fun(type: FunType, [tvar, targ]: [TypeVariable, Type]): Type {
     let params: Type[] = [];
     for (let param of type.params) {
       params.push(apply_type(param, tvar, targ));
@@ -580,34 +580,34 @@ let apply_type_rules: TypeVisit<[VariableType, Type], Type> = {
     let ret = apply_type(type.ret, tvar, targ);
     return new FunType(params, ret);
   },
-  visit_code(type: CodeType, [tvar, targ]: [VariableType, Type]): Type {
+  visit_code(type: CodeType, [tvar, targ]: [TypeVariable, Type]): Type {
     return new CodeType(apply_type(type.inner, tvar, targ), type.annotation, type.snippet);
   },
-  visit_any(type: AnyType, [tvar, targ]: [VariableType, Type]): Type {
+  visit_any(type: AnyType, [tvar, targ]: [TypeVariable, Type]): Type {
     return type;
   },
-  visit_void(type: VoidType, [tvar, targ]: [VariableType, Type]): Type {
+  visit_void(type: VoidType, [tvar, targ]: [TypeVariable, Type]): Type {
     return type;
   },
   visit_constructor(type: ConstructorType,
-      [tvar, targ]: [VariableType, Type]): Type
+      [tvar, targ]: [TypeVariable, Type]): Type
   {
     return type;
   },
   visit_instance(type: InstanceType,
-      [tvar, targ]: [VariableType, Type]): Type
+      [tvar, targ]: [TypeVariable, Type]): Type
   {
     return new InstanceType(type.cons, apply_type(type.arg, tvar, targ));
   },
   visit_quantified(type: QuantifiedType,
-      [tvar, targ]: [VariableType, Type]): Type
+      [tvar, targ]: [TypeVariable, Type]): Type
   {
     return new QuantifiedType(type.variable,
         apply_type(type.inner, tvar, targ));
   },
 }
 
-function apply_type(type: Type, tvar: VariableType, targ: Type): Type {
+function apply_type(type: Type, tvar: TypeVariable, targ: Type): Type {
   return type_visit(apply_type_rules, type, [tvar, targ]);
 }
 
