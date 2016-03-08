@@ -522,7 +522,40 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     }
     let ret = get_type(tree.ret, types);
 
-    return new FunType(params, ret);
+    // To make these polymorphic snippet code types possible to write down, we
+    // make any such type variables in function signatures "agree." This, of
+    // course, means that it's impossible to write a function that uses two
+    // different type variables for snippet code types.
+    let tvar: TypeVariable = null;
+    for (let param of params) {
+      if (param instanceof CodeType && param.snippet_var) {
+        if (tvar === null) {
+          // Take the first variable found.
+          tvar = param.snippet_var;
+        } else {
+          // Apply the same variable here.
+          param.snippet_var = tvar;
+        }
+      }
+    }
+    // Do the same for the return value.
+    if (ret instanceof CodeType && ret.snippet_var) {
+      if (tvar === null) {
+        tvar = ret.snippet_var;
+      } else {
+        ret.snippet_var = tvar;
+      }
+    }
+
+    // Construct the function type.
+    let out: Type = new FunType(params, ret);
+
+    // If there's polymorphism, wrap this in a universal quantifier type.
+    if (tvar) {
+      out = new QuantifiedType(tvar, out);
+    }
+
+    return out;
   },
 
   visit_code(tree: ast.CodeTypeNode, types: TypeMap) {
