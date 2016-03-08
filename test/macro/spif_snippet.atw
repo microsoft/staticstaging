@@ -1,0 +1,19 @@
+# Specialized `if`.
+var spif = fun c:<Int> t:$<Int> f:$<Int> -> if !c t f;
+
+# Just for fun, we'll define a macro-like function that just duplicates
+# the built-in `if` expression.
+var myif = fun c:<Int> t:$<Int> f:$<Int> -> < if [c] [t] [f] >;
+
+# These functions can be invoked as normal, without the `@` prefix.
+var spif? = fun s:<Int> c:<Int> t:$<Int> f:$<Int> ->
+    if !s (spif c t f) (myif c t f);
+
+var z = 1;
+<
+  var x = 2;
+  var y = 3;
+  @spif? 0 z x y +
+  @spif? 1 z x y
+>
+# -> < 2 + (if 1 2 3) + (if 1 2 3) + 2 >
