@@ -1,5 +1,5 @@
 import * as ast from './ast';
-import { ASTVisit, ast_visit } from './visit';
+import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 import { set_in } from './util';
 
 const TERM_TAGS = ["quote", "literal", "lookup", "escape", "run", "paren", "persist"];
@@ -12,7 +12,7 @@ function nonterm(tree: ast.SyntaxNode) {
   return !set_in(TERM_TAGS, tree.tag);
 }
 
-let Pretty : ASTVisit<void, string> = {
+let Pretty: ASTVisit<void, string> = {
   visit_literal(tree: ast.LiteralNode, _: void): string {
     return tree.value.toString();
   },
@@ -79,7 +79,7 @@ let Pretty : ASTVisit<void, string> = {
   visit_fun(tree: ast.FunNode, _: void): string {
     let params = "";
     for (let param of tree.params) {
-      params += param.name + " " + param.type + " ";
+      params += param.name + ":" + pretty_type_ast(param.type) + " ";
     }
     return "fun " + params + "-> " + pretty_paren(tree.body, nonterm);
   },
@@ -136,4 +136,43 @@ function pretty_paren(tree: ast.SyntaxNode, pred: (t: ast.SyntaxNode) => boolean
   } else {
     return out;
   }
+}
+
+/**
+ * The rules for pretty-printing type ASTs.
+ */
+let pretty_type_ast_rules: TypeASTVisit<void, string> = {
+  visit_primitive(tree: ast.PrimitiveTypeNode, param: void): string {
+    return tree.name;
+  },
+
+  visit_fun(tree: ast.FunTypeNode, param: void): string {
+    let params = "";
+    for (let param of tree.params) {
+      params += pretty_type_ast(param) + " ";
+    }
+    return "-> " + pretty_type_ast(tree.ret);
+  },
+
+  visit_code(tree: ast.CodeTypeNode, param: void): string {
+    let out = "<" + pretty_type_ast(tree.inner) + ">";
+    if (tree.annotation) {
+      out = tree.annotation + out;
+    }
+    if (tree.snippet) {
+      out = "$" + out;
+    }
+    return out;
+  },
+
+  visit_instance(tree: ast.InstanceTypeNode, param: void): string {
+    return pretty_type_ast(tree.arg) + " " + tree.name;
+  },
+}
+
+/**
+ * Pretty-print a type AST.
+ */
+function pretty_type_ast(tree: ast.TypeNode) {
+  return type_ast_visit(pretty_type_ast_rules, tree, null);
 }
