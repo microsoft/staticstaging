@@ -392,8 +392,9 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         throw "type error: macros must have function type";
       }
 
-      // Check arguments in a fresh, quoted environment.
-      let arg_env = te_push(env, {}, "");
+      // Check arguments in a fresh, quoted environment based at the stage
+      // where the macro was defined.
+      let arg_env = te_push(te_pop(env, count), {}, "");
       let arg_types: Type[] = [];
       for (let arg of tree.args) {
         let [t,] = check(arg, arg_env);
