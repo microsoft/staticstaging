@@ -32,7 +32,8 @@ export class CodeType extends Type {
   constructor(
     public inner: Type,
     public annotation: string,
-    public snippet: number = null  // Corresponding escape ID.
+    public snippet: number = null,  // Corresponding escape ID.
+    public snippet_var: TypeVariable = null  // Snippet polymorphism.
   ) { super() };
   _brand_CodeType: void;
 };
@@ -153,6 +154,8 @@ let pretty_type_rules: TypeVisit<void, string> = {
     }
     if (type.snippet) {
       out = "$" + type.snippet + out;
+    } else if (type.snippet_var) {
+      out = "$" + type.snippet_var.name + out;
     }
     return out;
   },

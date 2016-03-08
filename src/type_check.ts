@@ -581,7 +581,8 @@ let apply_type_rules: TypeVisit<[TypeVariable, Type], Type> = {
     return new FunType(params, ret);
   },
   visit_code(type: CodeType, [tvar, targ]: [TypeVariable, Type]): Type {
-    return new CodeType(apply_type(type.inner, tvar, targ), type.annotation, type.snippet);
+    return new CodeType(apply_type(type.inner, tvar, targ), type.annotation,
+        type.snippet, type.snippet_var);
   },
   visit_any(type: AnyType, [tvar, targ]: [TypeVariable, Type]): Type {
     return type;
