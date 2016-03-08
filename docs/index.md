@@ -296,6 +296,24 @@ is syntactic sugar for this:
 Intuitively, you can think of the `@` symbol as saying, "Escape out to where the macro was defined, invoke it with my arguments as unevaluated code, and then splice its result back in here."
 In other words, macros are just functions that run at an earlier stage.
 
+### Snippets and Macros
+
+Snippet splicing composes with macros.
+Together, they enforce *macro hygeine*, letting you safely use variables from the scope surrounding the macro invocation.
+
+To make this work, Alltheworld uses the types on the parameters to the macro function.
+Decorate your function's argument types with a `$` to indicate that the argument should be a snippet:
+
+    def left(lhs: $<Int>, rhs: $<Int>)
+      lhs;
+    < var x = 1; var y = 2; @left x y >
+
+When the macro function has a snippet parameter type, the corresponding argument quote behaves like a snippet quote. So the `@left x y` invocation above desugars to:
+
+    $[ left $<x> $<y> ]
+
+Snippet escapes are powerful because they can use variables from the surrounding scope, but they come with corresponding limitations: most importantly, you can't run (`!`) them.
+
 
 # Code Generation
 
