@@ -240,7 +240,7 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
   const keywords = ["var", "def", "fun", "extern", "if"];
   const brackets = "<>[]()";
   const punctuation = [":", "->"];
-  const operators = ["+", "-", "*", "/"];
+  const operators = ["+", "-", "*", "/", "=", "!"];
   const builtins = ["render", "vtx", "frag"];
   const quote_begin = /[A-Za-z0-9]+\</;
   const macro = /@[A-Za-z][A-Za-z0-9]*[\?\!]*/;
@@ -264,6 +264,13 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
       for (let builtin of builtins) {
         if (stream.match(builtin)) {
           return "builtin";
+        }
+      }
+
+      // Line noise, basically.
+      for (let symbol of punctuation) {
+        if (stream.match(symbol)) {
+          return "operator";
         }
       }
 
