@@ -14,13 +14,15 @@ var flag2 = <1>;
 # `s` is true, then this runs an `if`
 # immediately. If it's false, then we
 # insert an `if` into the code.
-var spif? = fun s:<Int> c:<Int> t:<Int> f:<Int> ->
+var spif? = fun s:<Int> c:<Int> t:$<Int> f:$<Int> ->
   if !s  # Choose whether to specialize.
     (if !c t f)  # Specialized.
     < if [c] [t] [f] >;  # Unspecialized.
 
 # Here's the program we're generating.
 <
-  @spif? [flag1] 1 2 3 +
-  @spif? [flag2] 1 2 3
+  var x = 35;
+  var y = 7;
+  @spif? [flag1] 1 x y +
+  @spif? [flag2] 0 x y
 >
