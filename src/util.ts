@@ -51,6 +51,14 @@ export function cons<T> (x: T, xs: T[]): T[] {
   return [x].concat(xs);
 }
 
+export function zip<A, B> (a: A[], b: B[]): [A, B][] {
+  let out: [A, B][] = [];
+  for (let i = 0; i < a.length && i < b.length; ++i) {
+    out.push([a[i], b[i]]);
+  }
+  return out;
+}
+
 export type Gen <T> = (_:T) => T;
 
 // A fixed-point combinator.

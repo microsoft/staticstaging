@@ -4,7 +4,7 @@ import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   type_visit } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
-  stack_put } from './util';
+  stack_put, zip } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 
 /**
@@ -389,13 +389,37 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         throw `type error: macro ${tree.macro} not defined`;
       }
 
+      // Get the function type (we need its arguments).
+      let fun_type: FunType;
+      if (macro_type instanceof FunType) {
+        fun_type = macro_type;
+      } else if (macro_type instanceof QuantifiedType &&
+                 macro_type.inner instanceof FunType) {
+        fun_type = macro_type.inner as FunType;
+      } else {
+        throw "type error: macro must be a function";
+      }
+
       // Check arguments in a fresh, quoted environment based at the stage
       // where the macro was defined.
       let arg_env = te_push(te_pop(env, count), {}, "");
       let arg_types: Type[] = [];
-      for (let arg of tree.args) {
-        let [t,] = check(arg, arg_env);
-        let code_t = new CodeType(t, "", null);
+      for (let [param, arg] of zip(fun_type.params, tree.args)) {
+        // Check whether the parameter is a snippet. This decides whether we
+        // check this as a snippet quote (open code) or ordinary quote (closed
+        // code).
+        let as_snippet = false;
+        if (param instanceof CodeType) {
+          if (param.snippet_var) {
+            as_snippet = true;
+          }
+        } else {
+          throw "type error: macro arguments must have code types";
+        }
+
+        // Check the argument and record its code type.
+        let [t,] = check(arg, as_snippet ? env : arg_env);
+        let code_t = new CodeType(t, "", as_snippet ? tree.id : null);
         arg_types.push(code_t);
       }
 
