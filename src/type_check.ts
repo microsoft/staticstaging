@@ -388,9 +388,6 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (macro_type === undefined) {
         throw `type error: macro ${tree.macro} not defined`;
       }
-      if (!(macro_type instanceof FunType)) {
-        throw "type error: macros must have function type";
-      }
 
       // Check arguments in a fresh, quoted environment based at the stage
       // where the macro was defined.
