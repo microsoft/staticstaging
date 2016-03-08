@@ -186,7 +186,7 @@ export function execute(config: Config, jscode: string,
       if (res.persist.length) {
         throw "error: code has persists";
       } else {
-        executed(res.prog);
+        executed(_runtime(config) + res.prog);
       }
     } else {
       throw "error: program did not produce code";
