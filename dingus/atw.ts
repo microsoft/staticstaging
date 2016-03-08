@@ -237,12 +237,13 @@ function encode_hash(obj: { [key: string]: string }): string {
 
 // CodeMirror syntax mode.
 CodeMirror.defineMode("alltheworld", function (config, pconfig) {
-  const keywords = ["var", "def", "fun", "extern"];
+  const keywords = ["var", "def", "fun", "extern", "if"];
   const brackets = "<>[]()";
   const punctuation = [":", "->"];
   const operators = ["+", "-", "*", "/"];
   const builtins = ["render", "vtx", "frag"];
   const quote_begin = /[A-Za-z0-9]+\</;
+  const macro = /@[A-Za-z][A-Za-z0-9]*[\?\!]*/;
 
   return {
     startState() {
@@ -252,16 +253,23 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
     },
 
     token(stream, state) {
+      // Language keywords.
       for (let keyword of keywords) {
         if (stream.match(keyword)) {
           return "keyword";
         }
       }
 
+      // Built-in functions.
       for (let builtin of builtins) {
         if (stream.match(builtin)) {
           return "builtin";
         }
+      }
+
+      // Macro invocations.
+      if (stream.match(macro)) {
+        return "builtin";
       }
 
       // Annotated quotes.
