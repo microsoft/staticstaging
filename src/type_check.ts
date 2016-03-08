@@ -455,9 +455,9 @@ function check_call(target: Type, args: Type[]): Type | string {
     return "type error: no overloaded type applies";
 
   // Polymorphic functions.
-  } else if (target instanceof QuantifiedType &&
-             target.inner instanceof FunType) {
-    // Special case for unifying with snippet arguments.
+  } else if (target instanceof QuantifiedType) {
+    // Special case for unifying polymorphic snippet function types with
+    // snippet arguments.
     let snippet: number = null;
     for (let arg of args) {
       if (arg instanceof CodeType && arg.snippet) {
@@ -466,8 +466,7 @@ function check_call(target: Type, args: Type[]): Type | string {
       }
     }
     if (snippet !== null) {
-      console.log("TODO", snippet);
-      return "type error: TODO";
+      return check_call(apply_quantified_type(target, snippet), args);
     } else {
       return "type error: unsupported polymorphism";
     }
