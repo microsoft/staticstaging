@@ -321,7 +321,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let [ret_type,] = check(tree.body, body_env);
 
       // Construct the function type.
-      let fun_type = new FunType(param_types, ret_type);
+      let fun_type = rectify_fun_type(new FunType(param_types, ret_type));
       return [fun_type, env];
     },
 
@@ -500,6 +500,46 @@ function compatible(ltype: Type, rtype: Type): boolean {
   return false;
 }
 
+/**
+ * To make these polymorphic snippet code types possible to write down, we
+ * make any such type variables in function signatures "agree." This, of
+ * course, means that it's impossible to write a function that uses two
+ * different type variables for snippet code types.
+ */
+function rectify_fun_type(type: FunType): Type {
+  let tvar: TypeVariable = null;
+
+  // Rectify the parameters.
+  for (let param of type.params) {
+    if (param instanceof CodeType && param.snippet_var) {
+      if (tvar === null) {
+        // Take the first variable found.
+        tvar = param.snippet_var;
+      } else {
+        // Apply the same variable here.
+        param.snippet_var = tvar;
+      }
+    }
+  }
+
+  // Do the same for the return value.
+  let ret = type.ret;
+  if (ret instanceof CodeType && ret.snippet_var) {
+    if (tvar === null) {
+      tvar = ret.snippet_var;
+    } else {
+      ret.snippet_var = tvar;
+    }
+  }
+
+  // If there's polymorphism, wrap this in a universal quantifier type.
+  if (tvar) {
+    return new QuantifiedType(tvar, type);
+  } else {
+    return type;
+  }
+}
+
 // Get the Type denoted by the type syntax tree.
 let get_type_rules: TypeASTVisit<TypeMap, Type> = {
   visit_primitive(tree: ast.PrimitiveTypeNode, types: TypeMap) {
@@ -522,40 +562,8 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     }
     let ret = get_type(tree.ret, types);
 
-    // To make these polymorphic snippet code types possible to write down, we
-    // make any such type variables in function signatures "agree." This, of
-    // course, means that it's impossible to write a function that uses two
-    // different type variables for snippet code types.
-    let tvar: TypeVariable = null;
-    for (let param of params) {
-      if (param instanceof CodeType && param.snippet_var) {
-        if (tvar === null) {
-          // Take the first variable found.
-          tvar = param.snippet_var;
-        } else {
-          // Apply the same variable here.
-          param.snippet_var = tvar;
-        }
-      }
-    }
-    // Do the same for the return value.
-    if (ret instanceof CodeType && ret.snippet_var) {
-      if (tvar === null) {
-        tvar = ret.snippet_var;
-      } else {
-        ret.snippet_var = tvar;
-      }
-    }
-
     // Construct the function type.
-    let out: Type = new FunType(params, ret);
-
-    // If there's polymorphism, wrap this in a universal quantifier type.
-    if (tvar) {
-      out = new QuantifiedType(tvar, out);
-    }
-
-    return out;
+    return rectify_fun_type(new FunType(params, ret));
   },
 
   visit_code(tree: ast.CodeTypeNode, types: TypeMap) {
