@@ -323,7 +323,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         param_types.push(ptype);
         body_env_hd[param.name] = ptype;
       }
-      rectify_fun_params(param_types);
+      let tvar = rectify_fun_params(param_types);
 
       // Check the body and get the return type.
       let body_env: TypeEnv = merge(env, {
@@ -332,7 +332,10 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let [ret_type,] = check(tree.body, body_env);
 
       // Construct the function type.
-      let fun_type = new FunType(param_types, ret_type);
+      let fun_type: Type = new FunType(param_types, ret_type);
+      if (tvar) {
+        fun_type = new QuantifiedType(tvar, fun_type);
+      }
       return [fun_type, env];
     },
 
