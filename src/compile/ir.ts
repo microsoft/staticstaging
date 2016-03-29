@@ -47,7 +47,11 @@ export interface Prog extends Scope {
 
   // Subsets of the overall escape lists for which this quote is the "owner"
   // of the escape. The owner is the quote at the level that matches the
-  // escape's level count---the point at which the expression is evaluated.
+  // escape's level count: the quote in whose *containing scope* the escape's
+  // expression is evaluated. These are necessary when compiling escapes
+  // because the owning quote is "responsible" for emitting the code for the
+  // escapes it owns. For example, the owner performs splicing, not the quote
+  // that directly *contains* the splice escape.
   owned_persist: Escape[],
   owned_splice: Escape[],
   owned_snippet: Escape[],
