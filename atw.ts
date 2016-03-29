@@ -56,54 +56,70 @@ function run(filename: string, source: string, webgl: boolean,
 {
   let success = true;
 
-  // Configure the driver.
-  let config: driver.Config = {
-    webgl: webgl,
-    generate: generate,
+  try {
 
-    log: log,
-    error (e: string) {
-      if (test) {
-        success = check_output(filename, source, e);
-      } else {
-        console.error(e);
-        success = false;
-      }
-    },
+    // Configure the driver.
+    let config: driver.Config = {
+      webgl: webgl,
+      generate: generate,
 
-    parsed: (_ => void 0),
-    typed: (_ => void 0),
-  };
-
-  // Run the driver.
-  driver.frontend(config, source, filename, function (tree, types) {
-    if (compile) {
-      // Compiler.
-      driver.compile(config, tree, types, function (code) {
-        if (execute) {
-          driver.execute(config, code, function (res) {
-            if (test) {
-              success = check_output(filename, source, res);
-            } else {
-              console.log(res);
-            }
-          });
-        } else {
-          console.log(code);
-        }
-      });
-
-    } else {
-      // Interpreter.
-      driver.interpret(config, tree, types, function (res) {
+      log: log,
+      error (e: string) {
         if (test) {
-          success = check_output(filename, source, res);
+          success = check_output(filename, source, e);
         } else {
-          console.log(res);
+          console.error(e);
+          success = false;
         }
-      });
+      },
+
+      parsed: (_ => void 0),
+      typed: (_ => void 0),
+    };
+
+    // Run the driver.
+    driver.frontend(config, source, filename, function (tree, types) {
+      if (compile) {
+        // Compiler.
+        driver.compile(config, tree, types, function (code) {
+          if (execute) {
+            driver.execute(config, code, function (res) {
+              if (test) {
+                success = check_output(filename, source, res);
+              } else {
+                console.log(res);
+              }
+            });
+          } else {
+            console.log(code);
+          }
+        });
+
+      } else {
+        // Interpreter.
+        driver.interpret(config, tree, types, function (res) {
+          if (test) {
+            success = check_output(filename, source, res);
+          } else {
+            console.log(res);
+          }
+        });
+      }
+    });
+
+  } catch (e) {
+
+    if (test) {
+      // Avoid crashing the test harness.
+      let name = path.basename(filename, '.atw');
+      console.log(`${name} ✘: unhandled error`);
+      console.error(e.stack);
+      success = false;
+    } else {
+      throw e;
     }
-  });
+
+  }
 
   return success;
 }
