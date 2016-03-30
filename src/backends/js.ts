@@ -342,8 +342,7 @@ function emit_quote_func(emitter: Emitter, prog: Prog):
     args.push(value);
   }
 
-  let prog_expr = emit_quote_prog_expr(emitter, prog.id);
-  return _emit_closure(prog_expr, args);
+  return _emit_closure(progsym(prog.id), args);
 }
 
 // Generate code for a splice escape. This first generates the code to
@@ -370,27 +369,6 @@ function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
   return `splice(${code}, ${esc.id}, ${paren(esc_expr)}, ${eval_quotes})`;
 }
 
-// Emit the expression that gets the appropriate program (i.e., code pointer)
-// for a quote expression. If this program has no variants, then this is a
-// single variable reference. Otherwise, it looks up the correct variant in
-// the appropriate table.
-// TODO delete
-function emit_quote_prog_expr(emitter: Emitter, scopeid: number): string {
-  if (emitter.ir.presplice_variants[scopeid] === null) {
-    // No snippets to pre-splice.
-    return progsym(scopeid);
-  } else {
-    // Emit code for each snippet escape to generate the name of the variant
-    // to select.
-    let id_exprs: string[] = [];
-    for (let esc of emitter.ir.progs[scopeid].owned_snippet) {
-      id_exprs.push(paren(emit(emitter, esc.body)));
-    }
-    let name_expr = `[${id_exprs.join(", ")}].join("_")`;
-    return `${vartablesym(scopeid)}[${name_expr}]`;
-  }
-}
-
 // Emit a quote as a full code value (which supports splicing).
 function emit_quote_eval(emitter: Emitter, prog: Prog): string
 {
@@ -406,9 +384,8 @@ function emit_quote_eval(emitter: Emitter, prog: Prog): string
   }
 
   // Create the initial program.
-  let prog_expr = emit_quote_prog_expr(emitter, prog.id);
   let pers_list = `{ ${persist_pairs.join(", ")} }`;
-  let code_expr = `{ prog: ${prog_expr}, persist: ${pers_list} }`;
+  let code_expr = `{ prog: ${progsym(prog.id)}, persist: ${pers_list} }`;
 
   // Compile each spliced escape expression and call our runtime to splice it
   // into the code value.
@@ -615,22 +592,12 @@ export function emit_prog(emitter: Emitter, prog: Prog): string
 
   // Multiple variants. Compile each.
   let out = "";
-  let table: { [name: string]: string } = {};
   for (let variant of variants) {
     let varid = variant_id(variant.config);
     let name = progsym(prog.id) + "_" + varid;
     out += emit_prog_decl(emitter, variant.prog, name) + "\n";
-    table[varid] = name;
   }
 
-  // Emit a table mapping names to programs.
-  let table_str = "{\n";
-  for (let key in table) {
-    let value = table[key];
-    table_str += `  ${emit_string(key)}: ${value},\n`;
-  }
-  table_str += "}";
-  out += emit_var(vartablesym(prog.id), table_str, false);
   return out;
 }
 
