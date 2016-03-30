@@ -332,17 +332,17 @@ function emit_func(emitter: Emitter, scopeid: number):
 }
 
 // Emit a quote as a function closure (i.e., for an f<> quote).
-function emit_quote_func(emitter: Emitter, scopeid: number):
+function emit_quote_func(emitter: Emitter, prog: Prog):
   string
 {
-  let args = _free_vars(emitter.ir.progs[scopeid]);
+  let args = _free_vars(prog);
 
   // Compile each persist so we can pass it in the environment.
-  for (let [key, value] of _persists(emitter, emitter.ir.progs[scopeid])) {
+  for (let [key, value] of _persists(emitter, prog)) {
     args.push(value);
   }
 
-  let prog_expr = emit_quote_prog_expr(emitter, scopeid);
+  let prog_expr = emit_quote_prog_expr(emitter, prog.id);
   return _emit_closure(prog_expr, args);
 }
 
@@ -391,28 +391,27 @@ function emit_quote_prog_expr(emitter: Emitter, scopeid: number): string {
 }
 
 // Emit a quote as a full code value (which supports splicing).
-function emit_quote_eval(emitter: Emitter, scopeid: number):
-  string
+function emit_quote_eval(emitter: Emitter, prog: Prog): string
 {
   // Compile each persist in this quote and pack them into a dictionary.
   let persist_pairs: string[] = [];
-  for (let [key, value] of _persists(emitter, emitter.ir.progs[scopeid])) {
+  for (let [key, value] of _persists(emitter, prog)) {
     persist_pairs.push(`${key}: ${value}`);
   }
 
   // Include free variables as persists.
-  for (let fv of emitter.ir.progs[scopeid].free) {
+  for (let fv of prog.free) {
     persist_pairs.push(varsym(fv) + ": " + varsym(fv));
   }
 
   // Create the initial program.
-  let prog_expr = emit_quote_prog_expr(emitter, scopeid);
+  let prog_expr = emit_quote_prog_expr(emitter, prog.id);
   let pers_list = `{ ${persist_pairs.join(", ")} }`;
   let code_expr = `{ prog: ${prog_expr}, persist: ${pers_list} }`;
 
   // Compile each spliced escape expression and call our runtime to splice it
   // into the code value.
-  for (let esc of emitter.ir.progs[scopeid].owned_splice) {
+  for (let esc of prog.owned_splice) {
     code_expr = emit_splice(emitter, esc, code_expr);
   }
 
@@ -428,11 +427,11 @@ function emit_quote(emitter: Emitter, scopeid: number): string
 
   } else if (emitter.ir.progs[scopeid].annotation === "f") {
     // A function quote.
-    return emit_quote_func(emitter, scopeid);
+    return emit_quote_func(emitter, emitter.ir.progs[scopeid]);
 
   } else {
     // An eval (string) quote.
-    return emit_quote_eval(emitter, scopeid);
+    return emit_quote_eval(emitter, emitter.ir.progs[scopeid]);
   }
 }
 
