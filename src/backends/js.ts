@@ -593,7 +593,7 @@ export function emit_prog(emitter: Emitter, prog: Prog): string
   // Multiple variants. Compile each.
   let out = "";
   for (let variant of variants) {
-    let name = variantsym(prog);
+    let name = variantsym(variant);
     out += emit_prog_decl(emitter, variant, name) + "\n";
   }
 
