@@ -1,7 +1,7 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
   paren, splicesym, persistsym, procsym, progsym, vartablesym, variant_id } from './emitutil';
-import { Emitter, emit, emit_scope, emit_main, emitter_with_subs } from './emitter';
+import { Emitter, emit, emit_scope, emit_main } from './emitter';
 import * as ast from '../ast';
 import { ast_visit } from '../visit';
 import { CompilerIR, Scope, Proc, Prog, Escape, nearest_quote } from '../compile/ir';
@@ -600,7 +600,6 @@ export function emit_prog(emitter: Emitter, prog: Prog): string
 export function codegen(ir: CompilerIR): string {
   let emitter: Emitter = {
     ir: ir,
-    substitutions: [],
     compile: compile,
     emit_proc: emit_proc,
     emit_prog: emit_prog,

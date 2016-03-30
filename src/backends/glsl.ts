@@ -208,7 +208,6 @@ export function compile_prog(ir: CompilerIR,
 {
   let emitter: Emitter = {
     ir: ir,
-    substitutions: [],
     compile: compile,
     emit_proc: null,
     emit_prog: null,

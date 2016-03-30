@@ -276,7 +276,6 @@ export function codegen(ir: CompilerIR): string {
 
   let emitter: GLEmitter = {
     ir: ir,
-    substitutions: [],
     compile: compile,
     emit_proc: js.emit_proc,
     emit_prog: emit_prog,

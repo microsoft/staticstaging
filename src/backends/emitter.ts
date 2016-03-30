@@ -10,11 +10,6 @@ export interface Emitter {
   // The program to compile.
   ir: CompilerIR,
 
-  // Tree substitutions to use during code generation. This is a map from
-  // expression node IDs to SyntaxNodes representing the new, substituted
-  // code.
-  substitutions: SyntaxNode[],
-
   // The core code-emission function for expressions.
   compile: Compile,
 
@@ -49,25 +44,5 @@ export function emit_scope(emitter: Emitter, scope: number) {
 
 // Generate code for an expression.
 export function emit(emitter: Emitter, tree: SyntaxNode) {
-  let sub = emitter.substitutions[tree.id];
-  if (sub !== undefined) {
-    tree = sub;
-  }
   return emitter.compile(tree, emitter);
-}
-
-// Add some substitutions to an Emitter, returning a new Emitter.
-export function emitter_with_subs(emitter: Emitter, subs: SyntaxNode[]):
-  Emitter
-{
-  // Overlay the `subs` map on the existing substitutions.
-  let combined_subs = emitter.substitutions.slice(0);
-  for (let i = 0; i < subs.length; ++i) {
-    if (subs[i] !== undefined) {
-      combined_subs[i] = subs[i];
-    }
-  }
-
-  // Construct a new Emitter.
-  return assign({}, emitter, { substitutions: combined_subs }) as Emitter;
 }
