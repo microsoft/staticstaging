@@ -62,8 +62,8 @@ export interface Prog extends Scope {
 }
 
 /**
- * A `Variant` reflects a pre-spliced version of a quote that contains snippet
- * escapes.
+ * A `Variant` represents a pre-spliced version of a quote that contains
+ * snippet escapes.
  */
 export interface Variant {
   /**

@@ -1,6 +1,7 @@
 import { SyntaxNode } from '../ast';
 import { hd, tl, cons } from '../util';
 import { Prog, Variant } from './ir';
+import { ast_translate_rules, ast_visit } from '../visit';
 
 /**
  * Given a list of N sets of values, generate the cross product of these sets.
@@ -28,6 +29,20 @@ function cross_product<T> (sets: T[][]): T[][] {
     }
   }
   return out;
+}
+
+/**
+ * Replace specified subtrees (selected by ID) in an AST with new subtrees.
+ */
+function substitute(tree: SyntaxNode, subs: SyntaxNode[]): SyntaxNode {
+  let rules = ast_translate_rules(fself);
+  function fself(tree: SyntaxNode): SyntaxNode {
+    if (subs[tree.id]) {
+      return subs[tree.id];
+    }
+    return ast_visit(rules, tree, null);
+  }
+  return fself(tree);
 }
 
 /**
@@ -60,17 +75,21 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
   }
 
   // The configurations are lists of resolutions (i.e., quote IDs) for each
-  // snippet escape in a program. We now format these as ID -> SyntaxNode
-  // maps, called `Variant`s.
+  // snippet escape in a program. Next, we use these mappings to create a new
+  // syntax tree that makes these replacements, substituting old escape nodes
+  // for new subtrees from their selected quotes.
   let out: Variant[] = [];
   for (let config of cross_product(options)) {
+    // Get a map from old (escape) IDs to new (quote body) trees.
     let substitutions: SyntaxNode[] = [];
-
     let i = 0;
     for (let esc of prog.owned_snippet) {
       substitutions[esc.id] = progs[config[i]].body;
       ++i;
     }
+
+    // Regenerate the program using these substitutions.
+    let new_body = substitute(prog.body, substitutions);
 
     out.push({ config, substitutions });
   }
