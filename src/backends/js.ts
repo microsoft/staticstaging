@@ -1,6 +1,6 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
-  paren, splicesym, persistsym, procsym, progsym, vartablesym, variant_id } from './emitutil';
+  paren, splicesym, persistsym, procsym, progsym, variantsym } from './emitutil';
 import { Emitter, emit, emit_scope, emit_main } from './emitter';
 import * as ast from '../ast';
 import { ast_visit } from '../visit';
@@ -342,7 +342,7 @@ function emit_quote_func(emitter: Emitter, prog: Prog):
     args.push(value);
   }
 
-  return _emit_closure(progsym(prog.id), args);
+  return _emit_closure(variantsym(prog), args);
 }
 
 // Generate code for a splice escape. This first generates the code to
@@ -385,7 +385,7 @@ function emit_quote_eval(emitter: Emitter, prog: Prog): string
 
   // Create the initial program.
   let pers_list = `{ ${persist_pairs.join(", ")} }`;
-  let code_expr = `{ prog: ${progsym(prog.id)}, persist: ${pers_list} }`;
+  let code_expr = `{ prog: ${variantsym(prog)}, persist: ${pers_list} }`;
 
   // Compile each spliced escape expression and call our runtime to splice it
   // into the code value.
@@ -593,8 +593,7 @@ export function emit_prog(emitter: Emitter, prog: Prog): string
   // Multiple variants. Compile each.
   let out = "";
   for (let variant of variants) {
-    let varid = variant_id(variant.config);
-    let name = progsym(prog.id) + "_" + varid;
+    let name = variantsym(prog);
     out += emit_prog_decl(emitter, variant, name) + "\n";
   }
 

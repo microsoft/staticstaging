@@ -2,6 +2,7 @@ import { Emitter, emit } from './emitter';
 import * as ast from '../ast';
 import { Type } from '../type';
 import { complete_visit, ast_visit } from '../visit';
+import { Prog, Variant } from '../compile/ir';
 
 // Utilities used by the various code-generation backends.
 
@@ -36,15 +37,24 @@ export function persistsym(escid: number) {
   return "p" + escid;
 }
 
-// Get a variable name for the *variance table* for a pre-spliced program.
-export function vartablesym(progid: number) {
-  return "vt" + progid;
+/**
+ * Dynamic type test for `Variant` as a subtype of `Prog`.
+ */
+function _is_variant(prog: Prog): prog is Variant {
+  return (prog as Variant).config !== undefined;
 }
 
-// Given a presplicing variant (an ID -> ID), generate a string that uniquely
-// identifies the variant.
-export function variant_id(config: number[]) {
-  return config.join("_");
+/**
+ * Get the symbol for a `Prog` or `Variant` (a pre-spliced version of a
+ * `Prog`).
+ */
+export function variantsym(prog: Prog) {
+  let base = progsym(prog.id);
+  if (_is_variant(prog)) {
+    return base + "_" + prog.config.join("_");
+  } else {
+    return base;
+  }
 }
 
 // Parenthesize an expression.
