@@ -61,9 +61,25 @@ export interface Prog extends Scope {
   snippet_escape: number,
 }
 
-// A Variant consists of a list of IDs that uniquely identifies the variant
-// and an ID-to-code map that can be used to resolve the variant.
-export type Variant = [number[], SyntaxNode[]];
+/**
+ * A `Variant` reflects a pre-spliced version of a quote that contains snippet
+ * escapes.
+ */
+export interface Variant {
+  /**
+   * The vector of IDs that uniquely identify the variant. Specifically, this
+   * is the list of snippet-quote IDs that have been chosen for each
+   * snippet-escape in the program, in order.
+   */
+  config: number[],
+
+  /**
+   * A map from old (escape) node IDs to new node IDs. This indicates the
+   * substitutions that, when applied to the original quote's contents,
+   * compose the specialized variant.
+   */
+  substitutions: SyntaxNode[],
+}
 
 // The mid-level IR structure.
 export interface CompilerIR {

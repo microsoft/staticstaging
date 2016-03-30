@@ -72,7 +72,7 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
       ++i;
     }
 
-    out.push([config, substitutions]);
+    out.push({ config, substitutions });
   }
   return out;
 }
