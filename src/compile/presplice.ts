@@ -1,5 +1,5 @@
 import { SyntaxNode } from '../ast';
-import { hd, tl, cons, merge } from '../util';
+import { hd, tl, cons, assign } from '../util';
 import { Prog, Variant } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
 
@@ -93,8 +93,8 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
 
     // Compose a new Variant object (which inherits from Prog) using this
     // body.
-    let variant: Variant = merge(prog as Variant,
-        { body: new_body, config });
+    let variant: Variant = assign({} as Variant, prog);
+    variant = assign(variant, { body: new_body, config });
     out.push(variant);
   }
   return out;
