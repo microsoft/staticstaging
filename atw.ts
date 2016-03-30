@@ -114,7 +114,7 @@ function run(filename: string, source: string, webgl: boolean,
       // Avoid crashing the test harness.
       let name = path.basename(filename, '.atw');
       console.log(`${name} ✘: unhandled error`);
-      console.error(e.stack);
+      console.error(e.stack || e);
       success = false;
     } else {
       throw e;
