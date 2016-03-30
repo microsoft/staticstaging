@@ -62,21 +62,16 @@ export interface Prog extends Scope {
 }
 
 /**
- * A `Variant` represents a pre-spliced version of a quote that contains
- * snippet escapes.
+ * A `Variant` represents a pre-spliced version of a quote with snippet
+ * escapes.
  */
-export interface Variant {
+export interface Variant extends Prog {
   /**
    * The vector of IDs that uniquely identify the variant. Specifically, this
    * is the list of snippet-quote IDs that have been chosen for each
    * snippet-escape in the program, in order.
    */
   config: number[],
-
-  /**
-   * A modified program containing the substituted code and new metadata.
-   */
-  prog: Prog,
 }
 
 // The mid-level IR structure.
@@ -101,8 +96,11 @@ export interface CompilerIR {
   // A mapping from every AST node ID to the containing scope ID.
   containers: number[],
 
-  // For presplicing, a set of variants (escape ID -> code maps) for each
-  // program that has snippet escapes.
+  /**
+   * For pre-splicing, a set of variants for each `Prog` that has snippet
+   * escapes. Programs with no snippet escapes have a `null` value in this
+   * map.
+   */
   presplice_variants: Variant[][],
 }
 

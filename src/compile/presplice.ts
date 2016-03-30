@@ -91,9 +91,11 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
     // Regenerate the program using these substitutions.
     let new_body = substitute(prog.body, substitutions);
 
-    // Compose a new Prog object using this body.
-    let new_prog = merge(prog, { body: new_body });
-    out.push({ config, prog: new_prog });
+    // Compose a new Variant object (which inherits from Prog) using this
+    // body.
+    let variant: Variant = merge(prog as Variant,
+        { body: new_body, config });
+    out.push(variant);
   }
   return out;
 }

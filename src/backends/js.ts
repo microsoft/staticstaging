@@ -438,7 +438,7 @@ function emit_quote(emitter: Emitter, scopeid: number): string
     for (let variant of variants) {
       let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
       let condition = cond_parts.join(" && ");
-      let progval = emit_quote_expr(emitter, variant.prog);
+      let progval = emit_quote_expr(emitter, variant);
       body += `if (${condition}) return ${progval};\n`;
     }
     body += `throw "unknown configuration";`;
@@ -595,7 +595,7 @@ export function emit_prog(emitter: Emitter, prog: Prog): string
   for (let variant of variants) {
     let varid = variant_id(variant.config);
     let name = progsym(prog.id) + "_" + varid;
-    out += emit_prog_decl(emitter, variant.prog, name) + "\n";
+    out += emit_prog_decl(emitter, variant, name) + "\n";
   }
 
   return out;
