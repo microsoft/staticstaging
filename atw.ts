@@ -28,7 +28,8 @@ function check_output(filename: string, source: string, result: string):
 
   let [,expected] = source.split('# -> ');
   if (expected === undefined) {
-    throw `error: no expected result in test ${name}`;
+    console.log(`${name} ✘: ${result} (no expected result found)`);
+    return false;
   }
   expected = expected.trim();
   result = result.trim();
