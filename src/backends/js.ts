@@ -418,21 +418,38 @@ function emit_quote_eval(emitter: Emitter, prog: Prog): string
   return code_expr;
 }
 
-// Emit a quote. The kind of JavaScript value depends on the annotation.
-function emit_quote(emitter: Emitter, scopeid: number): string
-{
-  if (emitter.ir.progs[scopeid].snippet_escape !== null) {
-    // A snippet quote. Just produce the ID.
-    return scopeid.toString();
-
-  } else if (emitter.ir.progs[scopeid].annotation === "f") {
+/**
+ * Emit the code reference expression for a quote expression.
+ *
+ * The quote must *not* be snippet (which should be pre-spliced). The type of
+ * the JavaScript value depends on the annotation.
+ */
+function emit_quote_expr(emitter: Emitter, prog: Prog) {
+  if (prog.annotation === "f") {
     // A function quote.
-    return emit_quote_func(emitter, emitter.ir.progs[scopeid]);
-
+    return emit_quote_func(emitter, prog);
   } else {
     // An eval (string) quote.
-    return emit_quote_eval(emitter, emitter.ir.progs[scopeid]);
+    return emit_quote_eval(emitter, prog);
   }
+}
+
+/**
+ * Emit code for a quote expression.
+ *
+ * The quote can be a pre-spliced snippet or an ordinary program value.
+ */
+function emit_quote(emitter: Emitter, scopeid: number): string
+{
+  // For snippet quotes, just produce the ID. This is used by the pre-splicing
+  // optimization to look up the corresponding pre-spliced program.
+  if (emitter.ir.progs[scopeid].snippet_escape !== null) {
+    return scopeid.toString();
+  }
+
+  // A "real" program value.
+  let prog = emitter.ir.progs[scopeid];
+  return emit_quote_expr(emitter, prog);
 }
 
 
