@@ -89,8 +89,19 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
     let substitutions: SyntaxNode[] = [];
     let i = 0;
     for (let esc of prog.owned_snippet) {
-      substitutions[esc.id] = progs[config[i]].body;
+      let snippet = progs[config[i]];
       ++i;
+
+      // Save the code substitution.
+      substitutions[esc.id] = snippet.body;
+
+      // Accumulate the metadata from the spliced code.
+      variant.persist = variant.persist.concat(snippet.persist);
+      variant.splice = variant.splice.concat(snippet.splice);
+      variant.owned_persist = variant.owned_persist.concat(snippet.owned_persist);
+      variant.owned_splice = variant.owned_splice.concat(snippet.owned_splice);
+      variant.free = variant.free.concat(snippet.free);
+      variant.bound = variant.bound.concat(snippet.bound);
     }
 
     // Generate the program body using these substitutions.
