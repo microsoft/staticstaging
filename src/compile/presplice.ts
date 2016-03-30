@@ -80,7 +80,12 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
   // for new subtrees from their selected quotes.
   let out: Variant[] = [];
   for (let config of cross_product(options)) {
-    // Get a map from old (escape) IDs to new (quote body) trees.
+    // Create a new Variant object (which inherits from Prog).
+    let variant = assign({ config }, prog) as Variant;
+
+    // Get a map from old (escape) IDs to new (quote body) trees. Also,
+    // accumulate each selected quote's splices, persists, free variables, and
+    // bound variables.
     let substitutions: SyntaxNode[] = [];
     let i = 0;
     for (let esc of prog.owned_snippet) {
@@ -88,13 +93,8 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
       ++i;
     }
 
-    // Regenerate the program using these substitutions.
-    let new_body = substitute(prog.body, substitutions);
-
-    // Compose a new Variant object (which inherits from Prog) using this
-    // body.
-    let variant: Variant = assign({} as Variant, prog);
-    variant = assign(variant, { body: new_body, config });
+    // Generate the program body using these substitutions.
+    variant.body = substitute(prog.body, substitutions);
     out.push(variant);
   }
   return out;
