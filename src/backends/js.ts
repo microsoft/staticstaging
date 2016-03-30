@@ -374,6 +374,7 @@ function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
 // for a quote expression. If this program has no variants, then this is a
 // single variable reference. Otherwise, it looks up the correct variant in
 // the appropriate table.
+// TODO delete
 function emit_quote_prog_expr(emitter: Emitter, scopeid: number): string {
   if (emitter.ir.presplice_variants[scopeid] === null) {
     // No snippets to pre-splice.
@@ -421,7 +422,8 @@ function emit_quote_eval(emitter: Emitter, prog: Prog): string
 /**
  * Emit the code reference expression for a quote expression.
  *
- * The quote must *not* be snippet (which should be pre-spliced). The type of
+ * The quote must *not* be snippet (which should be pre-spliced). This
+ * generates only a single variant of a pre-spliced quote. The type of
  * the JavaScript value depends on the annotation.
  */
 function emit_quote_expr(emitter: Emitter, prog: Prog) {
@@ -447,9 +449,32 @@ function emit_quote(emitter: Emitter, scopeid: number): string
     return scopeid.toString();
   }
 
-  // A "real" program value.
-  let prog = emitter.ir.progs[scopeid];
-  return emit_quote_expr(emitter, prog);
+  // Check whether this is a pre-spliced quote (i.e., it has variants).
+  let variants = emitter.ir.presplice_variants[scopeid];
+  if (variants === null) {
+    // No snippets to pre-splice.
+    return emit_quote_expr(emitter, emitter.ir.progs[scopeid]);
+
+  } else {
+    // Emit a "switch" construct that chooses the program variant.
+    let body = "";
+    for (let variant of variants) {
+      let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
+      let condition = cond_parts.join(" && ");
+      let progval = emit_quote_expr(emitter, variant.prog);
+      body += `if (${condition}) return ${progval};\n`;
+    }
+    body += `throw "unknown configuration";`;
+    let argnames = variants[0].config.map((id, i) => `a${i}`);
+    let selector = emit_fun(null, argnames, [], body);
+
+    // Invoke the selector switch with expressions for each snippet escape.
+    let id_exprs: string[] = [];
+    for (let esc of emitter.ir.progs[scopeid].owned_snippet) {
+      id_exprs.push(paren(emit(emitter, esc.body)));
+    }
+    return `${selector}(${ id_exprs.join(", ") })`;
+  }
 }
 
 
