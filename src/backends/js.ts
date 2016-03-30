@@ -578,8 +578,7 @@ export function emit_prog(emitter: Emitter, prog: Prog): string
   for (let variant of variants) {
     let varid = variant_id(variant.config);
     let name = progsym(prog.id) + "_" + varid;
-    let subemitter = emitter_with_subs(emitter, variant.substitutions);
-    out += emit_prog_decl(subemitter, prog, name) + "\n";
+    out += emit_prog_decl(emitter, variant.prog, name) + "\n";
     table[varid] = name;
   }
 

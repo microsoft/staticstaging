@@ -1,5 +1,5 @@
 import { SyntaxNode } from '../ast';
-import { hd, tl, cons } from '../util';
+import { hd, tl, cons, merge } from '../util';
 import { Prog, Variant } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
 
@@ -91,7 +91,9 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
     // Regenerate the program using these substitutions.
     let new_body = substitute(prog.body, substitutions);
 
-    out.push({ config, substitutions });
+    // Compose a new Prog object using this body.
+    let new_prog = merge(prog, { body: new_body });
+    out.push({ config, prog: new_prog });
   }
   return out;
 }

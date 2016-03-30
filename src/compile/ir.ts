@@ -74,11 +74,9 @@ export interface Variant {
   config: number[],
 
   /**
-   * A map from old (escape) node IDs to new node IDs. This indicates the
-   * substitutions that, when applied to the original quote's contents,
-   * compose the specialized variant.
+   * A modified program containing the substituted code and new metadata.
    */
-  substitutions: SyntaxNode[],
+  prog: Prog,
 }
 
 // The mid-level IR structure.
