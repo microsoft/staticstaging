@@ -102,6 +102,16 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
       variant.owned_splice = variant.owned_splice.concat(snippet.owned_splice);
       variant.free = variant.free.concat(snippet.free);
       variant.bound = variant.bound.concat(snippet.bound);
+
+      // Adjust ownership. If an escape was previously owned by the snippet,
+      // it is now owned by its splice destination.
+      for (let subescs of [variant.persist, variant.splice]) {
+        for (let subesc of subescs) {
+          if (subesc.prog === snippet.id) {
+            subesc.prog = prog.id;
+          }
+        }
+      }
     }
 
     // Generate the program body using these substitutions.

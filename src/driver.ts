@@ -127,6 +127,7 @@ export function compile(config: Config, tree: SyntaxNode,
   config.log('progs', ir.progs);
   config.log('procs', ir.procs);
   config.log('main', ir.main);
+  config.log('variants', ir.presplice_variants);
 
   // Compile.
   let jscode: string;
