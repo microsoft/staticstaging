@@ -104,3 +104,12 @@ watch:
 		-p 'src/**/*.ts' 'src/*.pegjs' atw.ts -t cli \
 		-p 'src/**/*.ts' 'src/*.pegjs' 'dingus/*.ts' 'dingus/gl.js' \
 			'dingus/examples/*.atw' -t dingus
+
+
+# Lint.
+
+.PHONY: lint
+lint:
+	find src -name '*.ts' | xargs tslint
+	find dingus -name '*.ts' | xargs tslint
+	tslint atw.ts
