@@ -76,8 +76,11 @@ function prog_variant(prog: Prog, config: number[], progs: Prog[]): Prog {
     // it is now owned by its splice destination.
     for (let subescs of [var_prog.persist, var_prog.splice]) {
       for (let subesc of subescs) {
-        if (subesc.prog === snippet.id) {
-          subesc.prog = prog.id;
+        if (subesc.owner === snippet.id) {
+          subesc.owner = prog.id;
+        }
+        if (subesc.container === snippet.id) {
+          subesc.container = prog.id;
         }
       }
     }
@@ -130,10 +133,15 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
       config,
       progs: [],
     };
-    out.push(variant);
 
-    // Copy the current program. We'll mutate it for this variant.
+    // For every snippet escape resolved in this variant, we'll need to
+    // specialize its directly-containing quote.
+    for (let esc of prog.owned_snippet) {
+    }
+
     variant.progs[prog.id] = prog_variant(prog, config, progs);
+
+    out.push(variant);
   }
   return out;
 }

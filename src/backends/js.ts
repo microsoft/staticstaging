@@ -304,7 +304,7 @@ function _persists(emitter: Emitter, prog: Prog): [string, string][] {
   for (let esc of prog.persist) {
     let key = persistsym(esc.id);
     let value: string;
-    if (esc.prog === prog.id) {
+    if (esc.owner === prog.id) {
       // We own this persist. Compute the expression.
       value = paren(emit(emitter, esc.body));
     } else {

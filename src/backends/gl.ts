@@ -287,7 +287,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     if (_attribute_type(type)) {
       // The original value was an attribute. We either compute the value (if
       // we're the owner) or we drag through the decayed value.
-      if (esc.prog === prog.id) {
+      if (esc.owner === prog.id) {
         // We own the escape. (This can only happen at the outermost shader
         // stage for attributes.) Compute the value on the CPU and consume it.
         g.value_expr = prog.body;
@@ -299,7 +299,7 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
         g.from_host = false;
       }
 
-    } else if (esc.prog === prog.id) {
+    } else if (esc.owner === prog.id) {
       // A uniform or varying whose value is produced here.
       g.value_expr = esc.body;
 

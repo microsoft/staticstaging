@@ -37,7 +37,8 @@ export interface Escape {
   id: number;
   body: ExpressionNode;
   count: number;
-  prog: number;  // The quote that *owns* this escape.
+  owner: number;  // The quote that *owns* this escape.
+  container: number;  // The quote that *directly contains* this escape.
 }
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.

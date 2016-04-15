@@ -313,7 +313,8 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
           id: node.id,
           body: node.expr,
           count: node.count,
-          prog: quote_id,
+          owner: quote_id,
+          container: _nearest_quote(containers, progs, node.id),
         };
 
         // Attribute the unique "owner" of this escape.
