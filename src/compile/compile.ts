@@ -68,16 +68,26 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   let [procs, main, progs] = lift(tree, defuse, containers, type_table);
 
   // Find variants for presplicing pass.
-  let variants = presplice_opt ? presplice(progs) : [];
+  let variants: Variant[][];
+  if (presplice_opt) {
+    variants = presplice(progs);
+  } else {
+    variants = [];
+    for (let prog of progs) {
+      if (prog !== undefined) {
+        variants[prog.id] = null;
+      }
+    }
+  }
 
   return {
-    defuse: defuse,
-    procs: procs,
-    progs: progs,
-    main: main,
-    type_table: type_table,
-    externs: externs,
-    containers: containers,
+    defuse,
+    procs,
+    progs,
+    main,
+    type_table,
+    externs,
+    containers,
     presplice_variants: variants,
   };
 }
