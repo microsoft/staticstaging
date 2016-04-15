@@ -442,7 +442,9 @@ function emit_quote(emitter: Emitter, scopeid: number): string
     for (let variant of variants) {
       let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
       let condition = cond_parts.join(" && ");
-      let progval = emit_quote_expr(emitter, variant.progs[variant.progid],
+      let prog_variant = variant.progs[variant.progid] ||
+        specialized_prog(emitter, variant.progid);
+      let progval = emit_quote_expr(emitter, prog_variant,
                                     variantsym(variant));
       body += `if (${condition}) return ${progval};\n`;
     }
