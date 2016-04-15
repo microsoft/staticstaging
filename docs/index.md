@@ -259,6 +259,8 @@ There are two specialized variants of the function for the quote. There's no cod
 
 Pre-splicing is important because it lets you use staging to express *compile-time* metaprogramming in the same way that you can write *run-time* metaprogramming. Snippets and pre-splicing are necessarily more restrictive, but they let you avoid the costs of more general run-time splicing.
 
+On the command line, you can optionally disable the presplicing optimization. Use the `-P` flag (with the ordinary `-c` flag to use the compiler) to see the effect.
+
 ## Macros
 
 Alltheworld has macros.
