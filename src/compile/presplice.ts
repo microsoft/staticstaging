@@ -1,5 +1,5 @@
 import { SyntaxNode } from '../ast';
-import { hd, tl, cons, assign } from '../util';
+import { hd, tl, cons, assign, set_add } from '../util';
 import { Prog, Variant } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
 
@@ -136,10 +136,13 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
 
     // For every snippet escape resolved in this variant, we'll need to
     // specialize its directly-containing quote.
+    let specialized: number[] = [];
     for (let esc of prog.owned_snippet) {
+      specialized = set_add(specialized, esc.container);
     }
-
-    variant.progs[prog.id] = prog_variant(prog, config, progs);
+    for (let id of specialized) {
+      variant.progs[id] = prog_variant(progs[id], config, progs);
+    }
 
     out.push(variant);
   }
