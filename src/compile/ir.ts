@@ -34,10 +34,10 @@ export interface Proc extends Scope {
 };
 
 export interface Escape {
-  id: number,
-  body: ExpressionNode,
-  count: number,
-  prog: number,  // The quote that *owns* this escape.
+  id: number;
+  body: ExpressionNode;
+  count: number;
+  prog: number;  // The quote that *owns* this escape.
 }
 
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
@@ -65,13 +65,23 @@ export interface Prog extends Scope {
  * A `Variant` represents a pre-spliced version of a quote with snippet
  * escapes.
  */
-export interface Variant extends Prog {
+export interface Variant {
+  /**
+   * The ID of the original program from which this variant was generated.
+   */
+  progid: number;
+
   /**
    * The vector of IDs that uniquely identify the variant. Specifically, this
    * is the list of snippet-quote IDs that have been chosen for each
    * snippet-escape in the program, in order.
    */
-  config: number[],
+  config: number[];
+
+  /**
+   * Replacement `Prog` values for any changed programs in this variant.
+   */
+  progs: Prog[];
 }
 
 // The mid-level IR structure.

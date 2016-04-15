@@ -80,8 +80,17 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
   // for new subtrees from their selected quotes.
   let out: Variant[] = [];
   for (let config of cross_product(options)) {
-    // Create a new Variant object (which inherits from Prog).
-    let variant = assign({ config }, prog) as Variant;
+    // Create a new Variant object.
+    let variant: Variant = {
+      progid: prog.id,
+      config,
+      progs: [],
+    };
+    out.push(variant);
+
+    // Copy the current program. We'll mutate it for this variant.
+    let var_prog = assign({}, prog);
+    variant.progs[prog.id] = var_prog;
 
     // Get a map from old (escape) IDs to new (quote body) trees. Also,
     // accumulate each selected quote's splices, persists, free variables, and
@@ -96,16 +105,16 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
       substitutions[esc.id] = snippet.body;
 
       // Accumulate the metadata from the spliced code.
-      variant.persist = variant.persist.concat(snippet.persist);
-      variant.splice = variant.splice.concat(snippet.splice);
-      variant.owned_persist = variant.owned_persist.concat(snippet.owned_persist);
-      variant.owned_splice = variant.owned_splice.concat(snippet.owned_splice);
-      variant.free = variant.free.concat(snippet.free);
-      variant.bound = variant.bound.concat(snippet.bound);
+      var_prog.persist = prog.persist.concat(snippet.persist);
+      var_prog.splice = prog.splice.concat(snippet.splice);
+      var_prog.owned_persist = prog.owned_persist.concat(snippet.owned_persist);
+      var_prog.owned_splice = prog.owned_splice.concat(snippet.owned_splice);
+      var_prog.free = prog.free.concat(snippet.free);
+      var_prog.bound = prog.bound.concat(snippet.bound);
 
       // Adjust ownership. If an escape was previously owned by the snippet,
       // it is now owned by its splice destination.
-      for (let subescs of [variant.persist, variant.splice]) {
+      for (let subescs of [var_prog.persist, var_prog.splice]) {
         for (let subesc of subescs) {
           if (subesc.prog === snippet.id) {
             subesc.prog = prog.id;
@@ -115,8 +124,7 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
     }
 
     // Generate the program body using these substitutions.
-    variant.body = substitute(prog.body, substitutions);
-    out.push(variant);
+    var_prog.body = substitute(prog.body, substitutions);
   }
   return out;
 }

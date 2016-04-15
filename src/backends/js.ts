@@ -332,7 +332,7 @@ function emit_func(emitter: Emitter, scopeid: number):
 }
 
 // Emit a quote as a function closure (i.e., for an f<> quote).
-function emit_quote_func(emitter: Emitter, prog: Prog):
+function emit_quote_func(emitter: Emitter, prog: Prog, name: string):
   string
 {
   let args = _free_vars(prog);
@@ -342,7 +342,7 @@ function emit_quote_func(emitter: Emitter, prog: Prog):
     args.push(value);
   }
 
-  return _emit_closure(variantsym(prog), args);
+  return _emit_closure(name, args);
 }
 
 // Generate code for a splice escape. This first generates the code to
@@ -370,7 +370,8 @@ function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
 }
 
 // Emit a quote as a full code value (which supports splicing).
-function emit_quote_eval(emitter: Emitter, prog: Prog): string
+function emit_quote_eval(emitter: Emitter, prog: Prog, name: string):
+  string
 {
   // Compile each persist in this quote and pack them into a dictionary.
   let persist_pairs: string[] = [];
@@ -385,7 +386,7 @@ function emit_quote_eval(emitter: Emitter, prog: Prog): string
 
   // Create the initial program.
   let pers_list = `{ ${persist_pairs.join(", ")} }`;
-  let code_expr = `{ prog: ${variantsym(prog)}, persist: ${pers_list} }`;
+  let code_expr = `{ prog: ${name}, persist: ${pers_list} }`;
 
   // Compile each spliced escape expression and call our runtime to splice it
   // into the code value.
@@ -402,13 +403,13 @@ function emit_quote_eval(emitter: Emitter, prog: Prog): string
  * This generates only a single variant of a pre-spliced quote. The type of
  * the JavaScript value depends on the annotation.
  */
-function emit_quote_expr(emitter: Emitter, prog: Prog) {
+function emit_quote_expr(emitter: Emitter, prog: Prog, name: string) {
   if (prog.annotation === "f") {
     // A function quote.
-    return emit_quote_func(emitter, prog);
+    return emit_quote_func(emitter, prog, name);
   } else {
     // An eval (string) quote.
-    return emit_quote_eval(emitter, prog);
+    return emit_quote_eval(emitter, prog, name);
   }
 }
 
@@ -429,7 +430,8 @@ function emit_quote(emitter: Emitter, scopeid: number): string
   let variants = emitter.ir.presplice_variants[scopeid];
   if (variants === null) {
     // No snippets to pre-splice.
-    return emit_quote_expr(emitter, emitter.ir.progs[scopeid]);
+    return emit_quote_expr(emitter, emitter.ir.progs[scopeid],
+                           progsym(scopeid));
 
   } else {
     // Emit a "switch" construct that chooses the program variant.
@@ -437,7 +439,8 @@ function emit_quote(emitter: Emitter, scopeid: number): string
     for (let variant of variants) {
       let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
       let condition = cond_parts.join(" && ");
-      let progval = emit_quote_expr(emitter, variant);
+      let progval = emit_quote_expr(emitter, variant.progs[variant.progid],
+                                    variantsym(variant));
       body += `if (${condition}) return ${progval};\n`;
     }
     body += `throw "unknown configuration";`;
@@ -588,7 +591,7 @@ export function emit_prog(emitter: Emitter, prog: Prog): string
   let out = "";
   for (let variant of variants) {
     let name = variantsym(variant);
-    out += emit_prog_decl(emitter, variant, name) + "\n";
+    out += emit_prog_decl(emitter, variant.progs[variant.progid], name) + "\n";
   }
 
   return out;
