@@ -181,8 +181,10 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
   return [procs, main, progs, scopes];
 }
 
-// Find the nearest containing scope that's in `progs`.
-// TODO just use `scopes` and `.parent`
+/**
+ * Find the nearest containing scope that is a quote. The search is inclusive,
+ * so if the scope is already a quote, it is returned.
+ */
 function _nearest_quote(containers: number[], progs: Prog[],
     where: number): number {
   if (where === null) {

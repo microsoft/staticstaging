@@ -104,8 +104,10 @@ export interface CompilerIR {
   presplice_variants: Variant[][],
 }
 
-// Find the nearest containing quote to the syntax node. If the syntax node is
-// already a quote, it is returned.
+/**
+ * Find the nearest containing quote to the syntax node. If the syntax node is
+ * already a quote, it is returned.
+ */
 export function nearest_quote(ir: CompilerIR, id: number): number {
   // Is this the top-level scope already?
   if (id === null) {
@@ -130,4 +132,11 @@ export function nearest_quote(ir: CompilerIR, id: number): number {
 
   // Otherwise, get the containing quote for the container.
   return ir.procs[scope].quote_parent;
+}
+
+/**
+ * Type test for `Prog` as a subtype of `Scope`.
+ */
+export function is_prog(scope: Scope): scope is Prog {
+  return (scope as Prog).annotation !== undefined;
 }
