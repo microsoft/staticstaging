@@ -1,5 +1,5 @@
 import { SyntaxNode } from '../ast';
-import { Proc, Prog, CompilerIR } from '../compile/ir';
+import { Proc, Prog, CompilerIR, Variant } from '../compile/ir';
 import { assign } from '../util';
 
 // A type for core code-generation functions.
@@ -25,9 +25,14 @@ export interface Emitter {
   emit_proc: (emitter: Emitter, proc: Proc) => string;
 
   /**
-   * Compile a Prog (lifted quote).
+   * Compile a Prog (lifted quote) without variants.
    */
   emit_prog: (emitter: Emitter, prog: Prog) => string;
+
+  /**
+   * Compile a Prog's variant.
+   */
+  emit_prog_variant: (emitter: Emitter, variant: Variant, prog: Prog) => string;
 }
 
 // Compile the main function.
@@ -35,7 +40,34 @@ export function emit_main(emitter: Emitter) {
   return emitter.emit_proc(emitter, emitter.ir.main);
 }
 
-// Emit either kind of scope.
+/**
+ * Emit a `Prog`, either single- or multi-variant.
+ */
+function emit_prog(emitter: Emitter, prog: Prog) {
+  if (prog.snippet_escape !== null) {
+    // Do not emit snippets separately.
+    return "";
+  }
+
+  // Check for variants. If there are none, just emit a single program.
+  let variants = emitter.ir.presplice_variants[prog.id];
+  if (variants === null) {
+    return emitter.emit_prog(emitter, prog);
+  }
+
+  // Multiple variants. Compile each.
+  let out = "";
+  for (let variant of variants) {
+    out += emitter.emit_prog_variant(
+      emitter, variant, variant.progs[variant.progid]
+    );
+  }
+  return out;
+}
+
+/**
+ * Emit either kind of scope.
+ */
 export function emit_scope(emitter: Emitter, scope: number) {
   // Try a Proc.
   let proc = emitter.ir.procs[scope];
@@ -46,12 +78,7 @@ export function emit_scope(emitter: Emitter, scope: number) {
   // Try a Prog.
   let prog = emitter.ir.progs[scope];
   if (prog) {
-    if (prog.snippet_escape !== null) {
-      // Do not emit snippets separately.
-      return "";
-    } else {
-      return emitter.emit_prog(emitter, prog);
-    }
+    return emit_prog(emitter, prog);
   }
 
   throw "error: unknown scope id";

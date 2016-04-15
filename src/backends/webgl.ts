@@ -1,4 +1,4 @@
-import { CompilerIR, Prog } from '../compile/ir';
+import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, get_glue, vtx_expr, render_expr, ProgKind, prog_kind,
@@ -275,15 +275,6 @@ function emit_glsl_prog(emitter: GLEmitter, prog: Prog): string {
   return out;
 }
 
-// Choose between emitting JavaScript and GLSL.
-function emit_prog(emitter: GLEmitter, prog: Prog): string {
-  if (prog.annotation == "s") {
-    return emit_glsl_prog(emitter, prog);
-  } else {
-    return js.emit_prog(emitter, prog);
-  }
-}
-
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 export function codegen(ir: CompilerIR): string {
   // Make some additional decisions about communication between shader stages.
@@ -300,7 +291,20 @@ export function codegen(ir: CompilerIR): string {
     ir: ir,
     compile: compile,
     emit_proc: js.emit_proc,
-    emit_prog: emit_prog,
+
+    emit_prog(emitter: GLEmitter, prog: Prog) {
+      // Choose between emitting JavaScript and GLSL.
+      if (prog.annotation == "s") {
+        return emit_glsl_prog(emitter, prog);
+      } else {
+        return js.emit_prog(emitter, prog);
+      }
+    },
+
+    emit_prog_variant(emitter: Emitter, variant: Variant, prog: Prog) {
+      // No GLSL variants yet.
+      return js.emit_prog_variant(emitter, variant, prog);
+    },
     glue: glue,
   };
 

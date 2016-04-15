@@ -4,7 +4,8 @@ import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
 import { Emitter, emit, emit_scope, emit_main } from './emitter';
 import * as ast from '../ast';
 import { ast_visit } from '../visit';
-import { CompilerIR, Scope, Proc, Prog, Escape, nearest_quote } from '../compile/ir';
+import { CompilerIR, Scope, Proc, Prog, Escape,
+  nearest_quote, Variant } from '../compile/ir';
 
 export const RUNTIME = `
 function assign() {
@@ -577,24 +578,19 @@ function emit_prog_decl(emitter: Emitter, prog: Prog, name: string): string {
   }
 }
 
-// Emit a JavaScript Prog, possibly including multiple variants.
-export function emit_prog(emitter: Emitter, prog: Prog): string
-{
-  // Check for a single variant.
-  let variants = emitter.ir.presplice_variants[prog.id];
-  if (variants === null) {
-    // Just emit the program.
-    return emit_prog_decl(emitter, prog, progsym(prog.id));
-  }
+/**
+ * Emit a single-variant program.
+ */
+export function emit_prog(emitter: Emitter, prog: Prog): string {
+  return emit_prog_decl(emitter, prog, progsym(prog.id));
+}
 
-  // Multiple variants. Compile each.
-  let out = "";
-  for (let variant of variants) {
-    let name = variantsym(variant);
-    out += emit_prog_decl(emitter, variant.progs[variant.progid], name) + "\n";
-  }
-
-  return out;
+/**
+ * Emit a variant of a pre-spliced program.
+ */
+export function emit_prog_variant(emitter: Emitter, variant: Variant,
+                           prog: Prog): string {
+  return emit_prog_decl(emitter, prog, variantsym(variant));
 }
 
 
@@ -607,6 +603,7 @@ export function codegen(ir: CompilerIR): string {
     compile: compile,
     emit_proc: emit_proc,
     emit_prog: emit_prog,
+    emit_prog_variant: emit_prog_variant,
   };
 
   // Emit and invoke the main (anonymous) function.
