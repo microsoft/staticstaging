@@ -36,7 +36,11 @@ export function emit_scope(emitter: Emitter, scope: number) {
   // Try a Prog.
   let prog = emitter.ir.progs[scope];
   if (prog) {
-    return emitter.emit_prog(emitter, prog);
+    if (prog.suppress) {
+      return "";
+    } else {
+      return emitter.emit_prog(emitter, prog);
+    }
   }
 
   throw "error: unknown scope id";

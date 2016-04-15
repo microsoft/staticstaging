@@ -399,8 +399,7 @@ function emit_quote_eval(emitter: Emitter, prog: Prog): string
 /**
  * Emit the code reference expression for a quote expression.
  *
- * The quote must *not* be snippet (which should be pre-spliced). This
- * generates only a single variant of a pre-spliced quote. The type of
+ * This generates only a single variant of a pre-spliced quote. The type of
  * the JavaScript value depends on the annotation.
  */
 function emit_quote_expr(emitter: Emitter, prog: Prog) {
@@ -578,11 +577,6 @@ function emit_prog_decl(emitter: Emitter, prog: Prog, name: string): string {
 // Emit a JavaScript Prog, possibly including multiple variants.
 export function emit_prog(emitter: Emitter, prog: Prog): string
 {
-  // Check whether this is a snippet, in which case we don't emit it at all.
-  if (prog.snippet_escape !== null) {
-    return "";
-  }
-
   // Check for a single variant.
   let variants = emitter.ir.presplice_variants[prog.id];
   if (variants === null) {

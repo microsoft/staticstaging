@@ -43,7 +43,7 @@ export interface Escape {
 // A Prog represents a quoted program. It's the quotation analogue of a Proc.
 // Progs can have bound variables but not free variables.
 export interface Prog extends Scope {
-  annotation: string,
+  annotation: string;
 
   // Subsets of the overall escape lists for which this quote is the "owner"
   // of the escape. The owner is the quote at the level that matches the
@@ -52,13 +52,19 @@ export interface Prog extends Scope {
   // because the owning quote is "responsible" for emitting the code for the
   // escapes it owns. For example, the owner performs splicing, not the quote
   // that directly *contains* the splice escape.
-  owned_persist: Escape[],
-  owned_splice: Escape[],
-  owned_snippet: Escape[],
+  owned_persist: Escape[];
+  owned_splice: Escape[];
+  owned_snippet: Escape[];
 
   // If this is a snippet program, the associated escape expression ID.
   // Otherwise, null.
-  snippet_escape: number,
+  snippet_escape: number;
+
+  /**
+   * Indicates that this program should not be compiled (i.e., it is subsumed
+   * by some other program.
+   */
+  suppress: boolean;
 }
 
 /**

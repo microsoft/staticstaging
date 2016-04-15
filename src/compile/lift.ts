@@ -137,7 +137,8 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
             owned_persist: [],
             owned_splice: [],
             owned_snippet: [],
-            snippet_escape: node.snippet ? snippet_escs[node.id] : null
+            snippet_escape: node.snippet ? snippet_escs[node.id] : null,
+            suppress: false,
           });
           progs[node.id] = prog;
           scopes[node.id] = prog;

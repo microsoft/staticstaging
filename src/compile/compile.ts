@@ -1,7 +1,7 @@
 import { ASTFold, ast_fold_rules, compose_visit, ast_visit } from '../visit';
 import { fix } from '../util';
 import * as ast from '../ast';
-import { CompilerIR } from './ir';
+import { CompilerIR, Variant } from './ir';
 import { TypeTable } from '../type_elaborate';
 import { TypeMap } from '../type';
 import { find_def_use, NameMap } from './defuse';
@@ -67,11 +67,21 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   let containers = find_scopes(tree);
   let [procs, main, progs] = lift(tree, defuse, containers, type_table);
 
-  // Find variants for presplicing pass.
+  // The "presplicing" optimization.
   let variants: Variant[][];
   if (presplice_opt) {
+    // Get the prespliced variants.
     variants = presplice(progs);
+
+    // Remove any snippet programs so they don't get compiled separately.
+    for (let prog of progs) {
+      if (prog !== undefined && prog.snippet_escape !== null) {
+        progs[prog.id].suppress = true;
+      }
+    }
   } else {
+    // Populate the table with `null` to indicate that nothing has any
+    // variants.
     variants = [];
     for (let prog of progs) {
       if (prog !== undefined) {
