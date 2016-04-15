@@ -49,12 +49,11 @@ export function emit_main(emitter: Emitter) {
  * Get the current specialized version of a program, according to the
  * emitter's current variant.
  */
-function specialized_prog(emitter: Emitter, progid: number) {
+export function specialized_prog(emitter: Emitter, progid: number) {
   let variant = emitter.variant;
   if (!variant) {
     return emitter.ir.progs[progid];
   }
-
   return variant.progs[progid] || emitter.ir.progs[progid];
 }
 

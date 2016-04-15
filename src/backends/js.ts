@@ -1,7 +1,8 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
   paren, splicesym, persistsym, procsym, progsym, variantsym } from './emitutil';
-import { Emitter, emit, emit_scope, emit_main } from './emitter';
+import { Emitter, emit, emit_scope, emit_main,
+  specialized_prog } from './emitter';
 import * as ast from '../ast';
 import { ast_visit } from '../visit';
 import { CompilerIR, Scope, Proc, Prog, Escape,
@@ -421,9 +422,11 @@ function emit_quote_expr(emitter: Emitter, prog: Prog, name: string) {
  */
 function emit_quote(emitter: Emitter, scopeid: number): string
 {
+  let prog = specialized_prog(emitter, scopeid);
+
   // For snippet quotes, just produce the ID. This is used by the pre-splicing
   // optimization to look up the corresponding pre-spliced program.
-  if (emitter.ir.progs[scopeid].snippet_escape !== null) {
+  if (prog.snippet_escape !== null) {
     return scopeid.toString();
   }
 
@@ -431,8 +434,7 @@ function emit_quote(emitter: Emitter, scopeid: number): string
   let variants = emitter.ir.presplice_variants[scopeid];
   if (variants === null) {
     // No snippets to pre-splice.
-    return emit_quote_expr(emitter, emitter.ir.progs[scopeid],
-                           progsym(scopeid));
+    return emit_quote_expr(emitter, prog, progsym(scopeid));
 
   } else {
     // Emit a "switch" construct that chooses the program variant.
@@ -450,7 +452,7 @@ function emit_quote(emitter: Emitter, scopeid: number): string
 
     // Invoke the selector switch with expressions for each snippet escape.
     let id_exprs: string[] = [];
-    for (let esc of emitter.ir.progs[scopeid].owned_snippet) {
+    for (let esc of prog.owned_snippet) {
       id_exprs.push(paren(emit(emitter, esc.body)));
     }
     return `${selector}(${ id_exprs.join(", ") })`;
