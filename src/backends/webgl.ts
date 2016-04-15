@@ -1,7 +1,8 @@
 import { CompilerIR, Prog } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
-import { Glue, get_glue, vtx_expr, render_expr, ProgKind, prog_kind } from './gl';
+import { Glue, get_glue, vtx_expr, render_expr, ProgKind, prog_kind,
+  FLOAT4X4 } from './gl';
 import { progsym, paren } from './emitutil';
 import { Type, PrimitiveType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
@@ -48,6 +49,12 @@ function vec3(x, y, z) {
   out[0] = x || 0.0;
   out[1] = y || 0.0;
   out[2] = z || 0.0;
+  return out;
+}
+
+function mat4mult(a, b) {
+  var out = mat4.create();
+  mat4.multiply(out, a, b);
   return out;
 }
 `.trim();
@@ -214,6 +221,21 @@ let compile_rules: ASTVisit<GLEmitter, string> =
       }
 
       // An ordinary function call.
+      return ast_visit(js.compile_rules, tree, emitter);
+    },
+
+    visit_binary(tree: ast.BinaryNode, emitter: GLEmitter): string {
+      // If this is a matrix/matrix multiply, emit a function call.
+      if (tree.op === "*") {
+        let [typ,] = emitter.ir.type_table[tree.id];
+        if (typ === FLOAT4X4) {
+          let lhs = paren(emit(emitter, tree.lhs));
+          let rhs = paren(emit(emitter, tree.rhs));
+          return `mat4mult(${lhs}, ${rhs})`;
+        }
+      }
+
+      // Otherwise, use the ordinary JavaScript backend.
       return ast_visit(js.compile_rules, tree, emitter);
     },
   });
