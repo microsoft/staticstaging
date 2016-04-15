@@ -50,6 +50,12 @@ test-compile: $(CLI_JS)
 test-interp: $(CLI_JS)
 	@ node $(CLI_JS) -t $(TESTS_INTERP)
 
+# A few compile tests *without* pre-splicing. This can fail when using splices
+# in a function quote.
+.PHONY: test-compile-unsplice
+test-compile-unsplice:
+	@ node $(CLI_JS) -t -cPx $(wildcard test/snippet/*.atw)
+
 .PHONY: test
 test: $(CLI_JS)
 	@ echo "interpreter" ; \
