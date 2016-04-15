@@ -72,20 +72,29 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   if (presplice_opt) {
     // Get the prespliced variants.
     variants = presplice(progs);
-
-    // Remove any snippet programs so they don't get compiled separately.
-    for (let prog of progs) {
-      if (prog !== undefined && prog.snippet_escape !== null) {
-        progs[prog.id].suppress = true;
-      }
-    }
   } else {
-    // Populate the table with `null` to indicate that nothing has any
-    // variants.
     variants = [];
     for (let prog of progs) {
       if (prog !== undefined) {
+        // Every program has no variants.
         variants[prog.id] = null;
+
+        // Transform snippets into ordinary quotes.
+        prog.snippet_escape = null;
+
+        // Transform snippet *escapes* into ordinary splice escapes.
+        prog.splice = prog.splice.concat(prog.snippet);
+        prog.snippet = [];
+        prog.owned_splice = prog.owned_splice.concat(prog.owned_snippet);
+        prog.owned_snippet = [];
+      }
+    }
+
+    // Do the same escape transformation for functions (procs).
+    for (let proc of procs) {
+      if (proc) {
+        proc.splice = proc.splice.concat(proc.snippet);
+        proc.snippet = [];
       }
     }
   }

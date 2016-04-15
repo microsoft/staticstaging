@@ -59,12 +59,6 @@ export interface Prog extends Scope {
   // If this is a snippet program, the associated escape expression ID.
   // Otherwise, null.
   snippet_escape: number;
-
-  /**
-   * Indicates that this program should not be compiled (i.e., it is subsumed
-   * by some other program.
-   */
-  suppress: boolean;
 }
 
 /**

@@ -36,7 +36,8 @@ export function emit_scope(emitter: Emitter, scope: number) {
   // Try a Prog.
   let prog = emitter.ir.progs[scope];
   if (prog) {
-    if (prog.suppress) {
+    if (prog.snippet_escape !== null) {
+      // Do not emit snippets separately.
       return "";
     } else {
       return emitter.emit_prog(emitter, prog);
