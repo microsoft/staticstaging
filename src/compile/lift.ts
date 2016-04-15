@@ -196,6 +196,17 @@ function _nearest_quote(containers: number[], progs: Prog[],
   }
 }
 
+/**
+ * Like `_nearest_quote`, but looks *n* levels up instead of just 1.
+ */
+function _nearest_quote_n(containers: number[], progs: Prog[], where: number,
+                          count: number) {
+  for (let i = 0; i < count; ++i) {
+    where = _nearest_quote(containers, progs, containers[where]);
+  }
+  return where;
+}
+
 // Assign children of the skeletal scopes.
 function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
     containers: number[])
@@ -295,10 +306,8 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
         // Get the quote that "owns" this escape: this is the quote that is N
         // steps up the quote containment chain, where N is the "level" of the
         // escape.
-        let quote_id = node.id;
-        for (let i = 0; i < node.count; ++i) {
-          quote_id = _nearest_quote(containers, progs, containers[quote_id]);
-        }
+        let quote_id = _nearest_quote_n(containers, progs, node.id,
+                                        node.count);
 
         let esc: Escape = {
           id: node.id,
