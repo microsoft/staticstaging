@@ -305,6 +305,8 @@ export function codegen(ir: CompilerIR): string {
       // No GLSL variants yet.
       return js.emit_prog_variant(emitter, variant, prog);
     },
+
+    variant: null,
     glue: glue,
   };
 

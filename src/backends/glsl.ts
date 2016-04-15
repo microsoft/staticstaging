@@ -212,6 +212,7 @@ export function compile_prog(ir: CompilerIR,
     emit_proc: null,
     emit_prog: null,
     emit_prog_variant: null,
+    variant: null,
   };
 
   // TODO compile the functions

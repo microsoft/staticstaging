@@ -33,11 +33,29 @@ export interface Emitter {
    * Compile a Prog's variant.
    */
   emit_prog_variant: (emitter: Emitter, variant: Variant, prog: Prog) => string;
+
+  /**
+   * The current variant we're compiling (or `null`).
+   */
+  variant: Variant;
 }
 
 // Compile the main function.
 export function emit_main(emitter: Emitter) {
   return emitter.emit_proc(emitter, emitter.ir.main);
+}
+
+/**
+ * Get the current specialized version of a program, according to the
+ * emitter's current variant.
+ */
+function specialized_prog(emitter: Emitter, progid: number) {
+  let variant = emitter.variant;
+  if (!variant) {
+    return emitter.ir.progs[progid];
+  }
+
+  return variant.progs[progid] || emitter.ir.progs[progid];
 }
 
 /**
@@ -52,14 +70,16 @@ function emit_prog(emitter: Emitter, prog: Prog) {
   // Check for variants. If there are none, just emit a single program.
   let variants = emitter.ir.presplice_variants[prog.id];
   if (variants === null) {
-    return emitter.emit_prog(emitter, prog);
+    return emitter.emit_prog(emitter, specialized_prog(emitter, prog.id));
   }
 
   // Multiple variants. Compile each.
   let out = "";
   for (let variant of variants) {
+    let subemitter = assign({}, emitter);
+    subemitter.variant = variant;
     out += emitter.emit_prog_variant(
-      emitter, variant, variant.progs[variant.progid]
+      subemitter, variant, specialized_prog(subemitter, variant.progid)
     );
   }
   return out;

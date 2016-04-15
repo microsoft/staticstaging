@@ -604,6 +604,7 @@ export function codegen(ir: CompilerIR): string {
     emit_proc: emit_proc,
     emit_prog: emit_prog,
     emit_prog_variant: emit_prog_variant,
+    variant: null,
   };
 
   // Emit and invoke the main (anonymous) function.
