@@ -52,8 +52,7 @@ function check_output(filename: string, source: string, result: string):
 
 function run(filename: string, source: string, webgl: boolean,
     compile: boolean, execute: boolean, test: boolean,
-    generate: boolean,
-    log: (...msg: any[]) => void)
+    generate: boolean, log: (...msg: any[]) => void, presplice: boolean)
 {
   let success = true;
 
@@ -76,6 +75,8 @@ function run(filename: string, source: string, webgl: boolean,
 
       parsed: (_ => void 0),
       typed: (_ => void 0),
+
+      presplice,
     };
 
     // Run the driver.
@@ -128,7 +129,7 @@ function run(filename: string, source: string, webgl: boolean,
 function main() {
   // Parse the command-line options.
   let args = minimist(process.argv.slice(2), {
-    boolean: ['v', 'c', 'x', 'w', 't', 'g'],
+    boolean: ['v', 'c', 'x', 'w', 't', 'g', 'P'],
   });
 
   // The flags: -v, -c, and -x.
@@ -138,16 +139,18 @@ function main() {
   let webgl: boolean = args['w'];
   let test: boolean = args['t'];
   let generate: boolean = args['g'];
+  let no_presplice: boolean = args['P'];
 
   // Help.
   if (args['h'] || args['help'] || args['?']) {
-    console.error("usage: " + process.argv[1] + " [-vcxwtg] [PROGRAM...]");
+    console.error("usage: " + process.argv[1] + " [-vcxwtgP] [PROGRAM...]");
     console.error("  -v: verbose mode");
     console.error("  -c: compile (as opposed to interpreting)");
     console.error("  -x: execute the program (use with -c)");
     console.error("  -w: use the WebGL language variant");
     console.error("  -t: test mode (check for expected output)");
     console.error("  -g: dump generated code");
+    console.error("  -P: do not use the presplicing optimization");
     process.exit(1);
   }
 
@@ -188,7 +191,7 @@ function main() {
     return new Promise(function (resolve, reject) {
       let then = function (source: string) {
         success = run(fn, source, webgl, compile, execute, test,
-            generate, log) && success;
+            generate, log, !no_presplice) && success;
         resolve();
       };
       if (fn === STDIN_FILENAME) {

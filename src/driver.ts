@@ -26,17 +26,25 @@ import { pretty } from './pretty';
 // - `execute`: Run the compiled code, hopefully getting the same
 //   result as the interpreter would.
 
+/**
+ * Configuration for the driver.
+ */
 export interface Config {
-  webgl: boolean,
+  webgl: boolean;
 
   // Expect the program to produce a code value, and just produce the
   // read-to-execute generated code.
-  generate: boolean,
+  generate: boolean;
 
-  parsed: (tree: SyntaxNode) => void,
-  typed: (type: string) => void,
-  error: (err: string) => void,
-  log: (...msg: any[]) => void,
+  parsed: (tree: SyntaxNode) => void;
+  typed: (type: string) => void;
+  error: (err: string) => void;
+  log: (...msg: any[]) => void;
+
+  /**
+   * Whether to use the "presplicing" compiler optimization.
+   */
+  presplice: boolean;
 }
 
 function _intrinsics(config: Config): TypeMap {
@@ -120,7 +128,8 @@ export function compile(config: Config, tree: SyntaxNode,
   let sugarfree = desugar_macros(tree, type_table, _check(config));
 
   let ir: CompilerIR;
-  ir = semantically_analyze(sugarfree, type_table, _intrinsics(config));
+  ir = semantically_analyze(sugarfree, type_table, _intrinsics(config),
+                            config.presplice);
 
   // Log some intermediates.
   config.log('def/use', ir.defuse);

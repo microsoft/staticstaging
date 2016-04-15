@@ -163,6 +163,8 @@ function atw_run(code: string, mode: string)
     typed (t: string) {
       type = t;
     },
+
+    prespliced: true,
   };
 
   // Add the preamble, if this is WebGL mode.
