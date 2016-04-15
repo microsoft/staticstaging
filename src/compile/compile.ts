@@ -26,11 +26,21 @@ function gen_find_externs(fself: FindExterns): FindExterns {
 }
 let find_externs = fix(gen_find_externs);
 
-// This is the semantic analysis that produces our mid-level IR given an
-// elaborated, desugared AST.
+/**
+ * Semantically analyze the program to produce our mid-level IR from an
+ * elaborated, desugared AST.
+ *
+ * @param tree          The program to compile.
+ * @param type_table    The result of type elaboration.
+ * @param intrinsics    Optionally, a map of built-ins to be considered
+ *                      "pre-defined" for the compiler.
+ * @param presplice_opt Whether to use the pre-splicing optimization for snippet
+ *                      escapes.
+ */
 export function semantically_analyze(tree: ast.SyntaxNode,
   type_table: TypeTable,
-  intrinsics: TypeMap = {}): CompilerIR
+  intrinsics: TypeMap = {},
+  presplice_opt: boolean = true): CompilerIR
 {
   // Give IDs to the intrinsics and add them to the type table.
   let intrinsics_map: NameMap = {};
@@ -58,7 +68,7 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   let [procs, main, progs] = lift(tree, defuse, containers, type_table);
 
   // Find variants for presplicing pass.
-  let variants = presplice(progs);
+  let variants = presplice_opt ? presplice(progs) : [];
 
   return {
     defuse: defuse,
