@@ -5,19 +5,29 @@ import { assign } from '../util';
 // A type for core code-generation functions.
 export type Compile = (tree: SyntaxNode, emitter: Emitter) => string;
 
-// A structure containing everything needed to generate code.
+/**
+ * A structure containing everything needed to generate code.
+ */
 export interface Emitter {
-  // The program to compile.
-  ir: CompilerIR,
+  /**
+   * The program we're compiling.
+   */
+  ir: CompilerIR;
 
-  // The core code-emission function for expressions.
-  compile: Compile,
+  /**
+   * The core code-emission function for expressions.
+   */
+  compile: Compile;
 
-  // Compile a Proc (lifted function).
-  emit_proc: (emitter: Emitter, proc: Proc) => string,
+  /**
+   * Compile a Proc (lifted function).
+   */
+  emit_proc: (emitter: Emitter, proc: Proc) => string;
 
-  // Compile a Prog (lifted quote).
-  emit_prog: (emitter: Emitter, prog: Prog) => string,
+  /**
+   * Compile a Prog (lifted quote).
+   */
+  emit_prog: (emitter: Emitter, prog: Prog) => string;
 }
 
 // Compile the main function.
