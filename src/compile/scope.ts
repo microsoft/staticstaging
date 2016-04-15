@@ -27,7 +27,13 @@ function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
       [frames, scopes]: [ScopeFrame[], number[]]):
       [ScopeFrame[], number[]]
     {
-      let [_, s] = fold_rules.visit_escape(tree, [tl(frames), scopes]);
+      // Pop `count` frames before recursing.
+      let esc_frames = frames;
+      for (let i = 0; i < tree.count; ++i) {
+        esc_frames = tl(esc_frames);
+      }
+
+      let [_, s] = fold_rules.visit_escape(tree, [esc_frames, scopes]);
       return [frames, s];
     },
 
