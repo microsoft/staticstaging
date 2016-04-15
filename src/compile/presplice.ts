@@ -46,6 +46,50 @@ function substitute(tree: SyntaxNode, subs: SyntaxNode[]): SyntaxNode {
 }
 
 /**
+ * Create a single variant program with the given escape-to-quote map.
+ */
+function prog_variant(prog: Prog, config: number[], progs: Prog[]): Prog {
+  // Copy the original program.
+  let var_prog = assign({}, prog);
+
+  // Get a map from old (escape) IDs to new (quote body) trees. Also,
+  // accumulate each selected quote's splices, persists, free variables, and
+  // bound variables.
+  let substitutions: SyntaxNode[] = [];
+  let i = 0;
+  for (let esc of prog.owned_snippet) {
+    let snippet = progs[config[i]];
+    ++i;
+
+    // Save the code substitution.
+    substitutions[esc.id] = snippet.body;
+
+    // Accumulate the metadata from the spliced code.
+    var_prog.persist = prog.persist.concat(snippet.persist);
+    var_prog.splice = prog.splice.concat(snippet.splice);
+    var_prog.owned_persist = prog.owned_persist.concat(snippet.owned_persist);
+    var_prog.owned_splice = prog.owned_splice.concat(snippet.owned_splice);
+    var_prog.free = prog.free.concat(snippet.free);
+    var_prog.bound = prog.bound.concat(snippet.bound);
+
+    // Adjust ownership. If an escape was previously owned by the snippet,
+    // it is now owned by its splice destination.
+    for (let subescs of [var_prog.persist, var_prog.splice]) {
+      for (let subesc of subescs) {
+        if (subesc.prog === snippet.id) {
+          subesc.prog = prog.id;
+        }
+      }
+    }
+  }
+
+  // Generate the program body using these substitutions.
+  var_prog.body = substitute(prog.body, substitutions);
+
+  return var_prog;
+}
+
+/**
  * Compute all the possible Variants for a given program. If the program has
  * no snippet splices, the result is `null` (rather than a single variant) to
  * indicate that backends should not do variant selection.
@@ -89,42 +133,7 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
     out.push(variant);
 
     // Copy the current program. We'll mutate it for this variant.
-    let var_prog = assign({}, prog);
-    variant.progs[prog.id] = var_prog;
-
-    // Get a map from old (escape) IDs to new (quote body) trees. Also,
-    // accumulate each selected quote's splices, persists, free variables, and
-    // bound variables.
-    let substitutions: SyntaxNode[] = [];
-    let i = 0;
-    for (let esc of prog.owned_snippet) {
-      let snippet = progs[config[i]];
-      ++i;
-
-      // Save the code substitution.
-      substitutions[esc.id] = snippet.body;
-
-      // Accumulate the metadata from the spliced code.
-      var_prog.persist = prog.persist.concat(snippet.persist);
-      var_prog.splice = prog.splice.concat(snippet.splice);
-      var_prog.owned_persist = prog.owned_persist.concat(snippet.owned_persist);
-      var_prog.owned_splice = prog.owned_splice.concat(snippet.owned_splice);
-      var_prog.free = prog.free.concat(snippet.free);
-      var_prog.bound = prog.bound.concat(snippet.bound);
-
-      // Adjust ownership. If an escape was previously owned by the snippet,
-      // it is now owned by its splice destination.
-      for (let subescs of [var_prog.persist, var_prog.splice]) {
-        for (let subesc of subescs) {
-          if (subesc.prog === snippet.id) {
-            subesc.prog = prog.id;
-          }
-        }
-      }
-    }
-
-    // Generate the program body using these substitutions.
-    var_prog.body = substitute(prog.body, substitutions);
+    variant.progs[prog.id] = prog_variant(prog, config, progs);
   }
   return out;
 }
