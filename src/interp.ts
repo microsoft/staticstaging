@@ -65,6 +65,13 @@ interface State {
    * Persist-escape environment.
    */
   pers: Pers;
+
+  /**
+   * Bookkeeping for snippets: when we're inside a snippet escape, the number
+   * of "levels" for that escape (so we can resume at the appropriate distance
+   * when we hit a snippet quote).
+   */
+  snipdist: number;
 }
 
 // This first set of rules applies at the "top level", for ordinary execution.
@@ -114,9 +121,11 @@ let Interp: ASTVisit<State, [Value, State]> = {
     return [v, state];
   },
 
-  visit_quote(tree: ast.RunNode, state: State): [Value, State] {
+  visit_quote(tree: ast.QuoteNode, state: State): [Value, State] {
     // Jump to any escapes and execute them.
-    let [t, s, p] = quote_interp(tree.expr, 1, state, []);
+    let level = tree.snippet ? state.snipdist : 1;
+    let [t, s, p] = quote_interp(tree.expr, level, state, []);
+
     // Wrap the resulting AST as a code value.
     return [new Code(t, p), s];
   },
@@ -219,7 +228,8 @@ let Interp: ASTVisit<State, [Value, State]> = {
 
       // Evaluate the function body. Throw away any updates it makes to its
       // environment.
-      let [ret, _] = interp(target.body, {env: call_env, pers: target.pers});
+      let substate = merge(state, {env: call_env, pers: target.pers});
+      let [ret, _] = interp(target.body, substate);
 
       return [ret, s];
 
@@ -310,7 +320,8 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
   visit_quote(tree: ast.QuoteNode,
       [stage, state, pers]: [number, State, Pers]):
       [ast.SyntaxNode, State, Pers] {
-    let inner_stage = stage + 1;  // Recurse at a deeper stage.
+    let level = tree.snippet ? state.snipdist : 1;
+    let inner_stage = stage + level;  // Recurse at a deeper stage.
     let [t, s, p] = quote_interp(tree.expr, inner_stage, state, pers);
     return [merge(tree, { expr: t }), s, p];
   },
@@ -321,6 +332,11 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
       [ast.SyntaxNode, State, Pers] {
     // The escape moves us "up" `count` stages.
     let inner_stage = stage - tree.count;
+
+    // Save the snippet distance, if any.
+    if (tree.kind === "snippet") {
+      state = merge(state, { snipdist: tree.count });
+    }
 
     if (inner_stage == 0) {
       // Escaped back out of the top-level quote! Evaluate it and integrate it
@@ -483,7 +499,7 @@ function quote_interp(tree: ast.SyntaxNode, stage: number, state: State,
 export function interpret(program: ast.SyntaxNode, e: Env = {}, p: Pers = []):
   Value
 {
-  let [v, _] = interp(program, {env: e, pers: p});
+  let [v, _] = interp(program, {env: e, pers: p, snipdist: null});
   return v;
 }
 
