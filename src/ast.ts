@@ -118,5 +118,5 @@ export interface CodeTypeNode extends TypeNode {
 // (called a `Pers` in the interpreter) associated with the `Code` that it
 // appears inside.
 export interface PersistNode extends ExpressionNode {
-  index: number,
+  index: number;
 }

@@ -52,16 +52,25 @@ function unwrap_extern(v: Value): Value {
 
 // Dynamic semantics rules.
 
-// The state tuple for the dynamic semantics.
+/**
+ * The state tuple for the dynamic semantics.
+ */
 interface State {
-  env: Env,
-  pers: Pers,
+  /**
+   * Variable environment.
+   */
+  env: Env;
+
+  /**
+   * Persist-escape environment.
+   */
+  pers: Pers;
 }
 
 // This first set of rules applies at the "top level", for ordinary execution.
 // Escapes are not allowed at this level. At a quote, we transition to a
 // different set of rules.
-let Interp : ASTVisit<State, [Value, State]> = {
+let Interp: ASTVisit<State, [Value, State]> = {
   visit_literal(tree: ast.LiteralNode, state: State): [Value, State] {
     return [tree.value, state];
   },
