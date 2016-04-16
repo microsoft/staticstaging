@@ -3,6 +3,9 @@ var spif = fun c:<Int> t:$<Int> f:$<Int> -> if !c t f;
 
 # Just for fun, we'll define a macro-like function that just duplicates
 # the built-in `if` expression.
+# This doesn't work yet because we're not allowed to create a snippet here,
+# which is necessary to produce a code value that can be pre-spliced back into
+# the macro call site.
 var myif = fun c:<Int> t:$<Int> f:$<Int> -> < if [c] [t] [f] >;
 
 # These functions can be invoked as normal, without the `@` prefix.
