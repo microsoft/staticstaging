@@ -58,6 +58,17 @@ export function specialized_prog(emitter: Emitter, progid: number) {
 }
 
 /**
+ * Get the current specialized version of a function.
+ */
+export function specialized_proc(emitter: Emitter, procid: number) {
+  let variant = emitter.variant;
+  if (!variant) {
+    return emitter.ir.procs[procid];
+  }
+  return variant.procs[procid] || emitter.ir.procs[procid];
+}
+
+/**
  * Emit a `Prog`, either single- or multi-variant.
  */
 function emit_prog(emitter: Emitter, prog: Prog) {
@@ -69,7 +80,7 @@ function emit_prog(emitter: Emitter, prog: Prog) {
   // Check for variants. If there are none, just emit a single program.
   let variants = emitter.ir.presplice_variants[prog.id];
   if (variants === null) {
-    return emitter.emit_prog(emitter, specialized_prog(emitter, prog.id));
+    return emitter.emit_prog(emitter, prog);
   }
 
   // Multiple variants. Compile each.
@@ -89,13 +100,13 @@ function emit_prog(emitter: Emitter, prog: Prog) {
  */
 export function emit_scope(emitter: Emitter, scope: number) {
   // Try a Proc.
-  let proc = emitter.ir.procs[scope];
+  let proc = specialized_proc(emitter, scope);
   if (proc) {
     return emitter.emit_proc(emitter, proc);
   }
 
   // Try a Prog.
-  let prog = emitter.ir.progs[scope];
+  let prog = specialized_prog(emitter, scope);
   if (prog) {
     return emit_prog(emitter, prog);
   }
