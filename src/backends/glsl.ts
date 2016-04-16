@@ -5,10 +5,10 @@ import { stack_lookup } from '../util';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { _unwrap_array, _is_cpu_scope, _attribute_type, TYPE_NAMES,
   shadervarsym, frag_expr, Glue, ProgKind, prog_kind } from './gl';
-import { Emitter, emit } from './emitter';
+import { Emitter, emit, specialized_prog } from './emitter';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
   paren, splicesym } from './emitutil';
-import { CompilerIR, nearest_quote } from '../compile/ir';
+import { CompilerIR, nearest_quote, Variant } from '../compile/ir';
 
 // Type checking for uniforms, which are automatically demoted from arrays to
 // individual values when they persist.
@@ -204,7 +204,7 @@ export function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
 // Emitting the surrounding machinery for communicating between stages.
 
 export function compile_prog(ir: CompilerIR,
-  glue: Glue[][], progid: number): string
+  glue: Glue[][], progid: number, variant: Variant): string
 {
   let emitter: Emitter = {
     ir: ir,
@@ -212,12 +212,12 @@ export function compile_prog(ir: CompilerIR,
     emit_proc: null,
     emit_prog: null,
     emit_prog_variant: null,
-    variant: null,
+    variant: variant,
   };
 
   // TODO compile the functions
 
-  let prog = ir.progs[progid];
+  let prog = specialized_prog(emitter, progid);
 
   // Check whether this is a vertex or fragment shader.
   let kind = prog_kind(ir, progid);

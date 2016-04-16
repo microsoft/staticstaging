@@ -263,7 +263,8 @@ function emit_glsl_prog(emitter: GLEmitter, prog: Prog): string {
   }
 
   // Emit the shader program.
-  let code = glsl.compile_prog(emitter.ir, emitter.glue, prog.id);
+  let code = glsl.compile_prog(emitter.ir, emitter.glue, prog.id,
+                               emitter.variant);
   out += js.emit_var(progsym(prog.id), js.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
