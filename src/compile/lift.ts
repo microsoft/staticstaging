@@ -256,7 +256,7 @@ function attribute_uses(scopes: Scope[], progs: Prog[], containers: number[],
       let cur_prog = cur_scope;
       let found_via_snippet = false;
       while (1) {
-        let prog = progs[cur_scope];
+        let prog = progs[cur_prog];
         if (prog === undefined || prog.snippet_escape === null) {
           break;
         }
