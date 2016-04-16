@@ -314,7 +314,7 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
           body: node.expr,
           count: node.count,
           owner: quote_id,
-          container: _nearest_quote(containers, progs, node.id),
+          container: containers[node.id],
         };
 
         // Attribute the unique "owner" of this escape.

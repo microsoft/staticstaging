@@ -1,6 +1,6 @@
 import { SyntaxNode } from '../ast';
 import { hd, tl, cons, assign, set_add } from '../util';
-import { Prog, Variant } from './ir';
+import { Prog, Proc, Scope, Variant, is_prog } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
 
 /**
@@ -48,16 +48,17 @@ function substitute(tree: SyntaxNode, subs: SyntaxNode[]): SyntaxNode {
 /**
  * Create a single variant program with the given escape-to-quote map.
  */
-function prog_variant(prog: Prog, config: number[], progs: Prog[]): Prog {
+function scope_variant<T extends Scope>(orig: T, config: number[],
+                                        progs: Prog[]): T {
   // Copy the original program.
-  let var_prog = assign({}, prog);
+  let var_scope: T = assign({}, orig);
 
   // Get a map from old (escape) IDs to new (quote body) trees. Also,
   // accumulate each selected quote's splices, persists, free variables, and
   // bound variables.
   let substitutions: SyntaxNode[] = [];
   let i = 0;
-  for (let esc of prog.snippet) {
+  for (let esc of orig.snippet) {
     let snippet = progs[config[i]];
     ++i;
 
@@ -65,31 +66,40 @@ function prog_variant(prog: Prog, config: number[], progs: Prog[]): Prog {
     substitutions[esc.id] = snippet.body;
 
     // Accumulate the metadata from the spliced code.
-    var_prog.persist = prog.persist.concat(snippet.persist);
-    var_prog.splice = prog.splice.concat(snippet.splice);
-    var_prog.owned_persist = prog.owned_persist.concat(snippet.owned_persist);
-    var_prog.owned_splice = prog.owned_splice.concat(snippet.owned_splice);
-    var_prog.free = prog.free.concat(snippet.free);
-    var_prog.bound = prog.bound.concat(snippet.bound);
+    var_scope.persist = orig.persist.concat(snippet.persist);
+    var_scope.splice = orig.splice.concat(snippet.splice);
+    var_scope.free = orig.free.concat(snippet.free);
+    var_scope.bound = orig.bound.concat(snippet.bound);
+
+    // For Progs, also transfer the *owned* lists.
+    if (is_prog(orig)) {
+      // I'm not sure why TypeScript gets confused here---it seems like the
+      // `if` above should be enough to specialize, but apparently that
+      // doesn't work on type parameters? For now, this is quite ugly.
+      (var_scope as any).owned_persist =
+        (orig as any).owned_persist.concat(snippet.owned_persist);
+      (var_scope as any).owned_splice =
+        (orig as any).owned_splice.concat(snippet.owned_splice);
+    }
 
     // Adjust ownership. If an escape was previously owned by the snippet,
     // it is now owned by its splice destination.
-    for (let subescs of [var_prog.persist, var_prog.splice]) {
+    for (let subescs of [var_scope.persist, var_scope.splice]) {
       for (let subesc of subescs) {
         if (subesc.owner === snippet.id) {
-          subesc.owner = prog.id;
+          subesc.owner = orig.id;
         }
         if (subesc.container === snippet.id) {
-          subesc.container = prog.id;
+          subesc.container = orig.id;
         }
       }
     }
   }
 
   // Generate the program body using these substitutions.
-  var_prog.body = substitute(prog.body, substitutions);
+  var_scope.body = substitute(orig.body, substitutions);
 
-  return var_prog;
+  return var_scope;
 }
 
 /**
@@ -97,7 +107,7 @@ function prog_variant(prog: Prog, config: number[], progs: Prog[]): Prog {
  * no snippet splices, the result is `null` (rather than a single variant) to
  * indicate that backends should not do variant selection.
  */
-function get_variants(progs: Prog[], prog: Prog): Variant[] {
+function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
   // Get the space of possible options for each snippet escape.
   let options: number[][] = [];
   let i = 0;
@@ -132,16 +142,25 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
       progid: prog.id,
       config,
       progs: [],
+      procs: [],
     };
 
     // For every snippet escape resolved in this variant, we'll need to
     // specialize its directly-containing quote.
-    let specialized: number[] = [];
+    let specialized_progs: number[] = [];
+    let specialized_procs: number[] = [];
     for (let esc of prog.owned_snippet) {
-      specialized = set_add(specialized, esc.container);
+      if (progs[esc.container]) {
+        specialized_progs = set_add(specialized_progs, esc.container);
+      } else {
+        specialized_procs = set_add(specialized_procs, esc.container);
+      }
     }
-    for (let id of specialized) {
-      variant.progs[id] = prog_variant(progs[id], config, progs);
+    for (let id of specialized_progs) {
+      variant.progs[id] = scope_variant(progs[id], config, progs);
+    }
+    for (let id of specialized_procs) {
+      variant.procs[id] = scope_variant(procs[id], config, progs);
     }
 
     out.push(variant);
@@ -152,11 +171,11 @@ function get_variants(progs: Prog[], prog: Prog): Variant[] {
 /**
  * Get the sets of variants for all programs.
  */
-export function presplice(progs: Prog[]): Variant[][] {
+export function presplice(progs: Prog[], procs: Proc[]): Variant[][] {
   let variants: Variant[][] = [];
   for (let prog of progs) {
     if (prog !== undefined) {
-      variants[prog.id] = get_variants(progs, prog);
+      variants[prog.id] = get_variants(progs, procs, prog);
     }
   }
   return variants;

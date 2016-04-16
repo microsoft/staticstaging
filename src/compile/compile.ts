@@ -71,7 +71,7 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   let variants: Variant[][];
   if (presplice_opt) {
     // Get the prespliced variants.
-    variants = presplice(progs);
+    variants = presplice(progs, procs);
   } else {
     variants = [];
     for (let prog of progs) {

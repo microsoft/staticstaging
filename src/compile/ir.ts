@@ -83,6 +83,11 @@ export interface Variant {
    * Replacement `Prog` values for any changed programs in this variant.
    */
   progs: Prog[];
+
+  /**
+   * Replacement `Proc`s.
+   */
+  procs: Proc[];
 }
 
 // The mid-level IR structure.
