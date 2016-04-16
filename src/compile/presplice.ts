@@ -57,7 +57,7 @@ function prog_variant(prog: Prog, config: number[], progs: Prog[]): Prog {
   // bound variables.
   let substitutions: SyntaxNode[] = [];
   let i = 0;
-  for (let esc of prog.owned_snippet) {
+  for (let esc of prog.snippet) {
     let snippet = progs[config[i]];
     ++i;
 
