@@ -1,5 +1,5 @@
 import { SyntaxNode } from '../ast';
-import { hd, tl, cons, assign, set_add } from '../util';
+import { hd, tl, cons, assign, set_add, set_diff } from '../util';
 import { Prog, Proc, Scope, Variant, is_prog } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
 
@@ -81,6 +81,14 @@ function scope_variant<T extends Scope>(orig: T, config: number[],
       (var_scope as any).owned_splice =
         (orig as any).owned_splice.concat(snippet.owned_splice);
     }
+
+    // Any parameters and bound variables in the original scope are not free
+    // here.
+    let bound = orig.bound;
+    if (!is_prog(orig)) {
+      bound = bound.concat((var_scope as any).params);
+    }
+    var_scope.free = set_diff(var_scope.free, bound);
 
     // Adjust ownership. If an escape was previously owned by the snippet,
     // it is now owned by its splice destination.
