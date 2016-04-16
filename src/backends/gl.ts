@@ -184,10 +184,10 @@ export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
       return ProgKind.vertex;
     }
     let parprog = ir.progs[prog.quote_parent];
-    if (parprog.annotation === "f") {
-      return ProgKind.vertex;
-    } else {
+    if (parprog.annotation === "s") {
       return ProgKind.fragment;
+    } else {
+      return ProgKind.vertex;
     }
   } else {
     return ProgKind.ordinary;
