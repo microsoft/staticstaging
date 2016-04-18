@@ -50,6 +50,8 @@ function run(code) {
 }
 `.trim();
 
+export const FUNC_ANNOTATION = "f";
+
 
 // Code-generation utilities.
 
@@ -226,7 +228,7 @@ export let compile_rules = {
       // Invoke the appropriate runtime function for executing code values.
       // We use a simple call wrapper for "progfuncs" and a more complex
       // `eval` trick for ordinary string code.
-      if (t.annotation === "f") {
+      if (t.annotation === FUNC_ANNOTATION) {
         return `call((${progex}), [])`;
       } else {
         return `run(${paren(progex)})`;
@@ -361,7 +363,7 @@ function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
   let cur_quote = nearest_quote(emitter.ir, esc.id);
   for (let i = 0; i < esc.count - 1; ++i) {
     let prog = emitter.ir.progs[cur_quote];
-    if (prog.annotation !== "f") {
+    if (prog.annotation !== FUNC_ANNOTATION) {
       ++eval_quotes;
     }
     cur_quote = prog.quote_parent;
@@ -406,7 +408,7 @@ function emit_quote_eval(emitter: Emitter, prog: Prog, name: string):
  * the JavaScript value depends on the annotation.
  */
 function emit_quote_expr(emitter: Emitter, prog: Prog, name: string) {
-  if (prog.annotation === "f") {
+  if (prog.annotation === FUNC_ANNOTATION) {
     // A function quote.
     return emit_quote_func(emitter, prog, name);
   } else {
@@ -573,7 +575,7 @@ function emit_prog_func(emitter: Emitter, prog: Prog, name: string): string
 // Emit a JavaScript Prog (a single variant). The backend depends on the
 // annotation.
 function emit_prog_decl(emitter: Emitter, prog: Prog, name: string): string {
-  if (prog.annotation === "f") {
+  if (prog.annotation === FUNC_ANNOTATION) {
     // A function quote. Compile to a JavaScript function.
     return emit_prog_func(emitter, prog, name);
   } else {

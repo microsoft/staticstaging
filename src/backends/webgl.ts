@@ -2,7 +2,7 @@ import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, get_glue, vtx_expr, render_expr, ProgKind, prog_kind,
-  FLOAT4X4 } from './gl';
+  FLOAT4X4, SHADER_ANNOTATION } from './gl';
 import { progsym, paren } from './emitutil';
 import { Type, PrimitiveType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
@@ -256,7 +256,7 @@ function emit_glsl_prog(emitter: GLEmitter, prog: Prog): string {
   // Emit subprograms.
   for (let subid of prog.quote_children) {
     let subprog = emitter.ir.progs[subid];
-    if (subprog.annotation !== "s") {
+    if (subprog.annotation !== SHADER_ANNOTATION) {
       throw "error: subprograms not allowed in shaders";
     }
     out += emit_glsl_prog(emitter, subprog);
@@ -282,7 +282,7 @@ export function codegen(ir: CompilerIR): string {
   let glue: Glue[][] = [];
   for (let prog of ir.progs) {
     if (prog !== undefined) {
-      if (prog.annotation === "s") {
+      if (prog.annotation === SHADER_ANNOTATION) {
         glue[prog.id] = get_glue(ir, prog);
       }
     }
@@ -295,7 +295,7 @@ export function codegen(ir: CompilerIR): string {
 
     emit_prog(emitter: GLEmitter, prog: Prog) {
       // Choose between emitting JavaScript and GLSL.
-      if (prog.annotation == "s") {
+      if (prog.annotation === SHADER_ANNOTATION) {
         return emit_glsl_prog(emitter, prog);
       } else {
         return js.emit_prog(emitter, prog);

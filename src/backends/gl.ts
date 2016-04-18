@@ -14,6 +14,7 @@ import {
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
 import { varsym } from './emitutil';
+import { FUNC_ANNOTATION } from './js';
 
 // General OpenGL-related backend components.
 
@@ -64,6 +65,10 @@ export const TYPE_NAMES: { [_: string]: string } = {
   "Float4x4": "mat4",
 };
 
+export const FRAG_INTRINSIC = "fragment";
+export const VTX_INTRINSIC = "vertex";
+export const SHADER_ANNOTATION = "s";
+
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),
   new FunType([FLOAT], FLOAT),
@@ -94,9 +99,9 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT4X4, FLOAT4], FLOAT4),
 ]);
 export const INTRINSICS: TypeMap = {
-  render: new FunType([new CodeType(ANY, "f")], VOID),
-  vertex: new FunType([new CodeType(ANY, "s")], VOID),
-  fragment: new FunType([new CodeType(ANY, "s")], VOID),
+  render: new FunType([new CodeType(ANY, FUNC_ANNOTATION)], VOID),
+  vertex: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
+  fragment: new FunType([new CodeType(ANY, SHADER_ANNOTATION)], VOID),
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new OverloadedType([
@@ -126,9 +131,6 @@ export const INTRINSICS: TypeMap = {
   '*': _GL_MUL_TYPE,
   '/': _GL_BINARY_TYPE,
 };
-
-export const FRAG_INTRINSIC = "fragment";
-export const VTX_INTRINSIC = "vertex";
 
 
 // Checking for our magic `vertex` and `fragmetn` intrinsics, which indicate
@@ -180,14 +182,14 @@ export enum ProgKind {
 }
 export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   let prog = ir.progs[progid];
-  if (prog.annotation === "f") {
+  if (prog.annotation === FUNC_ANNOTATION) {
     return ProgKind.render;
-  } else if (prog.annotation === "s") {
+  } else if (prog.annotation === SHADER_ANNOTATION) {
     if (prog.quote_parent === null) {
       return ProgKind.vertex;
     }
     let parprog = ir.progs[prog.quote_parent];
-    if (parprog.annotation === "s") {
+    if (parprog.annotation === SHADER_ANNOTATION) {
       return ProgKind.fragment;
     } else {
       return ProgKind.vertex;
