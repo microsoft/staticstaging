@@ -127,6 +127,9 @@ export const INTRINSICS: TypeMap = {
   '/': _GL_BINARY_TYPE,
 };
 
+export const FRAG_INTRINSIC = "fragment";
+export const VTX_INTRINSIC = "vertex";
+
 
 // Checking for our magic `vertex` and `fragmetn` intrinsics, which indicate
 // the structure of shader programs.
@@ -149,11 +152,11 @@ function is_intrinsic_call(tree: ast.ExpressionNode, name: string) {
 }
 
 export function frag_expr(tree: ast.ExpressionNode) {
-  return is_intrinsic_call(tree, "fragment");
+  return is_intrinsic_call(tree, FRAG_INTRINSIC);
 }
 
 export function vtx_expr(tree: ast.ExpressionNode) {
-  return is_intrinsic_call(tree, "vertex");
+  return is_intrinsic_call(tree, VTX_INTRINSIC);
 }
 
 export function render_expr(tree: ast.ExpressionNode) {
