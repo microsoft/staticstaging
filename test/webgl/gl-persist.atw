@@ -1,2 +1,2 @@
 var x = 5;
-vtx s< %[x]; frag s< 1 > >
+vertex s< %[x]; fragment s< 1 > >

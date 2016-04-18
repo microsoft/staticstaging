@@ -1,8 +1,8 @@
 # A uniform that is *only* used at the fragment stage.
 var x = 5;
 render f<
-  vtx s<
-    frag s<
+  vertex s<
+    fragment s<
       x * 3
     >
   >

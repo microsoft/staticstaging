@@ -19,9 +19,9 @@ var t_size = mesh_size(teapot);
 var t_model = mat4.create();
 
 def simple_shader(pos: Float3 Array, norm: Float3 Array, model: Mat4) (
-  vtx s<
+  vertex s<
     gl_Position = projection * view * model * vec4(pos, 1.0);
-    frag s<
+    fragment s<
       gl_FragColor = vec4(abs(norm), 1.0);
     >
   >;

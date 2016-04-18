@@ -1,5 +1,5 @@
 var x = 5;
-vtx s<
+vertex s<
   var y = %[x];
-  frag s< %[y] >
+  fragment s< %[y] >
 >

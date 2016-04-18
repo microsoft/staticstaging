@@ -95,8 +95,8 @@ const _GL_MUL_TYPE = new OverloadedType([
 ]);
 export const INTRINSICS: TypeMap = {
   render: new FunType([new CodeType(ANY, "f")], VOID),
-  vtx: new FunType([new CodeType(ANY, "s")], VOID),
-  frag: new FunType([new CodeType(ANY, "s")], VOID),
+  vertex: new FunType([new CodeType(ANY, "s")], VOID),
+  fragment: new FunType([new CodeType(ANY, "s")], VOID),
   gl_Position: FLOAT4,
   gl_FragColor: FLOAT4,
   vec4: new OverloadedType([
@@ -128,8 +128,8 @@ export const INTRINSICS: TypeMap = {
 };
 
 
-// Checking for our magic `vtx` and `frag` intrinsics, which indicate the
-// structure of shader programs.
+// Checking for our magic `vertex` and `fragmetn` intrinsics, which indicate
+// the structure of shader programs.
 // This could be more efficient by using the ID of the extern. For now, we
 // just match on the name.
 
@@ -149,11 +149,11 @@ function is_intrinsic_call(tree: ast.ExpressionNode, name: string) {
 }
 
 export function frag_expr(tree: ast.ExpressionNode) {
-  return is_intrinsic_call(tree, "frag");
+  return is_intrinsic_call(tree, "fragment");
 }
 
 export function vtx_expr(tree: ast.ExpressionNode) {
-  return is_intrinsic_call(tree, "vtx");
+  return is_intrinsic_call(tree, "vertex");
 }
 
 export function render_expr(tree: ast.ExpressionNode) {

@@ -1,1 +1,1 @@
-vtx s< 5; frag s< 2 > >
+vertex s< 5; fragment s< 2 > >

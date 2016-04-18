@@ -12,9 +12,9 @@ var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
 
 render f<
-  vtx s<
+  vertex s<
     gl_Position = projection * view * model * vec4(position, 1.0);
-    frag s<
+    fragment s<
       gl_FragColor = vec4(abs(normal), 1.0);
     >
   >;

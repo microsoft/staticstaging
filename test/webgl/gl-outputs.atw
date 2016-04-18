@@ -1,8 +1,8 @@
 var x = 5;
-vtx s<
+vertex s<
   var y = %[x];
   gl_Position = gl_Position;
-  frag s<
+  fragment s<
     gl_FragColor = gl_FragColor
   >
 >

@@ -1,8 +1,8 @@
 extern a: Int Array;
 extern b: Int;
 var c = a;
-vtx s<
-  frag s<
+vertex s<
+  fragment s<
     b = c
   >
 >

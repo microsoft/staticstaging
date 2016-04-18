@@ -2,9 +2,9 @@
 # both stages.
 var x = 5;
 render f<
-  vtx s<
+  vertex s<
     x * 2;
-    frag s<
+    fragment s<
       x * 3
     >
   >

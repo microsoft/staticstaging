@@ -3,9 +3,9 @@
 extern e: Float3 Array;
 var x = e;
 render f<
-  vtx s<
+  vertex s<
     abs(x);
-    frag s<
+    fragment s<
       abs(x)
     >
   >

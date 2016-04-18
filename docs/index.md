@@ -367,9 +367,9 @@ Alltheworld has a graphics-oriented extension called SHFL, for *shader family la
 
 The most obvious extension that SHFL adds is quotations that compile to GLSL shader code. Recall that we previously *annotated* quotes with `f` to make the compiler emit them as JavaScript functions; a new annotation, `s`, switches to emit them as shader programs.
 
-SHFL also has a couple of intrinsic functions, `vtx` and `frag`, to indicate vertex and fragment shaders. A fragment-shader quote is contained within a vertex-shader quote because it's a later stage. Here's a useless SHFL program:
+SHFL also has a couple of intrinsic functions, `vertex` and `fragment`, to indicate vertex and fragment shaders. A fragment-shader quote is contained within a vertex-shader quote because it's a later stage. Here's a useless SHFL program:
 
-    vtx s< frag s< 1.0 > >
+    vertex s< fragment s< 1.0 > >
 
 Take a look at the compiler's output. You'll see two string literals in the final JavaScript, both of which contain a `void main() {...}` declaration that characterizes them as GLSL shader programs.
 
@@ -387,12 +387,12 @@ The render stage needs to be a function quote (annotated with `f`), and you pass
 
     render f<
       # Bind the shader program.
-      vtx s<
+      vertex s<
         # Compute the final position of the model's vertex. The `projection`
         # and `view` matrices are provided by the runtime context.
         gl_Position = projection * view * vec4(position, 1.0);
 
-        frag s<
+        fragment s<
           # Use a solid color.
           gl_FragColor = vec4(0.5, 0.3, 0.7, 1.0);
         >
@@ -459,14 +459,14 @@ So far, our example has statically inlined the shading code with the host code. 
 In SHFL, you can encapsulate shaders just by wrapping them in functions. Since shader programs are first-class values, this works without any special consideration:
 
     def solid(pos: Float3 Array, model: Mat4, color: Vec3)
-      vtx s<
+      vertex s<
         gl_Position = projection * view * model * vec4(pos, 1.0);
-        frag s<
+        fragment s<
           gl_FragColor = vec4(color, 1.0);
         >
       >;
 
-This function, `solid`, takes the vertex position array and model-space matrix for the object it will draw along with the color to use as a red/green/blue vector. The global `projection` and `view` matrices come from closed-over state. Passing the shader to the `vtx` intrinsic binds it and its associated uniforms and attributes.
+This function, `solid`, takes the vertex position array and model-space matrix for the object it will draw along with the color to use as a red/green/blue vector. The global `projection` and `view` matrices come from closed-over state. Passing the shader to the `vertex` intrinsic binds it and its associated uniforms and attributes.
 
 Here's [a more complete example][example-objects] that uses a function-wrapped shader to draw two different objects.
 

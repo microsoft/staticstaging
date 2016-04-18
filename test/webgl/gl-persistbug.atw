@@ -1,6 +1,6 @@
 def f(x:Int)
-  vtx s<
-    frag s<
+  vertex s<
+    fragment s<
       x
     >
   >
