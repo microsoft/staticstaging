@@ -2,10 +2,10 @@
 # both stages.
 extern e: Float3 Array;
 var x = e;
-render f<
-  vertex s<
+render js<
+  vertex glsl<
     abs(x);
-    fragment s<
+    fragment glsl<
       abs(x)
     >
   >

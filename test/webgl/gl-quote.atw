@@ -1,1 +1,1 @@
-vertex s< 5; fragment s< 2 > >
+vertex glsl< 5; fragment glsl< 2 > >

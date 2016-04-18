@@ -50,7 +50,7 @@ function run(code) {
 }
 `.trim();
 
-export const FUNC_ANNOTATION = "f";
+export const FUNC_ANNOTATION = "js";
 
 
 // Code-generation utilities.

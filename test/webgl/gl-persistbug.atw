@@ -1,6 +1,6 @@
 def f(x:Int)
-  vertex s<
-    fragment s<
+  vertex glsl<
+    fragment glsl<
       x
     >
   >

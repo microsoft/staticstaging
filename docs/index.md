@@ -119,25 +119,25 @@ The code inside the quote can pretend that it shares the same variables that are
 
 If you don't use any splicing, quotes can feel very similar to lambdas. A lambda also wraps up code to run later, and via closures, a lambda can also share state from the enclosing scope where it is defined. In fact, it can seem silly that Alltheworld uses string literals and `eval` where an ordinary function would do just fine.
 
-In recognition this correspondence, Alltheworld lets you write quotes that compile to JavaScript functions. They have the same semantics as ordinary `eval`-based quotes---only their implementation, and therefore their performance, differs. To use function stages, you can *annotate* quotes with `f`, like this:
+In recognition this correspondence, Alltheworld lets you write quotes that compile to JavaScript functions. They have the same semantics as ordinary `eval`-based quotes---only their implementation, and therefore their performance, differs. To use function stages, you can *annotate* quotes with `js`, like this:
 
     var x = 21;
-    var doubler = f< x + x >;
+    var doubler = js< x + x >;
     !doubler
 
 The JavaScript code that Alltheworld generates for this program doesn't have any string literals at all---and it won't use `eval` at run time.
 
-The compiler needs keeps track of the kinds of programs so it knows how to execute them with `!`. The type system tracks the annotation on each quote. Here's a function that indicates that it takes a function (`f`-annotated) quote:
+The compiler needs keeps track of the kinds of programs so it knows how to execute them with `!`. The type system tracks the annotation on each quote. Here's a function that indicates that it takes a function (`js`-annotated) quote:
 
-    def runit(c:f<Int>)
+    def runit(c:js<Int>)
       !c;
-    runit(f<2>)
+    runit(js<2>)
 
 You'll get a type error if the annotations don't match:
 
     def runit(c:<Int>)
       !c;
-    runit(f<2>)
+    runit(js<2>)
 
 ## N-Level Escapes { #multiescape }
 
@@ -369,7 +369,7 @@ The most obvious extension that SHFL adds is quotations that compile to GLSL sha
 
 SHFL also has a couple of intrinsic functions, `vertex` and `fragment`, to indicate vertex and fragment shaders. A fragment-shader quote is contained within a vertex-shader quote because it's a later stage. Here's a useless SHFL program:
 
-    vertex s< fragment s< 1.0 > >
+    vertex glsl< fragment glsl< 1.0 > >
 
 Take a look at the compiler's output. You'll see two string literals in the final JavaScript, both of which contain a `void main() {...}` declaration that characterizes them as GLSL shader programs.
 
@@ -387,12 +387,12 @@ The render stage needs to be a function quote (annotated with `f`), and you pass
 
     render f<
       # Bind the shader program.
-      vertex s<
+      vertex glsl<
         # Compute the final position of the model's vertex. The `projection`
         # and `view` matrices are provided by the runtime context.
         gl_Position = projection * view * vec4(position, 1.0);
 
-        fragment s<
+        fragment glsl<
           # Use a solid color.
           gl_FragColor = vec4(0.5, 0.3, 0.7, 1.0);
         >
@@ -459,9 +459,9 @@ So far, our example has statically inlined the shading code with the host code. 
 In SHFL, you can encapsulate shaders just by wrapping them in functions. Since shader programs are first-class values, this works without any special consideration:
 
     def solid(pos: Float3 Array, model: Mat4, color: Vec3)
-      vertex s<
+      vertex glsl<
         gl_Position = projection * view * model * vec4(pos, 1.0);
-        fragment s<
+        fragment glsl<
           gl_FragColor = vec4(color, 1.0);
         >
       >;

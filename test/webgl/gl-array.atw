@@ -1,8 +1,8 @@
 extern a: Int Array;
 extern b: Int;
 var c = a;
-vertex s<
-  fragment s<
+vertex glsl<
+  fragment glsl<
     b = c
   >
 >

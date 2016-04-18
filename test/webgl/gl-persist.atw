@@ -1,2 +1,2 @@
 var x = 5;
-vertex s< %[x]; fragment s< 1 > >
+vertex glsl< %[x]; fragment glsl< 1 > >

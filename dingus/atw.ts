@@ -243,7 +243,7 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
   const brackets = "<>[]()";
   const punctuation = [":", "->"];
   const operators = ["+", "-", "*", "/", "=", "!"];
-  const builtins = ["render", "vtx", "frag"];
+  const builtins = ["render", "vertex", "fragment"];
   const quote_begin = /[A-Za-z0-9]+\</;
   const macro = /@[A-Za-z][A-Za-z0-9]*[\?\!]*/;
 

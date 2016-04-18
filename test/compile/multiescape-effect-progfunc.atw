@@ -1,6 +1,6 @@
 extern global.foo: Int;
 global.foo = 1;
-!!f< f<
+!!js< js<
   %[ global.foo = global.foo + 1 ]2
 > >;
 global.foo

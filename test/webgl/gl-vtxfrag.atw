@@ -1,5 +1,5 @@
 var x = 5;
-vertex s<
+vertex glsl<
   var y = %[x];
-  fragment s< %[y] >
+  fragment glsl< %[y] >
 >

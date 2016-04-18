@@ -1,8 +1,8 @@
 var x = 5;
-vertex s<
+vertex glsl<
   var y = %[x];
   gl_Position = gl_Position;
-  fragment s<
+  fragment glsl<
     gl_FragColor = gl_FragColor
   >
 >

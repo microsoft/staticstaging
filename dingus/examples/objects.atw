@@ -19,15 +19,15 @@ var t_size = mesh_size(teapot);
 var t_model = mat4.create();
 
 def simple_shader(pos: Float3 Array, norm: Float3 Array, model: Mat4) (
-  vertex s<
+  vertex glsl<
     gl_Position = projection * view * model * vec4(pos, 1.0);
-    fragment s<
+    fragment glsl<
       gl_FragColor = vec4(abs(norm), 1.0);
     >
   >;
 );
 
-render f<
+render js<
   var phase = Math.sin(Date.now() / 200);
   mat4.rotateX(b_model, id, phase);
   mat4.rotateZ(t_model, id, phase);

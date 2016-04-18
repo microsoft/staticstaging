@@ -1,10 +1,10 @@
 extern a: Float3 Array;
 extern s: Float3;
 var av = a;
-render f<
-  vertex s<
+render js<
+  vertex glsl<
     s = av;
-    fragment s<
+    fragment glsl<
       s = av;
     >
   >

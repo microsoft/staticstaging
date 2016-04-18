@@ -1,9 +1,9 @@
 # A uniform that is *only* used at the vertex stage.
 var x = 5;
-render f<
-  vertex s<
+render js<
+  vertex glsl<
     x * 3;
-    fragment s<
+    fragment glsl<
       3
     >
   >

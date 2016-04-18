@@ -67,7 +67,7 @@ export const TYPE_NAMES: { [_: string]: string } = {
 
 export const FRAG_INTRINSIC = "fragment";
 export const VTX_INTRINSIC = "vertex";
-export const SHADER_ANNOTATION = "s";
+export const SHADER_ANNOTATION = "glsl";
 
 const _GL_UNARY_TYPE = new OverloadedType([
   new FunType([INT], INT),

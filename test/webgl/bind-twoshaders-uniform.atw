@@ -1,14 +1,14 @@
 # A uniform that is used in two different shaders.
 var x = 5;
-render f<
-  vertex s<
-    fragment s<
+render js<
+  vertex glsl<
+    fragment glsl<
       x * 3
     >
   >;
 
-  vertex s<
-    fragment s<
+  vertex glsl<
+    fragment glsl<
       x * 5
     >
   >

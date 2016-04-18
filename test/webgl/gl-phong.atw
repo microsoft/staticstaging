@@ -17,12 +17,12 @@ var normal = bunny.normals;
 
 var shininess = 0.5;
 
-render f<
+render js<
   var t = Date.now();
   var lx = Math.sin(t / 200);
   var ly = Math.sin(t / 100);
   var lz = Math.sin(t / 300);
-  vertex s<
+  vertex glsl<
     var light_position = vec3(lx, ly, lz);
 
     var view_model = view * model;
@@ -41,7 +41,7 @@ render f<
 
     var norm_norm = normalize(normal);
 
-    fragment s<
+    fragment glsl<
       # Phong power.
       var r = -(reflect(light_direction, norm_norm));
       var power = pow(max(0.0, dot(view_direction, r)), shininess);
