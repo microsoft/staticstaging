@@ -547,4 +547,8 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
     });
     handle_hash();
   }
+
+  return {
+    set_code: set_code,
+  };
 }
