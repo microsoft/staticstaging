@@ -403,8 +403,10 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
       if (mode !== "interp") {
         // Show the compiled code.
         show(compiled, compiledbox);
-        treebox.style.display = 'none';
-      } else {
+        if (treebox) {
+          treebox.style.display = 'none';
+        }
+      } else if (treebox) {
         // Draw the syntax tree.
         if (!draw_tree) {
           // Lazily initialize the drawing code to avoid D3 invocations when
@@ -444,7 +446,9 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
         show(null, typebox);
       }
       show(null, outbox);
-      treebox.style.display = 'none';
+      if (treebox) {
+        treebox.style.display = 'none';
+      }
       show(null, compiledbox);
 
       if (navigate && config.history) {
