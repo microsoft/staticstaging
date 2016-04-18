@@ -321,10 +321,12 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
 
 interface Config {
   history?: boolean;
+  lineNumbers?: boolean;
 };
 
 let DEFAULT: Config = {
   history: true,
+  lineNumbers: true,
 };
 
 export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
@@ -343,7 +345,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
   let codemirror = CodeMirror.fromTextArea(codebox, {
-    lineNumbers: true,
+    lineNumbers: !!config.lineNumbers,
     mode: "alltheworld",
   });
 
