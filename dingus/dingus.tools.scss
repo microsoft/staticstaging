@@ -1,51 +1,55 @@
+.atwdingus {
+
 /* The toolbar. */
-#tools {
+.tools {
     height: 2em;
     margin-top: 0.5ex;
 }
-#tools > * {
+.tools > * {
     float: left;
     margin: 0 0.5em 0 0;
 }
 
 /* Output boxes hidden initially. */
-#error, #result {
+.error, .result {
     display: none;
     clear: both;
 }
-#fps {
+.fps {
     display: none;
 }
 
 /* Tiny output code. */
-#compiled {
+.compiled {
   font-size: 60%;
   overflow: auto;
 }
 
 /* When the output is a WebGL canvas, make it big. */
-#visual {
+.visual {
     height: 300px;
 }
 
 /* Framerate display. */
-#fps {
+.fps {
   text-align: right;
   font-size: 80%;
 }
-#fps::after {
+.fps::after {
   content: " fps";
 }
 
 /* The syntax tree diagram. */
-#tree {
+.tree {
     height: 30ex;
 }
-#tree .node text {
+.tree .node text {
   font-size: 80%;
 }
-#tree .link {
+.tree .link {
   fill: none;
   stroke: #ddd;
   stroke-width: 2px;
+}
+
 }

@@ -8,22 +8,22 @@ pre, textarea {
 
 /* Columns on wide, stacked on narrow. At an intermediate width, they're
    50/50; otherwise, make sure the code is wide enough. */
-#input, #output {
+.input, .output {
     width: 100%;
 }
 @media (min-width: 900px) {
-    #input, #output {
+    .input, .output {
         float: left;
     }
-    #input {
+    .input {
         width: calc(500px);
     }
-    #output {
+    .output {
         width: calc(98% - 500px);
     }
 }
 @media (min-width: 1020px) {
-    #input, #output {
+    .input, .output {
         width: 49%;
     }
 }
@@ -35,13 +35,13 @@ pre, textarea {
     height: 60ex;
 }
 @media (min-width: 900px) {
-    #input, #output {
+    .input, .output {
         height: calc(100vh - 7ex);
     }
-    #code, .CodeMirror {
+    .code, .CodeMirror {
         height: 100%;
     }
-    #compiled {
+    .compiled {
         height: calc(100vh - 300px - 18ex);
     }
 }

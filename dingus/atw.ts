@@ -320,18 +320,20 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  let codebox = <HTMLTextAreaElement> document.querySelector('textarea');
-  let errbox = <HTMLElement> document.querySelector('#error');
-  let treebox = <HTMLElement> document.querySelector('#tree');
-  let compiledbox = <HTMLElement> document.querySelector('#compiled');
-  let typebox = <HTMLElement> document.querySelector('#type');
-  let outbox = <HTMLElement> document.querySelector('#result');
-  let helpbox = <HTMLElement> document.querySelector('#help');
-  let clearbtn = <HTMLElement> document.querySelector('#clear');
-  let modeselect = <HTMLSelectElement> document.querySelector('#mode');
-  let exampleselect = <HTMLSelectElement> document.querySelector('#example');
-  let fpsbox = <HTMLElement> document.querySelector('#fps');
-  let visualbox = <HTMLElement> document.querySelector('#visual');
+  let base = <HTMLElement> document.querySelector('.atwdingus');
+
+  let codebox = <HTMLTextAreaElement> base.querySelector('textarea');
+  let errbox = <HTMLElement> base.querySelector('.error');
+  let treebox = <HTMLElement> base.querySelector('.tree');
+  let compiledbox = <HTMLElement> base.querySelector('.compiled');
+  let typebox = <HTMLElement> base.querySelector('.type');
+  let outbox = <HTMLElement> base.querySelector('.result');
+  let helpbox = <HTMLElement> base.querySelector('.help');
+  let clearbtn = <HTMLElement> base.querySelector('.clear');
+  let modeselect = <HTMLSelectElement> base.querySelector('.mode');
+  let exampleselect = <HTMLSelectElement> base.querySelector('.example');
+  let fpsbox = <HTMLElement> base.querySelector('.fps');
+  let visualbox = <HTMLElement> base.querySelector('.visual');
 
   // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
   let codemirror = CodeMirror.fromTextArea(codebox, {
