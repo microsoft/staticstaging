@@ -29,7 +29,7 @@ atw.bundle.js: $(DINGUS_JS) $(call npmdep,webpack)
 
 # Build the CSS.
 
-dingus.css: dingus.scss
+dingus.css: dingus.scss dingus.tools.scss
 	sassc $< > $@
 
 
