@@ -550,5 +550,6 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   return {
     set_code: set_code,
+    handle_code: handle_code,
   };
 }
