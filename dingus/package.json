@@ -4,7 +4,7 @@
   "private": true,
 
   "scripts": {
-    "build": "webpack build/dingus/atw.js atw.bundle.js"
+    "build": "webpack --output-library atwDingus build/dingus/atw.js atw.bundle.js"
   },
 
   "dependencies": {

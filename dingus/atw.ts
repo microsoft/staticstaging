@@ -319,9 +319,7 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
   };
 });
 
-document.addEventListener("DOMContentLoaded", function () {
-  let base = <HTMLElement> document.querySelector('.atwdingus');
-
+export = function atwDingus(base: HTMLElement) {
   let codebox = <HTMLTextAreaElement> base.querySelector('textarea');
   let errbox = <HTMLElement> base.querySelector('.error');
   let treebox = <HTMLElement> base.querySelector('.tree');
@@ -529,4 +527,4 @@ document.addEventListener("DOMContentLoaded", function () {
     handle_hash();
   });
   handle_hash();
-});
+}
