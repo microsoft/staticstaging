@@ -319,7 +319,15 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
   };
 });
 
-export = function atwDingus(base: HTMLElement) {
+interface Config {
+  history?: boolean;
+};
+
+let DEFAULT: Config = {
+  history: true,
+};
+
+export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
   let codebox = <HTMLTextAreaElement> base.querySelector('textarea');
   let errbox = <HTMLElement> base.querySelector('.error');
   let treebox = <HTMLElement> base.querySelector('.tree');
@@ -424,7 +432,7 @@ export = function atwDingus(base: HTMLElement) {
         show(res, outbox);
       }
 
-      if (navigate) {
+      if (navigate && config.history) {
         let hash = encode_hash({code: code, mode: mode});
         history.replaceState(null, null, hash);
       }
@@ -435,7 +443,7 @@ export = function atwDingus(base: HTMLElement) {
       treebox.style.display = 'none';
       show(null, compiledbox);
 
-      if (navigate) {
+      if (navigate && config.history) {
         history.replaceState(null, null, '#');
       }
     }
