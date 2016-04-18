@@ -1,8 +1,8 @@
 DINGUS_JS := build/dingus/atw.js
-GENERATED := examples.js preambles.js atw.bundle.js codemirror.css
+GENERATED := examples.js preambles.js atw.bundle.js codemirror.css dingus.css
 
 .PHONY: all clean
-all: atw.bundle.js codemirror.css
+all: atw.bundle.js codemirror.css dingus.css
 clean:
 	rm -rf build/ node_modules/ $(GENERATED)
 
@@ -25,6 +25,12 @@ $(DINGUS_JS): $(TS_SRC) $(JS_SRC) atw.ts $(TYPINGS_BROWSER) $(TSC)
 
 atw.bundle.js: $(DINGUS_JS) $(call npmdep,webpack)
 	$(call npmbin,webpack) $< $@
+
+
+# Build the CSS.
+
+dingus.css: dingus.scss
+	sassc $< > $@
 
 
 # Copy the CSS resource we need.
