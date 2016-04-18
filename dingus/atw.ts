@@ -399,7 +399,7 @@ export = function atwDingus(base: HTMLElement) {
         if (!draw_tree) {
           // Lazily initialize the drawing code to avoid D3 invocations when
           // we don't need them.
-          draw_tree = tree_canvas(d3, '.tree', get_name, get_children);
+          draw_tree = tree_canvas(d3, treebox, get_name, get_children);
         }
         draw_tree(tree);
         show(null, compiledbox);
