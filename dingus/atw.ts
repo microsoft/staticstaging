@@ -390,13 +390,15 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   function run_code(navigate=true) {
     let code = get_code();
-    let mode = modeselect.value;
+    let mode = modeselect ? modeselect.value : "interp";
 
     if (code !== "") {
       let [err, tree, typ, compiled, res, glcode] = atw_run(code, mode);
 
       show(err, errbox);
-      show(typ, typebox);
+      if (typebox) {
+        show(typ, typebox);
+      }
 
       if (mode !== "interp") {
         // Show the compiled code.
@@ -438,7 +440,9 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
       }
     } else {
       show(null, errbox);
-      show(null, typebox);
+      if (typebox) {
+        show(null, typebox);
+      }
       show(null, outbox);
       treebox.style.display = 'none';
       show(null, compiledbox);
@@ -502,37 +506,45 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
   }
 
   // Also run the code when toggling the compile checkbox.
-  modeselect.addEventListener('change', function () {
-    run_code();
-  });
-
-  // Populate the example popup.
-  for (let example of ATW_EXAMPLES) {
-    let option = document.createElement("option");
-    option.value = example['name'];
-    option.text = example['title'];
-    exampleselect.appendChild(option);
+  if (modeselect) {
+    modeselect.addEventListener('change', function () {
+      run_code();
+    });
   }
 
-  // Handle example choices.
-  exampleselect.addEventListener('change', function () {
-    // Load the example.
-    link_to_example(exampleselect.value);
+  if (exampleselect) {
+    // Populate the example popup.
+    for (let example of ATW_EXAMPLES) {
+      let option = document.createElement("option");
+      option.value = example['name'];
+      option.text = example['title'];
+      exampleselect.appendChild(option);
+    }
 
-    // Switch back to the "choose an example" item.
-    exampleselect.value = 'choose';
-  });
+    // Handle example choices.
+    exampleselect.addEventListener('change', function () {
+      // Load the example.
+      link_to_example(exampleselect.value);
+
+      // Switch back to the "choose an example" item.
+      exampleselect.value = 'choose';
+    });
+  }
 
   // Handle the "clear" button.
-  clearbtn.addEventListener('click', function () {
-    if (get_code() != '') {
-      link_to_code('');
-    }
-  });
+  if (clearbtn) {
+    clearbtn.addEventListener('click', function () {
+      if (get_code() != '') {
+        link_to_code('');
+      }
+    });
+  }
 
   // Handle the empty hash and any new ones that are set.
-  window.addEventListener('hashchange', function () {
+  if (config.history) {
+    window.addEventListener('hashchange', function () {
+      handle_hash();
+    });
     handle_hash();
-  });
-  handle_hash();
+  }
 }
