@@ -322,11 +322,13 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
 interface Config {
   history?: boolean;
   lineNumbers?: boolean;
+  scrollbars?: boolean;
 };
 
 let DEFAULT: Config = {
   history: true,
   lineNumbers: true,
+  scrollbars: true,
 };
 
 export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
@@ -347,7 +349,8 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
   let codemirror = CodeMirror.fromTextArea(codebox, {
     lineNumbers: !!config.lineNumbers,
     mode: "alltheworld",
-  });
+    scrollbarStyle: config.scrollbars ? "native" : null,
+  } as any);
 
   // Accessors for the current code in the box.
   function get_code() {
@@ -414,6 +417,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
         show(typ, typebox);
       }
 
+      // Show the compiled code or the AST visualization.
       if (mode !== "interp") {
         // Show the compiled code.
         show(compiled, compiledbox);
@@ -435,6 +439,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
         show(null, compiledbox);
       }
 
+      // Show the output, either as text or in the WebGL viewer.
       if (mode === "webgl" && glcode) {
         // Start the WebGL viewer.
         visualbox.style.display = 'block';
