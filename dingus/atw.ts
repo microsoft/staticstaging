@@ -390,9 +390,21 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
   let draw_tree: (tree_data: any) => void;
   let update_gl: (code: string) => void;
 
-  function run_code(navigate=true) {
+  let last_mode: string = null;
+  function run_code(navigate = true, mode:string = null) {
     let code = get_code();
-    let mode = modeselect ? modeselect.value : "interp";
+
+    // Get the mode from the popup, if available, or a variable if we don't
+    // have the popup.
+    if (!mode && modeselect) {
+      mode = modeselect.value;
+    } else {
+      if (mode) {
+        last_mode = mode;
+      } else {
+        mode = last_mode;
+      }
+    }
 
     if (code !== "") {
       let [err, tree, typ, compiled, res, glcode] = atw_run(code, mode);
@@ -408,16 +420,19 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
         if (treebox) {
           treebox.style.display = 'none';
         }
-      } else if (treebox) {
+      } else {
         // Draw the syntax tree.
-        if (!draw_tree) {
-          // Lazily initialize the drawing code to avoid D3 invocations when
-          // we don't need them.
-          draw_tree = tree_canvas(d3, treebox, get_name, get_children);
+        if (treebox) {
+          if (!draw_tree) {
+            // Lazily initialize the drawing code to avoid D3 invocations when
+            // we don't need them.
+            draw_tree = tree_canvas(d3, treebox, get_name, get_children);
+          }
+          draw_tree(tree);
+          treebox.style.display = 'block';
         }
-        draw_tree(tree);
+
         show(null, compiledbox);
-        treebox.style.display = 'block';
       }
 
       if (mode === "webgl" && glcode) {
@@ -555,7 +570,9 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
   }
 
   return {
-    set_code: set_code,
-    handle_code: handle_code,
+    run(code: string, mode: string = null) {
+      set_code(code);
+      run_code(true, mode);
+    },
   };
 }
