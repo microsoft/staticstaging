@@ -350,6 +350,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
     lineNumbers: !!config.lineNumbers,
     mode: "alltheworld",
     scrollbarStyle: config.scrollbars ? "native" : null,
+    tabSize: 2,
   } as any);
 
   // Accessors for the current code in the box.
