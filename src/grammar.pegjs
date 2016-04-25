@@ -21,8 +21,10 @@ SeqExpr
 
 // Expressions that usually don't need parenthesization.
 TermExpr
-  = Quote / FloatLiteral / IntLiteral / CCall / Lookup / Splice / Persist /
-  Snippet / Run / Paren
+  = Quote / FloatLiteral / IntLiteral / CCall / Lookup / Escape / Run / Paren
+
+Escape
+  = Splice / Persist / Snippet
 
 // Expressions that can be operands to binary/unary operators.
 Operand
