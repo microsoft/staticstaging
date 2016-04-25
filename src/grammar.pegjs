@@ -109,11 +109,13 @@ CParam
   { return {tag: "param", name: i, type: t}; }
 
 Call "call"
-  = i:TermExpr _ as:Arg+
+  = i:Callable _ as:Arg+
   { return {tag: "call", fun: i, args: as}; }
 Arg
   = e:TermExpr _
   { return e; }
+Callable
+  = Quote / CCall / Lookup / Escape / Run / Paren
 
 CCall "C-style call"
   = i:Lookup paren_open _ as:CArgList? _ paren_close

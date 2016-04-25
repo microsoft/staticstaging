@@ -18,7 +18,8 @@ class Code {
     public expr: ast.ExpressionNode,
     // The Pers is a Code value's equivalent of a closure's environment. It is
     // a list of values associated with the Persist nodes in the expression.
-    public pers: Pers
+    public pers: Pers,
+    public annotation: string
   ) {}
 }
 
@@ -127,7 +128,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
     let [t, s, p] = quote_interp(tree.expr, level, state, []);
 
     // Wrap the resulting AST as a code value.
-    return [new Code(t, p), s];
+    return [new Code(t, p, tree.annotation), s];
   },
 
   visit_escape(tree: ast.EscapeNode, state: State): [Value, State] {
@@ -508,7 +509,7 @@ export function pretty_value(v: Value): string {
   if (typeof v == 'number') {
     return v.toString();
   } else if (v instanceof Code) {
-    return "< " + pretty(v.expr) + " >";
+    return v.annotation + "< " + pretty(v.expr) + " >";
   } else if (v instanceof Fun) {
     return "(fun)";
   } else if (v instanceof Extern) {
