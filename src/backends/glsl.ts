@@ -5,7 +5,7 @@ import { stack_lookup } from '../util';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { _unwrap_array, _is_cpu_scope, _attribute_type, TYPE_NAMES,
   shadervarsym, frag_expr, Glue, ProgKind, prog_kind,
-  SHADER_ANNOTATION } from './gl';
+  SHADER_ANNOTATION, emit_glue } from './gl';
 import { Emitter, emit, specialized_prog } from './emitter';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
   paren, splicesym } from './emitutil';
@@ -204,16 +204,16 @@ export function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
 
 // Emitting the surrounding machinery for communicating between stages.
 
-export function compile_prog(ir: CompilerIR,
-  glue: Glue[][], progid: number, variant: Variant): string
+export function compile_prog(parent_emitter: Emitter, progid: number): string
 {
+  let ir = parent_emitter.ir;
   let emitter: Emitter = {
     ir: ir,
     compile: compile,
     emit_proc: null,
     emit_prog: null,
     emit_prog_variant: null,
-    variant: variant,
+    variant: parent_emitter.variant,
   };
 
   // TODO compile the functions
@@ -228,7 +228,7 @@ export function compile_prog(ir: CompilerIR,
 
   // Declare `in` variables for the persists and free variables.
   let decls: string[] = [];
-  for (let g of glue[progid]) {
+  for (let g of emit_glue(parent_emitter, progid)) {
     let qual: string;
     if (g.attribute) {
       qual = "attribute";
@@ -249,7 +249,7 @@ export function compile_prog(ir: CompilerIR,
     throw "error: too many subprograms";
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
-    for (let g of glue[subprog.id]) {
+    for (let g of emit_glue(parent_emitter, subprog.id)) {
       if (!g.from_host) {
         decls.push(emit_decl("varying", emit_type(g.type), g.name));
 

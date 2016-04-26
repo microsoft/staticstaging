@@ -14,6 +14,7 @@ import {
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
 import { varsym } from './emitutil';
+import { Emitter, specialized_prog } from './emitter';
 import { FUNC_ANNOTATION } from './js';
 
 // General OpenGL-related backend components.
@@ -275,7 +276,7 @@ export interface Glue {
 }
 
 // Find all the incoming Glue values for a given shader program.
-export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
+function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   let glue: Glue[] = [];
 
   // Get glue for the persists.
@@ -364,4 +365,15 @@ export function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   }
 
   return glue;
+}
+
+/**
+ * Gather the Glue data for a program by its ID. This is sensitive to
+ * presplicing variants.
+ *
+ * Eventually, it would be nice to pre-compute or memoize this. At the moment,
+ * we may be re-computing this many times.
+ */
+export function emit_glue(emitter: Emitter, progid: number) {
+  return get_glue(emitter.ir, specialized_prog(emitter, progid));
 }

@@ -1,7 +1,7 @@
 import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
-import { Glue, get_glue, vtx_expr, render_expr, ProgKind, prog_kind,
+import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, SHADER_ANNOTATION } from './gl';
 import { progsym, paren } from './emitutil';
 import { Type, PrimitiveType } from '../type';
@@ -113,10 +113,9 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
 
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
-function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
-    progid: number): string
+function emit_shader_setup(emitter: Emitter, progid: number): string
 {
-  let [vertex_prog, fragment_prog] = get_prog_pair(ir, progid);
+  let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
   let out = js.emit_var(
@@ -126,7 +125,8 @@ function emit_shader_setup(ir: CompilerIR, glue: Glue[][],
 
   // Get the variable locations, for both explicit persists and for free
   // variables.
-  for (let g of glue[vertex_prog.id]) {
+  let glue = emit_glue(emitter, vertex_prog.id);
+  for (let g of glue) {
     out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id) + "\n";
   }
 
@@ -176,7 +176,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
 // Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
 // shader). This includes both the `useProgram` call and the `bindX` calls to
 // set up the uniforms and attributes.
-function emit_shader_binding(emitter: GLEmitter,
+function emit_shader_binding(emitter: Emitter,
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
@@ -184,7 +184,8 @@ function emit_shader_binding(emitter: GLEmitter,
   let out = `gl.useProgram(${shadersym(vertex_prog.id)})`;
 
   // Emit and bind the uniforms and attributes.
-  for (let g of emitter.glue[progid]) {
+  let glue = emit_glue(emitter, progid);
+  for (let g of glue) {
     let value: string;
     if (g.value_name) {
       value = g.value_name;
@@ -199,10 +200,10 @@ function emit_shader_binding(emitter: GLEmitter,
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
-let compile_rules: ASTVisit<GLEmitter, string> =
+let compile_rules: ASTVisit<Emitter, string> =
   compose_visit(js.compile_rules, {
     // Compile calls to our intrinsics for binding shaders.
-    visit_call(tree: ast.CallNode, emitter: GLEmitter): string {
+    visit_call(tree: ast.CallNode, emitter: Emitter): string {
       // Check for the intrinsic that indicates a shader invocation.
       if (vtx_expr(tree)) {
         // For the moment, we require a literal quote so we can statically
@@ -224,7 +225,7 @@ let compile_rules: ASTVisit<GLEmitter, string> =
       return ast_visit(js.compile_rules, tree, emitter);
     },
 
-    visit_binary(tree: ast.BinaryNode, emitter: GLEmitter): string {
+    visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
       // If this is a matrix/matrix multiply, emit a function call.
       if (tree.op === "*") {
         let [typ,] = emitter.ir.type_table[tree.id];
@@ -240,17 +241,11 @@ let compile_rules: ASTVisit<GLEmitter, string> =
     },
   });
 
-function compile(tree: ast.SyntaxNode, emitter: GLEmitter): string {
+function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
   return ast_visit(compile_rules, tree, emitter);
 };
 
-// Our WebGL emitter also has a function to emit GLSL code and a special
-// summary of the cross-stage communication.
-interface GLEmitter extends Emitter {
-  glue: Glue[][],
-}
-
-function emit_glsl_prog(emitter: GLEmitter, prog: Prog): string {
+function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
   let out = "";
 
   // Emit subprograms.
@@ -263,14 +258,13 @@ function emit_glsl_prog(emitter: GLEmitter, prog: Prog): string {
   }
 
   // Emit the shader program.
-  let code = glsl.compile_prog(emitter.ir, emitter.glue, prog.id,
-                               emitter.variant);
+  let code = glsl.compile_prog(emitter, prog.id);
   out += js.emit_var(progsym(prog.id), js.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
   if (prog_kind(emitter.ir, prog.id) === ProgKind.vertex) {
-    out += emit_shader_setup(emitter.ir, emitter.glue, prog.id);
+    out += emit_shader_setup(emitter, prog.id);
   }
 
   return out;
@@ -278,22 +272,12 @@ function emit_glsl_prog(emitter: GLEmitter, prog: Prog): string {
 
 // Compile the IR to a JavaScript program that uses WebGL and GLSL.
 export function codegen(ir: CompilerIR): string {
-  // Make some additional decisions about communication between shader stages.
-  let glue: Glue[][] = [];
-  for (let prog of ir.progs) {
-    if (prog !== undefined) {
-      if (prog.annotation === SHADER_ANNOTATION) {
-        glue[prog.id] = get_glue(ir, prog);
-      }
-    }
-  }
-
-  let emitter: GLEmitter = {
+  let emitter: Emitter = {
     ir: ir,
     compile: compile,
     emit_proc: js.emit_proc,
 
-    emit_prog(emitter: GLEmitter, prog: Prog) {
+    emit_prog(emitter: Emitter, prog: Prog) {
       // Choose between emitting JavaScript and GLSL.
       if (prog.annotation === SHADER_ANNOTATION) {
         return emit_glsl_prog(emitter, prog);
@@ -308,7 +292,6 @@ export function codegen(ir: CompilerIR): string {
     },
 
     variant: null,
-    glue: glue,
   };
 
   // Wrap up the setup code with the main function(s).
