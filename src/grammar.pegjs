@@ -108,14 +108,20 @@ CParam
   = i:ident _ typed _ t:Type _
   { return {tag: "param", name: i, type: t}; }
 
+// This is a little hacky, but we currently require whitespace when the callee
+// is an identifier (a lookup). This resolves a grammar ambiguity with quote
+// annotations, e.g., `js<1>` vs. `js <1>`.
 Call "call"
-  = i:Callable _ as:Arg+
+  = OtherCall / IdentCall
+IdentCall
+  = i:Lookup ws _ as:Arg+
+  { return {tag: "call", fun: i, args: as}; }
+OtherCall
+  = i:(CCall / Escape / Run / Paren) _ as:Arg+
   { return {tag: "call", fun: i, args: as}; }
 Arg
   = e:TermExpr _
   { return e; }
-Callable
-  = Quote / CCall / Lookup / Escape / Run / Paren
 
 CCall "C-style call"
   = i:Lookup paren_open _ as:CArgList? _ paren_close
@@ -276,10 +282,10 @@ macromark
 
 // Empty space.
 
-comment "comment"
+comment
   = "#" (!NEWLINE .)*
 
-ws "whitespace"
+ws
   = SPACE
 
 _
