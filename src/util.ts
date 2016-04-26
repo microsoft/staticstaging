@@ -141,6 +141,19 @@ export function set_diff <T> (a: T[], b: T[]): T[] {
   return out;
 }
 
+/**
+ * Union for set. Also a naive implementation.
+ */
+export function set_union <T> (a: T[], b: T[]): T[] {
+  let out: T[] = [].concat(a);
+  for (let x of b) {
+    if (!set_in(a, x)) {
+      out.push(x);
+    }
+  }
+  return out;
+}
+
 // Eval inside a scope.
 export function scope_eval(code: string): any {
   return (function () {

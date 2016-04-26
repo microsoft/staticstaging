@@ -1,5 +1,5 @@
 import { SyntaxNode } from '../ast';
-import { hd, tl, cons, assign, set_add, set_diff } from '../util';
+import { hd, tl, cons, assign, set_add, set_diff, set_union } from '../util';
 import { Prog, Proc, Scope, Variant, is_prog } from './ir';
 import { ast_translate_rules, ast_visit } from '../visit';
 
@@ -66,10 +66,10 @@ function scope_variant<T extends Scope>(orig: T, config: number[],
     substitutions[esc.id] = snippet.body;
 
     // Accumulate the metadata from the spliced code.
-    var_scope.persist = orig.persist.concat(snippet.persist);
-    var_scope.splice = orig.splice.concat(snippet.splice);
-    var_scope.free = orig.free.concat(snippet.free);
-    var_scope.bound = orig.bound.concat(snippet.bound);
+    var_scope.persist = set_union(orig.persist, snippet.persist);
+    var_scope.splice = set_union(orig.splice, snippet.splice);
+    var_scope.free = set_union(orig.free, snippet.free);
+    var_scope.bound = set_union(orig.bound, snippet.bound);
 
     // For Progs, also transfer the *owned* lists.
     if (is_prog(orig)) {
@@ -77,16 +77,16 @@ function scope_variant<T extends Scope>(orig: T, config: number[],
       // `if` above should be enough to specialize, but apparently that
       // doesn't work on type parameters? For now, this is quite ugly.
       (var_scope as any).owned_persist =
-        (orig as any).owned_persist.concat(snippet.owned_persist);
+        set_union((orig as any).owned_persist, snippet.owned_persist);
       (var_scope as any).owned_splice =
-        (orig as any).owned_splice.concat(snippet.owned_splice);
+        set_union((orig as any).owned_splice, snippet.owned_splice);
     }
 
     // Any parameters and bound variables in the original scope are not free
     // here.
     let bound = orig.bound;
     if (!is_prog(orig)) {
-      bound = bound.concat((var_scope as any).params);
+      bound = set_union(bound, (var_scope as any).params);
     }
     var_scope.free = set_diff(var_scope.free, bound);
 
