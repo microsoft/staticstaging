@@ -12,7 +12,7 @@ Program
 
 // Expression syntax.
 
-Expr "expression"
+Expr
   = Var / Extern / Fun / CDef / If / Binary / Unary / Assign /
   CCall / Call / MacroCall / TermExpr
 
@@ -21,10 +21,7 @@ SeqExpr
 
 // Expressions that usually don't need parenthesization.
 TermExpr
-  = Quote / FloatLiteral / IntLiteral / CCall / Lookup / Escape / Run / Paren
-
-Escape
-  = Splice / Persist / Snippet
+  = Quote / CCall / Lookup / Escape / Run / FloatLiteral / IntLiteral / Paren
 
 // Expressions that can be operands to binary/unary operators.
 Operand
@@ -39,7 +36,7 @@ HalfSeq
   = lhs:Expr _ seq
   { return lhs; }
 
-IntLiteral "literal"
+IntLiteral
   = n:int
   { return {tag: "literal", type: "int", value: n}; }
 
@@ -47,15 +44,15 @@ FloatLiteral
   = n:float
   { return {tag: "literal", type: "float", value: n}; }
 
-Lookup "variable reference"
+Lookup
   = i:ident
   { return {tag: "lookup", ident: i}; }
 
-Var "definition"
+Var
   = var _ i:ident _ eq _ e:Expr
   { return {tag: "let", ident: i, expr: e}; }
 
-Unary "unary operation"
+Unary
   = op:unop _ e:Operand
   { return {tag: "unary", expr: e, op: op}; }
 
@@ -68,34 +65,35 @@ MulBinary
   = lhs:Operand _ op:mulbinop _ rhs:(MulBinary / Operand)
   { return {tag: "binary", lhs: lhs, rhs: rhs, op: op}; }
 
-Quote "quote"
+Quote
   = s:snippet_marker? a:ident? quote_open _ e:SeqExpr _ quote_close
   { return {tag: "quote", expr: e, annotation: a || "", snippet: !!s}; }
 
+// Our three kinds of escapes.
+Escape
+  = Splice / Persist / Snippet
 Splice "splice escape"
-  = escape_open _ e:SeqExpr _ escape_close n:int?
-  { return {tag: "escape", expr: e, count: n || 1, kind: "splice"}; }
-
+  = n:int? escape_open _ e:SeqExpr _ escape_close sn:int?
+  { return {tag: "escape", expr: e, count: n || sn || 1, kind: "splice"}; }
 Persist "persist escape"
-  = persist_marker escape_open _ e:SeqExpr _ escape_close n:int?
-  { return {tag: "escape", expr: e, count: n || 1, kind: "persist"}; }
-
+  = persist_marker n:int? escape_open _ e:SeqExpr _ escape_close sn:int?
+  { return {tag: "escape", expr: e, count: n || sn || 1, kind: "persist"}; }
 Snippet "snippet escape"
-  = snippet_marker escape_open _ e:SeqExpr _ escape_close n:int?
-  { return {tag: "escape", expr: e, count: n || 1, kind: "snippet"}; }
+  = snippet_marker n:int? escape_open _ e:SeqExpr _ escape_close sn:int?
+  { return {tag: "escape", expr: e, count: n || sn || 1, kind: "snippet"}; }
 
-Run "run"
+Run
   = run _ e:TermExpr
   { return {tag: "run", expr: e}; }
 
-Fun "lambda"
+Fun
   = fun _ ps:Param* _ arrow _ e:Expr
   { return {tag: "fun", params: ps, body: e}; }
-Param "parameter"
+Param
   = i:ident _ typed _ t:TermType _
   { return {tag: "param", name: i, type: t}; }
 
-CDef "C-style function definition"
+CDef
   = def _ i:ident _ paren_open _ ps:CParamList _ paren_close _ e:Expr
   { return {tag: "let", ident: i, expr: {tag: "fun", params: ps, body: e} }; }
 CParamList
@@ -111,7 +109,7 @@ CParam
 // This is a little hacky, but we currently require whitespace when the callee
 // is an identifier (a lookup). This resolves a grammar ambiguity with quote
 // annotations, e.g., `js<1>` vs. `js <1>`.
-Call "call"
+Call
   = OtherCall / IdentCall
 IdentCall
   = i:Lookup ws _ as:Arg+
@@ -123,7 +121,7 @@ Arg
   = e:TermExpr _
   { return e; }
 
-CCall "C-style call"
+CCall
   = i:Lookup paren_open _ as:CArgList? _ paren_close
   { return {tag: "call", fun: i, args: as || []}; }
 CArgList
@@ -137,39 +135,39 @@ MacroCall
   = macromark i:ident _ as:Arg+
   { return {tag: "macrocall", macro: i, args: as}; }
 
-Extern "extern declaration"
+Extern
   = extern _ i:ident _ typed _ t:Type e:ExternExpansion?
   { return {tag: "extern", name: i, type: t, expansion: e}; }
 ExternExpansion
   = _ eq _ s:string
   { return s; }
 
-Paren "parentheses"
+Paren
   = paren_open _ e:SeqExpr _ paren_close
   { return e; }
 
-Assign "assignment"
+Assign
   = i:ident _ eq _ e:Expr
   { return {tag: "assign", ident: i, expr: e}; }
 
-If "if/then/else"
+If
   = if _ c:TermExpr _ t:TermExpr _ f:TermExpr
   { return {tag: "if", cond: c, truex: t, falsex: f}; }
 
 
 // Type syntax.
 
-Type "type"
+Type
   = FunType / InstanceType / TermType
 
 TermType
   = CodeType / PrimitiveType / ParenType
 
-PrimitiveType "primitive type"
+PrimitiveType
   = i:ident
   { return {tag: "type_primitive", name: i}; }
 
-InstanceType "parameterized type instance"
+InstanceType
   = t:TermType _ i:ident
   { return {tag: "type_instance", name: i, arg: t}; }
 
@@ -177,11 +175,11 @@ ParenType
   = paren_open _ t:Type _ paren_close
   { return t; }
 
-FunType "function type"
+FunType
   = p:FunTypeParam* arrow _ r:TermType
   { return {tag: "type_fun", params: p, ret: r}; }
 
-CodeType "code type"
+CodeType
   = s:snippet_marker? a:ident? quote_open _ t:Type _ quote_close
   { return {tag: "type_code", inner: t, annotation: a || "", snippet: !!s}; }
 
@@ -282,10 +280,10 @@ macromark
 
 // Empty space.
 
-comment
+comment "comment"
   = "#" (!NEWLINE .)*
 
-ws
+ws "whitespace"
   = SPACE
 
 _
