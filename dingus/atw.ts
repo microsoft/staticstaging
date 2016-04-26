@@ -245,6 +245,7 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
   const operators = ["+", "-", "*", "/", "=", "!"];
   const builtins = ["render", "vertex", "fragment"];
   const quote_begin = /[A-Za-z0-9]+\</;
+  const escape_begin = /(\$|\%)?\d*\[/;
   const macro = /@[A-Za-z][A-Za-z0-9]*[\?\!]*/;
 
   return {
@@ -283,6 +284,11 @@ CodeMirror.defineMode("alltheworld", function (config, pconfig) {
 
       // Annotated quotes.
       if (stream.match(quote_begin)) {
+        return "bracket";
+      }
+
+      // Escapes in their various forms.
+      if (stream.match(escape_begin)) {
         return "bracket";
       }
 
