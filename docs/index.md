@@ -144,16 +144,16 @@ You'll get a type error if the annotations don't match:
 Alltheworld generalizes escapes to move across multiple stages at once. You can write a number after a splice `[e]` or persist `%[e]` escape to indicate the number of stages to look through:
 
     var c = <5>;
-    !< 2 + !< 8 * [c]2 > >
+    !< 2 + !< 8 * 2[c] > >
 
-The escape `[c]2` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote. (The syntax is intended to call to mind a subscript in math, as in $[ e ]_2$.)
+The escape `2[c]` gets the value to splice from *two* levels up---where `c` is defined---rather than just shifting to the immediately containing quote. (The syntax is intended to call to mind a subscript in math, as in $[ e ]_2$.)
 
 At first glance, it might look like `[e]n` or `%[e]n` is just syntactic sugar for $n$ nested escapes, like `[[e]]` or `%[%[e]]`. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
 
-Take another look at the splicing example above. It uses a form like `< ... < [e]2 > ... >` to splice code from the main stage *directly* into a nested program. That is, the expression $e$ is evaluated when the outer quote expression is evaluated, and the resulting program should do *no further splicing* when it is executed. In other words, if we inspect the program that the splice generates:
+Take another look at the splicing example above. It uses a form like `< ... < 2[e] > ... >` to splice code from the main stage *directly* into a nested program. That is, the expression $e$ is evaluated when the outer quote expression is evaluated, and the resulting program should do *no further splicing* when it is executed. In other words, if we inspect the program that the splice generates:
 
     var c = <5>;
-    < 2 + !< 8 * [c]2 > >
+    < 2 + !< 8 * 2[c] > >
 
 we'll see a splice-free nested program, `< 2 + !< 8 * 5 > >`. (You may need to switch the tool's mode to "interpreter" to see this pretty-printed code.) That's in contrast to this similar program that uses nested splices:
 
@@ -433,7 +433,7 @@ While sharing data between stages is straightforward in Alltheworld's homogeneou
 
 In the example above, we use cross-stage persistence to share data between the CPU and GPU. For example, the `model` matrix is initialized in the setup stage but used in the vertex shader. When a host communicates a value to a shader like this, it is traditionally called a [uniform variable][uniform], because the value is constant across invocations of the shader body. In the compiled code for the above example, you'll see several calls like `gl.uniformMatrix4fv(...)`. That's [the WebGL function for binding uniforms][uniformMatrix4fv] of the appropriate type.
 
-It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][#multiescape]. You can use explicit two-level escapes like `[ e ]2` or implicit cross-stage references to get this effect.
+It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][#multiescape]. You can use explicit two-level escapes like `2[ e ]` or implicit cross-stage references to get this effect.
 
 If different stages use the same uniform variable, SHFL only needs to bind it once.
 

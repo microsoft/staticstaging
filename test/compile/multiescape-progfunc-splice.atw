@@ -1,6 +1,6 @@
 var x = <5>;
 var c = < js<
-  [ x ]2 + 1
+  2[ x ] + 1
 > >;
 var f = !c;
 !f
