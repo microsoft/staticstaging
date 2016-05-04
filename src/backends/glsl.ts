@@ -220,8 +220,12 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
 
   let prog = specialized_prog(emitter, progid);
 
-  // Check whether this is a vertex or fragment shader.
+  // Check whether this is a vertex or fragment shader or just a GLSL
+  // subexpression.
   let kind = prog_kind(ir, progid);
+  if (kind === ProgKind.subexpr) {
+    return paren(emit(emitter, prog.body));
+  }
   if (kind !== ProgKind.vertex && kind !== ProgKind.fragment) {
     throw "error: unexpected program kind";
   }

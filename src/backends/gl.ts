@@ -174,26 +174,31 @@ export function render_expr(tree: ast.ExpressionNode) {
 // - A vertex program is a shader program that is either not nested in any
 //   other program or whose containing program is a function program.
 // - A render program is any function program.
+// - An unassociated chunk of GLSL code is a subexpression.
 // - Anything else is an ordinary program.
 export enum ProgKind {
   ordinary,
   render,
   vertex,
   fragment,
+  subexpr,
 }
 export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   let prog = ir.progs[progid];
   if (prog.annotation === FUNC_ANNOTATION) {
     return ProgKind.render;
   } else if (prog.annotation === SHADER_ANNOTATION) {
-    if (prog.quote_parent === null) {
-      return ProgKind.vertex;
-    }
     let parprog = ir.progs[prog.quote_parent];
-    if (parprog.annotation === SHADER_ANNOTATION) {
+    if (parprog && parprog.annotation === SHADER_ANNOTATION) {
+      // This is nested inside another shader program. It's a fragment shader.
       return ProgKind.fragment;
     } else {
-      return ProgKind.vertex;
+      // A "top-level" shader. Does it have shader children?
+      if (prog.quote_children.length) {
+        return ProgKind.vertex;
+      } else {
+        return ProgKind.subexpr;
+      }
     }
   } else {
     return ProgKind.ordinary;

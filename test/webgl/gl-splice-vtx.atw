@@ -1,0 +1,5 @@
+var x = glsl<5>;
+vertex glsl<
+  var y = [x];
+  fragment glsl< %[y] >
+>
