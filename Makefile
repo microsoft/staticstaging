@@ -94,7 +94,7 @@ docs/build/docs.js: docs/docs.ts $(TSC)
 .PHONY: deploy
 RSYNCARGS := --compress --recursive --checksum --delete -e ssh \
 	--exclude node_modules --exclude package.json --exclude gl.js \
-	--exclude '*.ts' --exclude docs
+	--exclude '*.ts' --exclude docs --exclude talk
 DEST := dh:domains/adriansampson.net/atw
 deploy: dingus docs
 	rsync $(RSYNCARGS) dingus/ $(DEST)
