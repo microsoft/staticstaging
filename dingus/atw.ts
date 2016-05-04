@@ -592,5 +592,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
     set_preamble(code?: string) {
       custom_preamble = code || "";
     },
+
+    cm: codemirror,
   };
 }
