@@ -272,7 +272,9 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         // spliced.
         if (t instanceof CodeType) {
           if (t.snippet !== null) {
-            throw "type error: snippet escape in non-snippet splice";
+            throw "type error: snippet quote in non-snippet splice";
+          } else if (t.annotation !== env.anns[0]) {
+            throw "type error: mismatched annotations in splice";
           }
           // The result type is the type that was quoted.
           return [t.inner, env];
