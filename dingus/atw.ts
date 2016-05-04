@@ -401,6 +401,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
   let update_gl: (code: string) => void;
 
   let last_mode: string = null;
+  let custom_preamble = "";
   function run_code(navigate = true, mode:string = null) {
     let code = get_code();
 
@@ -417,7 +418,8 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
     }
 
     if (code !== "") {
-      let [err, tree, typ, compiled, res, glcode] = atw_run(code, mode);
+      let [err, tree, typ, compiled, res, glcode] =
+        atw_run(custom_preamble + code, mode);
 
       show(err, errbox);
       if (typebox) {
@@ -585,6 +587,10 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
     run(code: string, mode: string = null) {
       set_code(code);
       run_code(true, mode);
+    },
+
+    set_preamble(code?: string) {
+      custom_preamble = code || "";
     },
   };
 }
