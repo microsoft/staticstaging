@@ -120,7 +120,7 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
  */
 function emit_shader_code_ref(emitter: Emitter, prog: Prog) {
   let code_expr = progsym(prog.id);
-  for (let esc of prog.splice) {
+  for (let esc of prog.owned_splice) {
     let esc_expr = emit(emitter, esc.body);
     code_expr += `.replace('__SPLICE_${esc.id}__', ${esc_expr})`;
   }
