@@ -111,6 +111,22 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
   );
 }
 
+/**
+ * Emit an expression that gets the code string for a shader. This takes care
+ * of splicing the code, if necessary.
+ *
+ * This doesn't quite work yet because we always set up shaders at startup
+ * time, not in the context of normal execution.
+ */
+function emit_shader_code_ref(emitter: Emitter, prog: Prog) {
+  let code_expr = progsym(prog.id);
+  for (let esc of prog.splice) {
+    let esc_expr = emit(emitter, esc.body);
+    code_expr += `.replace('__SPLICE_${esc.id}__', ${esc_expr})`;
+  }
+  return code_expr;
+}
+
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
 function emit_shader_setup(emitter: Emitter, progid: number): string
@@ -118,9 +134,11 @@ function emit_shader_setup(emitter: Emitter, progid: number): string
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
+  let vtx_code = emit_shader_code_ref(emitter, vertex_prog);
+  let frag_code = emit_shader_code_ref(emitter, fragment_prog);
   let out = js.emit_var(
     shadersym(vertex_prog.id),
-    `get_shader(gl, ${progsym(vertex_prog.id)}, ${progsym(fragment_prog.id)})`
+    `get_shader(gl, ${vtx_code}, ${frag_code})`
   ) + "\n";
 
   // Get the variable locations, for both explicit persists and for free
