@@ -79,13 +79,19 @@ tool/munge.js: tool/munge.ts $(TSC) $(TYPINGS_MAIN)
 
 # Documentation.
 
-.PHONY: docs
-docs: docs/build/index.html docs/build/docs.js
+DOC_PAGES := index hacking
+DOC_BUILD := docs/build
 
-docs/build/index.html: docs/index.md $(call npmdep,madoko)
+.PHONY: docs watch-docs
+docs: $(DOC_PAGES:%=$(DOC_BUILD)/%.html) $(DOC_BUILD)/docs.js
+
+watch-docs:
+	liveserve -h 0.0.0.0 -w docs -x 'make docs' $(DOC_BUILD)
+
+$(DOC_BUILD)/%.html: docs/%.md $(call npmdep,madoko)
 	cd docs; $(call npmbin,madoko) --odir=build ../$<
 
-docs/build/docs.js: docs/docs.ts $(TSC)
+$(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 	$(TSC) --out $@ $<
 
 
