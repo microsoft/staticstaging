@@ -86,7 +86,7 @@ DOC_BUILD := docs/build
 docs: $(DOC_PAGES:%=$(DOC_BUILD)/%.html) $(DOC_BUILD)/docs.js
 
 watch-docs:
-	liveserve -h 0.0.0.0 -w docs -x 'make docs' $(DOC_BUILD)
+	liveserve -h 0.0.0.0 -w docs -x 'make docs' -i $(DOC_BUILD) $(DOC_BUILD)
 
 $(DOC_BUILD)/%.html: docs/%.md $(call npmdep,madoko)
 	cd docs; $(call npmbin,madoko) --odir=build ../$<

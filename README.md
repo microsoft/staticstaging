@@ -3,10 +3,16 @@ Alltheworld
 
 [![build status](https://circleci.com/gh/sampsyo/alltheworld.svg?style=shield&circle-token=656c5c2a93fd48c8b2e1b1c4780b5a8a3ba4cae6)](https://circleci.com/gh/sampsyo/alltheworld)
 
-A toy language with:
+This is an experimental programming language for heterogeneous systems based on multi-stage programming. See [the documentation][docs] for an introduction to the language.
 
-* multi-stage programming
-* staging-based macros
-* cross-stage persistence
+The compiler is written in [TypeScript][] and runs on [Node][].
+You can build the compiler and run a few small programs by typing `make test` (if you have [npm][]).
+Check out the [code documentation][hacking] for an introduction to the compiler's internals.
+The license is [MIT][].
 
-Compile the interpreter and run a few small programs with `make test`. (You'll need Node.js and npm.)
+[MIT]: https://opensource.org/licenses/MIT
+[npm]: https://www.npmjs.com/
+[Node]: https://nodejs.org/
+[TypeScript]: http://www.typescriptlang.org/
+[docs]: http://adriansampson.net/atw/docs/
+[hacking]: http://adriansampson.net/atw/docs/hacking.html
