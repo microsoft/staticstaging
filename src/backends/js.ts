@@ -183,7 +183,7 @@ export let compile_rules = {
     return jsvar + " = " + paren(emit(emitter, tree.expr));
   },
 
-  visit_assign(tree: ast.LetNode, emitter: Emitter): string {
+  visit_assign(tree: ast.AssignNode, emitter: Emitter): string {
     return emit_assign(emitter, tree);
   },
 
