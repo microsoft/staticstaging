@@ -140,14 +140,14 @@ Function definition nodes are transformed to produce *closure values*, which con
 
 Quote lifting has a similar goal: extract all the quotes mixed into a program and turn them into global constants.
 (Think of them as strings embedded in the `.text` section of an executable binary.)
-Quote expressions also need to produce a closure-like value: they also consist of a pointer to the code and an environment---the environment contains the persisted outer-stage values.
+Quote expressions also need to produce a closure-like value: they also consist of a pointer to the code and an environment---the environment contains the materialized outer-stage values.
 
 General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. Atw's scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
 
-## Persists Generalize Free Variables
+## Materialization Generalizes Free Variables
 
-To compile persist escapes and free variables in quotes, Atw's quote-lifting analysis generalizes the concept of free variables in functions.
-As an example, this program uses a persist inside of a function body:
+To compile materialization escapes and free variables in quotes, Atw's quote-lifting analysis generalizes the concept of free variables in functions.
+As an example, this program uses a materialization inside of a function body:
 
     var y = 2;
     !<
@@ -168,7 +168,7 @@ After scope lifting, we should have a function contained in a string literal. In
 Specifically, the persisted value (here, `persist1`) must become *part of the quoted function's environment*.
 The same logic applies as for free variables: a reference to `y` in the function's body would this imply `y` is a free variable for the function, and thus require inclusion in the function's closure environment.
 
-The conclusion is that you can view persist escapes as a reference to a free variable, where the free variable is defined just before the quote. A program with a persist escape:
+The conclusion is that you can view materialization escapes as a reference to a free variable, where the free variable is defined just before the quote. A program with a materialization escape:
 
     < ... %[ expr ] ... >
 
@@ -182,11 +182,11 @@ is equivalent to one with a free variable reference to a temporary:
 
 To implement splicing, we need to be able to combine two program values at run time.
 Specifically, we need to have a runtime available with a *splice* operation that takes as input an outer program, an inner program, and an indication of where to splice the latter into the former.
-The operation needs to combine the persist values associated with both programs to produce a new mapping with their union.
+The operation needs to combine the persisted values associated with both programs to produce a new mapping with their union.
 
 In our JavaScript backend, this splicing works by string interpolation.
 Every escape in a quote becomes a special token like `__SPLICE_21__`; we use `String.replace` to stitch in the spliced code at the right token.
-Persists can be combined by taking the union of the two component name maps.
+Materialization maps can be combined by taking the union of the two component name maps.
 
 ## Splicing and Functions
 
@@ -200,7 +200,7 @@ For example, this program uses an escape inside of a function definition:
 
 This only works if the function is defined *inside* a quotation so it can be spliced into.
 
-In a homogeneous environment, where all code is compiled to the same language, the opposite direction is not a problem. This program defines a function outside a quote and then uses a persist to call it inside a quote:
+In a homogeneous environment, where all code is compiled to the same language, the opposite direction is not a problem. This program defines a function outside a quote and then uses materialization to call it inside a quote:
 
     var f = fun x:Int -> x * 2;
     !< %[f] 3 >
@@ -212,7 +212,7 @@ For that scenario, we probably want to explore compiling those outer functions *
 
 ## Multi-Level Escapes
 
-Our language extends traditional multi-stage programming with $n$-level escapes. An escape written `[e]n` or `%[e]n` evaluates the expression `e` in the context that is $n$ levels up from the current quote. The implementation is mostly straightforward for multi-level persist escapes---they work the same way as cross-stage free variable references that span multiple stages. Multi-stage *splice* escapes, however, require more complexity.
+Our language extends traditional multi-stage programming with $n$-level escapes. An escape written `[e]n` or `%[e]n` evaluates the expression `e` in the context that is $n$ levels up from the current quote.
 
 Consider this small example:
 
@@ -247,7 +247,7 @@ This section is about the JavaScript backend.
 
 ## Code Values
 
-In the current implementation, the persist environment in a code value is a JavaScript object that maps unique string keys---which correspond to variable names in the quoted code---to values. The keys are generated based on the ID of each persist node in the original AST. For example, [this example program][splice]:
+Code values in the JavaScript backend are objects containing the code pointer (`prog`) and the materialization environment (called `persist` for historical reasons). For example, [this example program][splice]:
 
     var x = 5;
     !< 37 + %[x] >
@@ -257,12 +257,10 @@ compiles to JavaScript that looks roughly like this (stripping away the details)
     var q4 = "... 37 + p7 ...";
     var v1 = 5;
     var code = { prog: q4, persist: { p7: v1 } };
-    with (code.persist)
-      return eval(code.prog);
+    run(code);
 
 Note that the quotation gets compiled to a global string, `q4`.
-The `code` object has two components: the program, a reference to `q4`, and a dictionary of persist values.
-The `with (code.persist) eval(code.prog)` pattern executes the quoted code using the variable mapping set up in the `code` declaration, which makes `p7` resolve to 5.
+The runtime function `run` binds the materialized names (i.e., `p7`) and calls `eval`.
 
 [splice]: http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0A!%3C%2037%20%2B%20%25%5Bx%5D%20%3E
 
@@ -305,7 +303,7 @@ That program compiles to code that invokes JavaScript's own `Math.pow` by wrappi
 
 [extern]: http://adriansampson.net/atw/#code=extern%20Math.pow%3A%20Int%20Int%20-%3E%20Int%3B%0AMath.pow%207%202
 
-Unlike ordinary variables, `extern`s are "ambient": they're available at all (subsequent) stages without the need for persisting or splicing.
+Unlike ordinary variables, `extern`s are "ambient": they're available at all (subsequent) stages without the need for materialization.
 
 The compiler infrastructure also a has a notion of intrinsics, which are just externs that are implicitly defined. For example, `vtx` and `frag` are both intrinsics that get special handling in the WebGL/GLSL compiler. The output variables of shaders, `gl_Position` and `gl_Color`, are also intrinsics but don't get any special handling. To make this work, I had to add special rules for *mutating* externs. That way, an expression like this:
 
@@ -339,7 +337,7 @@ But it would be silly to make this stage a string that gets `eval`ed, because we
 GLSL uses explicit `in` and `out` type qualifiers (or, in WebGL version 1, the more arcane `attribute`/`uniform`/`varying` set of qualifiers). These qualifiers indicate communication between stages. To understand how to generate these declarations, the Atw compiler catalogs the nesting of quotations. During quote lifting, it records the IDs of all the "subprograms" contained contained within each lifted program.
 
 Then, the WebGL backend requires that each vertex-shader program contain exactly one nested program: the fragment shader.
-When emitting the code for the vertex shader, it enumerates the persists in the nested fragment shader and emits an `out` declaration for each.
+When emitting the code for the vertex shader, it enumerates the materializations in the nested fragment shader and emits an `out` declaration for each.
 
 All shader programs---vertex and fragment---get a corresponding `in` declaration for each of their escapes.
 
@@ -363,7 +361,7 @@ But you *cannot* assign the fragment shader to a variable:
       frag fragment_shader
     >
 
-and you can't include two different fragment shader programs and then choose between them. This way, we know *statically* which variables need to be passed to support all the persists in the inner program.
+and you can't include two different fragment shader programs and then choose between them. This way, we know *statically* which variables need to be passed to support all the materializations in the inner program.
 
 A similar constraint pops up when binding the vertex shader on the CPU. You need some way to decide which variables to bind as uniforms and attributes: this can either be static (by applying the same literal-quote constraint) or dynamic (but this incurs overhead).
 
