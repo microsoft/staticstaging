@@ -86,7 +86,7 @@ It works as a type *elaborator:* it produces a table mapping node IDs to `TypeEn
 
 ## Desugaring
 
-Two features in the language are implemented as syntactic sugar:
+Two features in the language are implemented as [syntactic sugar][sugar]:
 
 * For the *interpreter*, cross-stage references are sugar for materialization (a.k.a. persisting) escapes. That is, `var x = 5; <x>` is sugar for `var x = 5; <%[x]>`. This way, the interpreter does not need any special logic to implement cross-stage references. We do not enable this desugaring for the compiler;  it handles free variables specially for efficiency.
 
@@ -94,23 +94,37 @@ Two features in the language are implemented as syntactic sugar:
 
 Both desugaring steps require type information, so they use the results from type elaboration.
 
-## Mid-Level IR and Backends
+[sugar]: https://github.com/sampsyo/alltheworld/blob/master/src/sugar.ts
 
-The rest of the compiler machinery is a collection of semantic analyses.
-They produce a "mid-level IR" that the backend uses to generate code.
-This IR is actually a little struct consisting of these fields:
+## Semantic Analysis and IR
 
-- `type_table`: The result of type elaboration. Maps the ID of every expression in the program to its type (and complete type environment).
-- `defuse`: A definition/use table that maps the ID of each variable reference nodes to ID of the node where it was defined.
-- `procs`: A set of *procedures*, which are the result of lambda lifting. There is one procedure per `fun` node in the AST, so the procedures are indexed by the ID of the corresponding `fun`.
-- `main`: One more procedure for the top-level code in the program.
-- `progs`: A set of *programs*, which are the result of "quote lifting." Analogously to `procs`, these are indexed by the corresponding quote node.
-- `containers`: An ID-to-ID mapping containing, for every node in the AST, the node of the scope that contains it. The containing scope is either a function or a quote.
+The compiler uses an IR consisting of the result of several semantic analyses. See [`compile/ir.ts`][ir] for an exhaustive look at the contents of this IR and [`compile/compile.ts`][compile] for the `semantically_analyze` megafunction that produces the `CompilerIR`.
 
-The procedures (`procs`) and programs (`progs`) in the IR are themselves structs, and they contain subtrees of the otherwise-unmodified desugared AST.
-Both structs inherit from a common `Scope` base type, which includes nearly all the data---free variables, bound variables, parent scope, child scopes, etc.
-Both even need to keep track of escapes, because persists are a generalization of free variables.
-The only differences are that procedures have arguments and programs have annotations (discussed below).
+Here are a few of the most interesting pieces of the IR:
+
+- `Proc` and `Prog` objects are "lifted" forms of functions and quotes, respectively. Both are subtypes of `Scope`. A process called *scope lifting*, which generalizes [lambda lifting][], finds the free variables and escapes to attribute to each scope.
+- A *definition--use table* keeps track of the defining expression for every variable reference.
+- The *pre-splicing* optimization described in the table produces a set of `Variant` objects for each quote with snippet escapes. The backends use these specific, pre-composed variants instead of the original `Prog`s.
+
+[lambda lifting]: https://en.wikipedia.org/wiki/Lambda_lifting
+[compile]: https://github.com/sampsyo/alltheworld/blob/master/src/compile/compile.ts
+[ir]: https://github.com/sampsyo/alltheworld/blob/master/src/compile/ir.ts
+
+## Backends
+
+There are three backends: [`js.ts`][js] emits "vanilla" JavaScript; [`glsl.ts`][glsl] emits pure GLSL code; and [`webgl.ts`][webgl] extends the JavaScript backend with WebGL-specific intrinsics and invokes the GLSL backend to emit shaders.
+
+All three backends share an [`Emitter` structure][emitter] that holds the functions for generating code from IR structures.
+
+There's also a [`gl.ts`][gl] source file with common logic shared by the GLSL backend and the higher-level WebGL backend.
+The most important bit here is the `Glue` object, which keeps track of a bunch of metadata for values that are communicated between shader stages.
+For example, `Glue` records the OpenGL name of the parameter to use for communication and a flag indicating whether the value is an attribute (i.e., an array).
+
+[js]: https://github.com/sampsyo/alltheworld/blob/master/src/backends/js.ts
+[glsl]: https://github.com/sampsyo/alltheworld/blob/master/src/backends/glsl.ts
+[webgl]: https://github.com/sampsyo/alltheworld/blob/master/src/backends/webgl.ts
+[emitter]: https://github.com/sampsyo/alltheworld/blob/master/src/backends/emitter.ts
+[gl]: https://github.com/sampsyo/alltheworld/blob/master/src/backends/gl.ts
 
 # How to Compile Stages
 

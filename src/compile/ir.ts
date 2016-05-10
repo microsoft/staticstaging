@@ -1,12 +1,18 @@
 import { SyntaxNode, ExpressionNode } from '../ast';
 import { TypeTable } from '../type_elaborate';
 
-// The def/use table: for every use node ID, the corresponding definition (let
-// or parameter) node ID.
+/**
+ * The result of definition--use analysis. Maps a "use" expression (e.g., a
+ * variable reference) to its corresponding "definition" expression (e.g., a
+ * `let` declaration).
+ */
 export type DefUseTable = number[];
 
+/**
+ * A lexical program scope. This is shared among quotes and function bodies.
+ */
 export interface Scope {
-  id: number,  // or null for top-level
+  id: number,  // or null for the top-level scope
   body: ExpressionNode,
   free: number[],  // variables referenced here, defined elsewhere
   bound: number[],  // variables defined here
@@ -26,13 +32,18 @@ export interface Scope {
   quote_children: number[],
 }
 
-// A procedure is a lambda-lifted function. It includes the original body of
-// the function and the IDs of the parameters and the closed-over free
-// variables used in the function.
+/**
+ * A *procedure* is a lambda-lifted function. It includes the original body of
+ * the function and the IDs of the parameters and the closed-over free
+ * variables used in the function.
+ */
 export interface Proc extends Scope {
   params: number[],
 };
 
+/**
+ * Information about any kind of escape appearing within a quote.
+ */
 export interface Escape {
   id: number;
   body: ExpressionNode;
@@ -41,8 +52,9 @@ export interface Escape {
   container: number;  // The quote that *directly contains* this escape.
 }
 
-// A Prog represents a quoted program. It's the quotation analogue of a Proc.
-// Progs can have bound variables but not free variables.
+/**
+ * A *quoted program*. `Prog` the quotation analogue of `Proc`.
+ */
 export interface Prog extends Scope {
   annotation: string;
 
@@ -90,26 +102,45 @@ export interface Variant {
   procs: Proc[];
 }
 
-// The mid-level IR structure.
+/**
+ * The mid-level intermediate representation structure.
+ */
 export interface CompilerIR {
-  // The def/use table.
+  /**
+   * The def/use table.
+   */
   defuse: DefUseTable;
 
-  // The lambda-lifted Procs. We have all the Procs except main, indexed by
-  // ID, and main separately.
+  /**
+   * The lambda-lifted Procs (excluding the implicit "main" function). These
+   * are indexed by their ID, which is the same as the ID of their defining
+   * AST node.
+   */
   procs: Proc[];
+
+  /**
+   * The main (top-level) function. This function has no ID.
+   */
   main: Proc;
 
-  // The quote-lifted Progs. Again, the Progs are indexed by ID.
+  /**
+   * The quote-lifted Progs. Again, the Progs are indexed by ID.
+   */
   progs: Prog[];
 
-  // Type elaboration.
+  /**
+   * The elaborated types.
+   */
   type_table: TypeTable;
 
-  // Names of externs, indexed by the `extern` expression ID.
+  /**
+   * The names of declared externs, indexed by the `extern` expression ID.
+   */
   externs: string[];
 
-  // A mapping from every AST node ID to the containing scope ID.
+  /**
+   * A mapping from every AST node ID to the containing scope ID.
+   */
   containers: number[],
 
   /**

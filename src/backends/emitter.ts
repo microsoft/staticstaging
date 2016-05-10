@@ -114,7 +114,9 @@ export function emit_scope(emitter: Emitter, scope: number) {
   throw "error: unknown scope id";
 }
 
-// Generate code for an expression.
+/**
+ * Generate code for an expression.
+ */
 export function emit(emitter: Emitter, tree: SyntaxNode) {
   return emitter.compile(tree, emitter);
 }

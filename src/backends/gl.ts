@@ -254,29 +254,42 @@ export function _unwrap_array(t: Type): Type {
   return t;
 }
 
-// Represents a single value as it is communicated *into* a stage.
+/**
+ * Information about a value being communicated into a GL shader stage.
+ */
 export interface Glue {
-  // Uniquely identify the original value.
+  /**
+   * Uniquely identify the original value.
+   */
   id: number,
 
-  // The GLSL variable name that stores the value as used in this stage.
+  /**
+   * The GLSL variable name that stores the value as used in this stage.
+   */
   name: string,
 
-  // The type of the value as it appears in the GLSL program.
+  /**
+   * The type of the value as it appears in the GLSL program.
+   */
   type: Type,
 
-  // The value is either an expression (for escapes) or just another variable
-  // name to carry through (for free variables). Only one of these may be
-  // set.
+  /**
+   * The value is either an expression (for escapes) or just another variable
+   * name to carry through (for free variables). Only one of these may be set.
+   */
   value_expr?: ast.ExpressionNode,
   value_name?: string,
 
-  // Whether this variable comes from the host directly (a WebGL binding) or
-  // from a previous shader stage (a `varying` variable).
+  /**
+   * Whether this variable comes from the host directly (a WebGL binding) or
+   * from a previous shader stage (a `varying` variable).
+   */
   from_host: boolean,
 
-  // Whether this is the point where the value decays from a `T Array` to a
-  // plain old `T`. This occurs only at the first shader stage.
+  /**
+   * Whether this is the point where the value decays from a `T Array` to a
+   * plain old `T`. This occurs only at the first shader stage.
+   */
   attribute: boolean,
 }
 
