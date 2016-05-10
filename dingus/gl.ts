@@ -84,8 +84,10 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4, vi
   })();
 }
 
-// Compute a project matrix (placed in the `out` matrix allocation) given the
-// width and height of a viewport.
+/**
+ * Compute a projection matrix (placed in the `out` matrix allocation) given
+ * the width and height of a viewport.
+ */
 function projection_matrix(out: Mat4, width: number, height: number) {
   var aspectRatio = width / height;
   var fieldOfView = Math.PI / 4;
@@ -95,8 +97,10 @@ function projection_matrix(out: Mat4, width: number, height: number) {
   mat4.perspective(out, fieldOfView, aspectRatio, near, far)
 }
 
-// Set up a canvas inside a container element. Return a function that sets the
-// render function (given compiled SHFL code as a string).
+/**
+ * Set up a canvas inside a container element. Return a function that sets the
+ * render function (given compiled SHFL code as a string).
+ */
 export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
