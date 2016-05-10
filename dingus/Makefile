@@ -11,8 +11,8 @@ include ../ts.mk
 
 # Build the TypeScript and JavaScript sources.
 
-TS_SRC := $(shell find ../src/ -type f -name '*.ts')
-JS_SRC := gl.js examples.js preambles.js ../parser.js
+TS_SRC := $(shell find ../src/ -type f -name '*.ts') gl.ts
+JS_SRC := examples.js preambles.js ../parser.js
 $(DINGUS_JS): $(TS_SRC) $(JS_SRC) atw.ts $(TYPINGS_BROWSER) $(TSC)
 	$(TSC)
 

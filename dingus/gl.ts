@@ -15,7 +15,17 @@ import bunny = require('./node_modules/bunny/index.js');
 import teapot = require('./node_modules/teapot/teapot.js');
 import snowden = require('./node_modules/snowden/index.js');
 
-function make_buffer(gl, data, type, mode) {
+// Some type aliases for GL data structures.
+type Mat4 = Float32Array;
+interface Mesh {
+  positions: [number, number, number][];
+  cells: [number, number, number][];
+};
+
+/**
+ * Create a WebGL buffer object containing the given data.
+ */
+function make_buffer(gl: WebGLRenderingContext, data: number[][], type: string, mode: number) {
   // Initialize a buffer.
   var buf = gl.createBuffer();
 
@@ -29,33 +39,35 @@ function make_buffer(gl, data, type, mode) {
   return buf;
 }
 
-// Evaluate the compiled SHFL code in the context of the globals we provide as
-// externs. Return a setup function that takes no arguments and returns a
-// per-frame function.
-function shfl_eval(code, gl, projection, view) {
+/**
+ * Evaluate the compiled SHFL code in the context of the globals we provide
+ * as externs. Return a setup function that takes no arguments and returns a
+ * per-frame function.
+ */
+function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4, view: Mat4) {
   var dingus = {
     projection: projection,
     view: view,
   };
 
   // Operations exposed to the language for getting data for meshes.
-  function mesh_indices(obj) {
+  function mesh_indices(obj: Mesh) {
     return make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER);
   }
-  function mesh_positions(obj) {
+  function mesh_positions(obj: Mesh) {
     return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
   }
-  function mesh_normals(obj) {
+  function mesh_normals(obj: Mesh) {
     var norm = normals.vertexNormals(obj.cells, obj.positions);
     return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
   }
-  function mesh_size(obj) {
+  function mesh_size(obj: Mesh) {
     return obj.cells.length * obj.cells[0].length;
   }
 
   // And, similarly, a function for actually drawing a mesh. This takes the
   // indices buffer for the mesh and its size (in the number of scalars).
-  function draw_mesh(indices, size) {
+  function draw_mesh(indices: WebGLBuffer, size: number) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
     gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
   }
@@ -68,7 +80,7 @@ function shfl_eval(code, gl, projection, view) {
 
 // Compute a project matrix (placed in the `out` matrix allocation) given the
 // width and height of a viewport.
-function projection_matrix(out, width, height) {
+function projection_matrix(out: Mat4, width: number, height: number) {
   var aspectRatio = width / height;
   var fieldOfView = Math.PI / 4;
   var near = 0.01;
@@ -79,10 +91,10 @@ function projection_matrix(out, width, height) {
 
 // Set up a canvas inside a container element. Return a function that sets the
 // render function (given compiled SHFL code as a string).
-function start_gl(container, fps_element) {
+export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
-  var canvas = container.appendChild(document.createElement('canvas'));
+  var canvas = container.appendChild(document.createElement('canvas')) as HTMLCanvasElement;
   function fit() {
     var width = container.clientWidth;
     var height = container.clientHeight;
@@ -94,10 +106,11 @@ function start_gl(container, fps_element) {
 
   // Attach a `canvas-orbit-camera` thing, which handles user input for
   // manipulating the view.
-  var camera = canvasOrbitCamera(canvas);
+  var camera = canvasOrbitCamera(canvas, {});
 
   // Initialize the OpenGL context with our rendering function.
-  var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+  var gl = (canvas.getContext("webgl") ||
+    canvas.getContext("experimental-webgl")) as WebGLRenderingContext;
 
   // Create the base matrices to be used
   // when rendering the bunny. Alternatively, can
@@ -112,7 +125,7 @@ function start_gl(container, fps_element) {
 
   // Initially, the SHFL function does nothing. The client needs to call us
   // back to fill in the function. Then, we will update this variable.
-  var shfl_render = null;
+  var shfl_render: { proc: any, env: any } = null;
 
   // The main render loop.
   function render() {
@@ -141,7 +154,7 @@ function start_gl(container, fps_element) {
     // Framerate tracking.
     ++frame_count;
     var now = new Date();
-    var elapsed = now - last_sample;  // Milliseconds.
+    var elapsed = now.getTime() - last_sample.getTime();  // Milliseconds.
     if (elapsed > sample_rate) {
       var fps = frame_count / elapsed * 1000;
       if (fps_element) {
@@ -162,7 +175,7 @@ function start_gl(container, fps_element) {
   window.requestAnimationFrame(render);
 
   // Return a function that lets the client update the render body.
-  return function (shfl_code) {
+  return function (shfl_code: string) {
     // Execute the compiled SHFL code in context.
     var shfl_program = shfl_eval(shfl_code, gl, projection, view);
 
@@ -170,5 +183,3 @@ function start_gl(container, fps_element) {
     shfl_render = shfl_program();
   };
 }
-
-module.exports = start_gl;
