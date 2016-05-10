@@ -17,7 +17,7 @@ include ts.mk
 # Build the parser from the grammar.
 
 parser.js: src/grammar.pegjs $(call npmdep,pegjs)
-	$(call npmbin,pegjs) --cache < $< > $@
+	$(call npmbin,pegjs) --cache $< $@
 
 
 # The command-line Node tool.
