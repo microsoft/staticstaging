@@ -5,6 +5,8 @@ title: Alltheworld Compiler Implementation
 This is the documentation for the Alltheworld compiler implementation.
 You may also be interested in the [language documentation](index.html).
 
+[TOC]
+
 
 # Build and Run
 
@@ -126,59 +128,11 @@ For example, `Glue` records the OpenGL name of the parameter to use for communic
 [emitter]: https://github.com/sampsyo/alltheworld/blob/master/src/backends/emitter.ts
 [gl]: https://github.com/sampsyo/alltheworld/blob/master/src/backends/gl.ts
 
-# How to Compile Stages
-
-There's not much of anything in the literature about implementing compilers for multi-stage languages.
-Papers in the [MetaML][] vein tend to use operational semantics that closely correspond to interpreters.
-[Terra][] and [Scala LMS][] are real implementations, but they are geared toward simple code generation scenarios---they do not express multiple stages that collaborate in the same process.
-As a result, they build up ASTs at run time that are only then sent through the compiler.
-That would be performance disaster for our scenario.
-[BER MetaOCaml][metaocaml] is similar; it translates staging into reflection-based code that builds up OCaml ASTs.
-
-We need another way. Specifically, we want to compile quotations (code values) *eagerly* as far as we can at compile time---to the same level of abstraction as unstaged code---while retaining the ability to splice and execute it.
-This is a trickier path.
-Quoth the designer of BER MetaOCaml:
-
-> A code value could represent bits of low-level code; however, they are very difficult to compose.
-
-That's why that implementation (and most others) opt to just represent code as high-level ASTs.
-[Jeannie][] is closer than any of the work that calls itself "multi-stage programming" because of its need to generate (ahead of time) two different programming languages.
-Most of the novelty in the Atw compiler lies in its ability to "really compile" quotations.
-
-[metaml]: http://dl.acm.org/citation.cfm?id=259019
-[metaocaml]: http://okmij.org/ftp/ML/MetaOCaml.html#implementing-staging
-[terra]: http://terralang.org
-[jeannie]: http://cs.nyu.edu/rgrimm/papers/oopsla07.pdf
-[scala lms]: https://scala-lms.github.io/
-
-To make the distinction here clear, I offer the following litmus test.
-In many staging implementations, it is natural and easy to pretty-print quotations as code.
-If a "staged" language supports pretty-printing, it is representing code as run-time AST values and it is *not* what we want.
-The interpreter for Atw is an example: code values are really just thin wrappers over the same AST data structure used by the type checker.
-The Atw compiler, in contrast, makes it *impossible by design* to pretty-print code values: all remnants of the AST are gone after everything is compiled.
-Code values are executable code.
-Credit to Ömer Sinan Ağacan's blog post, ["Staging is not just code generation,"][osa1-csp] for first making this distinction.
-
-[osa1-csp]: http://osa1.net/posts/2015-05-17-staging-is-not-just-codegen.html
-
-## Splicing vs. Persisting
-
-A key distinction the Atw language and compiler is the distinction between the two different ways that different stages can communicate with each other.
-
-* The first is *splicing*, which takes a *code value* from one stage and stitches it into the current code value. In Atw, you use plain brackets to express splicing. For example, `var a = <5>; < 6 + [a] >` produces the complete code value `<6 + 5>`.
-* The second is *persisting*, a verb I made up to describe what the [MetaML][] paper calls "cross-stage persistence." Persisting lets two different stages share the same data. There is no program-stitching involved. In Atw, you use `%[e]` to denote persistence. For example, `var a = 5; < 6 + %[a] >` produces a code value like `<6 + %p7>` where `%p7` is an opaque kind of expression that means "look up a value from a different stage." We use a unique identifier, `p7` in this example, for every persist to look up the right value in a quote's associated persist environment (see the section on "quote lifting" below).
-
-The importance of this distinction can't be overemphasized. It seems cosmetic from a semantic perspective---in fact, [BER MetaOCaml][metaocaml] intentionally confuses the two for convenience---but the performance implications are critical. Imagine a program that executes a quote expression a million times. If the quote uses a *splice*, the program will generate a million distinct subprograms at run time, each one with a different value spliced in as a literal. If it uses a *persist*, the compiler can generate only one quoted subprogram at compile time and reuse it a million times.
-
-Even if you don't care about performance, you should still care about the distinction for the sake of value lifetimes. A nice artifact of splicing code is that it produces complete, self-contained programs that you can write to disk and use independently. This is sometimes called *residualization*, and it is the core idea that codegen-focused systems like [Scala LMS][] rely on. But it doesn't make sense to serialize some kinds of data: file descriptors and pointers, for example. These need persistence. For example, since BER MetaOCaml relies on splicing for all cross-stage sharing, it cannot move functions or ML references between across stages.
-
-## Lambda Lifting and Quote Lifting
+# Scope Lifting
 
 [Lambda lifting][] is the standard technique for compiling languages with closures.
 Atw generalizes lambda lifting to apply to both functions and quotes simultaneously.
 The compiler calls the combined transformation *scope lifting*.
-
-[lambda lifting]: https://en.wikipedia.org/wiki/Lambda_lifting
 
 The idea behind lambda lifting is to take every function and turn it into a *procedure* that doesn't close over any state---all of its parameters must be provided explicitly rather than picked up from the surrounding environment.
 Procedures are placed in a global namespace, like C functions, and get extra parameters for every value they reference in their environment.
@@ -190,7 +144,7 @@ Quote expressions also need to produce a closure-like value: they also consist o
 
 General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. Atw's scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
 
-### Persists Generalize Free Variables
+## Persists Generalize Free Variables
 
 To compile persist escapes and free variables in quotes, Atw's quote-lifting analysis generalizes the concept of free variables in functions.
 As an example, this program uses a persist inside of a function body:
@@ -223,7 +177,8 @@ is equivalent to one with a free variable reference to a temporary:
     var temp = expr;
     < ... temp ... >
 
-## Splicing Program Values
+
+# Splicing
 
 To implement splicing, we need to be able to combine two program values at run time.
 Specifically, we need to have a runtime available with a *splice* operation that takes as input an outer program, an inner program, and an indication of where to splice the latter into the former.
@@ -233,7 +188,7 @@ In our JavaScript backend, this splicing works by string interpolation.
 Every escape in a quote becomes a special token like `__SPLICE_21__`; we use `String.replace` to stitch in the spliced code at the right token.
 Persists can be combined by taking the union of the two component name maps.
 
-### Splicing and Functions
+## Splicing and Functions
 
 One crucial detail is that lambda lifting needs to be quote-aware.
 That is, we need to lift functions into the quotation that contains it.
@@ -255,7 +210,7 @@ In a heterogeneous target (e.g., JavaScript + GLSL), though, this won't work: yo
 And in our scenario, it's even worse: the programs run on different hardware with different ISAs.
 For that scenario, we probably want to explore compiling those outer functions *twice*, once for each target, so they can be used in both places.
 
-## N-Level Escapes
+## Multi-Level Escapes
 
 Our language extends traditional multi-stage programming with $n$-level escapes. An escape written `[e]n` or `%[e]n` evaluates the expression `e` in the context that is $n$ levels up from the current quote. The implementation is mostly straightforward for multi-level persist escapes---they work the same way as cross-stage free variable references that span multiple stages. Multi-stage *splice* escapes, however, require more complexity.
 
@@ -286,18 +241,11 @@ Incidentally, the correct nesting for $n$-level escapes also makes it possible t
 The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When Atw eventually grows a native-code backend, this will manifest as emitting a complete `.text` section for the subprogram's binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the "hoisted" behavior, where all subprograms are linked into the main program's `.text` section.
 
 
-# JavaScript, GLSL, and WebGL
+# Emitting JavaScript
 
-The backends of the compiler start with the mid-level IR and generate code.
-Namely, I have a complete implementation of a homogeneous JavaScript backend.
-In this backend, quoted code is placed into global strings and executed with `eval`.
-Persists are implemented as plain variable references which are bound using JavaScript's `with` statement.
+This section is about the JavaScript backend.
 
-## JavaScript Examples
-
-Here are a few examples of the compiler concepts above, complete with the output JavaScript code.
-
-### Quotes and Persisting
+## Code Values
 
 In the current implementation, the persist environment in a code value is a JavaScript object that maps unique string keys---which correspond to variable names in the quoted code---to values. The keys are generated based on the ID of each persist node in the original AST. For example, [this example program][splice]:
 
@@ -318,7 +266,7 @@ The `with (code.persist) eval(code.prog)` pattern executes the quoted code using
 
 [splice]: http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0A!%3C%2037%20%2B%20%25%5Bx%5D%20%3E
 
-### Expression Chains
+## Expression Chains
 
 If you experiment with the compiler, you'll notice that the output JavaScript doesn't use very many semicolons---it uses commas instead.
 That's because was easier to chain *expressions* in the backend than to use a series of *statements*.
@@ -342,22 +290,7 @@ The `var` line pre-declares all the variables that we use in the code to make th
 
 [exprs]: http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0Avar%20y%20%3D%209%3B%0Ax%20%2B%20y
 
-### The Cost of Desugaring
-
-Our syntactic-sugar approach to cross-stage persistence comes at a cost when variables are used multiple times. For example, [this program][sugarcost]:
-
-    var x = 5;
-    !< x + x >
-
-desugars to one with two persist escape expressions. This means that the compiler must communicate *two copies* of `x` from the first stage to the second. Note the duplication of `v` in the compiled code:
-
-    var code = { prog: q4, persist: { p10: (v1), p8: (v1) } };
-
-An alternative system that used bespoke mechanisms for cross-stage lookup instead of our desugaring approach could feasibly avoid this inefficiency.
-
-[sugarcost]: http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0A!%3C%20x%20%2B%20x%20%3E
-
-### `extern` and Intrinsics
+## `extern`
 
 To make the language slightly more practical, I've I added an `extern` expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your Atw program. [For example:][extern]
 
@@ -380,11 +313,12 @@ The compiler infrastructure also a has a notion of intrinsics, which are just ex
 
 generates code that actually assigns to the variable `gl_Color` defined in the target. (An ordinary mutation would update a new variable generated by the compiler.)
 
-## WebGL Backend
+
+# The WebGL Backend
 
 Here are some less-organized notes on the hacky extensions I added to get the graphics-engine backend working.
 
-### Choosing the Target Language
+## Choosing the Target Language
 
 The compiler needs some way to decide what is host code and what is shader code so it can be compiled to the correct language. I see two options here:
 
@@ -394,13 +328,13 @@ The compiler needs some way to decide what is host code and what is shader code 
 I have gone with option 2, which makes it possible to put shader code by itself in a function and invoke it elsewhere. You write `s< ... >` to generate GLSL code.
 The type system is also aware of annotations: for example, you will get an error if you try to use a quote that's compiled as JavaScript with the `vtx` intrinsic.
 
-### Render Stage and Unmetaprogrammed Quotes
+## Render Stage and Unmetaprogrammed Quotes
 
 The language also needed a way to separate one-time setup code from the host-side code that gets executed on every frame. This is another perfect match for staging---clearly, the same issues of persistence and deferral arise. So we use a "render" stage that emits JavaScript code that draws stuff. This stage contains all the shaders.
 
 But it would be silly to make this stage a string that gets `eval`ed, because we definitely don't need run-time metaprogramming for it. (That is, the setup code doesn't need to splice together code dynamically to determine what to run in the render loop.) So I've added *another* quote emission annotation, `f< ... >`, that emits the quote as an ordinary function. Splices are forbidden in these quotes. This is very close to the essence of "staging without metaprogramming" that this project is based on.
 
-### Declaring In/Out Variables
+## Declaring In/Out Variables
 
 GLSL uses explicit `in` and `out` type qualifiers (or, in WebGL version 1, the more arcane `attribute`/`uniform`/`varying` set of qualifiers). These qualifiers indicate communication between stages. To understand how to generate these declarations, the Atw compiler catalogs the nesting of quotations. During quote lifting, it records the IDs of all the "subprograms" contained contained within each lifted program.
 
@@ -433,13 +367,13 @@ and you can't include two different fragment shader programs and then choose bet
 
 A similar constraint pops up when binding the vertex shader on the CPU. You need some way to decide which variables to bind as uniforms and attributes: this can either be static (by applying the same literal-quote constraint) or dynamic (but this incurs overhead).
 
-### GLSL Types
+## GLSL Types
 
 To make the backend extensible, I have implemented the parser and type checker so that primitive types are just strings. The two built-in primitive types, `Int` and `Float`, are used in the type checker to give types to literals, but they have no special designation otherwise.
 
 The WebGL backend adds primitive types for vectors and matrices. (They are called by the sensible HLSL-like names `Float3`, `Int4x4`, etc., but have OpenGL-like aliases like `Vec3` and `Mat4`.) It uses these types in the definition of its intrinsics.
 
-### Attributes
+## Attributes
 
 The components I've described so far work for *uniforms* but not quite for *attributes*. To recap, uniforms are values passed from CPU to GPU that are constant across all iterations on the GPU (e.g., a timer value); vertex attributes are big arrays for which the GPU gets one element per iteration (e.g., the vertex position vector).
 
