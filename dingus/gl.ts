@@ -50,7 +50,9 @@ function make_buffer(gl: WebGLRenderingContext, data: number[][], type: string, 
  * as externs. Return a setup function that takes no arguments and returns a
  * per-frame function.
  */
-function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4, view: Mat4) {
+function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
+                   view: Mat4)
+{
   let dingus = {
     projection: projection,
     view: view,
@@ -104,7 +106,8 @@ function projection_matrix(out: Mat4, width: number, height: number) {
 export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
-  let canvas = container.appendChild(document.createElement('canvas')) as HTMLCanvasElement;
+  let canvas = document.createElement('canvas');
+  container.appendChild(canvas);
   function fit() {
     let width = container.clientWidth;
     let height = container.clientHeight;
