@@ -1,14 +1,19 @@
-"use strict";
+/**
+ * The support library for running Atw's WebGL output in an interactive
+ * browser widget. This is the support structure that "links" with the
+ * compiled program to compose a complete scene.
+ */
 
-var mat4 = require('gl-mat4');
-var normals = require('normals');
-var canvasOrbitCamera = require('canvas-orbit-camera');
-var pack = require('array-pack-2d');
-var eye = require('eye-vector');
+import mat4 = require('./node_modules/gl-mat4/index.js');
+import normals = require('./node_modules/normals/normals.js');
+import canvasOrbitCamera =
+  require('./node_modules/canvas-orbit-camera/index.js');
+import pack = require('./node_modules/array-pack-2d/index.js');
+import eye = require('./node_modules/eye-vector/index.js');
 
-var bunny = require('bunny');
-var teapot = require('teapot');
-var snowden = require('snowden');
+import bunny = require('./node_modules/bunny/index.js');
+import teapot = require('./node_modules/teapot/teapot.js');
+import snowden = require('./node_modules/snowden/index.js');
 
 function make_buffer(gl, data, type, mode) {
   // Initialize a buffer.
