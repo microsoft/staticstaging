@@ -21,7 +21,7 @@
 
   "scripts": {
     "typings": "typings install",
-    "parser": "pegjs --cache src/grammar.pegjs src/parser.js",
+    "parser": "pegjs --cache src/grammar.pegjs parser.js",
     "compile": "tsc",
     "build": "npm run typings && npm run parser && npm run compile"
   }

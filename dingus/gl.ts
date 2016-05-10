@@ -31,7 +31,9 @@ interface Mesh {
 /**
  * Create a WebGL buffer object containing the given data.
  */
-function make_buffer(gl: WebGLRenderingContext, data: number[][], type: string, mode: number) {
+function make_buffer(gl: WebGLRenderingContext, data: number[][],
+                     type: string, mode: number)
+{
   // Initialize a buffer.
   let buf = gl.createBuffer();
 
