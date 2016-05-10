@@ -1,8 +1,27 @@
+/**
+ * The base type for all nodes in the AST.
+ */
 export interface SyntaxNode {
-  tag: string;  // The node type.
-  id?: number;  // Used in IRs to add computed information.
+  /**
+   * A string indicating the type of AST node. Every `interface` in this type
+   * hierarchy corresponds to a unique string.
+   *
+   * (If this seems redundant, remember that (a) the AST is raw JSON, and (b)
+   * TypeScript interfaces are structurally subtyped.)
+   */
+  tag: string;
+
+  /**
+   * A unique node id used in some IRs to "attach" additional information to
+   * the node.
+   */
+  id?: number;
 }
 
+/**
+ * An AST node that's an expression. This is almost everything---just not
+ * parameters and types.
+ */
 export interface ExpressionNode extends SyntaxNode {
 }
 

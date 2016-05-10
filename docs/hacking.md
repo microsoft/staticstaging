@@ -43,27 +43,28 @@ The dingus seems to work in current versions of Safari, Firefox, Chrome, and Mic
 
 # Compiler Architecture
 
-~ Figure { caption: "The primary data structures in the Atw compiler. Not pictured are a few minor data structures generated during semantic analysis and used by the backends: the proc/prog mapping and the extern list, for example." }
-![alltheworld compiler architecture](alltheworld.svg)
+~ Figure { caption: "The primary data structures in the Atw compiler." }
+![alltheworld compiler architecture](alltheworld.svg){ width: 400px; }
 ~
 
-The crude diagram at the right shows all the data structures in the Atw compiler workflow.
 The main phases in the compiler are:
 
-* The raw AST, i.e., the pristine output from the parser.
-* Type elaboration and desugaring, which produces a high-level IR that can be interpreted.
-* Additional semantic analysis: most importantly, a def/use analysis and "scope lifting," which generalizes lambda lifting to both functions and quotes.
+* Parsing, which produces the raw AST.
+* Type elaboration and desugaring, which produces a high-level IR in the form of an annotated AST (or a type error). This IR can be passed off to the interpreter.
+* A set of semantic analysis passes, which produce a mid-level IR. This IR consists of a collection of data structures *on the side* of the unmodified AST.
+* The backend, which produces JavaScript (and GLSL) from the IR.
 
 This section gives more overview on how the pieces go together. The latter sections give more detail on the more novel components work.
 
 ## Parser
 
 The parser uses a popular [parsing expression grammar][peg] parser-generator library called [PEG.js][].
-To stay as modular as possible, the parser produces an AST as a JSON data structure.
-Every object in the JSON is tagged with a string that indicates the type of the AST node (e.g., "let", "seq", "fun").
-All the other IRs in the compiler are based on variants of this JSON AST, and the major components all dispatch on the tags to recursively process the tree.
-The [web dingus][dingus] can draw the JSON document tree visually.
+The [grammar][] produces an AST as a JSON data structure, which is specified in [`ast.ts`][ast].
 
+All the other IRs in the compiler are based on variants of this JSON AST, and the major components all dispatch on the tags to recursively process the tree.
+
+[ast]: https://github.com/sampsyo/alltheworld/blob/master/src/ast.ts
+[grammar]: https://github.com/sampsyo/alltheworld/blob/master/src/grammar.pegjs
 [peg]: https://en.wikipedia.org/wiki/Parsing_expression_grammar
 [peg.js]: http://pegjs.org/
 [dingus]: http://adriansampson.net/atw/
