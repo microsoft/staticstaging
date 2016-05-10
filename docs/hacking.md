@@ -56,6 +56,10 @@ The main phases in the compiler are:
 
 This section gives more overview on how the pieces go together. The latter sections give more detail on the more novel components work.
 
+The *driver* in [`driver.ts`][driver] orchestrates the whole process, so it's useful as a way into the whole system.
+
+[driver]: https://github.com/sampsyo/alltheworld/blob/master/src/driver.ts
+
 ## Parser
 
 The parser uses a popular [parsing expression grammar][peg] parser-generator library called [PEG.js][].
@@ -71,45 +75,24 @@ All the other IRs in the compiler are based on variants of this JSON AST, and th
 
 ## Type Checking and Elaboration
 
-To turn the raw parse tree to a more useful IR, we attach sequential numeric IDs to every node in the AST.
-This lets us build tables that decorate the AST with extra information without actually mutating it (which we'll need to do repeatedly in the rest of the compiler).
-We could have used the identity of the node objects (i.e., their pointers) instead of handcrafted IDs, but JavaScript does not expose a useful notion of object identity.
+To turn the raw parse tree to a more useful IR, we attach sequential numeric IDs to every node in the AST (see the `stamp` function in [`type_elaborate.ts`][elaborate]).
+This lets us build tables that decorate the AST with extra information.
 
-The type checker runs next. It works as a type *elaborator:* it produces a table mapping node IDs to type information.
-Specifically, the table tracks each node's type and its *type environment* (a mapping from names to types used in type checking).
+The [type checker][check] runs next.
+It works as a type *elaborator:* it produces a table mapping node IDs to `TypeEnv` structures that capture the entire type information at every point.
 
-The high-level IR that forms the output here consists of the ID-stamped AST and the type table.
-This elaborated IR is essential for the next step, desugaring.
+[elaborate]: https://github.com/sampsyo/alltheworld/blob/master/src/type_elaborate.ts
+[check]: https://github.com/sampsyo/alltheworld/blob/master/src/type_check.ts
 
-## Syntactic Sugar
+## Desugaring
 
-It's possible to view cross-stage variable references in our language as syntactic sugar. Specifically, if you have a program like this:
+Two features in the language are implemented as syntactic sugar:
 
-    var x = 5;
-    < x >
+* For the *interpreter*, cross-stage references are sugar for materialization (a.k.a. persisting) escapes. That is, `var x = 5; <x>` is sugar for `var x = 5; <%[x]>`. This way, the interpreter does not need any special logic to implement cross-stage references. We do not enable this desugaring for the compiler;  it handles free variables specially for efficiency.
 
-This is semantically equivalent to:
+* Macro calls are sugar for escaped function invocations. The `desugar_macros` function eliminates all `MacroCall` nodes into of spliced function calls. This is used for both the compiler and the interpreter.
 
-    var x = 5;
-    < %[x] >
-
-That is, the concept called *cross-stage persistence* in the literature, where variables defined outside of a quote are also available inside, can be seen as inessential: you can just as easily express the same thing by sprinkling in explicit `%[...]` escapes.
-
-Even though the semantics are the same, however, the performance can differ. For example, this program:
-
-    var x = 5;
-    < %[x] + %[x] >
-
-creates a quote that needs to communicate the value of `x` *twice* before adding it. From the language's perspective, these are two different expressions that happen to produce the same value.
-
-So desugaring `x` to `%[x]` loses information that the compiler needs. For this reason, Atw implements desugaring but *only for the interpreter*. Desugaring significantly simplifies the implementation of the interpreter, but we do not use it to implement cross-stage references in the compiler.
-
-Desugaring works using the results from type elaboration.
-We traverse to every variable reference and
-look up the variable in the associated type environment.
-The table gives us the stage at which the variable was defined.
-If it is the current stage, the reference is left unchanged; otherwise, it is wrapped in the appropriate number of escape expressions.
-We re-run the type checker on the generated AST fragment, starting from the saved environment for the original node, and amend the type table accordingly to ensure that the entire AST remains elaborated.
+Both desugaring steps require type information, so they use the results from type elaboration.
 
 ## Mid-Level IR and Backends
 
