@@ -4,7 +4,8 @@
   "private": true,
 
   "scripts": {
-    "build": "webpack --output-library atwDingus build/dingus/atw.js atw.bundle.js"
+    "bundle": "webpack --output-library atwDingus build/dingus/atw.js atw.bundle.js",
+    "build": "tsc && npm run bundle"
   },
 
   "dependencies": {

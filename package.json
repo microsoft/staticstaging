@@ -17,5 +17,12 @@
 
   "bin": {
     "atw": "build/atw.js"
+  },
+
+  "scripts": {
+    "typings": "typings install",
+    "parser": "pegjs --cache src/grammar.pegjs > src/parser.js",
+    "compile": "tsc",
+    "build": "npm run typings && npm run parser && npm run compile"
   }
 }

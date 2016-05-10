@@ -24,7 +24,7 @@ $(DINGUS_JS): $(TS_SRC) $(JS_SRC) atw.ts $(TYPINGS_BROWSER) $(TSC)
 # Bundle the built sources for the Web.
 
 atw.bundle.js: $(DINGUS_JS) $(call npmdep,webpack)
-	npm run build
+	npm run bundle
 
 
 # Build the CSS.
