@@ -4,16 +4,22 @@
  * compiled program to compose a complete scene.
  */
 
-import mat4 = require('./node_modules/gl-mat4/index.js');
-import normals = require('./node_modules/normals/normals.js');
-import canvasOrbitCamera =
-  require('./node_modules/canvas-orbit-camera/index.js');
-import pack = require('./node_modules/array-pack-2d/index.js');
-import eye = require('./node_modules/eye-vector/index.js');
+// Declare the `require` function, which will be "implemented" by running
+// WebPack to concatenate all the modules. This, of course, means that
+// interactions with any of these modules is untyped. To resolve this, change
+// a module to use `import name = require('name')` and include a typing
+// definition file.
+declare function require(name: string): any;
 
-import bunny = require('./node_modules/bunny/index.js');
-import teapot = require('./node_modules/teapot/teapot.js');
-import snowden = require('./node_modules/snowden/index.js');
+const mat4 = require('gl-mat4');
+const normals = require('normals');
+const canvasOrbitCamera = require('canvas-orbit-camera');
+const pack = require('array-pack-2d');
+const eye = require('eye-vector');
+
+const bunny: Mesh = require('bunny');
+const teapot: Mesh = require('teapot');
+const snowden: Mesh = require('snowden');
 
 // Some type aliases for GL data structures.
 type Mat4 = Float32Array;
