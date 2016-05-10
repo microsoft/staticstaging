@@ -33,10 +33,10 @@ interface Mesh {
  */
 function make_buffer(gl: WebGLRenderingContext, data: number[][], type: string, mode: number) {
   // Initialize a buffer.
-  var buf = gl.createBuffer();
+  let buf = gl.createBuffer();
 
   // Flatten the data to a packed array.
-  var arr = pack(data, type);
+  let arr = pack(data, type);
 
   // Insert the data into the buffer.
   gl.bindBuffer(mode, buf);
@@ -51,7 +51,7 @@ function make_buffer(gl: WebGLRenderingContext, data: number[][], type: string, 
  * per-frame function.
  */
 function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4, view: Mat4) {
-  var dingus = {
+  let dingus = {
     projection: projection,
     view: view,
   };
@@ -64,7 +64,7 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4, vi
     return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
   }
   function mesh_normals(obj: Mesh) {
-    var norm = normals.vertexNormals(obj.cells, obj.positions);
+    let norm = normals.vertexNormals(obj.cells, obj.positions);
     return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
   }
   function mesh_size(obj: Mesh) {
@@ -89,10 +89,10 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4, vi
  * the width and height of a viewport.
  */
 function projection_matrix(out: Mat4, width: number, height: number) {
-  var aspectRatio = width / height;
-  var fieldOfView = Math.PI / 4;
-  var near = 0.01;
-  var far  = 100;
+  let aspectRatio = width / height;
+  let fieldOfView = Math.PI / 4;
+  let near = 0.01;
+  let far  = 100;
 
   mat4.perspective(out, fieldOfView, aspectRatio, near, far)
 }
@@ -104,10 +104,10 @@ function projection_matrix(out: Mat4, width: number, height: number) {
 export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
-  var canvas = container.appendChild(document.createElement('canvas')) as HTMLCanvasElement;
+  let canvas = container.appendChild(document.createElement('canvas')) as HTMLCanvasElement;
   function fit() {
-    var width = container.clientWidth;
-    var height = container.clientHeight;
+    let width = container.clientWidth;
+    let height = container.clientHeight;
     canvas.setAttribute('width', width + 'px');
     canvas.setAttribute('height', height + 'px');
   }
@@ -116,32 +116,32 @@ export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
 
   // Attach a `canvas-orbit-camera` thing, which handles user input for
   // manipulating the view.
-  var camera = canvasOrbitCamera(canvas, {});
+  let camera = canvasOrbitCamera(canvas, {});
 
   // Initialize the OpenGL context with our rendering function.
-  var gl = (canvas.getContext("webgl") ||
+  let gl = (canvas.getContext("webgl") ||
     canvas.getContext("experimental-webgl")) as WebGLRenderingContext;
 
   // Create the base matrices to be used
   // when rendering the bunny. Alternatively, can
   // be created using `new Float32Array(16)`
-  var projection = mat4.create();
-  var view = mat4.create();
+  let projection = mat4.create();
+  let view = mat4.create();
 
   // Bookkeeping for calculating framerate.
-  var frame_count = 0;
-  var last_sample = new Date();
-  var sample_rate = 1000;
+  let frame_count = 0;
+  let last_sample = new Date();
+  let sample_rate = 1000;
 
   // Initially, the SHFL function does nothing. The client needs to call us
   // back to fill in the function. Then, we will update this variable.
-  var shfl_render: { proc: any, env: any } = null;
+  let shfl_render: { proc: any, env: any } = null;
 
   // The main render loop.
   function render() {
     // Get the current size of the canvas.
-    var width = gl.drawingBufferWidth;
-    var height = gl.drawingBufferHeight;
+    let width = gl.drawingBufferWidth;
+    let height = gl.drawingBufferHeight;
 
     // Handle user input and update the resulting camera view matrix.
     camera.view(view);
@@ -163,10 +163,10 @@ export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
 
     // Framerate tracking.
     ++frame_count;
-    var now = new Date();
-    var elapsed = now.getTime() - last_sample.getTime();  // Milliseconds.
+    let now = new Date();
+    let elapsed = now.getTime() - last_sample.getTime();  // Milliseconds.
     if (elapsed > sample_rate) {
-      var fps = frame_count / elapsed * 1000;
+      let fps = frame_count / elapsed * 1000;
       if (fps_element) {
         fps_element.textContent = fps.toFixed(2);
       } else {
@@ -187,7 +187,7 @@ export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
   // Return a function that lets the client update the render body.
   return function (shfl_code: string) {
     // Execute the compiled SHFL code in context.
-    var shfl_program = shfl_eval(shfl_code, gl, projection, view);
+    let shfl_program = shfl_eval(shfl_code, gl, projection, view);
 
     // Invoke the setup stage.
     shfl_render = shfl_program();
