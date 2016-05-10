@@ -23,9 +23,8 @@ To make sure it's working, you can try running an example:
 
     $ atw test/basic/add.atw
 
-On Windows, you will probably need to type `node atw` explicitly instead of just `atw` because of [file type associations][node argv bug].
+If this doesn't do the right thing on Windows, you might need to type `node atw` explicitly instead of just `atw`.
 
-[node argv bug]: https://github.com/nodejs/node/issues/4725
 [npm]: https://www.npmjs.com/
 [Node]: https://nodejs.org/
 
