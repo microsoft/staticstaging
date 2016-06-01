@@ -1,8 +1,9 @@
-title: Alltheworld Compiler Implementation
+title: Static Staging Compiler Implementation
+[INCLUDE="docs.mdk"]
 
 [TITLE]
 
-This is the documentation for the Alltheworld compiler implementation.
+This is the documentation for the static staging compiler (&proj;) implementation.
 You may also be interested in the [language documentation](index.html).
 
 [TOC]
@@ -15,22 +16,20 @@ To get the compiler running, install [Node][] and [npm][]. Then, on Unix, just t
     $ npm install
     $ npm run build
 
-Then, you can install the `atw` command-line program by typing:
+Then, you can install the `&tool;` command-line program by typing:
 
     $ npm link
 
 To make sure it's working, you can try running an example:
 
-    $ atw test/basic/add.atw
-
-If this doesn't do the right thing on Windows, you might need to type `node atw` explicitly instead of just `atw`.
+    $ &tool; test/basic/add.atw
 
 [npm]: https://www.npmjs.com/
 [Node]: https://nodejs.org/
 
 ## Command Line
 
-Type `atw -h` for usage. The most important options are:
+Type `&tool; -h` for usage. The most important options are:
 
 * `-c`: Use the compiler to JavaScript. Otherwise, the interpreter is used instead. By default, this dumps the compiled JavaScript code to the standard output.
 - `-x`: When in compiler mode, run the resulting JavaScript code with `eval` and print the output. Together, `-cx` should give you the same output as running the interpreter (with no options at all).
@@ -47,8 +46,8 @@ The dingus seems to work in current versions of Safari, Firefox, Chrome, and Mic
 
 # Compiler Architecture
 
-~ Figure { caption: "The primary data structures in the Atw compiler." }
-![alltheworld compiler architecture](alltheworld.svg){ width: 400px; }
+~ Figure { caption: "The primary data structures in &proj;." }
+![static staging compiler architecture](alltheworld.svg){ width: 400px; }
 ~
 
 The main phases in the compiler are:
@@ -133,7 +132,7 @@ For example, `Glue` records the OpenGL name of the parameter to use for communic
 # Scope Lifting
 
 [Lambda lifting][] is the standard technique for compiling languages with closures.
-Atw generalizes lambda lifting to apply to both functions and quotes simultaneously.
+&proj; generalizes lambda lifting to apply to both functions and quotes simultaneously.
 The compiler calls the combined transformation *scope lifting*.
 
 The idea behind lambda lifting is to take every function and turn it into a *procedure* that doesn't close over any state---all of its parameters must be provided explicitly rather than picked up from the surrounding environment.
@@ -144,11 +143,11 @@ Quote lifting has a similar goal: extract all the quotes mixed into a program an
 (Think of them as strings embedded in the `.text` section of an executable binary.)
 Quote expressions also need to produce a closure-like value: they also consist of a pointer to the code and an environment---the environment contains the materialized outer-stage values.
 
-General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. Atw's scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
+General scope lifting recognizes that functions and quotes are nearly identical. Quotes don't have arguments and functions don't have escapes, but those are the only real differences. &proj;'s scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
 
 ## Materialization Generalizes Free Variables
 
-To compile materialization escapes and free variables in quotes, Atw's quote-lifting analysis generalizes the concept of free variables in functions.
+To compile materialization escapes and free variables in quotes, &proj;'s quote-lifting analysis generalizes the concept of free variables in functions.
 As an example, this program uses a materialization inside of a function body:
 
     var y = 2;
@@ -157,7 +156,7 @@ As an example, this program uses a materialization inside of a function body:
       f 3
     >
 
-After scope lifting, we should have a function contained in a string literal. In Atw's JavaScript backend, this looks something like:
+After scope lifting, we should have a function contained in a string literal. In &proj;'s JavaScript backend, this looks something like:
 
     var prog1 =
     "function func1(x, persist1) {" +
@@ -230,7 +229,7 @@ There are three stages here: the outer stage and two nested quotes. The splicing
     ";
     eval(prog1.replace("__SPLICE__", "5"));
 
-In particular, the string literal for the inner quote needs to appear *nested inside* the string for the outer quote. It won't work to hoist all the programs to the top-level namespace (as an earlier version of the Atw compiler would have):
+In particular, the string literal for the inner quote needs to appear *nested inside* the string for the outer quote. It won't work to hoist all the programs to the top-level namespace (as an earlier version of the &proj; compiler would have):
 
     var prog1 = "eval(prog2)";
     var prog2 = "__SPLICE__ + 4";
@@ -239,7 +238,7 @@ because this would make it impossible to splice into `prog2`'s text when prepari
 
 Incidentally, the correct nesting for $n$-level escapes also makes it possible to *residualize* programs. Since a quote contains everything it needs to execute, it is possible to write the program to a file and execute it later.
 
-The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When Atw eventually grows a native-code backend, this will manifest as emitting a complete `.text` section for the subprogram's binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the "hoisted" behavior, where all subprograms are linked into the main program's `.text` section.
+The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When &proj; eventually grows a native-code backend, this will manifest as emitting a complete `.text` section for the subprogram's binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the "hoisted" behavior, where all subprograms are linked into the main program's `.text` section.
 
 
 # Emitting JavaScript
@@ -291,12 +290,12 @@ The `var` line pre-declares all the variables that we use in the code to make th
 
 ## `extern`
 
-To make the language slightly more practical, I've I added an `extern` expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your Atw program. [For example:][extern]
+To make the language slightly more practical, I've I added an `extern` expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your &proj; program. [For example:][extern]
 
     extern Math.pow: Int Int -> Int;
     Math.pow 7 2
 
-That program compiles to code that invokes JavaScript's own `Math.pow` by wrapping it in an Atw closure value:
+That program compiles to code that invokes JavaScript's own `Math.pow` by wrapping it in an &proj; closure value:
 
     var closure = ({ proc: Math.pow, env: [] });
     var args = [(7), (2)].concat(closure.env);

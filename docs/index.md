@@ -1,9 +1,10 @@
-title: Alltheworld and SHFL
+title: Static Staging
 heading base: 2
 script: docs.js
 embed: 0
 section depth: 1
 toc depth: 2
+[INCLUDE="docs.mdk"]
 
 ~Pre:
   class=example
@@ -25,13 +26,14 @@ toc depth: 2
 
 [TITLE]
 
-This is an example-based introduction to the Alltheworld compiler and its graphics-centric language, SHFL.
+This is an example-based introduction to programming with static staging.
+It describes the static staging compiler (&proj;), its basic language &lang;, and its graphics-centric extended language &lang-gl;.
 
 [TOC]
 
 # The Basics { #basics }
 
-Alltheworld has a tiny, imperative core language. You can assign to variables with `var`, do basic arithmetic, and define functions with `def`:
+&lang; has a tiny, imperative core language. You can assign to variables with `var`, do basic arithmetic, and define functions with `def`:
 
     var g = 9.8;
     def gpe(mass:Float, height:Float)
@@ -56,7 +58,7 @@ The language can also interoperate with JavaScript. Use `extern` to declare some
 
 # Multi-Stage Programming
 
-Alltheworld, as the name implies, is a [multi-stage programming language][metaml]. This section introduces its constructs for deferring execution (quote), "un-deferring" expressions (escape), and executing deferred code (run).
+&lang;, as the name implies, is a [multi-stage programming language][metaml]. This section introduces its constructs for deferring execution (quote), "un-deferring" expressions (escape), and executing deferred code (run).
 
 [metaml]: http://dl.acm.org/citation.cfm?id=259019
 [metaocaml]: http://okmij.org/ftp/ML/MetaOCaml.html#implementing-staging
@@ -93,7 +95,7 @@ If you look at the compiled JavaScript code, you'll see that the second string l
 
 ## Persist
 
-Alltheworld has a second kind of escape expression called a *persist* escape. Rather than splicing together code at run time, persists let you share data between stages. Persist escapes are written with a leading `%` sign:
+&lang; has a second kind of escape expression called a *persist* escape. Rather than splicing together code at run time, persists let you share data between stages. Persist escapes are written with a leading `%` sign:
 
     var pi = 3.14;
     def calc_area(r:Float)
@@ -106,26 +108,26 @@ The difference may seem subtle, but it has an important effect on the generated 
 
 ## Cross-Stage References
 
-Alltheworld includes syntactic niceness for persisting data without explicit escape expressions. In the previous section's example, we performed one multiplication (`r * r`) in the first stage and a second multiplication (by `pi`) in a second stage. If you want to perform both multiplications at the same stage, then you could write `< %[pi] * %[r] * %[r] >`. Alltheworld lets you omit the persist-escape brackets when all you need is a single variable:
+&lang; includes syntactic niceness for persisting data without explicit escape expressions. In the previous section's example, we performed one multiplication (`r * r`) in the first stage and a second multiplication (by `pi`) in a second stage. If you want to perform both multiplications at the same stage, then you could write `< %[pi] * %[r] * %[r] >`. &lang; lets you omit the persist-escape brackets when all you need is a single variable:
 
     var pi = 3.14;
     def calc_area(r:Float)
       < pi * r * r >;
     !calc_area(5.0) + !calc_area(2.0)
 
-The code inside the quote can pretend that it shares the same variables that are available outside of the quote. The classic literature on multi-stage programming calls this shared-scope effect *cross-stage persistence*, but you can also think of it as syntactic sugar for explicit `%[x]` escapes. In fact, this is how the Alltheworld compiler works: you can see that it generates exactly the same JavaScript code whether you surround `pi` and `r` in persist-escape brackets or not.
+The code inside the quote can pretend that it shares the same variables that are available outside of the quote. The classic literature on multi-stage programming calls this shared-scope effect *cross-stage persistence*, but you can also think of it as syntactic sugar for explicit `%[x]` escapes. In fact, this is how &proj; works: you can see that it generates exactly the same JavaScript code whether you surround `pi` and `r` in persist-escape brackets or not.
 
 ## Staging Without Metaprogramming
 
-If you don't use any splicing, quotes can feel very similar to lambdas. A lambda also wraps up code to run later, and via closures, a lambda can also share state from the enclosing scope where it is defined. In fact, it can seem silly that Alltheworld uses string literals and `eval` where an ordinary function would do just fine.
+If you don't use any splicing, quotes can feel very similar to lambdas. A lambda also wraps up code to run later, and via closures, a lambda can also share state from the enclosing scope where it is defined. In fact, it can seem silly that &proj; uses string literals and `eval` where an ordinary function would do just fine.
 
-In recognition this correspondence, Alltheworld lets you write quotes that compile to JavaScript functions. They have the same semantics as ordinary `eval`-based quotes---only their implementation, and therefore their performance, differs. To use function stages, you can *annotate* quotes with `js`, like this:
+In recognition this correspondence, &lang; lets you write quotes that compile to JavaScript functions. They have the same semantics as ordinary `eval`-based quotes---only their implementation, and therefore their performance, differs. To use function stages, you can *annotate* quotes with `js`, like this:
 
     var x = 21;
     var doubler = js< x + x >;
     !doubler
 
-The JavaScript code that Alltheworld generates for this program doesn't have any string literals at all---and it won't use `eval` at run time.
+The JavaScript code that &proj; generates for this program doesn't have any string literals at all---and it won't use `eval` at run time.
 
 The compiler needs keeps track of the kinds of programs so it knows how to execute them with `!`. The type system tracks the annotation on each quote. Here's a function that indicates that it takes a function (`js`-annotated) quote:
 
@@ -141,7 +143,7 @@ You'll get a type error if the annotations don't match:
 
 ## N-Level Escapes { #multiescape }
 
-Alltheworld generalizes escapes to move across multiple stages at once. You can write a number after a splice `[e]` or persist `%[e]` escape to indicate the number of stages to look through:
+&lang; generalizes escapes to move across multiple stages at once. You can write a number after a splice `[e]` or persist `%[e]` escape to indicate the number of stages to look through:
 
     var c = <5>;
     !< 2 + !< 8 * 2[c] > >
@@ -165,7 +167,7 @@ which produces `< 2 + !< 8 * [<5>] > >`, a program that will splice the number 5
 
 # Metaprogramming
 
-Splicing is the basis of Alltheworld's metaprogramming tools.
+Splicing is the basis of &lang;'s metaprogramming tools.
 This section describes extensions beyond the basic splices we've already seen that make metaprogramming more powerful.
 
 ## Snippets
@@ -204,7 +206,7 @@ But for metaprogramming, scopes that span multiple quotes can be important. Say,
 
 You need to share the value of `r` between the outer quote and the first inner quote (to compute the volume as $\frac{4}{3} \pi r^3$).
 
-To make this work, Alltheworld supports special kinds of escape and quote that can preserve scopes. They're called *splices*, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
+To make this work, &lang; supports special kinds of escape and quote that can preserve scopes. They're called *snippets*, and you use them by prefixing escapes and quotes with the `$` character. This modified example works:
 
     var pi = 3.14;
     def sphere(d: Float, volume: Int)
@@ -224,7 +226,7 @@ Snippets' scope sharing is in tension with the self-contained, reusable nature o
 
 [mint]: http://www.cs.rice.edu/~mgricken/research/mint/download/techreport.pdf
 
-Alltheworld uses a simple strategy to make sure that a snippet can only be spliced into its intended destination. The language gives a special, one-off type to snippets that identifies their splice points. This sneaky program, for example:
+&lang; uses a simple strategy to make sure that a snippet can only be spliced into its intended destination. The language gives a special, one-off type to snippets that identifies their splice points. This sneaky program, for example:
 
     var c = <0>;
     <
@@ -233,7 +235,7 @@ Alltheworld uses a simple strategy to make sure that a snippet can only be splic
     >;
     !c
 
-tries to squirrel away a snippet that refers to a variable from the outer quote. Alltheworld will helpfully complain that the `$<x>` expression has a special type that can't be assigned into a variable with type `<Int>`. That special type has only one purpose: to be spliced into one specific point in one specific program.
+tries to squirrel away a snippet that refers to a variable from the outer quote. &lang; will helpfully complain that the `$<x>` expression has a special type that can't be assigned into a variable with type `<Int>`. That special type has only one purpose: to be spliced into one specific point in one specific program.
 
 ## Pre-Splicing
 
@@ -263,12 +265,12 @@ On the command line, you can optionally disable the presplicing optimization. Us
 
 ## Macros
 
-Alltheworld has macros.
+&lang; has macros.
 In fact, the staging concepts you already know are already enough to implement something very close to macros you know and love!
-The Atw just uses a little syntactic sugar to make them work.
+&proj; just uses a little syntactic sugar to make them work.
 
 Fundamentally, a macro is just a function that takes code as arguments and produces code as its return value.
-In Alltheworld, that's exactly how you define a macro:
+In &lang;, that's exactly how you define a macro:
 
     def add(lhs: <Int>, rhs: <Int>)
       < [lhs] + [rhs] >;
@@ -303,7 +305,7 @@ In other words, macros are just functions that run at an earlier stage.
 Snippet splicing composes with macros.
 Together, they enforce *macro hygeine*, letting you safely use variables from the scope surrounding the macro invocation.
 
-To make this work, Alltheworld uses the types on the parameters to the macro function.
+To make this work, &lang; uses the types on the parameters to the macro function.
 Decorate your function's argument types with a `$` to indicate that the argument should be a snippet:
 
     def left(lhs: $<Int>, rhs: $<Int>)
@@ -319,18 +321,18 @@ Snippet escapes are powerful because they can use variables from the surrounding
 
 # Code Generation
 
-This section describes how to invoke the Alltheworld compiler or interpreter to generate code.
+This section describes how to invoke &proj;'s compiler or interpreter to generate code.
 
-You can use the interpreter mode to generate Alltheworld code, which you can then feed back into the interpreter.
+You can use the interpreter mode to generate &lang; code, which you can then feed back into the interpreter.
 Use the `-g` flag to the command-line tool to make it emit the *body* of a residualizable code value produced by the program.
 For example:
 
 ```sh
-$ echo 'var x = <5>; < [x] + 2>' | atw
+$ echo 'var x = <5>; < [x] + 2>' | &tool;
 < 5 + 2 >
-$ echo 'var x = <5>; < [x] + 2>' | atw -g
+$ echo 'var x = <5>; < [x] + 2>' | &tool; -g
 5 + 2
-$ echo 'var x = <5>; < [x] + 2>' | atw -g | atw
+$ echo 'var x = <5>; < [x] + 2>' | &tool; -g | &tool;
 7
 ```
 
@@ -338,19 +340,19 @@ The code must be residualizable: it must not contain any persists.
 For example, this will produce an error:
 
 ```sh
-$ echo 'var x = 5; < %[x] + 2>' | atw -g
+$ echo 'var x = 5; < %[x] + 2>' | &tool; -g
 ```
 
 indicating that the resulting code value `< %0 + 2 >` can't be residualized.
 
-In compiler mode, the `-g` flag does not produce Atw source code; instead, it produces JavaScript code.
+In compiler mode, the `-g` flag does not produce &lang; source code; instead, it produces JavaScript code.
 You can execute this code by passing it into `node`, probably with the `-p` flag to print its output.
 For example:
 
 ```sh
-$ echo 'var x = <5>; < [x] + 2>' | atw -cxg
+$ echo 'var x = <5>; < [x] + 2>' | &tool; -cxg
 (... a bunch of JavaScript ...)
-$ echo 'var x = <5>; < [x] + 2>' | atw -cxg | node -p
+$ echo 'var x = <5>; < [x] + 2>' | &tool; -cxg | node -p
 7
 ```
 
@@ -359,15 +361,15 @@ If you like, you can save this JavaScript code to a file to execute it later.
 
 # Graphics { data-mode=webgl }
 
-Alltheworld has a graphics-oriented extension called SHFL, for *shader family language*. In SHFL mode, the compiler targets a combination of JavaScript with WebGL API calls and [GLSL][], the associated low-level shading language.
+&lang; has a graphics-oriented extension called &lang-gl;. In &lang-gl; mode, the compiler targets a combination of JavaScript with WebGL API calls and [GLSL][], the associated low-level shading language.
 
 [glsl]: https://www.opengl.org/documentation/glsl/
 
 ## Shader Quotes
 
-The most obvious extension that SHFL adds is quotations that compile to GLSL shader code. Recall that we previously *annotated* quotes with `f` to make the compiler emit them as JavaScript functions; a new annotation, `s`, switches to emit them as shader programs.
+The most obvious extension that &lang-gl; adds is quotations that compile to GLSL shader code. Recall that we previously *annotated* quotes with `f` to make the compiler emit them as JavaScript functions; a new annotation, `s`, switches to emit them as shader programs.
 
-SHFL also has a couple of intrinsic functions, `vertex` and `fragment`, to indicate vertex and fragment shaders. A fragment-shader quote is contained within a vertex-shader quote because it's a later stage. Here's a useless SHFL program:
+&lang-gl; also has a couple of intrinsic functions, `vertex` and `fragment`, to indicate vertex and fragment shaders. A fragment-shader quote is contained within a vertex-shader quote because it's a later stage. Here's a useless &lang-gl; program:
 
     vertex glsl< fragment glsl< 1.0 > >
 
@@ -375,9 +377,9 @@ Take a look at the compiler's output. You'll see two string literals in the fina
 
 ## Render, Vertex, Fragment
 
-SHFL programs use three kinds of stages. We've already seen two: the vertex shader stage and the fragment shader stage. Both of thee run on the GPU. The third stage is the *render loop* stage, which distinguishes code that runs on the CPU for every frame from code that runs once at setup time.
+&lang-gl; programs use three kinds of stages. We've already seen two: the vertex shader stage and the fragment shader stage. Both of thee run on the GPU. The third stage is the *render loop* stage, which distinguishes code that runs on the CPU for every frame from code that runs once at setup time.
 
-The render stage needs to be a function quote (annotated with `f`), and you pass it to an intrinsic function called `render` to register it as the render-loop code. Inside the vertex and fragment shader stages, your job is to assign to the intrinsic variables `gl_Position` and `gl_FragColor` respectively. In the initial setup stage, there are also intrinsics to load a few built-in sample model assets. Here's a tiny example that uses all of the SHFL stages:
+The render stage needs to be a function quote (annotated with `f`), and you pass it to an intrinsic function called `render` to register it as the render-loop code. Inside the vertex and fragment shader stages, your job is to assign to the intrinsic variables `gl_Position` and `gl_FragColor` respectively. In the initial setup stage, there are also intrinsics to load a few built-in sample model assets. Here's a tiny example that uses all of the &lang-gl; stages:
 
     # Load the mesh data for a sample model.
     var mesh = teapot;
@@ -408,7 +410,7 @@ There's a lot going on even in this small example. The next two sections will in
 
 ## WebGL and GLSL Intrinsics
 
-SHFL gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl ref] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s][#basics] in a standard preamble. You can see the definitive list in [the source code for this preamble][preamble]. Here are a few important intrinsics you'll need:
+&lang-gl; gives you access to parts of the [WebGL API][webgl] for host-side code and [GLSL built-ins][glsl ref] in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using [`extern`s][#basics] in a standard preamble. You can see the definitive list in [the source code for this preamble][preamble]. Here are a few important intrinsics you'll need:
 
 [preamble]: https://github.com/sampsyo/alltheworld/blob/master/dingus/gl_preamble.atw
 
@@ -425,9 +427,9 @@ These intrinsics use matrix and vector types such as `Float4` (a 4-element float
 [webgl]: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
 [glsl ref]: https://www.opengl.org/sdk/docs/man4/index.php
 
-## Cross-Stage Persistence in SHFL
+## Cross-Stage Persistence in &lang-gl;
 
-While sharing data between stages is straightforward in Alltheworld's homogeneous JavaScript mode, the SHFL mode has more work to do to build communication channels among the CPU and the rendering stages on the GPU.
+While sharing data between stages is straightforward in &lang;'s homogeneous JavaScript mode, the &lang-gl; mode has more work to do to build communication channels among the CPU and the rendering stages on the GPU.
 
 ### Uniform Variables
 
@@ -435,28 +437,28 @@ In the example above, we use cross-stage persistence to share data between the C
 
 It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on [$n$-level escapes][#multiescape]. You can use explicit two-level escapes like `2[ e ]` or implicit cross-stage references to get this effect.
 
-If different stages use the same uniform variable, SHFL only needs to bind it once.
+If different stages use the same uniform variable, &lang-gl; only needs to bind it once.
 
 ### Vertex Attributes
 
 Graphics APIs have a second mechanism for sending data to shaders that differs per vertex, called *vertex attributes*. In our above example, the `position` variable is an array of vectors indicating the location of each vertex. We don't want to pass the entire array to every invocation of the vertex shader---instead, each invocation should get a different vector, as if we had called `map` on the array.
 
-To this end, SHFL handles cross-stage persistence specially when sharing arrays from the host to a shader. If an expression `e` has type `T Array`, then in a shader quote, the persist-escape expression `%[e]` has the element type `T`. The compile code uses WebGL's APIs to bind the array as an attribute instead of a uniform.
+To this end, &lang-gl; handles cross-stage persistence specially when sharing arrays from the host to a shader. If an expression `e` has type `T Array`, then in a shader quote, the persist-escape expression `%[e]` has the element type `T`. The compile code uses WebGL's APIs to bind the array as an attribute instead of a uniform.
 
-When a program uses an attribute at the fragment stage, OpenGL can't communicate the value directly. (There is no such thing as a "fragment attribute.") Instead, SHFL implements the communication by generated code at the vertex stage to pass the current value to the fragment stage.
+When a program uses an attribute at the fragment stage, OpenGL can't communicate the value directly. (There is no such thing as a "fragment attribute.") Instead, &lang-gl; implements the communication by generated code at the vertex stage to pass the current value to the fragment stage.
 
 [uniform]: https://www.opengl.org/wiki/Uniform_(GLSL)
 [uniformMatrix4fv]: https://msdn.microsoft.com/en-us/library/dn302458(v=vs.85).aspx
 
 ### Varying
 
-The third communication mode that SHFL provides is between different stages of the graphics pipeline. If you need to perform some computation in the vertex stage and communicate it to the fragment stage, this is the mechanism you need. In OpenGL, variables like this use a `varying` qualifier, so they are sometimes just called *varyings*. In SHFL, stage-to-stage communication looks the same between GPU stages as it does when communicating from the CPU and GPU. Persists and cross-stage references work how you expect them to, and SHFL compiles them to GLSL varyings.
+The third communication mode that &lang-gl; provides is between different stages of the graphics pipeline. If you need to perform some computation in the vertex stage and communicate it to the fragment stage, this is the mechanism you need. In OpenGL, variables like this use a `varying` qualifier, so they are sometimes just called *varyings*. In &lang-gl;, stage-to-stage communication looks the same between GPU stages as it does when communicating from the CPU and GPU. Persists and cross-stage references work how you expect them to, and &lang-gl; compiles them to GLSL varyings.
 
 ## Reusable Shaders
 
 So far, our example has statically inlined the shading code with the host code. Realistically, we need to be able to separate the two. This separation is not only helpful for building a cleaner abstraction, but also so the shader can be decoupled from the object it "paints": you'll want to draw multiple objects with a single shader, or choose between multiple shaders for a single object.
 
-In SHFL, you can encapsulate shaders just by wrapping them in functions. Since shader programs are first-class values, this works without any special consideration:
+In &lang-gl;, you can encapsulate shaders just by wrapping them in functions. Since shader programs are first-class values, this works without any special consideration:
 
     def solid(pos: Float3 Array, model: Mat4, color: Vec3)
       vertex glsl<
@@ -475,9 +477,9 @@ Here's [a more complete example][example-objects] that uses a function-wrapped s
 
 # Loose Ends
 
-If you keep playing with Alltheworld and SHFL, you'll quickly notice that this is a research prototype. Here are a few of the most glaring current omissions:
+If you keep playing with &proj;, you'll quickly notice that this is a research prototype. Here are a few of the most glaring current omissions:
 
-- Parse errors are frequently useless: they'll point you toward a seemingly irrelevant part of the code. In SHFL mode, the line number also reflects the (hidden) preamble code.
+- Parse errors are frequently useless: they'll point you toward a seemingly irrelevant part of the code. In &lang-gl; mode, the line number also reflects the (hidden) preamble code.
 - Type errors are often vague and don't have source position information.
 - Missing control flow constructs: `if`, `while`, and `for`.
 - Shaders and their parameters are currently coupled: you can't bind a single shader and reuse it with multiple sets of uniforms and attributes without re-binding.
