@@ -1,5 +1,5 @@
 /**
- * The support library for running Atw's WebGL output in an interactive
+ * The support library for running SSC's WebGL output in an interactive
  * browser widget. This is the support structure that "links" with the
  * compiled program to compose a complete scene.
  */

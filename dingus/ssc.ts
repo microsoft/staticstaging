@@ -140,7 +140,7 @@ function get_name(tree: ast.SyntaxNode): string {
 // - the result of interpretation or execution
 // - the complete WebGL code (if in WebGL mode)
 // The mode can be "interp", "compile", or "webgl".
-function atw_run(code: string, mode: string)
+function ssc_run(code: string, mode: string)
   : [string, ast.SyntaxNode, string, string, string, string]
 {
   // Configure the driver to store a bunch of results.
@@ -337,7 +337,7 @@ let DEFAULT: Config = {
   scrollbars: true,
 };
 
-export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
+export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   let codebox = <HTMLTextAreaElement> base.querySelector('textarea');
   let errbox = <HTMLElement> base.querySelector('.error');
   let treebox = <HTMLElement> base.querySelector('.tree');
@@ -419,7 +419,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
 
     if (code !== "") {
       let [err, tree, typ, compiled, res, glcode] =
-        atw_run(custom_preamble + code, mode);
+        ssc_run(custom_preamble + code, mode);
 
       show(err, errbox);
       if (typebox) {
