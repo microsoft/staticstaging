@@ -1,4 +1,4 @@
-var DINGUS_URL = 'http://adriansampson.net/atw';
+var DINGUS_URL = 'http://microsoft.github.io/staticstaging/dingus/';
 function encode_hash(obj) {
     var parts = [];
     for (var key in obj) {
