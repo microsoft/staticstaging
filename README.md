@@ -1,7 +1,7 @@
 Static Staging Compiler
 =======================
 
-[![build status](https://circleci.com/gh/microsoft/staticstaging.svg?style=shield&circle-token=656c5c2a93fd48c8b2e1b1c4780b5a8a3ba4cae6)](https://circleci.com/gh/microsoft/staticstaging)
+[![build status](https://circleci.com/gh/microsoft/staticstaging.svg?style=shield&circle-token=c39f027c650d4a4e2c6f9b59868309c210228de3)](https://circleci.com/gh/microsoft/staticstaging)
 
 This is an experimental programming language for heterogeneous systems based on multi-stage programming. See [the documentation][docs] for an introduction to the language.
 
