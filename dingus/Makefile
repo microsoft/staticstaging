@@ -1,8 +1,8 @@
-DINGUS_JS := build/dingus/atw.js
-GENERATED := examples.js preambles.js atw.bundle.js codemirror.css dingus.css
+DINGUS_JS := build/dingus/ssc.js
+GENERATED := examples.js preambles.js ssc.bundle.js codemirror.css dingus.css
 
 .PHONY: all clean
-all: atw.bundle.js codemirror.css dingus.css
+all: ssc.bundle.js codemirror.css dingus.css
 clean:
 	rm -rf build/ node_modules/ $(GENERATED)
 
@@ -13,7 +13,7 @@ include ../ts.mk
 
 TS_SRC := $(shell find ../src/ -type f -name '*.ts') gl.ts
 JS_SRC := examples.js preambles.js ../parser.js
-$(DINGUS_JS): $(TS_SRC) $(JS_SRC) atw.ts $(TYPINGS_BROWSER) $(TSC)
+$(DINGUS_JS): $(TS_SRC) $(JS_SRC) ssc.ts $(TYPINGS_BROWSER) $(TSC)
 	$(TSC)
 
 # It's a shame we have to duplicate this rule here.
@@ -23,7 +23,7 @@ $(DINGUS_JS): $(TS_SRC) $(JS_SRC) atw.ts $(TYPINGS_BROWSER) $(TSC)
 
 # Bundle the built sources for the Web.
 
-atw.bundle.js: $(DINGUS_JS) $(call npmdep,webpack)
+ssc.bundle.js: $(DINGUS_JS) $(call npmdep,webpack)
 	npm run bundle
 
 

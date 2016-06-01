@@ -16,7 +16,7 @@
   },
 
   "bin": {
-    "atw": "build/atw.js"
+    "ssc": "build/ssc.js"
   },
 
   "scripts": {

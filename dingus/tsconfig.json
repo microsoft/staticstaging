@@ -6,6 +6,6 @@
         "outDir": "build"
     },
     "files": [
-        "atw.ts"
+        "ssc.ts"
     ]
 }

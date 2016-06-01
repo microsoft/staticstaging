@@ -1,4 +1,5 @@
-CLI_JS := build/atw.js
+CLI_JS := build/ssc.js
+CLI_TS := ssc.ts
 
 .PHONY: cli dingus all
 cli: $(CLI_JS)
@@ -23,7 +24,7 @@ parser.js: src/grammar.pegjs $(call npmdep,pegjs)
 # The command-line Node tool.
 
 TS_SRC := $(shell find src/ -type f -name '*.ts')
-$(CLI_JS): $(TS_SRC) atw.ts parser.js $(TYPINGS_MAIN) $(TSC)
+$(CLI_JS): $(TS_SRC) $(CLI_TS) parser.js $(TYPINGS_MAIN) $(TSC)
 	$(TSC)
 
 
@@ -107,21 +108,10 @@ deploy: dingus docs
 	rsync $(RSYNCARGS) docs/build/ $(DEST)/docs
 
 
-# Auto-build using https://facebook.github.io/watchman/
-
-.PHONY: watch
-watch:
-	watchman-make --settle 0.1 \
-		-p 'docs/*.md' 'docs/*.ts' -t docs \
-		-p 'src/**/*.ts' 'src/*.pegjs' atw.ts -t cli \
-		-p 'src/**/*.ts' 'src/*.pegjs' 'dingus/*.ts' 'dingus/gl.js' \
-			'dingus/examples/*.atw' -t dingus
-
-
 # Lint.
 
 .PHONY: lint
 lint:
 	find src -name '*.ts' | xargs tslint
 	find dingus -name '*.ts' | xargs tslint
-	tslint atw.ts
+	tslint $(CLI_TS)
