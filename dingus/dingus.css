@@ -1,0 +1,74 @@
+/* Fonts! */
+body {
+  font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, sans-serif; }
+
+pre, textarea {
+  font-family: 'Anonymous Pro', Inconsolata, Consolas, 'Source Code Pro', Menlo, Monaco, monospace; }
+
+/* Columns on wide, stacked on narrow. At an intermediate width, they're
+   50/50; otherwise, make sure the code is wide enough. */
+.input, .output {
+  width: 100%; }
+
+@media (min-width: 900px) {
+  .input, .output {
+    float: left; }
+  .input {
+    width: calc(500px); }
+  .output {
+    width: calc(98% - 500px); } }
+
+@media (min-width: 1020px) {
+  .input, .output {
+    width: 49%; } }
+
+/* Make the code input as tall as possible when in columns, and with a fixed
+   height when we don't. */
+#code, .CodeMirror {
+  width: calc(100% - 2em);
+  height: 60ex; }
+
+@media (min-width: 900px) {
+  .input, .output {
+    height: calc(100vh - 7ex); }
+  .code, .CodeMirror {
+    height: 100%; }
+  .compiled {
+    height: calc(100vh - 300px - 18ex); } }
+
+.sscdingus {
+  /* The toolbar. */
+  /* Output boxes hidden initially. */
+  /* Tiny output code. */
+  /* When the output is a WebGL canvas, make it big. */
+  /* Framerate display. */
+  /* The syntax tree diagram. */ }
+  .sscdingus .tools {
+    height: 2em;
+    margin-top: 0.5ex; }
+  .sscdingus .tools > * {
+    float: left;
+    margin: 0 0.5em 0 0; }
+  .sscdingus .error, .sscdingus .result {
+    display: none;
+    clear: both; }
+  .sscdingus .fps {
+    display: none; }
+  .sscdingus .compiled {
+    font-size: 60%;
+    overflow: auto; }
+  .sscdingus .visual {
+    height: 300px; }
+  .sscdingus .fps {
+    text-align: right;
+    font-size: 80%; }
+  .sscdingus .fps::after {
+    content: " fps"; }
+  .sscdingus .tree {
+    height: 30ex; }
+  .sscdingus .tree .node text {
+    font-size: 80%; }
+  .sscdingus .tree .link {
+    fill: none;
+    stroke: #ddd;
+    stroke-width: 2px; }

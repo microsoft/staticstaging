@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>Static Staging Dingus</title>
+    <link rel="stylesheet" href="codemirror.css">
+    <link rel="stylesheet" href="dingus.css">
+</head>
+<body class="sscdingus">
+
+<div class="input">
+    <textarea class="code"></textarea>
+    <div class="tools">
+        <button type="button" class="clear">
+            clear
+        </button>
+        <p>
+            <select class="mode">
+                <option value="interp">interpreter</option>
+                <option value="compile">compiler</option>
+                <option value="webgl">WebGL</option>
+            </select>
+        </p>
+        <p>
+            <select class="example">
+                <option value="choose" selected disabled>
+                    choose an example
+                </option>
+            </select>
+        </p>
+        <p class="type"></p>
+    </div>
+</div>
+
+<div class="output">
+    <div class="error"></div>
+    <pre class="result"></pre>
+    <div class="visual"></div>
+    <div class="fps"></div>
+    <div class="tree"></div>
+    <pre class="compiled"></pre>
+</div>
+
+<script type="text/javascript" src="ssc.bundle.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function () {
+  var base = document.querySelector('.sscdingus');
+  sscDingus(base);
+});
+</script>
+</body>
+</html>

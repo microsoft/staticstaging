@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <meta name="generator" content="Madoko, version 1.0.0-rc5" />
+  <meta name="viewport" content="initial-scale=1.0" />
+  <title>Static Staging Compiler Implementation</title>
+  <style type="text/css"  class="link">
+  /*# sourceURL=madoko.css */
+  
+  .madoko .toc>.tocblock .tocblock .tocblock {
+    margin-left: 2.25em;
+  }
+  .madoko .toc>.tocblock .tocblock {
+    margin-left: 1.5em;
+  }
+  .madoko .toc-contents>.tocblock>.tocitem {
+    font-weight: bold;
+  }
+  .madoko .toc {
+    margin-top: 1em;
+  }
+  .madoko p.para-continue {
+    margin-bottom: 0pt;
+  }
+  .madoko .para-block+p {
+    margin-top: 0pt;
+  }
+  .madoko ul.para-block, .madoko ol.para-block {
+    margin-top: 0pt;
+    margin-bottom: 0pt;
+  }
+  .madoko ul.para-end, .madoko ol.para-end {
+    margin-bottom: 1em;
+  }
+  .madoko dl {
+    margin-left: 0em;
+  }
+  .madoko blockquote {
+    font-style: italic;
+  }
+  .madoko a.localref {
+    text-decoration: none;
+  }
+  .madoko a.localref:hover {
+    text-decoration: underline;
+  }
+  .madoko .footnotes {
+    font-size: smaller;
+    margin-top: 2em;
+  }
+  .madoko .footnotes hr {
+    width: 50%;
+    text-align: left;
+  }
+  .madoko .footnote { 
+    margin-left: 1em;
+  }
+  .madoko .footnote-before {
+    margin-left: -1em;
+    width: 1em;
+    display: inline-block;
+  }
+  .madoko .align-center, .madoko .align-center>p {
+    text-align: center !important;
+  }
+  .madoko .align-center pre {
+    text-align: left;
+  }
+  .madoko .align-center>* {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .madoko .align-left, .madoko .align-left>p {
+    text-align: left !important;
+  }
+  .madoko .align-left>* {
+    margin-left: 0pt !important;
+    margin-right: auto !important;
+  }
+  .madoko .align-right, .madoko .align-right>p {
+    text-align: right !important;
+  }
+  .madoko .align-right>* {
+    margin-left: auto !important;
+    margin-right: 0pt !important;
+  }
+  .madoko .align-center>table,
+  .madoko .align-left>table,
+  .madoko .align-right>table {
+    text-align: left !important;
+  }
+  .madoko .equation-before {
+    float: right;
+  }
+  .madoko .bibitem {
+    font-size: smaller;
+  }
+  .madoko .bibsearch {
+    font-size: x-small;
+    text-decoration:none;
+    color: black;
+    font-family: "Segoe UI Symbol", Symbola, serif;
+  }
+  .madoko .block, .madoko .figure, .madoko .bibitem, .madoko .equation, .madoko div.math {
+    margin-top: 1ex;
+    margin-bottom: 1ex;
+  }
+  .madoko .figure {
+    padding: 0.5em;
+    margin-left: 0pt;
+    margin-right: 0pt;
+  }
+  .madoko .hidden {
+    display: none;
+  }
+  .madoko .invisible {
+    visibility: hidden;
+  }
+  .madoko.preview .invisible {
+    visibility: visible;
+    opacity: 0.5;
+  }
+  .madoko code.code, .madoko span.code {
+    white-space: pre-wrap;
+  }
+  .madoko hr, hr.madoko {
+    border: none;
+    border-bottom: black solid 1px;
+    margin-bottom: 0.5ex;
+  }
+  .madoko .framed>*:first-child {
+    margin-top: 0pt;
+  }
+  .madoko .framed>*:last-child {
+    margin-bottom: 0pt;
+  }
+  .madoko ul.list-style-type-dash {
+      list-style-type: none !important;
+  }
+  .madoko ul.list-style-type-dash > li:before {
+      content: "\2013"; 
+      position: absolute;
+      margin-left: -1em; 
+  }
+  .madoko table.madoko {
+    border-collapse: collapse;
+  }
+  .madoko td, .madoko th {
+    padding: 0ex 0.5ex;
+    margin: 0pt;
+    vertical-align: top;
+  }
+  .madoko .cell-border-left {
+    border-left: 1px solid black;
+  }
+  .madoko .cell-border-right {
+    border-right: 1px solid black;
+  }
+  .madoko thead>tr:first-child>.cell-line,
+  .madoko tbody:first-child>tr:first-child>.cell-line {
+    border-top: 1px solid black;
+    border-bottom: none;
+  }
+  .madoko .cell-line, .madoko .cell-double-line {
+    border-bottom: 1px solid black;
+    border-top: none;
+  }
+  .madoko .cell-double-line {
+    border-top: 1px solid black;
+    padding-top: 1.5px !important;
+  }
+  .madoko .input-mathpre .MathJax_Display {
+    text-align: left !important;
+  }
+  .madoko div.input-mathpre {
+    text-align: left;
+    margin-top: 1.5ex;
+    margin-bottom: 1ex;
+  }
+  .madoko .math-rendering {
+    color: gray;
+  }
+  .madoko .mathdisplay {
+    text-align: center;
+  }
+  .madoko .pretty table {
+    border-collapse: collapse;
+  }
+  .madoko .pretty td {
+    padding: 0em;
+  }
+  .madoko .pretty td.empty {
+    min-width: 1.5ex;
+  }
+  .madoko .pretty td.expander {
+    width: 100em;
+  }
+  body.madoko, .madoko .serif {
+    font-family: Cambria,"Times New Roman","Liberation Serif","Times",serif;
+  }
+  .madoko .sans-serif {
+    font-family: "Calibri", "Optima", sans-serif;
+  }
+  .madoko .symbol {
+    font-family: "Segoe UI Symbol", Symbola, serif;
+  }
+  body.madoko {  
+    -webkit-text-size-adjust: 100%;       
+    text-rendering: optimizeLegibility;
+  }
+  body.madoko {
+    max-width: 88ex; 
+    margin: 1em auto;
+    padding: 0em 2em;  
+  }
+  body.preview.madoko {
+    padding: 0em 1em;
+  }
+  .madoko p {
+    text-align: justify;
+  }
+  .madoko h1, .madoko h2, .madoko h3, .madoko h4 { 
+    margin-top: 1.22em; 
+    margin-bottom: 1ex;
+  }
+  .madoko h1+p, .madoko h2+p, .madoko h3+p, .madoko h4+p, .madoko h5+p  { 
+    margin-top: 1ex;    
+  }
+  .madoko h5, .madoko h6 { 
+    margin-top: 1ex;
+    font-size: 1em;
+  }
+  .madoko h5 { 
+    margin-bottom: 0.5ex;
+  }
+  .madoko h5 + p {
+    margin-top: 0.5ex;
+  }
+  .madoko h6 { 
+    margin-bottom: 0pt;
+  }
+  .madoko h6 + p {
+    margin-top: 0pt;
+  }
+  .madoko pre, .madoko code, .madoko kbd, .madoko samp, .madoko tt, 
+  .madoko .monospace, .madoko .token-indent, .madoko .reveal pre, .madoko .reveal code, .madoko .email {
+    font-family: Consolas,"Andale Mono WT","Andale Mono",Lucida Console,Monaco,monospace,monospace;
+    font-size: 0.85em;
+  }
+  .madoko pre code, .madoko .token-indent {
+    font-size: 0.95em;
+  }
+  .madoko pre code {
+    font-family: inherit !important;
+  }
+  .madoko ol.linenums li {
+    background-color: white;
+    list-style-type: decimal;
+  }
+  .madoko .remote {
+    background-color: #F0FFF0;
+  }
+  .madoko .remote + * {
+    margin-top: 0pt;
+  }
+  @media print {
+    body.madoko {
+      font-size: 10pt;
+    }
+    @page {
+      margin: 1in 1.5in;
+    }
+  }
+  @media only screen and (max-device-width:1024px) {
+    body.madoko {
+      padding: 0em 0.5em;    
+    }
+    .madoko li {
+      text-align: left;
+    }
+  }
+  
+    </style>
+  
+  </head>
+<body class="madoko">
+
+<div class="body madoko" style="line-adjust:0">
+<div class="titleblock align-center para-block" data-line="4" style="text-align:center;line-adjust:0">
+<div class="titleheader align-center" data-line="4" style="text-align:center;line-adjust:0">
+<div class="title para-block" data-line="4" style="font-size:xx-large;font-weight:bold;margin-bottom:0.5ex;line-adjust:0"><span data-line="4"></span>Static Staging Compiler Implementation</div></div></div>
+<p class="p noindent para-continued" data-line="6"><span data-line="6"></span>This is the documentation for the static staging compiler (<span data-line="6"></span>SSC<span data-line="6"></span>) implementation.
+You may also be interested in the<span data-line="7"></span>&nbsp;<a href="index.html">language documentation</a><span data-line="7"></span>.
+</p><span data-line="9"></span>
+<nav class="toc toc-contents"><h2 id="sec-contents" class="clearnum h1 heading-contents" data-heading-depth="1" style="display:block">Contents</h2>
+<div class="tocblock tocblock1">
+<div class="tocitem tocitem1" data-toc-target="sec-build-and-run" data-toc-depth="1" data-toc-line="[1]{.heading-label}.&#8194;Build and Run" style="toctarget:sec-build-and-run"><a href="#sec-build-and-run" class="localref"><span class="heading-label">1</span>.&#8194;Build and Run</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-command-line" data-toc-depth="2" data-toc-line="[1.1]{.heading-label}.&#8194;Command Line" style="toctarget:sec-command-line"><a href="#sec-command-line" class="localref"><span class="heading-label">1.1</span>.&#8194;Command Line</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-web-dingus" data-toc-depth="2" data-toc-line="[1.2]{.heading-label}.&#8194;Web Dingus" style="toctarget:sec-web-dingus"><a href="#sec-web-dingus" class="localref"><span class="heading-label">1.2</span>.&#8194;Web Dingus</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-compiler-architecture" data-toc-depth="1" data-toc-line="[2]{.heading-label}.&#8194;Compiler Architecture" style="toctarget:sec-compiler-architecture"><a href="#sec-compiler-architecture" class="localref"><span class="heading-label">2</span>.&#8194;Compiler Architecture</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-parser" data-toc-depth="2" data-toc-line="[2.1]{.heading-label}.&#8194;Parser" style="toctarget:sec-parser"><a href="#sec-parser" class="localref"><span class="heading-label">2.1</span>.&#8194;Parser</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-type-checking-and-elaboration" data-toc-depth="2" data-toc-line="[2.2]{.heading-label}.&#8194;Type Checking and Elaboration" style="toctarget:sec-type-checking-and-elaboration"><a href="#sec-type-checking-and-elaboration" class="localref"><span class="heading-label">2.2</span>.&#8194;Type Checking and Elaboration</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-desugaring" data-toc-depth="2" data-toc-line="[2.3]{.heading-label}.&#8194;Desugaring" style="toctarget:sec-desugaring"><a href="#sec-desugaring" class="localref"><span class="heading-label">2.3</span>.&#8194;Desugaring</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-semantic-analysis-and-ir" data-toc-depth="2" data-toc-line="[2.4]{.heading-label}.&#8194;Semantic Analysis and IR" style="toctarget:sec-semantic-analysis-and-ir"><a href="#sec-semantic-analysis-and-ir" class="localref"><span class="heading-label">2.4</span>.&#8194;Semantic Analysis and IR</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-backends" data-toc-depth="2" data-toc-line="[2.5]{.heading-label}.&#8194;Backends" style="toctarget:sec-backends"><a href="#sec-backends" class="localref"><span class="heading-label">2.5</span>.&#8194;Backends</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-scope-lifting" data-toc-depth="1" data-toc-line="[3]{.heading-label}.&#8194;Scope Lifting" style="toctarget:sec-scope-lifting"><a href="#sec-scope-lifting" class="localref"><span class="heading-label">3</span>.&#8194;Scope Lifting</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-materialization-generalizes-free-variables" data-toc-depth="2" data-toc-line="[3.1]{.heading-label}.&#8194;Materialization Generalizes Free Variables" style="toctarget:sec-materialization-generalizes-free-variables"><a href="#sec-materialization-generalizes-free-variables" class="localref"><span class="heading-label">3.1</span>.&#8194;Materialization Generalizes Free Variables</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-splicing" data-toc-depth="1" data-toc-line="[4]{.heading-label}.&#8194;Splicing" style="toctarget:sec-splicing"><a href="#sec-splicing" class="localref"><span class="heading-label">4</span>.&#8194;Splicing</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-splicing-and-functions" data-toc-depth="2" data-toc-line="[4.1]{.heading-label}.&#8194;Splicing and Functions" style="toctarget:sec-splicing-and-functions"><a href="#sec-splicing-and-functions" class="localref"><span class="heading-label">4.1</span>.&#8194;Splicing and Functions</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-multi-level-escapes" data-toc-depth="2" data-toc-line="[4.2]{.heading-label}.&#8194;Multi-Level Escapes" style="toctarget:sec-multi-level-escapes"><a href="#sec-multi-level-escapes" class="localref"><span class="heading-label">4.2</span>.&#8194;Multi-Level Escapes</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-emitting-javascript" data-toc-depth="1" data-toc-line="[5]{.heading-label}.&#8194;Emitting JavaScript" style="toctarget:sec-emitting-javascript"><a href="#sec-emitting-javascript" class="localref"><span class="heading-label">5</span>.&#8194;Emitting JavaScript</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-code-values" data-toc-depth="2" data-toc-line="[5.1]{.heading-label}.&#8194;Code Values" style="toctarget:sec-code-values"><a href="#sec-code-values" class="localref"><span class="heading-label">5.1</span>.&#8194;Code Values</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-expression-chains" data-toc-depth="2" data-toc-line="[5.2]{.heading-label}.&#8194;Expression Chains" style="toctarget:sec-expression-chains"><a href="#sec-expression-chains" class="localref"><span class="heading-label">5.2</span>.&#8194;Expression Chains</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-extern" data-toc-depth="2" data-toc-line="[5.3]{.heading-label}.&#8194;`extern`" style="toctarget:sec-extern"><a href="#sec-extern" class="localref"><span class="heading-label">5.3</span>.&#8194;<code class="code code1">extern</code></a></div>
+<div class="tocitem tocitem2" data-toc-target="fquote" data-toc-depth="2" data-toc-line="[5.4]{.heading-label}.&#8194;Function Quotes" style="toctarget:fquote"><a href="#fquote" class="localref"><span class="heading-label">5.4</span>.&#8194;Function Quotes</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-the-webgl-backend" data-toc-depth="1" data-toc-line="[6]{.heading-label}.&#8194;The WebGL Backend" style="toctarget:sec-the-webgl-backend"><a href="#sec-the-webgl-backend" class="localref"><span class="heading-label">6</span>.&#8194;The WebGL Backend</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-choosing-the-target-language" data-toc-depth="2" data-toc-line="[6.1]{.heading-label}.&#8194;Choosing the Target Language" style="toctarget:sec-choosing-the-target-language"><a href="#sec-choosing-the-target-language" class="localref"><span class="heading-label">6.1</span>.&#8194;Choosing the Target Language</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-render-stage-and-unmetaprogrammed-quotes" data-toc-depth="2" data-toc-line="[6.2]{.heading-label}.&#8194;Render Stage and Unmetaprogrammed Quotes" style="toctarget:sec-render-stage-and-unmetaprogrammed-quotes"><a href="#sec-render-stage-and-unmetaprogrammed-quotes" class="localref"><span class="heading-label">6.2</span>.&#8194;Render Stage and Unmetaprogrammed Quotes</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-declaring-inout-variables" data-toc-depth="2" data-toc-line="[6.3]{.heading-label}.&#8194;Declaring In/Out Variables" style="toctarget:sec-declaring-inout-variables"><a href="#sec-declaring-inout-variables" class="localref"><span class="heading-label">6.3</span>.&#8194;Declaring In/Out Variables</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-glsl-types" data-toc-depth="2" data-toc-line="[6.4]{.heading-label}.&#8194;GLSL Types" style="toctarget:sec-glsl-types"><a href="#sec-glsl-types" class="localref"><span class="heading-label">6.4</span>.&#8194;GLSL Types</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-attributes" data-toc-depth="2" data-toc-line="[6.5]{.heading-label}.&#8194;Attributes" style="toctarget:sec-attributes"><a href="#sec-attributes" class="localref"><span class="heading-label">6.5</span>.&#8194;Attributes</a></div></div></div></nav><h2 id="sec-build-and-run" class="h1" data-line="12" data-heading-depth="1" style="display:block"><span data-line="12"></span><span class="heading-before"><span class="heading-label">1</span>.&#8194;</span><span data-line="12"></span>Build and Run</h2>
+<p class="p noindent" data-line="14"><span data-line="14"></span>To get the compiler running, install<span data-line="14"></span>&nbsp;<a href="https://nodejs.org/" data-linkid="node">Node</a><span data-line="14"></span> and<span data-line="14"></span>&nbsp;<a href="https://www.npmjs.com/" data-linkid="npm">npm</a><span data-line="14"></span>. Then, on Unix, just type <span data-line="14"></span><code class="code code1">make</code><span data-line="14"></span> to install the dependencies and build the project. Or you can run these commands manually:
+</p>
+<pre class="para-block pre-indented" data-line="16" style="display:block"><code>$ npm install
+$ npm run build</code></pre>
+<p class="p noindent para-continued" data-line="19"><span data-line="19"></span>Then, you can install the <span data-line="19"></span><code class="code code1"><span class="code-escaped">ssc</span></code><span data-line="19"></span> command-line program by typing:
+</p>
+<pre class="para-block pre-indented" data-line="21" style="display:block"><code>$ npm link</code></pre>
+<p class="p noindent para-continued" data-line="23"><span data-line="23"></span>To make sure it<span data-line="23"></span>&#39;<span data-line="23"></span>s working, you can try running an example:
+</p>
+<pre class="para-block pre-indented" data-line="25" style="display:block"><code>$ <span class="code-escaped">ssc</span> test/basic/add.ss</code></pre><h3 id="sec-command-line" class="h2" data-line="30" data-heading-depth="2" style="display:block"><span data-line="30"></span><span class="heading-before"><span class="heading-label">1.1</span>.&#8194;</span><span data-line="30"></span>Command Line</h3>
+<p class="p noindent" data-line="32"><span data-line="32"></span>Type <span data-line="32"></span><code class="code code1"><span class="code-escaped">ssc</span> -h</code><span data-line="32"></span> for usage. The most important options are:
+</p>
+<ul class="ul list-star compact" data-line="34">
+<li class="li ul-li list-star-li compact-li" data-line="34"><span data-line="34"></span><code class="code code1">-c</code><span data-line="34"></span>: Use the compiler to JavaScript. Otherwise, the interpreter is used instead. By default, this dumps the compiled JavaScript code to the standard output.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="35"><span data-line="35"></span><code class="code code1">-x</code><span data-line="35"></span>: When in compiler mode, run the resulting JavaScript code with <span data-line="35"></span><code class="code code1">eval</code><span data-line="35"></span> and print the output. Together, <span data-line="35"></span><code class="code code1">-cx</code><span data-line="35"></span> should give you the same output as running the interpreter (with no options at all).
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="36"><span data-line="36"></span><code class="code code1">-w</code><span data-line="36"></span>: Use the WebGL language extension. (Only valid in compiler mode.)
+</li></ul>
+
+<p class="p noindent" data-line="38"><span data-line="38"></span>There<span data-line="38"></span>&#39;<span data-line="38"></span>s also <span data-line="38"></span><code class="code code1">-v</code><span data-line="38"></span> for debugging output and <span data-line="38"></span><code class="code code1">-g</code><span data-line="38"></span> for program generation, as described in the language overview.
+</p><h3 id="sec-web-dingus" class="h2" data-line="40" data-heading-depth="2" style="display:block"><span data-line="40"></span><span class="heading-before"><span class="heading-label">1.2</span>.&#8194;</span><span data-line="40"></span>Web Dingus</h3>
+<p class="p noindent" data-line="42"><span data-line="42"></span>There<span data-line="42"></span>&#39;<span data-line="42"></span>s also an interactive browser frontend. On Unix, just type <span data-line="42"></span><code class="code code1">make</code><span data-line="42"></span> in the <span data-line="42"></span><code class="code code1">dingus</code><span data-line="42"></span> directory, or otherwise use the same <span data-line="42"></span><code class="code code1">npm run build</code><span data-line="42"></span> dance. Then, open <span data-line="42"></span><code class="code code1">index.html</code><span data-line="42"></span> in your browser.
+</p>
+<p class="p indent" data-line="44"><span data-line="44"></span>The dingus seems to work in current versions of Safari, Firefox, Chrome, and Microsoft Edge.
+</p><h2 id="sec-compiler-architecture" class="h1" data-line="47" data-heading-depth="1" style="display:block"><span data-line="47"></span><span class="heading-before"><span class="heading-label">2</span>.&#8194;</span><span data-line="47"></span>Compiler Architecture</h2>
+<figure class="figure floating align-center float" data-line="49" style="text-align:center;float-env:figure;float-name:Figure">
+<p class="p noindent" data-line="50"><span data-line="50"></span><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+CjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bD0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIxNTkgMTkgMzU1IDM2NCIgd2lkdGg9IjM1NXB0IiBoZWlnaHQ9IjM2NHB0Ij48bWV0YWRhdGEgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIj48ZGM6ZGF0ZT4yMDE1LTExLTEzIDIyOjMyWjwvZGM6ZGF0ZT48IS0tIFByb2R1Y2VkIGJ5IE9tbmlHcmFmZmxlIFByb2Zlc3Npb25hbCA1LjQuNCAtLT48L21ldGFkYXRhPjxkZWZzPjxmb250LWZhY2UgZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxMCIgdW5pdHMtcGVyLWVtPSIxMDAwIiB1bmRlcmxpbmUtcG9zaXRpb249Ii03NS42ODM1OTQiIHVuZGVybGluZS10aGlja25lc3M9IjQ5LjMxNjQwNiIgc2xvcGU9IjAiIHgtaGVpZ2h0PSI1MjIuOTQ5MjIiIGNhcC1oZWlnaHQ9IjcxNy4yODUxNiIgYXNjZW50PSI3NzAuMDE5NTMiIGRlc2NlbnQ9Ii0yMjkuOTgwNDciIGZvbnQtd2VpZ2h0PSI1MDAiPjxmb250LWZhY2Utc3JjPjxmb250LWZhY2UtbmFtZSBuYW1lPSJIZWx2ZXRpY2EiLz48L2ZvbnQtZmFjZS1zcmM+PC9mb250LWZhY2U+PG1hcmtlciBvcmllbnQ9ImF1dG8iIG92ZXJmbG93PSJ2aXNpYmxlIiBtYXJrZXJVbml0cz0ic3Ryb2tlV2lkdGgiIGlkPSJGaWxsZWRBcnJvd19NYXJrZXIiIHZpZXdCb3g9Ii0xIC00IDkgOCIgbWFya2VyV2lkdGg9IjkiIG1hcmtlckhlaWdodD0iOCIgY29sb3I9ImJsYWNrIj48Zz48cGF0aCBkPSJNIDYuOTk5OTUgMCBMIDAgLTIuNjI0OTgxMiBMIDAgMi42MjQ5ODEyIFoiIGZpbGw9ImN1cnJlbnRDb2xvciIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMSIvPjwvZz48L21hcmtlcj48bWFya2VyIG9yaWVudD0iYXV0byIgb3ZlcmZsb3c9InZpc2libGUiIG1hcmtlclVuaXRzPSJzdHJva2VXaWR0aCIgaWQ9IkZpbGxlZEFycm93X01hcmtlcl8yIiB2aWV3Qm94PSItMSAtNCAxMCA4IiBtYXJrZXJXaWR0aD0iMTAiIG1hcmtlckhlaWdodD0iOCIgY29sb3I9ImJsYWNrIj48Zz48cGF0aCBkPSJNIDcuMDM5OTQzNyAwIEwgMCAtMi42Mzk5Nzg5IEwgMCAyLjYzOTk3ODkgWiIgZmlsbD0iY3VycmVudENvbG9yIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9nPjwvbWFya2VyPjwvZGVmcz48ZyBzdHJva2U9Im5vbmUiIHN0cm9rZS1vcGFjaXR5PSIxIiBzdHJva2UtZGFzaGFycmF5PSJub25lIiBmaWxsPSJub25lIiBmaWxsLW9wYWNpdHk9IjEiPjx0aXRsZT5QYWdlLTE8L3RpdGxlPjxyZWN0IGZpbGw9IndoaXRlIiB3aWR0aD0iNzkyIiBoZWlnaHQ9IjYxMiIvPjxnPjx0aXRsZT5MYXllciAxPC90aXRsZT48cmVjdCB4PSIzMjguNSIgeT0iOTkiIHdpZHRoPSI4MSIgaGVpZ2h0PSIyNyIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSIzMjguNSIgeT0iOTkiIHdpZHRoPSI4MSIgaGVpZ2h0PSIyNyIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9Ii43NSIvPjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDMzMi41IDEwNi41KSIgZmlsbD0iYmxhY2siPjx0c3BhbiBmb250LWZhbWlseT0iSGVsdmV0aWNhIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNTAwIiBmaWxsPSJibGFjayIgeD0iMTUuNjU3NzE1IiB5PSIxMCIgdGV4dExlbmd0aD0iMjIuNzgzMjAzIj5SYXcgPC90c3Bhbj48dHNwYW4gZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iYmxhY2siIHg9IjM3Ljg5NDA0MyIgeT0iMTAiIHRleHRMZW5ndGg9IjE5LjQ0ODI0MiI+QVNUPC90c3Bhbj48L3RleHQ+PHJlY3QgeD0iMzI4LjUiIHk9IjIxLjUiIHdpZHRoPSI4MSIgaGVpZ2h0PSIyNyIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSIzMjguNSIgeT0iMjEuNSIgd2lkdGg9IjgxIiBoZWlnaHQ9IjI3IiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iLjc1Ii8+PHRleHQgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzMyLjUgMjkpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIyMC42NTc3MTUiIHk9IjEwIiB0ZXh0TGVuZ3RoPSIzMS42ODQ1NyI+U291cmNlPC90c3Bhbj48L3RleHQ+PHJlY3QgeD0iMzI4LjUiIHk9IjE5NS41IiB3aWR0aD0iODEiIGhlaWdodD0iMjciIGZpbGw9IndoaXRlIi8+PHJlY3QgeD0iMzI4LjUiIHk9IjE5NS41IiB3aWR0aD0iODEiIGhlaWdodD0iMjciIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIuNzUiLz48dGV4dCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMzIuNSAyMDMpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIxMi40MDMzMiIgeT0iMTAiIHRleHRMZW5ndGg9IjYuMTA4Mzk4NCI+VDwvdHNwYW4+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIxNy45NjQ4NDQiIHk9IjEwIiB0ZXh0TGVuZ3RoPSIxOC45MDEzNjciPnlwZSA8L3RzcGFuPjx0c3BhbiBmb250LWZhbWlseT0iSGVsdmV0aWNhIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNTAwIiBmaWxsPSJibGFjayIgeD0iMzYuNjkwNDMiIHk9IjEwIiB0ZXh0TGVuZ3RoPSI2LjEwODM5ODQiPlQ8L3RzcGFuPjx0c3BhbiBmb250LWZhbWlseT0iSGVsdmV0aWNhIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNTAwIiBmaWxsPSJibGFjayIgeD0iNDEuNjkwNDMiIHk9IjEwIiB0ZXh0TGVuZ3RoPSIxOC45MDYyNSI+YWJsZTwvdHNwYW4+PC90ZXh0PjxyZWN0IHg9IjQzMC4xMjUiIHk9IjIzNC4wMDAwMSIgd2lkdGg9IjgxIiBoZWlnaHQ9IjI3IiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjQzMC4xMjUiIHk9IjIzNC4wMDAwMSIgd2lkdGg9IjgxIiBoZWlnaHQ9IjI3IiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iLjc1Ii8+PHRleHQgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDM0LjEyNSAyNDEuNTAwMDEpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIxLjE5OTcwNyIgeT0iMTAiIHRleHRMZW5ndGg9IjUxLjY5OTIyIj5EZXN1Z2FyZWQgPC90c3Bhbj48dHNwYW4gZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iYmxhY2siIHg9IjUyLjM1MjA1IiB5PSIxMCIgdGV4dExlbmd0aD0iMTkuNDQ4MjQyIj5BU1Q8L3RzcGFuPjwvdGV4dD48cmVjdCB4PSIyMDguNSIgeT0iMTk1LjUiIHdpZHRoPSI4MSIgaGVpZ2h0PSIyNyIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSIyMDguNSIgeT0iMTk1LjUiIHdpZHRoPSI4MSIgaGVpZ2h0PSIyNyIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9Ii43NSIvPjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDIxMi41IDIwMykiIGZpbGw9ImJsYWNrIj48dHNwYW4gZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iYmxhY2siIHg9IjUuMTg0MDgyIiB5PSIxMCIgdGV4dExlbmd0aD0iMzguOTAxMzY3Ij5EZWYvVXNlIDwvdHNwYW4+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSI0My45MDk2NjgiIHk9IjEwIiB0ZXh0TGVuZ3RoPSI2LjEwODM5ODQiPlQ8L3RzcGFuPjx0c3BhbiBmb250LWZhbWlseT0iSGVsdmV0aWNhIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNTAwIiBmaWxsPSJibGFjayIgeD0iNDguOTA5NjY4IiB5PSIxMCIgdGV4dExlbmd0aD0iMTguOTA2MjUiPmFibGU8L3RzcGFuPjwvdGV4dD48cmVjdCB4PSIxNjEiIHk9IjI3Ni4wMDAwMiIgd2lkdGg9IjgxIiBoZWlnaHQ9IjI3IiBmaWxsPSJ3aGl0ZSIvPjxyZWN0IHg9IjE2MSIgeT0iMjc2LjAwMDAyIiB3aWR0aD0iODEiIGhlaWdodD0iMjciIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIuNzUiLz48dGV4dCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNjUgMjgzLjUwMDAyKSIgZmlsbD0iYmxhY2siPjx0c3BhbiBmb250LWZhbWlseT0iSGVsdmV0aWNhIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNTAwIiBmaWxsPSJibGFjayIgeD0iMjMuNzE5MjM4IiB5PSIxMCIgdGV4dExlbmd0aD0iMjUuNTYxNTIzIj5Qcm9jczwvdHNwYW4+PC90ZXh0PjxyZWN0IHg9IjI1NiIgeT0iMjc2LjAwMDAyIiB3aWR0aD0iODEiIGhlaWdodD0iMjciIGZpbGw9IndoaXRlIi8+PHJlY3QgeD0iMjU2IiB5PSIyNzYuMDAwMDIiIHdpZHRoPSI4MSIgaGVpZ2h0PSIyNyIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9Ii43NSIvPjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDI2MCAyODMuNTAwMDIpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIyMy40Mzg0NzciIHk9IjEwIiB0ZXh0TGVuZ3RoPSIyNi4xMjMwNDciPlByb2dzPC90c3Bhbj48L3RleHQ+PHJlY3QgeD0iMzI4LjUiIHk9IjM1My41IiB3aWR0aD0iODEiIGhlaWdodD0iMjciIGZpbGw9IndoaXRlIi8+PHJlY3QgeD0iMzI4LjUiIHk9IjM1My41IiB3aWR0aD0iODEiIGhlaWdodD0iMjciIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIuNzUiLz48dGV4dCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMzIuNSAzNjEpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIxMy4xNTc3MTUiIHk9IjEwIiB0ZXh0TGVuZ3RoPSI0Ni42ODQ1NyI+SmF2YVNjcmlwdDwvdHNwYW4+PC90ZXh0PjxwYXRoIGQ9Ik0gMzY5IDEyNiBMIDM2OSAxMzMuMDAwMDEgTCAzNjkgMTQyLjQ5OTk4NiIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEuMDAwMDEiLz48cGF0aCBkPSJNIDQwOS41IDIwOSBMIDQxNi4zMTI1IDIwOSBMIDQzNS4xMjUgMjA5IiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMS4wMDAwMSIvPjxwYXRoIGQ9Ik0gNDA5LjUgMTEyLjUgTCA0NzAuNzUgMTEyLjUgTCA0NzAuNzUgMTM4IEwgNDcwLjYzMDg1IDE5OC45OTk5OSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEuMDAwMDEiLz48cGF0aCBkPSJNIDIwMS41IDMwMy4wMDAwMiBMIDIwMS41IDMxMC4wMDAwMyBMIDIwMS41IDMyNC4wMDAwMSBMIDM0NS4yNSAzMjQuMDAwMDEiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIxLjAwMDAxIi8+PHBhdGggZD0iTSAyOTYuNSAzMDMuMDAwMDIgTCAyOTYuNSAzMTAuMDAwMDMgTCAyOTYuNSAzMjQuMDAwMDEgTCAzNDUuMjUgMzI0LjAwMDAxIiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMS4wMDAwMSIvPjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDM0Mi43Mzk5OCA2My41MDAwMSkiIGZpbGw9ImJsYWNrIj48dHNwYW4gZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iYmxhY2siIHg9IjEyLjA4NzY1MiIgeT0iMTAiIHRleHRMZW5ndGg9IjI4LjM0NDcyNyI+cGFyc2VyPC90c3Bhbj48L3RleHQ+PHRleHQgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzI0IDE0Ny4wMDAwMDUpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIxNC40MjYyNjQ1IiB5PSIxMCIgdGV4dExlbmd0aD0iNjEuMTQ3NDYiPnR5cGUgY2hlY2tpbmc8L3RzcGFuPjx0c3BhbiBmb250LWZhbWlseT0iSGVsdmV0aWNhIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNTAwIiBmaWxsPSJibGFjayIgeD0iMTYuOTI4NzA2IiB5PSIyMiIgdGV4dExlbmd0aD0iNTYuMTQyNTc4Ij4oZWxhYm9yYXRpb24pPC90c3Bhbj48L3RleHQ+PHRleHQgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDM5LjEyNSAyMDMpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSI2Ljc1ODc4NCIgeT0iMTAiIHRleHRMZW5ndGg9IjQ5LjQ4MjQyMiI+ZGVzdWdhcmluZzwvdHNwYW4+PC90ZXh0Pjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDIxOS44MTI1IDI0MS41MDAwMSkiIGZpbGw9ImJsYWNrIj48dHNwYW4gZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iYmxhY2siIHg9IjIuNzgzNjkxNCIgeT0iMTAiIHRleHRMZW5ndGg9IjUyLjgwNzYxNyI+c2NvcGUgbGlmdGluZzwvdHNwYW4+PC90ZXh0Pjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDM0OS4yNSAzMTguMDAwMDEpIiBmaWxsPSJibGFjayI+PHRzcGFuIGZvbnQtZmFtaWx5PSJIZWx2ZXRpY2EiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI1MDAiIGZpbGw9ImJsYWNrIiB4PSIuODQ2MTkxNCIgeT0iMTAiIHRleHRMZW5ndGg9IjM3LjgwNzYxNyI+YmFja2VuZDwvdHNwYW4+PC90ZXh0Pjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDQ0MS40Mzc1IDI4My41MDAwMikiIGZpbGw9ImJsYWNrIj48dHNwYW4gZm9udC1mYW1pbHk9IkhlbHZldGljYSIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjUwMCIgZmlsbD0iYmxhY2siIHg9IjYuMzk5NDE0IiB5PSIxMCIgdGV4dExlbmd0aD0iNDUuNTc2MTcyIj5pbnRlcnByZXRlcjwvdHNwYW4+PC90ZXh0PjxwYXRoIGQ9Ik0gNDcwLjYyNSAyNjEuMDAwMDEgTCA0NzAuNjI1IDI2My4wNSBMIDQ3MC42MjUgMjcwLjU5OTk4IiBtYXJrZXItZW5kPSJ1cmwoI0ZpbGxlZEFycm93X01hcmtlcikiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIxLjAwMDAxIi8+PHBhdGggZD0iTSAzNjkuMDYxMzYgMjIyLjUgTCAzNjkuMjUgMjY0IEwgMzY5LjAxNDE1IDMxNCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEuMDAwMDEiLz48cGF0aCBkPSJNIDI0OSAyNTcuNTAwMDIgTCAyNDkgMjU4LjQwMDA2IEwgMjQ5IDI2MC41IEwgMjU4LjUgMjYwLjUgTCAyOTYuNSAyNjAuNSBMIDI5Ni41IDI2Ny4wOTk5OSIgbWFya2VyLWVuZD0idXJsKCNGaWxsZWRBcnJvd19NYXJrZXIpIiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMS4wMDAwMSIvPjxwYXRoIGQ9Ik0gMjQ5IDI1Ny41MDAwMiBMIDI0OSAyNTguNDAwMDYgTCAyNDkgMjYwLjUgTCAyMjcuNSAyNjAuNSBMIDIwMS41IDI2MC41IEwgMjAxLjUgMjY1LjA5OTk4IEwgMjAxLjUgMjY3LjA5OTk5IiBtYXJrZXItZW5kPSJ1cmwoI0ZpbGxlZEFycm93X01hcmtlcikiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIxLjAwMDAxIi8+PHBhdGggZD0iTSAyNDkgMjIyLjUgTCAyNDkgMjI5LjUwMDAxIEwgMjQ5IDIzNS4wMDAwMSBMIDI0OSAyMzcuNSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEuMDAwMDEiLz48cGF0aCBkPSJNIDI4OS41IDIwOSBMIDMxMSAyMDkgTCAzMTEgMjQ3LjUwMDAyIEwgMzExIDI1My4yNSBMIDMzNyAyNTMuMjUgTCAzNjkgMjUzLjI1IEwgMzY5IDMxNCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEuMDAwMDEiLz48cGF0aCBkPSJNIDM2OSA3OS41MDAwMiBMIDM2OSA4MC40NDAwNSBMIDM2OSA5MC4wNTk5NzMiIG1hcmtlci1lbmQ9InVybCgjRmlsbGVkQXJyb3dfTWFya2VyXzIpIiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMS4wMDAwMSIvPjxsaW5lIHgxPSIzNjkiIHkxPSI0OC41IiB4Mj0iMzY5IiB5Mj0iNTkuNSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEiLz48cGF0aCBkPSJNIDM2OSAzMzQuMDAwMDIgTCAzNjkgMzM0Ljk0MDA1IEwgMzY5IDM0NC41NTk5NyIgbWFya2VyLWVuZD0idXJsKCNGaWxsZWRBcnJvd19NYXJrZXJfMikiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIxLjAwMDAxIi8+PHBhdGggZD0iTSA0NzAuNjI1IDIxOS4wMDAwMSBMIDQ3MC42MjUgMjE5Ljk0MDA0IEwgNDcwLjYyNSAyMjUuMDU5OTkiIG1hcmtlci1lbmQ9InVybCgjRmlsbGVkQXJyb3dfTWFya2VyXzIpIiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMS4wMDAwMSIvPjxsaW5lIHgxPSIzNjkiIHkxPSIxNzUuNTAwMDIiIHgyPSIzNjkiIHkyPSIxODYuNTU5OTciIG1hcmtlci1lbmQ9InVybCgjRmlsbGVkQXJyb3dfTWFya2VyXzIpIiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMS4wMDAwMSIvPjx0ZXh0IHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwNCAxNTMuMDAwMDA1KSIgZmlsbD0iYmxhY2siPjx0c3BhbiBmb250LWZhbWlseT0iSGVsdmV0aWNhIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNTAwIiBmaWxsPSJibGFjayIgeD0iOS4xNDU1MDMiIHk9IjEwIiB0ZXh0TGVuZ3RoPSI3MS43MDg5ODQiPmRlZi91c2UgYW5hbHlzaXM8L3RzcGFuPjwvdGV4dD48cGF0aCBkPSJNIDMyOC4xMjU4OCAxMTUuMzEwMDk2IEwgMzIxLjEyNTg4IDExNS4zMTAwOTYgTCAyNDkgMTE1LjMxMDA5NiBMIDI0OSAxMjAuNzUgTCAyNDkgMTQxLjk5OTk5NSBMIDI0OSAxNDguOTk5OTk1IiBzdHJva2U9ImJsYWNrIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMSIvPjxwYXRoIGQ9Ik0gMjQ5IDE2OS4wMDAwMSBMIDI0OSAxNjkuOTQwMDQgTCAyNDkgMTg2LjU1OTk3IiBtYXJrZXItZW5kPSJ1cmwoI0ZpbGxlZEFycm93X01hcmtlcl8yKSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEuMDAwMDEiLz48cGF0aCBkPSJNIDI1MCAxMTUuMzEwMDk2IEwgMjQzIDExNS4zMTAwOTYgTCAxOTUuMjUgMTE1LjMxMDA5NiBMIDE5NS4yNSAxNDIuNDk5OTg2IEwgMTk1LjI1IDI0OCBMIDIwOC44MTI1IDI0Ny44MDg3MyBMIDIxNS44MTI1IDI0Ny44MDg3MyIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjEiLz48L2c+PC9nPjwvc3ZnPgo=" alt="static staging compiler architecture" data-path="alltheworld.svg" style="width:400px"><span data-line="50"></span>
+</p>
+<hr  class="figureline madoko" data-line="51" style="display:block">
+
+<div class="p noindent" data-line="52"><span data-line="52"></span><fig-caption class="figure-caption"><span class="caption-before"><strong class="strong-star2">Figure&#160;<span class="figure-label">1</span>.</strong>&#160;</span><span class="caption-text">The primary data structures in SSC.</span></fig-caption></div></figure>
+<p class="p noindent" data-line="53"><span data-line="53"></span>The main phases in the compiler are:
+</p>
+<ul class="ul list-star compact" data-line="55">
+<li class="li ul-li list-star-li compact-li" data-line="55"><span data-line="55"></span>Parsing, which produces the raw AST.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="56"><span data-line="56"></span>Type elaboration and desugaring, which produces a high-level IR in the form of an annotated AST (or a type error). This IR can be passed off to the interpreter.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="57"><span data-line="57"></span>A set of semantic analysis passes, which produce a mid-level IR. This IR consists of a collection of data structures <span data-line="57"></span><em class="em-star1">on the side</em><span data-line="57"></span> of the unmodified AST.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="58"><span data-line="58"></span>The backend, which produces JavaScript (and GLSL) from the IR.
+</li></ul>
+
+<p class="p noindent" data-line="60"><span data-line="60"></span>This section gives more overview on how the pieces go together. The latter sections give more detail on the more novel components work.
+</p>
+<p class="p indent" data-line="62"><span data-line="62"></span>The <span data-line="62"></span><em class="em-star1">driver</em><span data-line="62"></span> in<span data-line="62"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/driver.ts" data-linkid="driver"><code class="code code1">driver.ts</code></a><span data-line="62"></span> orchestrates the whole process, so it<span data-line="62"></span>&#39;<span data-line="62"></span>s useful as a way into the whole system.
+</p><h3 id="sec-parser" class="h2" data-line="66" data-heading-depth="2" style="display:block"><span data-line="66"></span><span class="heading-before"><span class="heading-label">2.1</span>.&#8194;</span><span data-line="66"></span>Parser</h3>
+<p class="p noindent" data-line="68"><span data-line="68"></span>The parser uses a popular<span data-line="68"></span>&nbsp;<a href="https://en.wikipedia.org/wiki/Parsing_expression_grammar" data-linkid="peg">parsing expression grammar</a><span data-line="68"></span> parser-generator library called<span data-line="68"></span>&nbsp;<a href="http://pegjs.org/" data-linkid="peg.js">PEG.js</a><span data-line="68"></span>.
+The<span data-line="69"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/grammar.pegjs" data-linkid="grammar">grammar</a><span data-line="69"></span> produces an AST as a JSON data structure, which is specified in<span data-line="69"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/ast.ts" data-linkid="ast"><code class="code code1">ast.ts</code></a><span data-line="69"></span>.
+</p>
+<p class="p indent" data-line="71"><span data-line="71"></span>All the other IRs in the compiler are based on variants of this JSON AST, and the major components all dispatch on the tags to recursively process the tree.
+</p><h3 id="sec-type-checking-and-elaboration" class="h2" data-line="79" data-heading-depth="2" style="display:block"><span data-line="79"></span><span class="heading-before"><span class="heading-label">2.2</span>.&#8194;</span><span data-line="79"></span>Type Checking and Elaboration</h3>
+<p class="p noindent" data-line="81"><span data-line="81"></span>To turn the raw parse tree to a more useful IR, we attach sequential numeric IDs to every node in the AST (see the <span data-line="81"></span><code class="code code1">stamp</code><span data-line="81"></span> function in<span data-line="81"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/type_elaborate.ts" data-linkid="elaborate"><code class="code code1">type_elaborate.ts</code></a><span data-line="81"></span>).
+This lets us build tables that decorate the AST with extra information.
+</p>
+<p class="p indent" data-line="84"><span data-line="84"></span>The<span data-line="84"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/type_check.ts" data-linkid="check">type checker</a><span data-line="84"></span> runs next.
+It works as a type <span data-line="85"></span><em class="em-star1">elaborator:</em><span data-line="85"></span> it produces a table mapping node IDs to <span data-line="85"></span><code class="code code1">TypeEnv</code><span data-line="85"></span> structures that capture the entire type information at every point.
+</p><h3 id="sec-desugaring" class="h2" data-line="90" data-heading-depth="2" style="display:block"><span data-line="90"></span><span class="heading-before"><span class="heading-label">2.3</span>.&#8194;</span><span data-line="90"></span>Desugaring</h3>
+<p class="p noindent" data-line="92"><span data-line="92"></span>Two features in the language are implemented as<span data-line="92"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/sugar.ts" data-linkid="sugar">syntactic sugar</a><span data-line="92"></span>:
+</p>
+<ul class="ul list-star loose" data-line="94">
+<li class="li ul-li list-star-li loose-li" data-line="94">
+<p data-line="94"><span data-line="94"></span>For the <span data-line="94"></span><em class="em-star1">interpreter</em><span data-line="94"></span>, cross-stage references are sugar for materialization (a.k.a. persisting) escapes. That is, <span data-line="94"></span><code class="code code1">var x = 5; &lt;x&gt;</code><span data-line="94"></span> is sugar for <span data-line="94"></span><code class="code code1">var x = 5; &lt;%[x]&gt;</code><span data-line="94"></span>. This way, the interpreter does not need any special logic to implement cross-stage references. We do not enable this desugaring for the compiler;  it handles free variables specially for efficiency.
+</p></li>
+<li class="li ul-li list-star-li loose-li" data-line="96">
+<p data-line="96"><span data-line="96"></span>Macro calls are sugar for escaped function invocations. The <span data-line="96"></span><code class="code code1">desugar_macros</code><span data-line="96"></span> function eliminates all <span data-line="96"></span><code class="code code1">MacroCall</code><span data-line="96"></span> nodes into of spliced function calls. This is used for both the compiler and the interpreter.
+</p></li></ul>
+
+<p class="p noindent" data-line="98"><span data-line="98"></span>Both desugaring steps require type information, so they use the results from type elaboration.
+</p><h3 id="sec-semantic-analysis-and-ir" class="h2" data-line="102" data-heading-depth="2" style="display:block"><span data-line="102"></span><span class="heading-before"><span class="heading-label">2.4</span>.&#8194;</span><span data-line="102"></span>Semantic Analysis and IR</h3>
+<p class="p noindent" data-line="104"><span data-line="104"></span>The compiler uses an IR consisting of the result of several semantic analyses. See<span data-line="104"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/compile/ir.ts" data-linkid="ir"><code class="code code1">compile/ir.ts</code></a><span data-line="104"></span> for an exhaustive look at the contents of this IR and<span data-line="104"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/compile/compile.ts" data-linkid="compile"><code class="code code1">compile/compile.ts</code></a><span data-line="104"></span> for the <span data-line="104"></span><code class="code code1">semantically_analyze</code><span data-line="104"></span> megafunction that produces the <span data-line="104"></span><code class="code code1">CompilerIR</code><span data-line="104"></span>.
+</p>
+<p class="p indent" data-line="106"><span data-line="106"></span>Here are a few of the most interesting pieces of the IR:
+</p>
+<ul class="ul list-dash compact" data-line="108">
+<li class="li ul-li list-dash-li compact-li" data-line="108"><span data-line="108"></span><code class="code code1">Proc</code><span data-line="108"></span> and <span data-line="108"></span><code class="code code1">Prog</code><span data-line="108"></span> objects are <span data-line="108"></span>&#8220;lifted&#8221;<span data-line="108"></span> forms of functions and quotes, respectively. Both are subtypes of <span data-line="108"></span><code class="code code1">Scope</code><span data-line="108"></span>. A process called <span data-line="108"></span><em class="em-star1">scope lifting</em><span data-line="108"></span>, which generalizes<span data-line="108"></span>&nbsp;<a href="https://en.wikipedia.org/wiki/Lambda_lifting" data-linkid="lambda lifting">lambda lifting</a><span data-line="108"></span>, finds the free variables and escapes to attribute to each scope.
+</li>
+<li class="li ul-li list-dash-li compact-li" data-line="109"><span data-line="109"></span>A <span data-line="109"></span><em class="em-star1">definition&#8211;use table</em><span data-line="109"></span> keeps track of the defining expression for every variable reference.
+</li>
+<li class="li ul-li list-dash-li compact-li" data-line="110"><span data-line="110"></span>The <span data-line="110"></span><em class="em-star1">pre-splicing</em><span data-line="110"></span> optimization described in the table produces a set of <span data-line="110"></span><code class="code code1">Variant</code><span data-line="110"></span> objects for each quote with snippet escapes. The backends use these specific, pre-composed variants instead of the original <span data-line="110"></span><code class="code code1">Prog</code><span data-line="110"></span>s.
+</li></ul>
+<h3 id="sec-backends" class="h2" data-line="116" data-heading-depth="2" style="display:block"><span data-line="116"></span><span class="heading-before"><span class="heading-label">2.5</span>.&#8194;</span><span data-line="116"></span>Backends</h3>
+<p class="p noindent" data-line="118"><span data-line="118"></span>There are three backends:<span data-line="118"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/backends/js.ts" data-linkid="js"><code class="code code1">js.ts</code></a><span data-line="118"></span> emits <span data-line="118"></span>&#8220;vanilla&#8221;<span data-line="118"></span> JavaScript;<span data-line="118"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/backends/glsl.ts" data-linkid="glsl"><code class="code code1">glsl.ts</code></a><span data-line="118"></span> emits pure GLSL code; and<span data-line="118"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/backends/webgl.ts" data-linkid="webgl"><code class="code code1">webgl.ts</code></a><span data-line="118"></span> extends the JavaScript backend with WebGL-specific intrinsics and invokes the GLSL backend to emit shaders.
+</p>
+<p class="p indent" data-line="120"><span data-line="120"></span>All three backends share an<span data-line="120"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/backends/emitter.ts" data-linkid="emitter"><code class="code code1">Emitter</code> structure</a><span data-line="120"></span> that holds the functions for generating code from IR structures.
+</p>
+<p class="p indent" data-line="122"><span data-line="122"></span>There<span data-line="122"></span>&#39;<span data-line="122"></span>s also a<span data-line="122"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/backends/gl.ts" data-linkid="gl"><code class="code code1">gl.ts</code></a><span data-line="122"></span> source file with common logic shared by the GLSL backend and the higher-level WebGL backend.
+The most important bit here is the <span data-line="123"></span><code class="code code1">Glue</code><span data-line="123"></span> object, which keeps track of a bunch of metadata for values that are communicated between shader stages.
+For example, <span data-line="124"></span><code class="code code1">Glue</code><span data-line="124"></span> records the OpenGL name of the parameter to use for communication and a flag indicating whether the value is an attribute (i.e., an array).
+</p><h2 id="sec-scope-lifting" class="h1" data-line="132" data-heading-depth="1" style="display:block"><span data-line="132"></span><span class="heading-before"><span class="heading-label">3</span>.&#8194;</span><span data-line="132"></span>Scope Lifting</h2>
+<p class="p noindent" data-line="134"><span data-line="134"></span><a href="https://en.wikipedia.org/wiki/Lambda_lifting" data-linkid="lambda lifting">Lambda lifting</a><span data-line="134"></span> is the standard technique for compiling languages with closures.
+<span data-line="135"></span>SSC<span data-line="135"></span> generalizes lambda lifting to apply to both functions and quotes simultaneously.
+The compiler calls the combined transformation <span data-line="136"></span><em class="em-star1">scope lifting</em><span data-line="136"></span>.
+</p>
+<p class="p indent" data-line="138"><span data-line="138"></span>The idea behind lambda lifting is to take every function and turn it into a <span data-line="138"></span><em class="em-star1">procedure</em><span data-line="138"></span> that doesn<span data-line="138"></span>&#39;<span data-line="138"></span>t close over any state<span data-line="138"></span>&#8212;<span data-line="138"></span>all of its parameters must be provided explicitly rather than picked up from the surrounding environment.
+Procedures are placed in a global namespace, like C functions, and get extra parameters for every value they reference in their environment.
+Function definition nodes are transformed to produce <span data-line="140"></span><em class="em-star1">closure values</em><span data-line="140"></span>, which consist of a procedure pointer and an environment mapping that holds values to pass to the procedure when it is called.
+</p>
+<p class="p indent" data-line="142"><span data-line="142"></span>Quote lifting has a similar goal: extract all the quotes mixed into a program and turn them into global constants.
+(Think of them as strings embedded in the <span data-line="143"></span><code class="code code1">.text</code><span data-line="143"></span> section of an executable binary.)
+Quote expressions also need to produce a closure-like value: they also consist of a pointer to the code and an environment<span data-line="144"></span>&#8212;<span data-line="144"></span>the environment contains the materialized outer-stage values.
+</p>
+<p class="p indent" data-line="146"><span data-line="146"></span>General scope lifting recognizes that functions and quotes are nearly identical. Quotes don<span data-line="146"></span>&#39;<span data-line="146"></span>t have arguments and functions don<span data-line="146"></span>&#39;<span data-line="146"></span>t have escapes, but those are the only real differences. <span data-line="146"></span>SSC<span data-line="146"></span>&#39;<span data-line="146"></span>s scope lifting pass finds free and bound variables in a uniform way for both kinds of scopes.
+</p><h3 id="sec-materialization-generalizes-free-variables" class="h2" data-line="148" data-heading-depth="2" style="display:block"><span data-line="148"></span><span class="heading-before"><span class="heading-label">3.1</span>.&#8194;</span><span data-line="148"></span>Materialization Generalizes Free Variables</h3>
+<p class="p noindent" data-line="150"><span data-line="150"></span>To compile materialization escapes and free variables in quotes, <span data-line="150"></span>SSC<span data-line="150"></span>&#39;<span data-line="150"></span>s quote-lifting analysis generalizes the concept of free variables in functions.
+As an example, this program uses a materialization inside of a function body:
+</p>
+<pre class="para-block pre-indented" data-line="153" style="display:block"><code>var y = 2;
+!&lt;
+  let f = fun x:Int -&gt; x * %[y + 1];
+  f 3
+&gt;</code></pre>
+<p class="p noindent para-continued" data-line="159"><span data-line="159"></span>After scope lifting, we should have a function contained in a string literal. In <span data-line="159"></span>SSC<span data-line="159"></span>&#39;<span data-line="159"></span>s JavaScript backend, this looks something like:
+</p>
+<pre class="para-block pre-indented" data-line="161" style="display:block"><code>var prog1 =
+&quot;function func1(x, persist1) {&quot; +
+&quot;  return x * persist1;&quot; +
+&quot;}&quot; +
+&quot;func1(3, persist1)&quot;;
+var y = 2;
+eval(prog1, persist1: y + 1);</code></pre>
+<p class="p noindent para-continued" data-line="169"><span data-line="169"></span>Specifically, the persisted value (here, <span data-line="169"></span><code class="code code1">persist1</code><span data-line="169"></span>) must become <span data-line="169"></span><em class="em-star1">part of the quoted function&#39;s environment</em><span data-line="169"></span>.
+The same logic applies as for free variables: a reference to <span data-line="170"></span><code class="code code1">y</code><span data-line="170"></span> in the function<span data-line="170"></span>&#39;<span data-line="170"></span>s body would this imply <span data-line="170"></span><code class="code code1">y</code><span data-line="170"></span> is a free variable for the function, and thus require inclusion in the function<span data-line="170"></span>&#39;<span data-line="170"></span>s closure environment.
+</p>
+<p class="p indent" data-line="172"><span data-line="172"></span>The conclusion is that you can view materialization escapes as a reference to a free variable, where the free variable is defined just before the quote. A program with a materialization escape:
+</p>
+<pre class="para-block pre-indented" data-line="174" style="display:block"><code>&lt; ... %[ expr ] ... &gt;</code></pre>
+<p class="p noindent para-continued" data-line="176"><span data-line="176"></span>is equivalent to one with a free variable reference to a temporary:
+</p>
+<pre class="para-block pre-indented" data-line="178" style="display:block"><code>var temp = expr;
+&lt; ... temp ... &gt;</code></pre><h2 id="sec-splicing" class="h1" data-line="182" data-heading-depth="1" style="display:block"><span data-line="182"></span><span class="heading-before"><span class="heading-label">4</span>.&#8194;</span><span data-line="182"></span>Splicing</h2>
+<p class="p noindent" data-line="184"><span data-line="184"></span>To implement splicing, we need to be able to combine two program values at run time.
+Specifically, we need to have a runtime available with a <span data-line="185"></span><em class="em-star1">splice</em><span data-line="185"></span> operation that takes as input an outer program, an inner program, and an indication of where to splice the latter into the former.
+The operation needs to combine the persisted values associated with both programs to produce a new mapping with their union.
+</p>
+<p class="p indent" data-line="188"><span data-line="188"></span>In our JavaScript backend, this splicing works by string interpolation.
+Every escape in a quote becomes a special token like <span data-line="189"></span><code class="code code1">__SPLICE_21__</code><span data-line="189"></span>; we use <span data-line="189"></span><code class="code code1">String.replace</code><span data-line="189"></span> to stitch in the spliced code at the right token.
+Materialization maps can be combined by taking the union of the two component name maps.
+</p><h3 id="sec-splicing-and-functions" class="h2" data-line="192" data-heading-depth="2" style="display:block"><span data-line="192"></span><span class="heading-before"><span class="heading-label">4.1</span>.&#8194;</span><span data-line="192"></span>Splicing and Functions</h3>
+<p class="p noindent" data-line="194"><span data-line="194"></span>Lambda lifting and quote lifting are intertwined<span data-line="194"></span>&#8212;<span data-line="194"></span>they can<span data-line="194"></span>&#39;<span data-line="194"></span>t be performed separately.
+For example, this program uses an escape inside of a function definition:
+</p>
+<pre class="para-block pre-indented" data-line="197" style="display:block"><code>var x = &lt;5&gt;;
+var f = !&lt; fun y:Int -&gt; y + [x] &gt;;
+f 2</code></pre>
+<p class="p noindent para-continued" data-line="201"><span data-line="201"></span>This only works if the function is defined <span data-line="201"></span><em class="em-star1">inside</em><span data-line="201"></span> a quotation so it can be spliced into.
+</p>
+<p class="p indent" data-line="203"><span data-line="203"></span>In a homogeneous environment, where all code is compiled to the same language, the opposite direction is not a problem. This program defines a function outside a quote and then uses materialization to call it inside a quote:
+</p>
+<pre class="para-block pre-indented" data-line="205" style="display:block"><code>var f = fun x:Int -&gt; x * 2;
+!&lt; %[f] 3 &gt;</code></pre>
+<p class="p noindent para-continued" data-line="208"><span data-line="208"></span>The closure value named <span data-line="208"></span><code class="code code1">f</code><span data-line="208"></span> can stick around to be used when the quote is executed.
+In a heterogeneous target (e.g., JavaScript<span data-line="209"></span> <span data-line="209"></span>+ GLSL), though, this won<span data-line="209"></span>&#39;<span data-line="209"></span>t work: you can<span data-line="209"></span>&#39;<span data-line="209"></span>t take a function defined in language A and call it in language B without an FFI.
+And in our scenario, it<span data-line="210"></span>&#39;<span data-line="210"></span>s even worse: the programs run on different hardware with different ISAs.
+For that scenario, we probably want to explore compiling those outer functions <span data-line="211"></span><em class="em-star1">twice</em><span data-line="211"></span>, once for each target, so they can be used in both places.
+</p><h3 id="sec-multi-level-escapes" class="h2" data-line="213" data-heading-depth="2" style="display:block"><span data-line="213"></span><span class="heading-before"><span class="heading-label">4.2</span>.&#8194;</span><span data-line="213"></span>Multi-Level Escapes</h3>
+<p class="p noindent" data-line="215"><span data-line="215"></span>Our language extends traditional multi-stage programming with <span data-line="215"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAYAAACw50UTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABVklEQVQ4y6WV4VGDQBCFv2NSAGMJ2AFqB7EDRjvQDuJYAiVgB07sgJRg0gF24GAH65+78bEeJNH7tXf73mP3sRyYGWYGUAN7YAQGYJNygqmALuKGiN0DjceaGYlURuA67jvAgE6EuyjYyFkZxSdYL94BrZCaSLBYbZ8jS8cJW+fEDaiEsBHCqA/OiJeCnVhZhBAa4GBmH/ysG4nfzeyJ+XUh8aUmCuAeeHWEWuJHlpdi95pYReFdOgghlNFngJ3rKLe0yyk242Ez5+GM50PC+1yRqeRW4t1SySGESrp8+wU4p5IMVqeqyc75zFj1/7HEzFi5Ru4k3h6xpBZLXlyuBK5Xf/Xbjagv5Bn49G2O6as8w5IxkxuByt94ye/tEWF9N63LPSS+2rKWuF/yw8y+QghpOzivW+BqMorRt1RNeYItnVYei5teya6d8ZSvUjit/DR6f+V+A/60I/jE733oAAAAAElFTkSuQmCC" alt="$n$" class="math-inline math-render-png math" style="height:0.4683em"><span data-line="215"></span>-level escapes. An escape written <span data-line="215"></span><code class="code code1">[e]n</code><span data-line="215"></span> or <span data-line="215"></span><code class="code code1">%[e]n</code><span data-line="215"></span> evaluates the expression <span data-line="215"></span><code class="code code1">e</code><span data-line="215"></span> in the context that is <span data-line="215"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAYAAACw50UTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABVklEQVQ4y6WV4VGDQBCFv2NSAGMJ2AFqB7EDRjvQDuJYAiVgB07sgJRg0gF24GAH65+78bEeJNH7tXf73mP3sRyYGWYGUAN7YAQGYJNygqmALuKGiN0DjceaGYlURuA67jvAgE6EuyjYyFkZxSdYL94BrZCaSLBYbZ8jS8cJW+fEDaiEsBHCqA/OiJeCnVhZhBAa4GBmH/ysG4nfzeyJ+XUh8aUmCuAeeHWEWuJHlpdi95pYReFdOgghlNFngJ3rKLe0yyk242Ez5+GM50PC+1yRqeRW4t1SySGESrp8+wU4p5IMVqeqyc75zFj1/7HEzFi5Ru4k3h6xpBZLXlyuBK5Xf/Xbjagv5Bn49G2O6as8w5IxkxuByt94ye/tEWF9N63LPSS+2rKWuF/yw8y+QghpOzivW+BqMorRt1RNeYItnVYei5teya6d8ZSvUjit/DR6f+V+A/60I/jE733oAAAAAElFTkSuQmCC" alt="$n$" class="math-inline math-render-png math" style="height:0.4683em"><span data-line="215"></span> levels up from the current quote.
+</p>
+<p class="p indent" data-line="217"><span data-line="217"></span>Consider this small example:
+</p>
+<pre class="para-block pre-indented" data-line="219" style="display:block"><code>var c = &lt;5&gt;;
+!&lt;!&lt; [c]2 + 4 &gt;&gt;</code></pre>
+<p class="p noindent para-continued" data-line="222"><span data-line="222"></span>There are three stages here: the outer stage and two nested quotes. The splicing needs to happen at the first, outermost stage<span data-line="222"></span>&#8212;<span data-line="222"></span>the generated code should not do any splicing in the latter stages. That is, we need to emit JavaScript code that looks like this:
+</p>
+<pre class="para-block pre-indented" data-line="224" style="display:block"><code>var prog1 = &quot;
+  var prog2 = \&quot;
+    __SPLICE__ + 4
+  \&quot;;
+  eval(prog2);
+&quot;;
+eval(prog1.replace(&quot;__SPLICE__&quot;, &quot;5&quot;));</code></pre>
+<p class="p noindent para-continued" data-line="232"><span data-line="232"></span>In particular, the string literal for the inner quote needs to appear <span data-line="232"></span><em class="em-star1">nested inside</em><span data-line="232"></span> the string for the outer quote. It won<span data-line="232"></span>&#39;<span data-line="232"></span>t work to hoist all the programs to the top-level namespace (as an earlier version of the <span data-line="232"></span>SSC<span data-line="232"></span> compiler would have):
+</p>
+<pre class="para-block pre-indented" data-line="234" style="display:block"><code>var prog1 = &quot;eval(prog2)&quot;;
+var prog2 = &quot;__SPLICE__ + 4&quot;;</code></pre>
+<p class="p noindent para-continued" data-line="237"><span data-line="237"></span>because this would make it impossible to splice into <span data-line="237"></span><code class="code code1">prog2</code><span data-line="237"></span>&#39;<span data-line="237"></span>s text when preparing prog1 for evaluation.
+</p>
+<p class="p indent" data-line="239"><span data-line="239"></span>Incidentally, the correct nesting for <span data-line="239"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAYAAACw50UTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABVklEQVQ4y6WV4VGDQBCFv2NSAGMJ2AFqB7EDRjvQDuJYAiVgB07sgJRg0gF24GAH65+78bEeJNH7tXf73mP3sRyYGWYGUAN7YAQGYJNygqmALuKGiN0DjceaGYlURuA67jvAgE6EuyjYyFkZxSdYL94BrZCaSLBYbZ8jS8cJW+fEDaiEsBHCqA/OiJeCnVhZhBAa4GBmH/ysG4nfzeyJ+XUh8aUmCuAeeHWEWuJHlpdi95pYReFdOgghlNFngJ3rKLe0yyk242Ez5+GM50PC+1yRqeRW4t1SySGESrp8+wU4p5IMVqeqyc75zFj1/7HEzFi5Ru4k3h6xpBZLXlyuBK5Xf/Xbjagv5Bn49G2O6as8w5IxkxuByt94ye/tEWF9N63LPSS+2rKWuF/yw8y+QghpOzivW+BqMorRt1RNeYItnVYei5teya6d8ZSvUjit/DR6f+V+A/60I/jE733oAAAAAElFTkSuQmCC" alt="$n$" class="math-inline math-render-png math" style="height:0.4683em"><span data-line="239"></span>-level escapes also makes it possible to <span data-line="239"></span><em class="em-star1">residualize</em><span data-line="239"></span> programs. Since a quote contains everything it needs to execute, it is possible to write the program to a file and execute it later.
+</p>
+<p class="p indent" data-line="241"><span data-line="241"></span>The correct nesting is also simpler to explain: each quote in the output is a self-contained, complete program. Generating code for a quotation amounts to a recursive invocation of the entire compiler. When <span data-line="241"></span>SSC<span data-line="241"></span> eventually grows a native-code backend, this will manifest as emitting a complete <span data-line="241"></span><code class="code code1">.text</code><span data-line="241"></span> section for the subprogram<span data-line="241"></span>&#39;<span data-line="241"></span>s binary. We could consider an optional quotation mode that leads to more efficient in-process execution but prevents residualization by returning to the <span data-line="241"></span>&#8220;hoisted&#8221;<span data-line="241"></span> behavior, where all subprograms are linked into the main program<span data-line="241"></span>&#39;<span data-line="241"></span>s <span data-line="241"></span><code class="code code1">.text</code><span data-line="241"></span> section.
+</p><h2 id="sec-emitting-javascript" class="h1" data-line="244" data-heading-depth="1" style="display:block"><span data-line="244"></span><span class="heading-before"><span class="heading-label">5</span>.&#8194;</span><span data-line="244"></span>Emitting JavaScript</h2>
+<p class="p noindent" data-line="246"><span data-line="246"></span>This section is about the JavaScript backend.
+</p><h3 id="sec-code-values" class="h2" data-line="248" data-heading-depth="2" style="display:block"><span data-line="248"></span><span class="heading-before"><span class="heading-label">5.1</span>.&#8194;</span><span data-line="248"></span>Code Values</h3>
+<p class="p noindent" data-line="250"><span data-line="250"></span>Code values in the JavaScript backend are objects containing the code pointer (<span data-line="250"></span><code class="code code1">prog</code><span data-line="250"></span>) and the materialization environment (called <span data-line="250"></span><code class="code code1">persist</code><span data-line="250"></span> for historical reasons). For example,<span data-line="250"></span>&nbsp;<a href="http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0A!%3C%2037%20%2B%20%25%5Bx%5D%20%3E" data-linkid="splice">this example program</a><span data-line="250"></span>:
+</p>
+<pre class="para-block pre-indented" data-line="252" style="display:block"><code>var x = 5;
+!&lt; 37 + %[x] &gt;</code></pre>
+<p class="p noindent para-continued" data-line="255"><span data-line="255"></span>compiles to JavaScript that looks roughly like this (stripping away the details):
+</p>
+<pre class="para-block pre-indented" data-line="257" style="display:block"><code>var q4 = &quot;... 37 + p7 ...&quot;;
+var v1 = 5;
+var code = { prog: q4, persist: { p7: v1 } };
+run(code);</code></pre>
+<p class="p noindent para-continued" data-line="262"><span data-line="262"></span>Note that the quotation gets compiled to a global string, <span data-line="262"></span><code class="code code1">q4</code><span data-line="262"></span>.
+The runtime function <span data-line="263"></span><code class="code code1">run</code><span data-line="263"></span> binds the materialized names (i.e., <span data-line="263"></span><code class="code code1">p7</code><span data-line="263"></span>) and calls <span data-line="263"></span><code class="code code1">eval</code><span data-line="263"></span>.
+</p><h3 id="sec-expression-chains" class="h2" data-line="267" data-heading-depth="2" style="display:block"><span data-line="267"></span><span class="heading-before"><span class="heading-label">5.2</span>.&#8194;</span><span data-line="267"></span>Expression Chains</h3>
+<p class="p noindent" data-line="269"><span data-line="269"></span>If you experiment with the compiler, you<span data-line="269"></span>&#39;<span data-line="269"></span>ll notice that the output JavaScript doesn<span data-line="269"></span>&#39;<span data-line="269"></span>t use very many semicolons<span data-line="269"></span>&#8212;<span data-line="269"></span>it uses commas instead.
+That<span data-line="270"></span>&#39;<span data-line="270"></span>s because was easier to chain <span data-line="270"></span><em class="em-star1">expressions</em><span data-line="270"></span> in the backend than to use a series of <span data-line="270"></span><em class="em-star1">statements</em><span data-line="270"></span>.
+So<span data-line="271"></span>&nbsp;<a href="http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0Avar%20y%20%3D%209%3B%0Ax%20%2B%20y" data-linkid="exprs">this tiny program</a><span data-line="271"></span>:
+</p>
+<pre class="para-block pre-indented" data-line="273" style="display:block"><code>var x = 5;
+var y = 9;
+x + y</code></pre>
+<p class="p noindent para-continued" data-line="277"><span data-line="277"></span>compiles to:
+</p>
+<pre class="para-block pre-indented" data-line="279" style="display:block"><code>(function () {
+  var v4, v1;
+  return v1 = (5),
+  v4 = (9),
+  (v1) + (v4);
+})()</code></pre>
+<p class="p noindent para-continued" data-line="286"><span data-line="286"></span>where the three expressions are chained with commas after the <span data-line="286"></span><code class="code code1">return</code><span data-line="286"></span> keyword.
+The <span data-line="287"></span><code class="code code1">var</code><span data-line="287"></span> line pre-declares all the variables that we use in the code to make them into local JavaScript variables.
+</p><h3 id="sec-extern" class="h2" data-line="291" data-heading-depth="2" style="display:block"><span data-line="291"></span><span class="heading-before"><span class="heading-label">5.3</span>.&#8194;</span><span data-line="291"></span><code class="code code1">extern</code></h3>
+<p class="p noindent" data-line="293"><span data-line="293"></span>To make the language slightly more practical, I<span data-line="293"></span>&#39;<span data-line="293"></span>ve I added an <span data-line="293"></span><code class="code code1">extern</code><span data-line="293"></span> expression. It lets you declare values without defining them. This way, in the JavaScript backend, you can use plain JavaScript functions from your <span data-line="293"></span>SSC<span data-line="293"></span> program.<span data-line="293"></span>&nbsp;<a href="http://adriansampson.net/atw/#code=extern%20Math.pow%3A%20Int%20Int%20-%3E%20Int%3B%0AMath.pow%207%202" data-linkid="extern">For example:</a><span data-line="293"></span>
+</p>
+<pre class="para-block pre-indented" data-line="295" style="display:block"><code>extern Math.pow: Int Int -&gt; Int;
+Math.pow 7 2</code></pre>
+<p class="p noindent para-continued" data-line="298"><span data-line="298"></span>That program compiles to code that invokes JavaScript<span data-line="298"></span>&#39;<span data-line="298"></span>s own <span data-line="298"></span><code class="code code1">Math.pow</code><span data-line="298"></span> by wrapping it in an <span data-line="298"></span>SSC<span data-line="298"></span> closure value:
+</p>
+<pre class="para-block pre-indented" data-line="300" style="display:block"><code>var closure = ({ proc: Math.pow, env: [] });
+var args = [(7), (2)].concat(closure.env);
+return closure.proc.apply(void 0, args);</code></pre>
+<p class="p noindent" data-line="306"><span data-line="306"></span>Unlike ordinary variables, <span data-line="306"></span><code class="code code1">extern</code><span data-line="306"></span>s are <span data-line="306"></span>&#8220;ambient&#8221;<span data-line="306"></span>: they<span data-line="306"></span>&#39;<span data-line="306"></span>re available at all (subsequent) stages without the need for materialization.
+</p>
+<p class="p indent" data-line="308"><span data-line="308"></span>The compiler infrastructure also a has a notion of intrinsics, which are just externs that are implicitly defined. For example, <span data-line="308"></span><code class="code code1">vtx</code><span data-line="308"></span> and <span data-line="308"></span><code class="code code1">frag</code><span data-line="308"></span> are both intrinsics that get special handling in the WebGL/GLSL compiler. The output variables of shaders, <span data-line="308"></span><code class="code code1">gl_Position</code><span data-line="308"></span> and <span data-line="308"></span><code class="code code1">gl_Color</code><span data-line="308"></span>, are also intrinsics but don<span data-line="308"></span>&#39;<span data-line="308"></span>t get any special handling. To make this work, I had to add special rules for <span data-line="308"></span><em class="em-star1">mutating</em><span data-line="308"></span> externs. That way, an expression like this:
+</p>
+<pre class="para-block pre-indented" data-line="310" style="display:block"><code>gl_Color = x</code></pre>
+<p class="p noindent para-continued" data-line="312"><span data-line="312"></span>generates code that actually assigns to the variable <span data-line="312"></span><code class="code code1">gl_Color</code><span data-line="312"></span> defined in the target. (An ordinary mutation would update a new variable generated by the compiler.)
+</p><h3 id="fquote" class="h2" data-line="314" data-heading-depth="2" style="display:block"><span data-line="314"></span><span class="heading-before"><span class="heading-label">5.4</span>.&#8194;</span><span data-line="314"></span>Function Quotes</h3>
+<p class="p noindent" data-line="316"><span data-line="316"></span>When splicing is not required, <span data-line="316"></span><code class="code code1">eval</code><span data-line="316"></span> shouldn<span data-line="316"></span>&#39;<span data-line="316"></span>t be required either<span data-line="316"></span>&#8212;<span data-line="316"></span>all the code can be emitted ahead of time.
+The compiler supports <span data-line="317"></span><em class="em-star1">function quotes</em><span data-line="317"></span>, annotated like <span data-line="317"></span><code class="code code1">js&lt; ... &gt;</code><span data-line="317"></span>, that get compiled as plain JavaScript functions instead of strings.
+Splice escapes are not allowed in these quotes, but materialization still is.
+</p><h2 id="sec-the-webgl-backend" class="h1" data-line="321" data-heading-depth="1" style="display:block"><span data-line="321"></span><span class="heading-before"><span class="heading-label">6</span>.&#8194;</span><span data-line="321"></span>The WebGL Backend</h2>
+<p class="p noindent" data-line="323"><span data-line="323"></span>These are some extensions to the core compiler for the graphics variant.
+</p><h3 id="sec-choosing-the-target-language" class="h2" data-line="325" data-heading-depth="2" style="display:block"><span data-line="325"></span><span class="heading-before"><span class="heading-label">6.1</span>.&#8194;</span><span data-line="325"></span>Choosing the Target Language</h3>
+<p class="p noindent" data-line="327"><span data-line="327"></span>The compiler needs some way to decide what is host code and what is shader code so it can be compiled to the correct language.
+There are two obvious options:
+</p>
+<ol class="ol compact" data-line="330">
+<li class="li ol-li compact-li" data-line="330"><span data-line="330"></span>Count the number of nested angle brackets <span data-line="330"></span><<span data-line="330"></span>><span data-line="330"></span> and switch backends at some threshold.
+</li>
+<li class="li ol-li compact-li" data-line="331"><span data-line="331"></span>Use an annotation to mark shader code.
+</li></ol>
+
+<p class="p noindent" data-line="333"><span data-line="333"></span>I have gone with option 2, which makes it possible to put shader code by itself in a function and invoke it elsewhere. You write <span data-line="333"></span><code class="code code1">glsl&lt; ... &gt;</code><span data-line="333"></span> to generate GLSL code.
+The type system is also aware of annotations: for example, you will get an error if you try to use a quote that<span data-line="334"></span>&#39;<span data-line="334"></span>s compiled as JavaScript with the <span data-line="334"></span><code class="code code1">vertex</code><span data-line="334"></span> intrinsic.
+</p><h3 id="sec-render-stage-and-unmetaprogrammed-quotes" class="h2" data-line="336" data-heading-depth="2" style="display:block"><span data-line="336"></span><span class="heading-before"><span class="heading-label">6.2</span>.&#8194;</span><span data-line="336"></span>Render Stage and Unmetaprogrammed Quotes</h3>
+<p class="p noindent" data-line="338"><span data-line="338"></span>The language also needed a way to separate one-time setup code from the host-side code that gets executed on every frame. This is another perfect match for staging<span data-line="338"></span>&#8212;<span data-line="338"></span>clearly, the same issues of persistence and deferral arise. So we use a <span data-line="338"></span>&#8220;render&#8221;<span data-line="338"></span> stage, which must be a<span data-line="338"></span>&nbsp;<a href="#fquote" title="5.4.&#8194;Function Quotes" class="localref" style="target-element:h2"><code class="code code1">js&lt;...&gt;</code> function quote</a><span data-line="338"></span> that emits JavaScript code that draws stuff.
+</p><h3 id="sec-declaring-inout-variables" class="h2" data-line="340" data-heading-depth="2" style="display:block"><span data-line="340"></span><span class="heading-before"><span class="heading-label">6.3</span>.&#8194;</span><span data-line="340"></span>Declaring In/Out Variables</h3>
+<p class="p noindent" data-line="342"><span data-line="342"></span>GLSL uses explicit <span data-line="342"></span><code class="code code1">in</code><span data-line="342"></span> and <span data-line="342"></span><code class="code code1">out</code><span data-line="342"></span> type qualifiers (or, in WebGL version 1, the more arcane <span data-line="342"></span><code class="code code1">attribute</code><span data-line="342"></span>, <span data-line="342"></span><code class="code code1">uniform</code><span data-line="342"></span>, and <span data-line="342"></span><code class="code code1">varying</code><span data-line="342"></span> qualifiers). These qualifiers indicate communication between stages. To generate these declarations, the compiler uses the nesting structure of GLSL quotes.
+</p>
+<p class="p indent" data-line="344"><span data-line="344"></span>The WebGL backend requires that each vertex-shader program contain exactly one nested program: the fragment shader.
+When emitting the code for the vertex shader, it enumerates the materializations in the nested fragment shader and emits an <span data-line="345"></span><code class="code code1">out</code><span data-line="345"></span> declaration for each.
+</p>
+<p class="p indent" data-line="347"><span data-line="347"></span>All shader programs<span data-line="347"></span>&#8212;<span data-line="347"></span>vertex and fragment<span data-line="347"></span>&#8212;<span data-line="347"></span>get a corresponding <span data-line="347"></span><code class="code code1">in</code><span data-line="347"></span> declaration for each of their escapes.
+</p>
+<p class="p indent" data-line="349"><span data-line="349"></span>This nesting-based strategy requires, currently, that you transition to fragment shading using a <span data-line="349"></span><em class="em-star1">literal</em><span data-line="349"></span> quote. That is, your code has to look like this:
+</p>
+<pre class="para-block pre-indented" data-line="351" style="display:block"><code>var shader = glsl&lt;
+  # vertex code here
+  fragment glsl&lt;
+    # fragment code here
+  &gt;
+&gt;</code></pre>
+<p class="p noindent para-continued" data-line="358"><span data-line="358"></span>But you <span data-line="358"></span><em class="em-star1">cannot</em><span data-line="358"></span> assign the fragment shader to a variable:
+</p>
+<pre class="para-block pre-indented" data-line="360" style="display:block"><code>var shader = glsl&lt;
+  # ...
+  var fragment_shader = fragment glsl&lt;
+    # ...
+  &gt;
+  # ...
+  fragment fragment_shader
+&gt;</code></pre>
+<p class="p noindent para-continued" data-line="369"><span data-line="369"></span>This way, we know <span data-line="369"></span><em class="em-star1">statically</em><span data-line="369"></span> which variables need to be passed to support all the materializations in the inner program.
+</p><h3 id="sec-glsl-types" class="h2" data-line="371" data-heading-depth="2" style="display:block"><span data-line="371"></span><span class="heading-before"><span class="heading-label">6.4</span>.&#8194;</span><span data-line="371"></span>GLSL Types</h3>
+<p class="p noindent" data-line="373"><span data-line="373"></span>The WebGL backend adds primitive types for vectors and matrices. (They are called by the sensible HLSL-like names <span data-line="373"></span><code class="code code1">Float3</code><span data-line="373"></span>, <span data-line="373"></span><code class="code code1">Int4x4</code><span data-line="373"></span>, etc., but have OpenGL-like aliases like <span data-line="373"></span><code class="code code1">Vec3</code><span data-line="373"></span> and <span data-line="373"></span><code class="code code1">Mat4</code><span data-line="373"></span>.) It uses these types in the definition of its intrinsics.
+</p>
+<p class="p indent" data-line="375"><span data-line="375"></span>See<span data-line="375"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/backends/gl.ts" data-linkid="gl"><code class="code code1">gl.ts</code></a><span data-line="375"></span> for the type declarations and aliases.
+</p><h3 id="sec-attributes" class="h2" data-line="377" data-heading-depth="2" style="display:block"><span data-line="377"></span><span class="heading-before"><span class="heading-label">6.5</span>.&#8194;</span><span data-line="377"></span>Attributes</h3>
+<p class="p noindent" data-line="379"><span data-line="379"></span>To define attributes, the compiler uses a limited form of polymorphic type constructors. For the gory details, see <span data-line="379"></span><code class="code code1">ConstructorType</code><span data-line="379"></span> and <span data-line="379"></span><code class="code code1">InstanceType</code><span data-line="379"></span> from<span data-line="379"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/type.ts" data-linkid="type"><code class="code code1">type.ts</code></a><span data-line="379"></span>.
+</p>
+<p class="p noindent" data-line="383"><span data-line="383"></span>These type constructors let you declare values of type <span data-line="383"></span><code class="code code1">T Array</code><span data-line="383"></span> where <span data-line="383"></span><code class="code code1">T</code><span data-line="383"></span> is some other type.
+For the moment, user code can<span data-line="384"></span>&#39;<span data-line="384"></span>t construct and destruct these types<span data-line="384"></span>&#8212;<span data-line="384"></span>doing so would require something like full Hindley<span data-line="384"></span>&#8211;<span data-line="384"></span>Millner type inference.
+</p>
+<p class="p indent" data-line="386"><span data-line="386"></span>The trick for attributes is that we type and compile cross-stage persistence differently in the for <span data-line="386"></span><code class="code code1">T Array</code><span data-line="386"></span>s. That is, a program like this:
+</p>
+<pre class="para-block pre-indented" data-line="388" style="display:block"><code>extern buf: Float3 Array;
+glsl&lt;
+  let val = buf
+&gt;</code></pre>
+<p class="p noindent para-continued" data-line="393"><span data-line="393"></span>gives <span data-line="393"></span><code class="code code1">val</code><span data-line="393"></span> the type <span data-line="393"></span><code class="code code1">Float3</code><span data-line="393"></span>, not <span data-line="393"></span><code class="code code1">Float3 Array</code><span data-line="393"></span> as it would normally. This array-to-element <span data-line="393"></span>&#8220;degrading&#8221;<span data-line="393"></span> only occurs when crossing the boundary into a shader stage (one marked with the <span data-line="393"></span><code class="code code1">glsl</code><span data-line="393"></span> annotation). We also generate the code differently to communicate an attribute instead of a uniform.
+See <span data-line="394"></span><code class="code code1">Glue</code><span data-line="394"></span> from<span data-line="394"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/src/backends/gl.ts" data-linkid="gl"><code class="code code1">gl.ts</code></a><span data-line="394"></span>.
+</p>
+<p class="p indent" data-line="396"><span data-line="396"></span>I also considered an alternative design where you would need to use an explicit function, like <span data-line="396"></span><code class="code code1">cur a</code><span data-line="396"></span>, to project an array to a single element inside a quote. This had two downsides:
+</p>
+<ul class="ul list-star compact" data-line="398">
+<li class="li ul-li list-star-li compact-li" data-line="398"><span data-line="398"></span>The <span data-line="398"></span><code class="code code1">cur</code><span data-line="398"></span> function would need the polymorphic type <span data-line="398"></span><code class="code code1">&#39;a Array -&gt; &#39;a</code><span data-line="398"></span>, so we<span data-line="398"></span>&#39;<span data-line="398"></span>d need something closer to full Hindley<span data-line="398"></span>&#8211;<span data-line="398"></span>Millner. A custom type rule was simpler for this specific case.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="399"><span data-line="399"></span>Since you can<span data-line="399"></span>&#39;<span data-line="399"></span>t communicate an entire array from the CPU to GPU anyway, you would <span data-line="399"></span><em class="em-star1">always</em><span data-line="399"></span> need to use <span data-line="399"></span><code class="code code1">cur</code><span data-line="399"></span>. It would be redundant from the programmer<span data-line="399"></span>&#39;<span data-line="399"></span>s perspective, because whether you want <span data-line="399"></span><code class="code code1">a</code><span data-line="399"></span> or <span data-line="399"></span><code class="code code1">cur a</code><span data-line="399"></span> is entirely dictated by the context anyway.
+</li></ul>
+<span data-line=""></span></div>
+</body>
+
+</html>

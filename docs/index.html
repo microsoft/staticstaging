@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <meta name="generator" content="Madoko, version 1.0.0-rc5" />
+  <meta name="viewport" content="initial-scale=1.0" />
+  <title>Static Staging</title>
+  <link rel="stylesheet" type="text/css" href="madoko.css"  class="link">
+  <script src="docs.js"  class="script"></script>
+  
+  </head>
+<body class="madoko">
+
+<div class="body madoko" style="line-adjust:0">
+<style>
+.example {
+  cursor: pointer;
+}
+.example:hover {
+  background: #eee;
+}
+.madoko p, .madoko li {
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+}
+</style>
+
+
+
+<div class="titleblock align-center para-block" data-line="27" style="text-align:center;line-adjust:0">
+<div class="titleheader align-center" data-line="27" style="text-align:center;line-adjust:0">
+<div class="title para-block" data-line="27" style="font-size:xx-large;font-weight:bold;margin-bottom:0.5ex;line-adjust:0"><span data-line="27"></span>Static Staging</div></div></div>
+<p class="p noindent para-continued" data-line="29"><span data-line="29"></span>This is an example-based introduction to programming with static staging.
+It describes the static staging compiler (<span data-line="30"></span>SSC<span data-line="30"></span>), its basic language <span data-line="30"></span>Ssl<span data-line="30"></span>, and its graphics-centric extended language <span data-line="30"></span>Ssgl<span data-line="30"></span>.
+</p><span data-line="32"></span>
+<nav class="toc toc-contents"><h2 id="sec-contents" class="clearnum h1 heading-contents" data-heading-depth="1" style="display:block">Contents</h2>
+<div class="tocblock tocblock1">
+<div class="tocitem tocitem1" data-toc-target="basics" data-toc-depth="1" data-toc-line="[1]{.heading-label}.&#8194;The Basics" style="toctarget:basics"><a href="#basics" class="localref"><span class="heading-label">1</span>.&#8194;The Basics</a></div>
+<div class="tocitem tocitem1" data-toc-target="sec-multi-stage-programming" data-toc-depth="1" data-toc-line="[2]{.heading-label}.&#8194;Multi-Stage Programming" style="toctarget:sec-multi-stage-programming"><a href="#sec-multi-stage-programming" class="localref"><span class="heading-label">2</span>.&#8194;Multi-Stage Programming</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-quote-and-run" data-toc-depth="2" data-toc-line="[2.1]{.heading-label}.&#8194;Quote and Run" style="toctarget:sec-quote-and-run"><a href="#sec-quote-and-run" class="localref"><span class="heading-label">2.1</span>.&#8194;Quote and Run</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-splice" data-toc-depth="2" data-toc-line="[2.2]{.heading-label}.&#8194;Splice" style="toctarget:sec-splice"><a href="#sec-splice" class="localref"><span class="heading-label">2.2</span>.&#8194;Splice</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-persist" data-toc-depth="2" data-toc-line="[2.3]{.heading-label}.&#8194;Persist" style="toctarget:sec-persist"><a href="#sec-persist" class="localref"><span class="heading-label">2.3</span>.&#8194;Persist</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-cross-stage-references" data-toc-depth="2" data-toc-line="[2.4]{.heading-label}.&#8194;Cross-Stage References" style="toctarget:sec-cross-stage-references"><a href="#sec-cross-stage-references" class="localref"><span class="heading-label">2.4</span>.&#8194;Cross-Stage References</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-staging-without-metaprogramming" data-toc-depth="2" data-toc-line="[2.5]{.heading-label}.&#8194;Staging Without Metaprogramming" style="toctarget:sec-staging-without-metaprogramming"><a href="#sec-staging-without-metaprogramming" class="localref"><span class="heading-label">2.5</span>.&#8194;Staging Without Metaprogramming</a></div>
+<div class="tocitem tocitem2" data-toc-target="multiescape" data-toc-depth="2" data-toc-line="[2.6]{.heading-label}.&#8194;N-Level Escapes" style="toctarget:multiescape"><a href="#multiescape" class="localref"><span class="heading-label">2.6</span>.&#8194;N-Level Escapes</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-metaprogramming" data-toc-depth="1" data-toc-line="[3]{.heading-label}.&#8194;Metaprogramming" style="toctarget:sec-metaprogramming"><a href="#sec-metaprogramming" class="localref"><span class="heading-label">3</span>.&#8194;Metaprogramming</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-snippets" data-toc-depth="2" data-toc-line="[3.1]{.heading-label}.&#8194;Snippets" style="toctarget:sec-snippets"><a href="#sec-snippets" class="localref"><span class="heading-label">3.1</span>.&#8194;Snippets</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-pre-splicing" data-toc-depth="2" data-toc-line="[3.2]{.heading-label}.&#8194;Pre-Splicing" style="toctarget:sec-pre-splicing"><a href="#sec-pre-splicing" class="localref"><span class="heading-label">3.2</span>.&#8194;Pre-Splicing</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-macros" data-toc-depth="2" data-toc-line="[3.3]{.heading-label}.&#8194;Macros" style="toctarget:sec-macros"><a href="#sec-macros" class="localref"><span class="heading-label">3.3</span>.&#8194;Macros</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-code-generation" data-toc-depth="1" data-toc-line="[4]{.heading-label}.&#8194;Code Generation" style="toctarget:sec-code-generation"><a href="#sec-code-generation" class="localref"><span class="heading-label">4</span>.&#8194;Code Generation</a></div>
+<div class="tocitem tocitem1" data-toc-target="sec-graphics" data-toc-depth="1" data-toc-line="[5]{.heading-label}.&#8194;Graphics" style="toctarget:sec-graphics"><a href="#sec-graphics" class="localref"><span class="heading-label">5</span>.&#8194;Graphics</a></div>
+<div class="tocblock tocblock2">
+<div class="tocitem tocitem2" data-toc-target="sec-shader-quotes" data-toc-depth="2" data-toc-line="[5.1]{.heading-label}.&#8194;Shader Quotes" style="toctarget:sec-shader-quotes"><a href="#sec-shader-quotes" class="localref"><span class="heading-label">5.1</span>.&#8194;Shader Quotes</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-render-vertex-fragment" data-toc-depth="2" data-toc-line="[5.2]{.heading-label}.&#8194;Render, Vertex, Fragment" style="toctarget:sec-render-vertex-fragment"><a href="#sec-render-vertex-fragment" class="localref"><span class="heading-label">5.2</span>.&#8194;Render, Vertex, Fragment</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-webgl-and-glsl-intrinsics" data-toc-depth="2" data-toc-line="[5.3]{.heading-label}.&#8194;WebGL and GLSL Intrinsics" style="toctarget:sec-webgl-and-glsl-intrinsics"><a href="#sec-webgl-and-glsl-intrinsics" class="localref"><span class="heading-label">5.3</span>.&#8194;WebGL and GLSL Intrinsics</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-cross-stage-persistence-in-lang-gl" data-toc-depth="2" data-toc-line="[5.4]{.heading-label}.&#8194;Cross-Stage Persistence in Ssgl" style="toctarget:sec-cross-stage-persistence-in-lang-gl"><a href="#sec-cross-stage-persistence-in-lang-gl" class="localref"><span class="heading-label">5.4</span>.&#8194;Cross-Stage Persistence in Ssgl</a></div>
+<div class="tocitem tocitem2" data-toc-target="sec-reusable-shaders" data-toc-depth="2" data-toc-line="[5.5]{.heading-label}.&#8194;Reusable Shaders" style="toctarget:sec-reusable-shaders"><a href="#sec-reusable-shaders" class="localref"><span class="heading-label">5.5</span>.&#8194;Reusable Shaders</a></div></div>
+<div class="tocitem tocitem1" data-toc-target="sec-loose-ends" data-toc-depth="1" data-toc-line="[6]{.heading-label}.&#8194;Loose Ends" style="toctarget:sec-loose-ends"><a href="#sec-loose-ends" class="localref"><span class="heading-label">6</span>.&#8194;Loose Ends</a></div></div></nav>
+<section id="basics" class="section section1" data-section-depth="1" data-line="34"><h2 id="heading-basics" class="h1" data-heading-depth="1" style="display:block"><span class="heading-before"><span class="heading-label">1</span>.&#8194;</span>The Basics</h2>
+<p class="p noindent" data-line="36"><span data-line="36"></span>Ssl<span data-line="36"></span> has a tiny, imperative core language. You can assign to variables with <span data-line="36"></span><code class="code code1">var</code><span data-line="36"></span>, do basic arithmetic, and define functions with <span data-line="36"></span><code class="code code1">def</code><span data-line="36"></span>:
+</p>
+<pre class="para-block example pre-indented" data-line="38" style="display:block"><code>var g = 9.8;
+def gpe(mass:Float, height:Float)
+  mass * height * g;
+gpe(2.0, 3.0)</code></pre>
+<p class="p noindent para-continued" data-line="43"><span data-line="43"></span>This program evaluates to around 58.8. (You can click on any of the examples in this document to run them in your browser.)
+</p>
+<p class="p indent" data-line="45"><span data-line="45"></span>There<span data-line="45"></span>&#39;<span data-line="45"></span>s also an ML-esque syntax for defining and invoking functions, which can occasionally be more appropriate:
+</p>
+<pre class="para-block example pre-indented" data-line="47" style="display:block"><code>var g = 9.8;
+var gpe = fun mass:Float height:Float -&gt; mass * height * g;
+gpe 2.0 3.0</code></pre>
+<p class="p noindent para-continued" data-line="51"><span data-line="51"></span>The language can also interoperate with JavaScript. Use <span data-line="51"></span><code class="code code1">extern</code><span data-line="51"></span> to declare something from JavaScript land:
+</p>
+<pre class="para-block example pre-indented" data-line="53" style="display:block"><code>extern Math.PI: Float;
+def circumference(radius:Float)
+  2.0 * Math.PI * radius;
+circumference(5.0)</code></pre></section>
+<section id="sec-multi-stage-programming" class="section section1" data-section-depth="1" data-line="59"><h2 id="heading-sec-multi-stage-programming" class="h1" data-heading-depth="1" style="display:block"><span class="heading-before"><span class="heading-label">2</span>.&#8194;</span>Multi-Stage Programming</h2>
+<p class="p noindent" data-line="61"><span data-line="61"></span>Ssl<span data-line="61"></span>, as the name implies, is a<span data-line="61"></span>&nbsp;<a href="http://dl.acm.org/citation.cfm?id=259019" data-linkid="metaml">multi-stage programming language</a><span data-line="61"></span>. This section introduces its constructs for deferring execution (quote), <span data-line="61"></span>&#8220;un-deferring&#8221;<span data-line="61"></span> expressions (escape), and executing deferred code (run).
+</p><h3 id="sec-quote-and-run" class="h2" data-line="69" data-heading-depth="2" style="display:block"><span data-line="69"></span><span class="heading-before"><span class="heading-label">2.1</span>.&#8194;</span><span data-line="69"></span>Quote and Run</h3>
+<p class="p noindent" data-line="71"><span data-line="71"></span>Angle brackets denote a quote, which defers the execution of some code:
+</p>
+<pre class="para-block example pre-indented" data-line="73" style="display:block"><code>&lt; 40 + 2 &gt;</code></pre>
+<p class="p noindent para-continued" data-line="75"><span data-line="75"></span>A quote produces a code value. Like a closure, a code value is a first-class value representing a computation. To execute a code value, use the <span data-line="75"></span><code class="code code1">!</code><span data-line="75"></span> operator:
+</p>
+<pre class="para-block example pre-indented" data-line="77" style="display:block"><code>var code = &lt; 21 * 2 &gt;;
+!code</code></pre>
+<p class="p noindent para-continued" data-line="80"><span data-line="80"></span>If you compile that code to JavaScript, you<span data-line="80"></span>&#39;<span data-line="80"></span>ll see that the quoted code gets compiled to a string literal<span data-line="80"></span>&#8212;<span data-line="80"></span>it is literally placed in quotation marks. To execute code, the emitted program uses a function called <span data-line="80"></span><code class="code code1">run</code><span data-line="80"></span>, which is a small wrapper around JavaScript<span data-line="80"></span>&#39;<span data-line="80"></span>s <span data-line="80"></span><code class="code code1">eval</code><span data-line="80"></span>.
+</p><h3 id="sec-splice" class="h2" data-line="82" data-heading-depth="2" style="display:block"><span data-line="82"></span><span class="heading-before"><span class="heading-label">2.2</span>.&#8194;</span><span data-line="82"></span>Splice</h3>
+<p class="p noindent" data-line="84"><span data-line="84"></span><em class="em-star1">Splicing</em><span data-line="84"></span> is a defining feature of classic staged languages. You use it to combine quoted code, stitching together pieces into complete programs.
+</p>
+<p class="p indent" data-line="86"><span data-line="86"></span>To splice one code value into another, use an <span data-line="86"></span><em class="em-star1">escape</em><span data-line="86"></span> expression, which is denoted by square brackets:
+</p>
+<pre class="para-block example pre-indented" data-line="88" style="display:block"><code>var a = &lt; 7 * 3 &gt;;
+var b = &lt; [a] * 2 &gt;;
+!b</code></pre>
+<p class="p noindent para-continued" data-line="92"><span data-line="92"></span>You can think of <span data-line="92"></span><code class="code code1">[a]</code><span data-line="92"></span> as invoking a three-step process: First, it <span data-line="92"></span><em class="em-star1">escapes</em><span data-line="92"></span> to the outer context, where <span data-line="92"></span><code class="code code1">a</code><span data-line="92"></span> is defined. In that context, it evaluates <span data-line="92"></span><code class="code code1">a</code><span data-line="92"></span> to get the code value <span data-line="92"></span><code class="code code1">&lt; 7 * 3 &gt;</code><span data-line="92"></span>. Finally, it splices that code into the current quote to produce a code value equivalent to <span data-line="92"></span><code class="code code1">&lt; (7 * 3) * 2 &gt;</code><span data-line="92"></span>.
+</p>
+<p class="p indent" data-line="94"><span data-line="94"></span>If you look at the compiled JavaScript code, you<span data-line="94"></span>&#39;<span data-line="94"></span>ll see that the second string literal<span data-line="94"></span>&#8212;<span data-line="94"></span>the one representing the quotation <span data-line="94"></span><code class="code code1">&lt; [a] * 2 &gt;</code><span data-line="94"></span>&#8212;<span data-line="94"></span>has a placeholder token in it. (As of this writing, the token was <span data-line="94"></span><code class="code code1">__SPLICE_10__</code><span data-line="94"></span>.) The program uses this along with JavaScript<span data-line="94"></span>&#39;<span data-line="94"></span>s <span data-line="94"></span><code class="code code1">string.replace</code><span data-line="94"></span> function to stitch together code at run time before <span data-line="94"></span><code class="code code1">eval</code><span data-line="94"></span>ing it. The logic for this string manipulation is encapsulated in a runtime function called <span data-line="94"></span><code class="code code1">splice</code><span data-line="94"></span>.
+</p><h3 id="sec-persist" class="h2" data-line="96" data-heading-depth="2" style="display:block"><span data-line="96"></span><span class="heading-before"><span class="heading-label">2.3</span>.&#8194;</span><span data-line="96"></span>Persist</h3>
+<p class="p noindent" data-line="98"><span data-line="98"></span>Ssl<span data-line="98"></span> has a second kind of escape expression called a <span data-line="98"></span><em class="em-star1">persist</em><span data-line="98"></span> escape. Rather than splicing together code at run time, persists let you share data between stages. Persist escapes are written with a leading <span data-line="98"></span><code class="code code1">%</code><span data-line="98"></span> sign:
+</p>
+<pre class="para-block example pre-indented" data-line="100" style="display:block"><code>var pi = 3.14;
+def calc_area(r:Float)
+  &lt; %[pi] * %[r * r] &gt;;
+!calc_area(5.0) + !calc_area(2.0)</code></pre>
+<p class="p noindent para-continued" data-line="105"><span data-line="105"></span>Like a splice escape, a persist escape shifts to the context outside of the quote and evaluates an expression. But instead of taking another code value and merging it in, a persist gets an ordinary value<span data-line="105"></span>&#8212;<span data-line="105"></span>here, plain old numbers<span data-line="105"></span>&#8212;<span data-line="105"></span>and makes them available inside the quote.
+</p>
+<p class="p indent" data-line="107"><span data-line="107"></span>The difference may seem subtle, but it has an important effect on the generated code. This example has two calls to <span data-line="107"></span><code class="code code1">calc_area</code><span data-line="107"></span> with different values for <span data-line="107"></span><code class="code code1">r</code><span data-line="107"></span>. If we had used a splice, it would have created and executed two different programs at run time<span data-line="107"></span>&#8212;<span data-line="107"></span>each with a different number inlined in place of <span data-line="107"></span><code class="code code1">r</code><span data-line="107"></span>. Instead, the compiled JavaScript only has one string literal in it, and no string splicing occurs at run time.
+</p><h3 id="sec-cross-stage-references" class="h2" data-line="109" data-heading-depth="2" style="display:block"><span data-line="109"></span><span class="heading-before"><span class="heading-label">2.4</span>.&#8194;</span><span data-line="109"></span>Cross-Stage References</h3>
+<p class="p noindent" data-line="111"><span data-line="111"></span>Ssl<span data-line="111"></span> includes syntactic niceness for persisting data without explicit escape expressions. In the previous section<span data-line="111"></span>&#39;<span data-line="111"></span>s example, we performed one multiplication (<span data-line="111"></span><code class="code code1">r * r</code><span data-line="111"></span>) in the first stage and a second multiplication (by <span data-line="111"></span><code class="code code1">pi</code><span data-line="111"></span>) in a second stage. If you want to perform both multiplications at the same stage, then you could write <span data-line="111"></span><code class="code code1">&lt; %[pi] * %[r] * %[r] &gt;</code><span data-line="111"></span>. <span data-line="111"></span>Ssl<span data-line="111"></span> lets you omit the persist-escape brackets when all you need is a single variable:
+</p>
+<pre class="para-block example pre-indented" data-line="113" style="display:block"><code>var pi = 3.14;
+def calc_area(r:Float)
+  &lt; pi * r * r &gt;;
+!calc_area(5.0) + !calc_area(2.0)</code></pre>
+<p class="p noindent para-continued" data-line="118"><span data-line="118"></span>The code inside the quote can pretend that it shares the same variables that are available outside of the quote. The classic literature on multi-stage programming calls this shared-scope effect <span data-line="118"></span><em class="em-star1">cross-stage persistence</em><span data-line="118"></span>, but you can also think of it as syntactic sugar for explicit <span data-line="118"></span><code class="code code1">%[x]</code><span data-line="118"></span> escapes. In fact, this is how <span data-line="118"></span>SSC<span data-line="118"></span> works: you can see that it generates exactly the same JavaScript code whether you surround <span data-line="118"></span><code class="code code1">pi</code><span data-line="118"></span> and <span data-line="118"></span><code class="code code1">r</code><span data-line="118"></span> in persist-escape brackets or not.
+</p><h3 id="sec-staging-without-metaprogramming" class="h2" data-line="120" data-heading-depth="2" style="display:block"><span data-line="120"></span><span class="heading-before"><span class="heading-label">2.5</span>.&#8194;</span><span data-line="120"></span>Staging Without Metaprogramming</h3>
+<p class="p noindent" data-line="122"><span data-line="122"></span>If you don<span data-line="122"></span>&#39;<span data-line="122"></span>t use any splicing, quotes can feel very similar to lambdas. A lambda also wraps up code to run later, and via closures, a lambda can also share state from the enclosing scope where it is defined. In fact, it can seem silly that <span data-line="122"></span>SSC<span data-line="122"></span> uses string literals and <span data-line="122"></span><code class="code code1">eval</code><span data-line="122"></span> where an ordinary function would do just fine.
+</p>
+<p class="p indent" data-line="124"><span data-line="124"></span>In recognition this correspondence, <span data-line="124"></span>Ssl<span data-line="124"></span> lets you write quotes that compile to JavaScript functions. They have the same semantics as ordinary <span data-line="124"></span><code class="code code1">eval</code><span data-line="124"></span>-based quotes<span data-line="124"></span>&#8212;<span data-line="124"></span>only their implementation, and therefore their performance, differs. To use function stages, you can <span data-line="124"></span><em class="em-star1">annotate</em><span data-line="124"></span> quotes with <span data-line="124"></span><code class="code code1">js</code><span data-line="124"></span>, like this:
+</p>
+<pre class="para-block example pre-indented" data-line="126" style="display:block"><code>var x = 21;
+var doubler = js&lt; x + x &gt;;
+!doubler</code></pre>
+<p class="p noindent para-continued" data-line="130"><span data-line="130"></span>The JavaScript code that <span data-line="130"></span>SSC<span data-line="130"></span> generates for this program doesn<span data-line="130"></span>&#39;<span data-line="130"></span>t have any string literals at all<span data-line="130"></span>&#8212;<span data-line="130"></span>and it won<span data-line="130"></span>&#39;<span data-line="130"></span>t use <span data-line="130"></span><code class="code code1">eval</code><span data-line="130"></span> at run time.
+</p>
+<p class="p indent" data-line="132"><span data-line="132"></span>The compiler needs keeps track of the kinds of programs so it knows how to execute them with <span data-line="132"></span><code class="code code1">!</code><span data-line="132"></span>. The type system tracks the annotation on each quote. Here<span data-line="132"></span>&#39;<span data-line="132"></span>s a function that indicates that it takes a function (<span data-line="132"></span><code class="code code1">js</code><span data-line="132"></span>-annotated) quote:
+</p>
+<pre class="para-block example pre-indented" data-line="134" style="display:block"><code>def runit(c:js&lt;Int&gt;)
+  !c;
+runit(js&lt;2&gt;)</code></pre>
+<p class="p noindent para-continued" data-line="138"><span data-line="138"></span>You<span data-line="138"></span>&#39;<span data-line="138"></span>ll get a type error if the annotations don<span data-line="138"></span>&#39;<span data-line="138"></span>t match:
+</p>
+<pre class="para-block example pre-indented" data-line="140" style="display:block"><code>def runit(c:&lt;Int&gt;)
+  !c;
+runit(js&lt;2&gt;)</code></pre><h3 id="multiescape" class="h2" data-line="144" data-heading-depth="2" style="display:block"><span data-line="144"></span><span class="heading-before"><span class="heading-label">2.6</span>.&#8194;</span><span data-line="144"></span>N-Level Escapes</h3>
+<p class="p noindent" data-line="146"><span data-line="146"></span>Ssl<span data-line="146"></span> generalizes escapes to move across multiple stages at once. You can write a number after a splice <span data-line="146"></span><code class="code code1">[e]</code><span data-line="146"></span> or persist <span data-line="146"></span><code class="code code1">%[e]</code><span data-line="146"></span> escape to indicate the number of stages to look through:
+</p>
+<pre class="para-block example pre-indented" data-line="148" style="display:block"><code>var c = &lt;5&gt;;
+!&lt; 2 + !&lt; 8 * 2[c] &gt; &gt;</code></pre>
+<p class="p noindent para-continued" data-line="151"><span data-line="151"></span>The escape <span data-line="151"></span><code class="code code1">2[c]</code><span data-line="151"></span> gets the value to splice from <span data-line="151"></span><em class="em-star1">two</em><span data-line="151"></span> levels up<span data-line="151"></span>&#8212;<span data-line="151"></span>where <span data-line="151"></span><code class="code code1">c</code><span data-line="151"></span> is defined<span data-line="151"></span>&#8212;<span data-line="151"></span>rather than just shifting to the immediately containing quote. (The syntax is intended to call to mind a subscript in math, as in <span data-line="151"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAArCAYAAAAzDXuYAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACe0lEQVRo3u2a/42iUBCAvzEUoGsHlLDmOtAOMNeBdoC5ErQDbQE70A52pQO5Dk47mPtnSN5xbxVcYGXDJC+SMDDv482bH4gAQyDhf0lUdUeNIiKt2Qrsd+o5l9GMtGJr4BxvVFWcsazbmKpeXRvAqKGH9w/Yt5IerAfrwXqwHqwH68F6sI6BichCRBIROYvIxcZBRKadBBORWEQuwAp4AyaqOlLVEbAFEhGJvwIseBAotL7qFdir6txTye9FBNPbPP2KGdTpFlSxz7JrnhfMOuCTdd3XO1AAP00ve3ZXXBsUtq9uBhQgBmY1v1r4Zd6Se0Fq+3unqldXfwgosFZVPhp2I3XG0HN+ajBnG9M798xtb2/pmW5s3hKbnRCIbA/nc4pz/SorVnxVcLLgUNxTKbBU1WONKxUBP1R14rG3N+/YAmsRGavqqsqKnX1P5jOj7IoBF9Nb3NA5OPMLqwQPN7KlbQUB21dl9vXW9a5HE/R7W2AWEFLP5L2pJY8bwSeM0SLcpITai3N8rrJi+RO5PuBOry3wu2klrQKWOumhClTiiahNyMJ+j6p6rAK2ciY7rQA1bOKtss+OedW8UkllZdGuZNURicgZ+KOqs4ahFpaoM2Dm7v9SecyTL7Zu9WHpYFG26qhaeXxwfWTXH4qVUPBAhJpZJbAEfjvVRwYcgbmqNp7nbA6J1YjLWvoxVd0D+6/qjp0Saln8X81apDCgY2JQa+vWfZ4RAeNBB6FWN6DyHvAt6BBUbCu1AaJCZzG2QPRivVoWdAwq78vuxYB00AGo0IEqI9eHo2LLBXAGSKvvFZ9Zvi2Y64pRob1o8wOWRsHCQvvf5gcstctfkOAjw9S0kfEAAAAASUVORK5CYII=" alt="$[ e ]_2$" class="math-inline math-render-png math" style="vertical-align:-0.2797em;height:1.1187em"><span data-line="151"></span>.)
+</p>
+<p class="p indent" data-line="153"><span data-line="153"></span>At first glance, it might look like <span data-line="153"></span><code class="code code1">[e]n</code><span data-line="153"></span> or <span data-line="153"></span><code class="code code1">%[e]n</code><span data-line="153"></span> is just syntactic sugar for <span data-line="153"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAYAAACw50UTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABVklEQVQ4y6WV4VGDQBCFv2NSAGMJ2AFqB7EDRjvQDuJYAiVgB07sgJRg0gF24GAH65+78bEeJNH7tXf73mP3sRyYGWYGUAN7YAQGYJNygqmALuKGiN0DjceaGYlURuA67jvAgE6EuyjYyFkZxSdYL94BrZCaSLBYbZ8jS8cJW+fEDaiEsBHCqA/OiJeCnVhZhBAa4GBmH/ysG4nfzeyJ+XUh8aUmCuAeeHWEWuJHlpdi95pYReFdOgghlNFngJ3rKLe0yyk242Ez5+GM50PC+1yRqeRW4t1SySGESrp8+wU4p5IMVqeqyc75zFj1/7HEzFi5Ru4k3h6xpBZLXlyuBK5Xf/Xbjagv5Bn49G2O6as8w5IxkxuByt94ye/tEWF9N63LPSS+2rKWuF/yw8y+QghpOzivW+BqMorRt1RNeYItnVYei5teya6d8ZSvUjit/DR6f+V+A/60I/jE733oAAAAAElFTkSuQmCC" alt="$n$" class="math-inline math-render-png math" style="height:0.4683em"><span data-line="153"></span> nested escapes, like <span data-line="153"></span><code class="code code1">[[e]]</code><span data-line="153"></span> or <span data-line="153"></span><code class="code code1">%[%[e]]</code><span data-line="153"></span>. This is close to true semantically, but as with cross-stage references and program quotes, the differences are in performance.
+</p>
+<p class="p indent" data-line="155"><span data-line="155"></span>Take another look at the splicing example above. It uses a form like <span data-line="155"></span><code class="code code1">&lt; ... &lt; 2[e] &gt; ... &gt;</code><span data-line="155"></span> to splice code from the main stage <span data-line="155"></span><em class="em-star1">directly</em><span data-line="155"></span> into a nested program. That is, the expression <span data-line="155"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAASCAYAAAC9+TVUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA+klEQVQ4y6WUa7HCQAyFvzAIKBYqoRoqoRqKg3q4EtBQCcVCcVAkUBwcftzAhLL0MWQmMzt5nE3OZoMk5hSogRYYgNG1A8pXzExy4wmDn7Pgq9zXJEGAHOgBAe3MJRWgDxAHGJcAPLbwuDwaswAwruDq7xkXjScHEFCvIFtPcmMbCpol2iyd4MH19Tp7/uXIu/RmNjFxBS7AUdL5zeM3DaGKZomPqe4cKw+4FzaKScLMFGwHSfefQCTZ1kp2gTSA++ZWzIp94CH3gdsC0AK31JyUa17Ef3b3bWK7heTKR+KUXAW+J+SA2WRi69S0flsFlYONQXv/cEWqugcmiLUk6/JKJQAAAABJRU5ErkJggg==" alt="$e$" class="math-inline math-render-png math" style="height:0.4683em"><span data-line="155"></span> is evaluated when the outer quote expression is evaluated, and the resulting program should do <span data-line="155"></span><em class="em-star1">no further splicing</em><span data-line="155"></span> when it is executed. In other words, if we inspect the program that the splice generates:
+</p>
+<pre class="para-block example pre-indented" data-line="157" style="display:block"><code>var c = &lt;5&gt;;
+&lt; 2 + !&lt; 8 * 2[c] &gt; &gt;</code></pre>
+<p class="p noindent para-continued" data-line="160"><span data-line="160"></span>we<span data-line="160"></span>&#39;<span data-line="160"></span>ll see a splice-free nested program, <span data-line="160"></span><code class="code code1">&lt; 2 + !&lt; 8 * 5 &gt; &gt;</code><span data-line="160"></span>. (You may need to switch the tool<span data-line="160"></span>&#39;<span data-line="160"></span>s mode to <span data-line="160"></span>&#8220;interpreter&#8221;<span data-line="160"></span> to see this pretty-printed code.) That<span data-line="160"></span>&#39;<span data-line="160"></span>s in contrast to this similar program that uses nested splices:
+</p>
+<pre class="para-block example pre-indented" data-line="162" style="display:block"><code>var c = &lt;&lt;5&gt;&gt;;
+&lt; 2 + !&lt; 8 * [[c]] &gt; &gt;</code></pre>
+<p class="p noindent para-continued" data-line="165"><span data-line="165"></span>which produces <span data-line="165"></span><code class="code code1">&lt; 2 + !&lt; 8 * [&lt;5&gt;] &gt; &gt;</code><span data-line="165"></span>, a program that will splice the number 5 into the inner quote when it eventually executes. Nesting a persist inside a splice, as in <span data-line="165"></span><code class="code code1">[%[c]]</code><span data-line="165"></span>, has a similar drawback. In fact, it is impossible to implement <span data-line="165"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAYAAACw50UTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABVklEQVQ4y6WV4VGDQBCFv2NSAGMJ2AFqB7EDRjvQDuJYAiVgB07sgJRg0gF24GAH65+78bEeJNH7tXf73mP3sRyYGWYGUAN7YAQGYJNygqmALuKGiN0DjceaGYlURuA67jvAgE6EuyjYyFkZxSdYL94BrZCaSLBYbZ8jS8cJW+fEDaiEsBHCqA/OiJeCnVhZhBAa4GBmH/ysG4nfzeyJ+XUh8aUmCuAeeHWEWuJHlpdi95pYReFdOgghlNFngJ3rKLe0yyk242Ez5+GM50PC+1yRqeRW4t1SySGESrp8+wU4p5IMVqeqyc75zFj1/7HEzFi5Ru4k3h6xpBZLXlyuBK5Xf/Xbjagv5Bn49G2O6as8w5IxkxuByt94ye/tEWF9N63LPSS+2rKWuF/yw8y+QghpOzivW+BqMorRt1RNeYItnVYei5teya6d8ZSvUjit/DR6f+V+A/60I/jE733oAAAAAElFTkSuQmCC" alt="$n$" class="math-inline math-render-png math" style="height:0.4683em"><span data-line="165"></span>-level escapes as syntactic sugar: they are required to splice directly into nested quotes. We<span data-line="165"></span>&#39;<span data-line="165"></span>ll also see below that they model certain CPU<span data-line="165"></span>&#8211;<span data-line="165"></span>GPU communication channels that can skip stages.
+</p></section>
+<section id="sec-metaprogramming" class="section section1" data-section-depth="1" data-line="168"><h2 id="heading-sec-metaprogramming" class="h1" data-heading-depth="1" style="display:block"><span class="heading-before"><span class="heading-label">3</span>.&#8194;</span>Metaprogramming</h2>
+<p class="p noindent" data-line="170"><span data-line="170"></span>Splicing is the basis of <span data-line="170"></span>Ssl<span data-line="170"></span>&#39;<span data-line="170"></span>s metaprogramming tools.
+This section describes extensions beyond the basic splices we<span data-line="171"></span>&#39;<span data-line="171"></span>ve already seen that make metaprogramming more powerful.
+</p><h3 id="sec-snippets" class="h2" data-line="173" data-heading-depth="2" style="display:block"><span data-line="173"></span><span class="heading-before"><span class="heading-label">3.1</span>.&#8194;</span><span data-line="173"></span>Snippets</h3>
+<p class="p noindent" data-line="175"><span data-line="175"></span>So far, each quote has had its own independent scope. No two quotes get to share the same set of local variables, and that includes quotes nested inside escapes. It<span data-line="175"></span>&#39;<span data-line="175"></span>s important to prohibit programs like this, for example:
+</p>
+<pre class="para-block example pre-indented" data-line="177" style="display:block"><code>&lt;
+  var x = 5;
+  [ x ]
+&gt;</code></pre>
+<p class="p noindent para-continued" data-line="182"><span data-line="182"></span>because the reference to <span data-line="182"></span><code class="code code1">x</code><span data-line="182"></span> would run before <span data-line="182"></span><code class="code code1">x</code><span data-line="182"></span> is defined. Prohibiting this more complex example might seem less intuitive, but it<span data-line="182"></span>&#39;<span data-line="182"></span>s illegal for the same reason:
+</p>
+<pre class="para-block example pre-indented" data-line="184" style="display:block"><code>&lt;
+  var x = 5;
+  [
+    &lt; x * 2 &gt;
+  ]
+&gt;</code></pre>
+<p class="p noindent para-continued" data-line="191"><span data-line="191"></span>The reference to <span data-line="191"></span><code class="code code1">x</code><span data-line="191"></span> won<span data-line="191"></span>&#39;<span data-line="191"></span>t typecheck because it wasn<span data-line="191"></span>&#39;<span data-line="191"></span>t defined in the inner quote<span data-line="191"></span>&#39;<span data-line="191"></span>s enclosing scope, which doesn<span data-line="191"></span>&#39;<span data-line="191"></span>t include variables from the outer quote.
+</p>
+<p class="p indent" data-line="193"><span data-line="193"></span>But for metaprogramming, scopes that span multiple quotes can be important. Say, for example, that you want to compute either the surface area or the volume of a sphere given its diameter:
+</p>
+<pre class="para-block example pre-indented" data-line="195" style="display:block"><code>var pi = 3.14;
+def sphere(d: Float, volume: Int)
+  &lt;
+    var r = d / 2.0;
+    pi * r * r * [
+      if volume
+        &lt; 4.0 / 3.0 * r &gt;
+        &lt; 4.0 &gt;
+    ]
+  &gt;;
+!sphere(4.0, 1)</code></pre>
+<p class="p noindent para-continued" data-line="207"><span data-line="207"></span>You need to share the value of <span data-line="207"></span><code class="code code1">r</code><span data-line="207"></span> between the outer quote and the first inner quote (to compute the volume as <span data-line="207"></span><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFIAAAA0CAYAAAAZgW/cAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEZ0lEQVR42u1b0XHbOBB9q1EBTK6CYwm0OwjdAZ1UELkDaa6CG7kDJhXk5A6kDhKqA6mDi9TB3ocXuhUEgCBl0zMmdoYzIgmJ5ONi9+3DipgZMUZEJYA1gA/MfESyM5tEgpgBWMnuxwTbpU0jx60AZGMEiIhmAO4B5HJoD2ALoGbm/WkgMwc3ADMADQCWLW/7znvYBLiDOFGhjpdynAEsT8cjfmwHoBgTkDL7DgDmnvMajxkzt8bIFYAHAGNLLqWA+UXyw5kx81ZhsggmGyJaAtgw82aEodHEw0JAddlvPXYaoDolM9+MNAk/AfginzctYG+dQIor1wDuxkplJBvftHBqY3/7pvZ3yUb7xA69tjSey8xPF0ASUQUgY+ZvCSunJ+ZEtJLY+cjM9xc8UlGdzEODRsUjLaqzU8/PLlqkv9AAqAJ8cpRAOvhlpQj5zJybiMvOAfwy8z2ZNwkdBSOTiGqhiSBmBhEdBO0Q8TbEVI/5OlbwiaiW8hkAbgyQbYLEZ6FEkLexN29oxImnUorY0zQGECL6rXaP7xlAJRnmAB4ClZ2mh8UEyVyzrxQgF4FxWpfdTyLf0J1V0L9n07NvHRhXqM/bUKqfW9zJtZUd6cPc0jb7bAcXTRMPauT8zuZ6kiyX1pjaw5sPWmv0PEuj7icbkn9dC6DeKo9+WMp+LeNqRaoP8iIzOVbJmHVAb5xHOFnBzM/0Z4AA3sjNbWS67JWCshQpX9sdgFsjCNhBXvRAm4ocmXnhyKj3oh/cGP1Alg9qxQ/JVQ7KvZVy3z8B/CH7hShEX0+JdwBvrLW3ON7s2vOdZYdrnFVcjrBUWuPX6twuYjaVwhlnRvT1loivBGKp3d9xfqfLLCv+zCKvUQForGMrBdTSc18Huc6LlLyvDeTal5BU/Z57PKyIvMbKkVhOIsNQdfiUiK4Okq4YI8dD4vCDxLW9FZsKRykash9axRa6lreo2y9u0zfka5XnQW8dfC70Eu1av4zkgS8LpM+bXjmLFypjw5Gxr6nj9SwYzCPfqkR8CDxofuVvl8pbt+8dyJkrPmq5LkKR8pWzg8fHNwFSyHDoQXOHKNBFcBg8PnqTTXTjUD9bqGyLFlGg67V0fBxWcL6mcagHr6wUUc4CVUqv66h7PAy+nnNN41CPBzXCRdNS7rWWbi0LdKuhgZxY2a5T41APylNETGuTaXMRDjpn66Hjo51sOjcO9aQ8ABBqQNj0FJF1fPxncB7iEEabiPjV9JjWs0jB1DQqrH330fL787dY86YezfgAcJ/WwC18OgBpxNmns56XZHGEPNg4lKyVkBf4f233RKSZ+TFB1nNqCxUqZd0jw/OieWr7uyJGmmwKmeKLBF8P0UJqbOOJc6VkJ+uh/uiK4a8EnwUkEWVEtCaindVobtveUmeSWR7Zq3EowXcJZL/GoWSXWVu6dr+FsrGqbo4A/kz/23YT8k8AGiL610W8pc/ceOSnBGKAR3ZuHEoWJuRSzdzifM3mVwLQb/8BL8mQJohNYfQAAAAASUVORK5CYII=" alt="$\frac{4}{3} \pi r^3$" class="math-inline math-render-png math" style="vertical-align:-0.3921em;height:1.3529em"><span data-line="207"></span>).
+</p>
+<p class="p indent" data-line="209"><span data-line="209"></span>To make this work, <span data-line="209"></span>Ssl<span data-line="209"></span> supports special kinds of escape and quote that can preserve scopes. They<span data-line="209"></span>&#39;<span data-line="209"></span>re called <span data-line="209"></span><em class="em-star1">snippets</em><span data-line="209"></span>, and you use them by prefixing escapes and quotes with the <span data-line="209"></span><code class="code code1">$</code><span data-line="209"></span> character. This modified example works:
+</p>
+<pre class="para-block example pre-indented" data-line="211" style="display:block"><code>var pi = 3.14;
+def sphere(d: Float, volume: Int)
+  &lt;
+    var r = d / 2.0;
+    pi * r * r * $[
+      if volume
+        $&lt; 4.0 / 3.0 * r &gt;
+        $&lt; 4.0 &gt;
+    ]
+  &gt;;
+!sphere(4.0, 1)</code></pre>
+<p class="p noindent para-continued" data-line="223"><span data-line="223"></span>When a quote is marked with a <span data-line="223"></span><code class="code code1">$</code><span data-line="223"></span>, it inherits its scope from the nearest containing escape<span data-line="223"></span>&#8212;<span data-line="223"></span>if it is also marked with a <span data-line="223"></span><code class="code code1">$</code><span data-line="223"></span>. (Syntax mnemonic: <span data-line="223"></span><code class="code code1">$</code><span data-line="223"></span> is for <span data-line="223"></span>$<span data-line="223"></span>plicing <span data-line="223"></span>$<span data-line="223"></span>nippets.)
+</p>
+<p class="p indent" data-line="225"><span data-line="225"></span>Snippets<span data-line="225"></span>&#39;<span data-line="225"></span> scope sharing is in tension with the self-contained, reusable nature of garden-variety quotes. In fact, confusing self-contained programs partial snippets causes lots of problems in<span data-line="225"></span>&nbsp;<a href="http://www.cs.rice.edu/~mgricken/research/mint/download/techreport.pdf" data-linkid="mint">other work on multi-stage programming</a><span data-line="225"></span>. Since snippets can contain variables referenced elsewhere, it would be meaningless to run them independently or to splice them anywhere other than their one true intended splicing point.
+</p>
+<p class="p noindent" data-line="229"><span data-line="229"></span>Ssl<span data-line="229"></span> uses a simple strategy to make sure that a snippet can only be spliced into its intended destination. The language gives a special, one-off type to snippets that identifies their splice points. This sneaky program, for example:
+</p>
+<pre class="para-block example pre-indented" data-line="231" style="display:block"><code>var c = &lt;0&gt;;
+&lt;
+  var x = 5;
+  $[ c = $&lt;x&gt; ]
+&gt;;
+!c</code></pre>
+<p class="p noindent para-continued" data-line="238"><span data-line="238"></span>tries to squirrel away a snippet that refers to a variable from the outer quote. <span data-line="238"></span>Ssl<span data-line="238"></span> will helpfully complain that the <span data-line="238"></span><code class="code code1">$&lt;x&gt;</code><span data-line="238"></span> expression has a special type that can<span data-line="238"></span>&#39;<span data-line="238"></span>t be assigned into a variable with type <span data-line="238"></span><code class="code code1">&lt;Int&gt;</code><span data-line="238"></span>. That special type has only one purpose: to be spliced into one specific point in one specific program.
+</p><h3 id="sec-pre-splicing" class="h2" data-line="240" data-heading-depth="2" style="display:block"><span data-line="240"></span><span class="heading-before"><span class="heading-label">3.2</span>.&#8194;</span><span data-line="240"></span>Pre-Splicing</h3>
+<p class="p noindent" data-line="242"><span data-line="242"></span>Aside from giving you scope-spanning, snippets can also be compiled more efficiently. The key factor is the same property that lets them span scopes: they can be spliced into exactly one other program point.
+</p>
+<p class="p indent" data-line="244"><span data-line="244"></span>Check out the JavaScript code generated from the sphere example above. Unlike previous examples that used splicing, the code here has no magical <span data-line="244"></span><code class="code code1">__SPLICE_N__</code><span data-line="244"></span> tokens and no runtime <span data-line="244"></span><code class="code code1">splice</code><span data-line="244"></span> calls. There is no run-time code generation at all. Instead, the two choices for completing the program have been <span data-line="244"></span><em class="em-star1">inlined</em><span data-line="244"></span>. To decide how the quote should behave, the program just chooses between the two complete program variants stored in two different JavaScript strings (called <span data-line="244"></span><code class="code code1">q10_25</code><span data-line="244"></span> and <span data-line="244"></span><code class="code code1">q10_31</code><span data-line="244"></span> as of this writing).
+</p>
+<p class="p indent" data-line="246"><span data-line="246"></span>In fact, unlike ordinary splicing, you can use snippet splicing with <span data-line="246"></span><code class="code code1">f&lt;...&gt;</code><span data-line="246"></span> function-backed quotes. Look at the code generated for this version of our example:
+</p>
+<pre class="para-block example pre-indented" data-line="248" style="display:block"><code>var pi = 3.14;
+def sphere(d: Float, volume: Int)
+  f&lt;
+    var r = d / 2.0;
+    pi * r * r * $[
+      if volume
+        $&lt; 4.0 / 3.0 * r &gt;
+        $&lt; 4.0 &gt;
+    ]
+  &gt;;
+!sphere(4.0, 1)</code></pre>
+<p class="p noindent para-continued" data-line="260"><span data-line="260"></span>There are two specialized variants of the function for the quote. There<span data-line="260"></span>&#39;<span data-line="260"></span>s no code in string literals and no <span data-line="260"></span><code class="code code1">eval</code><span data-line="260"></span> monkey business in sight.
+</p>
+<p class="p indent" data-line="262"><span data-line="262"></span>Pre-splicing is important because it lets you use staging to express <span data-line="262"></span><em class="em-star1">compile-time</em><span data-line="262"></span> metaprogramming in the same way that you can write <span data-line="262"></span><em class="em-star1">run-time</em><span data-line="262"></span> metaprogramming. Snippets and pre-splicing are necessarily more restrictive, but they let you avoid the costs of more general run-time splicing.
+</p>
+<p class="p indent" data-line="264"><span data-line="264"></span>On the command line, you can optionally disable the presplicing optimization. Use the <span data-line="264"></span><code class="code code1">-P</code><span data-line="264"></span> flag (with the ordinary <span data-line="264"></span><code class="code code1">-c</code><span data-line="264"></span> flag to use the compiler) to see the effect.
+</p><h3 id="sec-macros" class="h2" data-line="266" data-heading-depth="2" style="display:block"><span data-line="266"></span><span class="heading-before"><span class="heading-label">3.3</span>.&#8194;</span><span data-line="266"></span>Macros</h3>
+<p class="p noindent" data-line="268"><span data-line="268"></span>Ssl<span data-line="268"></span> has macros.
+In fact, the staging concepts you already know are already enough to implement something very close to macros you know and love!
+<span data-line="270"></span>SSC<span data-line="270"></span> just uses a little syntactic sugar to make them work.
+</p>
+<p class="p indent" data-line="272"><span data-line="272"></span>Fundamentally, a macro is just a function that takes code as arguments and produces code as its return value.
+In <span data-line="273"></span>Ssl<span data-line="273"></span>, that<span data-line="273"></span>&#39;<span data-line="273"></span>s exactly how you define a macro:
+</p>
+<pre class="para-block example pre-indented" data-line="275" style="display:block"><code>def add(lhs: &lt;Int&gt;, rhs: &lt;Int&gt;)
+  &lt; [lhs] + [rhs] &gt;;</code></pre>
+<p class="p noindent para-continued" data-line="278"><span data-line="278"></span>To use a macro, type its name prefixed with an <span data-line="278"></span><code class="code code1">@</code><span data-line="278"></span> symbol:
+</p>
+<pre class="para-block example pre-indented" data-line="280" style="display:block"><code>@add 1 2</code></pre>
+<p class="p noindent para-continued" data-line="282"><span data-line="282"></span>Unlike an ordinary function call, like <span data-line="282"></span><code class="code code1">add 1 2</code><span data-line="282"></span>, the arguments to a macro invocation are treated as <span data-line="282"></span><em class="em-star1">code</em><span data-line="282"></span>, as if you had wrapped them in angle brackets.
+Like this:
+</p>
+<pre class="para-block example pre-indented" data-line="285" style="display:block"><code>add &lt;1&gt; &lt;2&gt;</code></pre>
+<p class="p noindent para-continued" data-line="287"><span data-line="287"></span>A macro invocation also automatically escapes <span data-line="287"></span><em class="em-star1">to the point where the name was defined</em><span data-line="287"></span>.
+Specifically, this:
+</p>
+<pre class="para-block example pre-indented" data-line="290" style="display:block"><code>def add(lhs: &lt;Int&gt;, rhs: &lt;Int&gt;)
+  &lt; [lhs] + [rhs] &gt;;
+&lt; @add 1 2 &gt;</code></pre>
+<p class="p noindent para-continued" data-line="294"><span data-line="294"></span>is syntactic sugar for this:
+</p>
+<pre class="para-block example pre-indented" data-line="296" style="display:block"><code>def add(lhs: &lt;Int&gt;, rhs: &lt;Int&gt;)
+  &lt; [lhs] + [rhs] &gt;;
+&lt; [ add &lt;1&gt; &lt;2&gt; ] &gt;</code></pre>
+<p class="p noindent para-continued" data-line="300"><span data-line="300"></span>Intuitively, you can think of the <span data-line="300"></span><code class="code code1">@</code><span data-line="300"></span> symbol as saying, <span data-line="300"></span>&#8220;Escape out to where the macro was defined, invoke it with my arguments as unevaluated code, and then splice its result back in here.&#8221;<span data-line="300"></span>
+In other words, macros are just functions that run at an earlier stage.
+</p><h4 id="sec-snippets-and-macros" class="h3" data-line="303" data-heading-depth="3" style="display:block"><span data-line="303"></span><span class="heading-before"><span class="heading-label">3.3.1</span>.&#8194;</span><span data-line="303"></span>Snippets and Macros</h4>
+<p class="p noindent" data-line="305"><span data-line="305"></span>Snippet splicing composes with macros.
+Together, they enforce <span data-line="306"></span><em class="em-star1">macro hygeine</em><span data-line="306"></span>, letting you safely use variables from the scope surrounding the macro invocation.
+</p>
+<p class="p indent" data-line="308"><span data-line="308"></span>To make this work, <span data-line="308"></span>Ssl<span data-line="308"></span> uses the types on the parameters to the macro function.
+Decorate your function<span data-line="309"></span>&#39;<span data-line="309"></span>s argument types with a <span data-line="309"></span><code class="code code1">$</code><span data-line="309"></span> to indicate that the argument should be a snippet:
+</p>
+<pre class="para-block example pre-indented" data-line="311" style="display:block"><code>def left(lhs: $&lt;Int&gt;, rhs: $&lt;Int&gt;)
+  lhs;
+&lt; var x = 1; var y = 2; @left x y &gt;</code></pre>
+<p class="p noindent para-continued" data-line="315"><span data-line="315"></span>When the macro function has a snippet parameter type, the corresponding argument quote behaves like a snippet quote. So the <span data-line="315"></span><code class="code code1">@left x y</code><span data-line="315"></span> invocation above desugars to:
+</p>
+<pre class="para-block example pre-indented" data-line="317" style="display:block"><code>$[ left $&lt;x&gt; $&lt;y&gt; ]</code></pre>
+<p class="p noindent para-continued" data-line="319"><span data-line="319"></span>Snippet escapes are powerful because they can use variables from the surrounding scope, but they come with corresponding limitations: most importantly, you can<span data-line="319"></span>&#39;<span data-line="319"></span>t run (<span data-line="319"></span><code class="code code1">!</code><span data-line="319"></span>) them.
+</p></section>
+<section id="sec-code-generation" class="section section1" data-section-depth="1" data-line="322"><h2 id="heading-sec-code-generation" class="h1" data-heading-depth="1" style="display:block"><span class="heading-before"><span class="heading-label">4</span>.&#8194;</span>Code Generation</h2>
+<p class="p noindent" data-line="324"><span data-line="324"></span>This section describes how to invoke <span data-line="324"></span>SSC<span data-line="324"></span>&#39;<span data-line="324"></span>s compiler or interpreter to generate code.
+</p>
+<p class="p indent" data-line="326"><span data-line="326"></span>You can use the interpreter mode to generate <span data-line="326"></span>Ssl<span data-line="326"></span> code, which you can then feed back into the interpreter.
+Use the <span data-line="327"></span><code class="code code1">-g</code><span data-line="327"></span> flag to the command-line tool to make it emit the <span data-line="327"></span><em class="em-star1">body</em><span data-line="327"></span> of a residualizable code value produced by the program.
+For example:
+</p>
+<pre class="para-block example pre-fenced pre-fenced3 language-sh lang-sh sh" data-line="330" data-line-first="331" style="display:block"><code data-line="331">$ echo &#39;var x = &lt;5&gt;; &lt; [x] + 2&gt;&#39; | <span class="code-escaped">ssc</span>
+&lt; 5 + 2 &gt;
+$ echo &#39;var x = &lt;5&gt;; &lt; [x] + 2&gt;&#39; | <span class="code-escaped">ssc</span> -g
+5 + 2
+$ echo &#39;var x = &lt;5&gt;; &lt; [x] + 2&gt;&#39; | <span class="code-escaped">ssc</span> -g | <span class="code-escaped">ssc</span>
+7</code></pre>
+<p class="p noindent para-continued" data-line="339"><span data-line="339"></span>The code must be residualizable: it must not contain any persists.
+For example, this will produce an error:
+</p>
+<pre class="para-block example pre-fenced pre-fenced3 language-sh lang-sh sh" data-line="342" data-line-first="343" style="display:block"><code data-line="343">$ echo &#39;var x = 5; &lt; %[x] + 2&gt;&#39; | <span class="code-escaped">ssc</span> -g</code></pre>
+<p class="p noindent para-continued" data-line="346"><span data-line="346"></span>indicating that the resulting code value <span data-line="346"></span><code class="code code1">&lt; %0 + 2 &gt;</code><span data-line="346"></span> can<span data-line="346"></span>&#39;<span data-line="346"></span>t be residualized.
+</p>
+<p class="p indent" data-line="348"><span data-line="348"></span>In compiler mode, the <span data-line="348"></span><code class="code code1">-g</code><span data-line="348"></span> flag does not produce <span data-line="348"></span>Ssl<span data-line="348"></span> source code; instead, it produces JavaScript code.
+You can execute this code by passing it into <span data-line="349"></span><code class="code code1">node</code><span data-line="349"></span>, probably with the <span data-line="349"></span><code class="code code1">-p</code><span data-line="349"></span> flag to print its output.
+For example:
+</p>
+<pre class="para-block example pre-fenced pre-fenced3 language-sh lang-sh sh" data-line="352" data-line-first="353" style="display:block"><code data-line="353">$ echo &#39;var x = &lt;5&gt;; &lt; [x] + 2&gt;&#39; | <span class="code-escaped">ssc</span> -cxg
+(... a bunch of JavaScript ...)
+$ echo &#39;var x = &lt;5&gt;; &lt; [x] + 2&gt;&#39; | <span class="code-escaped">ssc</span> -cxg | node -p
+7</code></pre>
+<p class="p noindent para-continued" data-line="359"><span data-line="359"></span>If you like, you can save this JavaScript code to a file to execute it later.
+</p></section>
+<section id="sec-graphics" class="section section1" data-section-depth="1" data-mode="webgl" data-line="362"><h2 id="heading-sec-graphics" class="h1" data-heading-depth="1" style="display:block"><span class="heading-before"><span class="heading-label">5</span>.&#8194;</span>Graphics</h2>
+<p class="p noindent" data-line="364"><span data-line="364"></span>Ssl<span data-line="364"></span> has a graphics-oriented extension called <span data-line="364"></span>Ssgl<span data-line="364"></span>. In <span data-line="364"></span>Ssgl<span data-line="364"></span> mode, the compiler targets a combination of JavaScript with WebGL API calls and<span data-line="364"></span>&nbsp;<a href="https://www.opengl.org/documentation/glsl/" data-linkid="glsl">GLSL</a><span data-line="364"></span>, the associated low-level shading language.
+</p><h3 id="sec-shader-quotes" class="h2" data-line="368" data-heading-depth="2" style="display:block"><span data-line="368"></span><span class="heading-before"><span class="heading-label">5.1</span>.&#8194;</span><span data-line="368"></span>Shader Quotes</h3>
+<p class="p noindent" data-line="370"><span data-line="370"></span>The most obvious extension that <span data-line="370"></span>Ssgl<span data-line="370"></span> adds is quotations that compile to GLSL shader code. Recall that we previously <span data-line="370"></span><em class="em-star1">annotated</em><span data-line="370"></span> quotes with <span data-line="370"></span><code class="code code1">f</code><span data-line="370"></span> to make the compiler emit them as JavaScript functions; a new annotation, <span data-line="370"></span><code class="code code1">s</code><span data-line="370"></span>, switches to emit them as shader programs.
+</p>
+<p class="p indent" data-line="372"><span data-line="372"></span>Ssgl<span data-line="372"></span> also has a couple of intrinsic functions, <span data-line="372"></span><code class="code code1">vertex</code><span data-line="372"></span> and <span data-line="372"></span><code class="code code1">fragment</code><span data-line="372"></span>, to indicate vertex and fragment shaders. A fragment-shader quote is contained within a vertex-shader quote because it<span data-line="372"></span>&#39;<span data-line="372"></span>s a later stage. Here<span data-line="372"></span>&#39;<span data-line="372"></span>s a useless <span data-line="372"></span>Ssgl<span data-line="372"></span> program:
+</p>
+<pre class="para-block example pre-indented" data-line="374" style="display:block"><code>vertex glsl&lt; fragment glsl&lt; 1.0 &gt; &gt;</code></pre>
+<p class="p noindent para-continued" data-line="376"><span data-line="376"></span>Take a look at the compiler<span data-line="376"></span>&#39;<span data-line="376"></span>s output. You<span data-line="376"></span>&#39;<span data-line="376"></span>ll see two string literals in the final JavaScript, both of which contain a <span data-line="376"></span><code class="code code1">void main() {...}</code><span data-line="376"></span> declaration that characterizes them as GLSL shader programs.
+</p><h3 id="sec-render-vertex-fragment" class="h2" data-line="378" data-heading-depth="2" style="display:block"><span data-line="378"></span><span class="heading-before"><span class="heading-label">5.2</span>.&#8194;</span><span data-line="378"></span>Render, Vertex, Fragment</h3>
+<p class="p noindent" data-line="380"><span data-line="380"></span>Ssgl<span data-line="380"></span> programs use three kinds of stages. We<span data-line="380"></span>&#39;<span data-line="380"></span>ve already seen two: the vertex shader stage and the fragment shader stage. Both of thee run on the GPU. The third stage is the <span data-line="380"></span><em class="em-star1">render loop</em><span data-line="380"></span> stage, which distinguishes code that runs on the CPU for every frame from code that runs once at setup time.
+</p>
+<p class="p indent" data-line="382"><span data-line="382"></span>The render stage needs to be a function quote (annotated with <span data-line="382"></span><code class="code code1">f</code><span data-line="382"></span>), and you pass it to an intrinsic function called <span data-line="382"></span><code class="code code1">render</code><span data-line="382"></span> to register it as the render-loop code. Inside the vertex and fragment shader stages, your job is to assign to the intrinsic variables <span data-line="382"></span><code class="code code1">gl_Position</code><span data-line="382"></span> and <span data-line="382"></span><code class="code code1">gl_FragColor</code><span data-line="382"></span> respectively. In the initial setup stage, there are also intrinsics to load a few built-in sample model assets. Here<span data-line="382"></span>&#39;<span data-line="382"></span>s a tiny example that uses all of the <span data-line="382"></span>Ssgl<span data-line="382"></span> stages:
+</p>
+<pre class="para-block example pre-indented" data-line="384" style="display:block"><code># Load the mesh data for a sample model.
+var mesh = teapot;
+var position = mesh_positions(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
+
+render f&lt;
+  # Bind the shader program.
+  vertex glsl&lt;
+    # Compute the final position of the model&#39;s vertex. The `projection`
+    # and `view` matrices are provided by the runtime context.
+    gl_Position = projection * view * vec4(position, 1.0);
+
+    fragment glsl&lt;
+      # Use a solid color.
+      gl_FragColor = vec4(0.5, 0.3, 0.7, 1.0);
+    &gt;
+  &gt;;
+
+  # Draw the model with the above bound shader.
+  draw_mesh(indices, size);
+&gt;</code></pre>
+<p class="p noindent para-continued" data-line="407"><span data-line="407"></span>There<span data-line="407"></span>&#39;<span data-line="407"></span>s a lot going on even in this small example. The next two sections will introduce the graphics-specific intrinsics that the example uses and the way data is shared between the stages. Then, we<span data-line="407"></span>&#39;<span data-line="407"></span>ll move on to more interesting graphics.
+</p>
+<p class="p indent" data-line="409"><span data-line="409"></span><strong class="strong-star2">TK: Start with a simpler example (no mesh).</strong><span data-line="409"></span>
+</p><h3 id="sec-webgl-and-glsl-intrinsics" class="h2" data-line="411" data-heading-depth="2" style="display:block"><span data-line="411"></span><span class="heading-before"><span class="heading-label">5.3</span>.&#8194;</span><span data-line="411"></span>WebGL and GLSL Intrinsics</h3>
+<p class="p noindent" data-line="413"><span data-line="413"></span>Ssgl<span data-line="413"></span> gives you access to parts of the<span data-line="413"></span>&nbsp;<a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API" data-linkid="webgl">WebGL API</a><span data-line="413"></span> for host-side code and<span data-line="413"></span>&nbsp;<a href="https://www.opengl.org/sdk/docs/man4/index.php" data-linkid="glsl ref">GLSL built-ins</a><span data-line="413"></span> in shader code. It also provides several handy higher-level operations from libraries that extend the WebGL basics. All of these are exposed using<span data-line="413"></span>&nbsp;<a href="#basics" title="1.&#8194;The Basics" class="localref" style="target-element:h1"><code class="code code1">extern</code>s</a><span data-line="413"></span> in a standard preamble. You can see the definitive list in<span data-line="413"></span>&nbsp;<a href="https://github.com/sampsyo/alltheworld/blob/master/dingus/gl_preamble.ss" data-linkid="preamble">the source code for this preamble</a><span data-line="413"></span>. Here are a few important intrinsics you<span data-line="413"></span>&#39;<span data-line="413"></span>ll need:
+</p>
+<ul class="ul list-star compact" data-line="417">
+<li class="li ul-li list-star-li compact-li" data-line="417"><span data-line="417"></span><code class="code code1">teapot</code><span data-line="417"></span>, <span data-line="417"></span><code class="code code1">bunny</code><span data-line="417"></span>, and <span data-line="417"></span><code class="code code1">snowden</code><span data-line="417"></span>: <span data-line="417"></span><code class="code code1">Mesh</code><span data-line="417"></span>. Sample object assets.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="418"><span data-line="418"></span><code class="code code1">mesh_positions</code><span data-line="418"></span>: <span data-line="418"></span><code class="code code1">Mesh -&gt; Float3 Array</code><span data-line="418"></span>. Get the vertex positions from a mesh. Under the hood, a <span data-line="418"></span><code class="code code1">Float3 Array</code><span data-line="418"></span> is implemented as a WebGL buffer.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="419"><span data-line="419"></span><code class="code code1">mesh_indices</code><span data-line="419"></span>: <span data-line="419"></span><code class="code code1">Mesh -&gt; Int3 Array</code><span data-line="419"></span>. Get the triangle vertex indices for a mesh.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="420"><span data-line="420"></span><code class="code code1">mesh_size</code><span data-line="420"></span>: <span data-line="420"></span><code class="code code1">Mesh -&gt; Int</code><span data-line="420"></span>. Get the size (in triangles) of a mesh.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="421"><span data-line="421"></span><code class="code code1">draw_mesh</code><span data-line="421"></span>: <span data-line="421"></span><code class="code code1">(Int3 Array) Int -&gt; Void</code><span data-line="421"></span>. Draw an object given its index array and the length of the array using the currently bound shader. Uses<span data-line="421"></span>&nbsp;<a href="https://msdn.microsoft.com/en-us/library/dn302396(v=vs.85).aspx" data-linkid="drawelements"><code class="code code1">gl.drawElements</code></a><span data-line="421"></span> under the hood.
+</li>
+<li class="li ul-li list-star-li compact-li" data-line="422"><span data-line="422"></span><code class="code code1">projection</code><span data-line="422"></span> and <span data-line="422"></span><code class="code code1">view</code><span data-line="422"></span>: <span data-line="422"></span><code class="code code1">Float4x4</code><span data-line="422"></span>. Transform matrices corresponding to the viewer<span data-line="422"></span>&#39;<span data-line="422"></span>s canvas shape and camera position.
+</li></ul>
+
+<p class="p noindent" data-line="424"><span data-line="424"></span>These intrinsics use matrix and vector types such as <span data-line="424"></span><code class="code code1">Float4</code><span data-line="424"></span> (a 4-element float vector) and <span data-line="424"></span><code class="code code1">Int3x3</code><span data-line="424"></span> (a 3-by-3 matrix of integers). We provide aliases to make these comfortable for people coming from Direct3D and HLSL (<span data-line="424"></span><code class="code code1">Float3</code><span data-line="424"></span> and <span data-line="424"></span><code class="code code1">Float3x3</code><span data-line="424"></span>) and from OpenGL (<span data-line="424"></span><code class="code code1">Vec3</code><span data-line="424"></span> and <span data-line="424"></span><code class="code code1">Mat4</code><span data-line="424"></span>). These alternate names can be used interchangeably.
+</p><h3 id="sec-cross-stage-persistence-in-lang-gl" class="h2" data-line="430" data-heading-depth="2" style="display:block"><span data-line="430"></span><span class="heading-before"><span class="heading-label">5.4</span>.&#8194;</span><span data-line="430"></span>Cross-Stage Persistence in <span data-line="430"></span>Ssgl</h3>
+<p class="p noindent" data-line="432"><span data-line="432"></span>While sharing data between stages is straightforward in <span data-line="432"></span>Ssl<span data-line="432"></span>&#39;<span data-line="432"></span>s homogeneous JavaScript mode, the <span data-line="432"></span>Ssgl<span data-line="432"></span> mode has more work to do to build communication channels among the CPU and the rendering stages on the GPU.
+</p><h4 id="sec-uniform-variables" class="h3" data-line="434" data-heading-depth="3" style="display:block"><span data-line="434"></span><span class="heading-before"><span class="heading-label">5.4.1</span>.&#8194;</span><span data-line="434"></span>Uniform Variables</h4>
+<p class="p noindent" data-line="436"><span data-line="436"></span>In the example above, we use cross-stage persistence to share data between the CPU and GPU. For example, the <span data-line="436"></span><code class="code code1">model</code><span data-line="436"></span> matrix is initialized in the setup stage but used in the vertex shader. When a host communicates a value to a shader like this, it is traditionally called a<span data-line="436"></span>&nbsp;<a href="https://www.opengl.org/wiki/Uniform_(GLSL)" data-linkid="uniform">uniform variable</a><span data-line="436"></span>, because the value is constant across invocations of the shader body. In the compiled code for the above example, you<span data-line="436"></span>&#39;<span data-line="436"></span>ll see several calls like <span data-line="436"></span><code class="code code1">gl.uniformMatrix4fv(...)</code><span data-line="436"></span>. That<span data-line="436"></span>&#39;<span data-line="436"></span>s<span data-line="436"></span>&nbsp;<a href="https://msdn.microsoft.com/en-us/library/dn302458(v=vs.85).aspx" data-linkid="uniformmatrix4fv">the WebGL function for binding uniforms</a><span data-line="436"></span> of the appropriate type.
+</p>
+<p class="p indent" data-line="438"><span data-line="438"></span>It is also possible to share uniform data directly from the CPU to the fragment stage (skipping the vertex stage). This case is based on<span data-line="438"></span>&nbsp;<a href="#multiescape" title="2.6.&#8194;N-Level Escapes" class="localref" style="target-element:h2"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAYAAACw50UTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABVklEQVQ4y6WV4VGDQBCFv2NSAGMJ2AFqB7EDRjvQDuJYAiVgB07sgJRg0gF24GAH65+78bEeJNH7tXf73mP3sRyYGWYGUAN7YAQGYJNygqmALuKGiN0DjceaGYlURuA67jvAgE6EuyjYyFkZxSdYL94BrZCaSLBYbZ8jS8cJW+fEDaiEsBHCqA/OiJeCnVhZhBAa4GBmH/ysG4nfzeyJ+XUh8aUmCuAeeHWEWuJHlpdi95pYReFdOgghlNFngJ3rKLe0yyk242Ez5+GM50PC+1yRqeRW4t1SySGESrp8+wU4p5IMVqeqyc75zFj1/7HEzFi5Ru4k3h6xpBZLXlyuBK5Xf/Xbjagv5Bn49G2O6as8w5IxkxuByt94ye/tEWF9N63LPSS+2rKWuF/yw8y+QghpOzivW+BqMorRt1RNeYItnVYei5teya6d8ZSvUjit/DR6f+V+A/60I/jE733oAAAAAElFTkSuQmCC" alt="$n$" class="math-inline math-render-png math" style="height:0.4683em">-level escapes</a><span data-line="438"></span>. You can use explicit two-level escapes like <span data-line="438"></span><code class="code code1">2[ e ]</code><span data-line="438"></span> or implicit cross-stage references to get this effect.
+</p>
+<p class="p indent" data-line="440"><span data-line="440"></span>If different stages use the same uniform variable, <span data-line="440"></span>Ssgl<span data-line="440"></span> only needs to bind it once.
+</p><h4 id="sec-vertex-attributes" class="h3" data-line="442" data-heading-depth="3" style="display:block"><span data-line="442"></span><span class="heading-before"><span class="heading-label">5.4.2</span>.&#8194;</span><span data-line="442"></span>Vertex Attributes</h4>
+<p class="p noindent" data-line="444"><span data-line="444"></span>Graphics APIs have a second mechanism for sending data to shaders that differs per vertex, called <span data-line="444"></span><em class="em-star1">vertex attributes</em><span data-line="444"></span>. In our above example, the <span data-line="444"></span><code class="code code1">position</code><span data-line="444"></span> variable is an array of vectors indicating the location of each vertex. We don<span data-line="444"></span>&#39;<span data-line="444"></span>t want to pass the entire array to every invocation of the vertex shader<span data-line="444"></span>&#8212;<span data-line="444"></span>instead, each invocation should get a different vector, as if we had called <span data-line="444"></span><code class="code code1">map</code><span data-line="444"></span> on the array.
+</p>
+<p class="p indent" data-line="446"><span data-line="446"></span>To this end, <span data-line="446"></span>Ssgl<span data-line="446"></span> handles cross-stage persistence specially when sharing arrays from the host to a shader. If an expression <span data-line="446"></span><code class="code code1">e</code><span data-line="446"></span> has type <span data-line="446"></span><code class="code code1">T Array</code><span data-line="446"></span>, then in a shader quote, the persist-escape expression <span data-line="446"></span><code class="code code1">%[e]</code><span data-line="446"></span> has the element type <span data-line="446"></span><code class="code code1">T</code><span data-line="446"></span>. The compile code uses WebGL<span data-line="446"></span>&#39;<span data-line="446"></span>s APIs to bind the array as an attribute instead of a uniform.
+</p>
+<p class="p indent" data-line="448"><span data-line="448"></span>When a program uses an attribute at the fragment stage, OpenGL can<span data-line="448"></span>&#39;<span data-line="448"></span>t communicate the value directly. (There is no such thing as a <span data-line="448"></span>&#8220;fragment attribute.&#8221;<span data-line="448"></span>) Instead, <span data-line="448"></span>Ssgl<span data-line="448"></span> implements the communication by generated code at the vertex stage to pass the current value to the fragment stage.
+</p><h4 id="sec-varying" class="h3" data-line="453" data-heading-depth="3" style="display:block"><span data-line="453"></span><span class="heading-before"><span class="heading-label">5.4.3</span>.&#8194;</span><span data-line="453"></span>Varying</h4>
+<p class="p noindent" data-line="455"><span data-line="455"></span>The third communication mode that <span data-line="455"></span>Ssgl<span data-line="455"></span> provides is between different stages of the graphics pipeline. If you need to perform some computation in the vertex stage and communicate it to the fragment stage, this is the mechanism you need. In OpenGL, variables like this use a <span data-line="455"></span><code class="code code1">varying</code><span data-line="455"></span> qualifier, so they are sometimes just called <span data-line="455"></span><em class="em-star1">varyings</em><span data-line="455"></span>. In <span data-line="455"></span>Ssgl<span data-line="455"></span>, stage-to-stage communication looks the same between GPU stages as it does when communicating from the CPU and GPU. Persists and cross-stage references work how you expect them to, and <span data-line="455"></span>Ssgl<span data-line="455"></span> compiles them to GLSL varyings.
+</p><h3 id="sec-reusable-shaders" class="h2" data-line="457" data-heading-depth="2" style="display:block"><span data-line="457"></span><span class="heading-before"><span class="heading-label">5.5</span>.&#8194;</span><span data-line="457"></span>Reusable Shaders</h3>
+<p class="p noindent" data-line="459"><span data-line="459"></span>So far, our example has statically inlined the shading code with the host code. Realistically, we need to be able to separate the two. This separation is not only helpful for building a cleaner abstraction, but also so the shader can be decoupled from the object it <span data-line="459"></span>&#8220;paints&#8221;<span data-line="459"></span>: you<span data-line="459"></span>&#39;<span data-line="459"></span>ll want to draw multiple objects with a single shader, or choose between multiple shaders for a single object.
+</p>
+<p class="p indent" data-line="461"><span data-line="461"></span>In <span data-line="461"></span>Ssgl<span data-line="461"></span>, you can encapsulate shaders just by wrapping them in functions. Since shader programs are first-class values, this works without any special consideration:
+</p>
+<pre class="para-block example pre-indented" data-line="463" style="display:block"><code>def solid(pos: Float3 Array, model: Mat4, color: Vec3)
+  vertex glsl&lt;
+    gl_Position = projection * view * model * vec4(pos, 1.0);
+    fragment glsl&lt;
+      gl_FragColor = vec4(color, 1.0);
+    &gt;
+  &gt;;</code></pre>
+<p class="p noindent para-continued" data-line="471"><span data-line="471"></span>This function, <span data-line="471"></span><code class="code code1">solid</code><span data-line="471"></span>, takes the vertex position array and model-space matrix for the object it will draw along with the color to use as a red/green/blue vector. The global <span data-line="471"></span><code class="code code1">projection</code><span data-line="471"></span> and <span data-line="471"></span><code class="code code1">view</code><span data-line="471"></span> matrices come from closed-over state. Passing the shader to the <span data-line="471"></span><code class="code code1">vertex</code><span data-line="471"></span> intrinsic binds it and its associated uniforms and attributes.
+</p>
+<p class="p indent" data-line="473"><span data-line="473"></span>Here<span data-line="473"></span>&#39;<span data-line="473"></span>s<span data-line="473"></span>&nbsp;<a href="http://adriansampson.net/atw/#example=objects" data-linkid="example-objects">a more complete example</a><span data-line="473"></span> that uses a function-wrapped shader to draw two different objects.
+</p></section>
+<section id="sec-loose-ends" class="section section1" data-section-depth="1" data-line="478"><h2 id="heading-sec-loose-ends" class="h1" data-heading-depth="1" style="display:block"><span class="heading-before"><span class="heading-label">6</span>.&#8194;</span>Loose Ends</h2>
+<p class="p noindent" data-line="480"><span data-line="480"></span>If you keep playing with <span data-line="480"></span>SSC<span data-line="480"></span>, you<span data-line="480"></span>&#39;<span data-line="480"></span>ll quickly notice that this is a research prototype. Here are a few of the most glaring current omissions:
+</p>
+<ul class="ul list-dash compact" data-line="482">
+<li class="li ul-li list-dash-li compact-li" data-line="482"><span data-line="482"></span>Parse errors are frequently useless: they<span data-line="482"></span>&#39;<span data-line="482"></span>ll point you toward a seemingly irrelevant part of the code. In <span data-line="482"></span>Ssgl<span data-line="482"></span> mode, the line number also reflects the (hidden) preamble code.
+</li>
+<li class="li ul-li list-dash-li compact-li" data-line="483"><span data-line="483"></span>Type errors are often vague and don<span data-line="483"></span>&#39;<span data-line="483"></span>t have source position information.
+</li>
+<li class="li ul-li list-dash-li compact-li" data-line="484"><span data-line="484"></span>Missing control flow constructs: <span data-line="484"></span><code class="code code1">if</code><span data-line="484"></span>, <span data-line="484"></span><code class="code code1">while</code><span data-line="484"></span>, and <span data-line="484"></span><code class="code code1">for</code><span data-line="484"></span>.
+</li>
+<li class="li ul-li list-dash-li compact-li" data-line="485"><span data-line="485"></span>Shaders and their parameters are currently coupled: you can<span data-line="485"></span>&#39;<span data-line="485"></span>t bind a single shader and reuse it with multiple sets of uniforms and attributes without re-binding.
+</li>
+<li class="li ul-li list-dash-li compact-li" data-line="486"><span data-line="486"></span>The set of exposed WebGL and GLSL features is small and ad hoc. We should expand our coverage of the built-ins.
+
+<ul class="ul list-dash compact" data-line="487">
+<li class="li ul-li list-dash-li compact-li" data-line="487"><span data-line="487"></span>Relatedly, your code mostly gets to play in a <span data-line="487"></span>&#8220;sandbox&#8221;<span data-line="487"></span> currently. You can<span data-line="487"></span>&#39;<span data-line="487"></span>t load arbitrary models. You also can<span data-line="487"></span>&#39;<span data-line="487"></span>t yet use textures, which we should really be able to support.
+</li></ul></li>
+<li class="li ul-li list-dash-li compact-li" data-line="488"><span data-line="488"></span>These intrinsics are not currently <span data-line="488"></span>&#8220;world-specific.&#8221;<span data-line="488"></span> For example, you won<span data-line="488"></span>&#39;<span data-line="488"></span>t get a type error when trying to use<span data-line="488"></span>&nbsp;<a href="https://www.opengl.org/sdk/docs/man/html/normalize.xhtml" data-linkid="normalize">the GLSL function <code class="code code1">normalize</code></a><span data-line="488"></span> in host code or the<span data-line="488"></span>&nbsp;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now" data-linkid="date.now">JavaScript function <code class="code code1">Date.now</code></a><span data-line="488"></span> in shader code<span data-line="488"></span>&#8212;<span data-line="488"></span>things will just break silently.
+</li>
+<li class="li ul-li list-dash-li compact-li" data-line="489"><span data-line="489"></span>Functions defined in shader code are not supported. You should also be able to share functions defined at the host stage inside shaders; this is also not implemented.
+</li></ul>
+
+<p class="p noindent" data-line="494"><span data-line="494"></span>The major missing features, which I<span data-line="494"></span>&#39;<span data-line="494"></span>m working on now, are:
+</p>
+<ul class="ul list-dash compact" data-line="496">
+<li class="li ul-li list-dash-li compact-li" data-line="496"><span data-line="496"></span>We need constructs for compile-time metaprogramming of later stages.
+</li></ul>
+<span data-line=""></span></section></div>
+</body>
+
+</html>
