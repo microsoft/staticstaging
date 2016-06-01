@@ -96,16 +96,27 @@ $(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 	$(TSC) --out $@ $<
 
 
-# Deploy the dingus and docs.
+# Deploy the dingus and docs to the gh-pages branch.
 
-.PHONY: deploy
-RSYNCARGS := --compress --recursive --checksum --delete -e ssh \
-	--exclude node_modules --exclude package.json --exclude gl.js \
-	--exclude '*.ts' --exclude docs --exclude talk
-DEST := dh:domains/adriansampson.net/atw
-deploy: dingus docs
-	rsync $(RSYNCARGS) dingus/ $(DEST)
-	rsync $(RSYNCARGS) docs/build/ $(DEST)/docs
+.PHONY: site deploy
+
+DEPLOY_DIR := _site
+RSYNC := rsync -a --delete --exclude node_modules --exclude *.ts \
+	--exclude Makefile --exclude package.json --exclude typings
+site: dingus docs
+	mkdir -p $(DEPLOY_DIR)/docs
+	$(RSYNC) docs/build/* $(DEPLOY_DIR)/docs
+	mkdir -p $(DEPLOY_DIR)/dingus
+	$(RSYNC) --exclude build dingus/* $(DEPLOY_DIR)/dingus
+
+DEPLOY_BRANCH := gh-pages
+deploy: site
+	git checkout $(DEPLOY_BRANCH)
+	git --work-tree $(DEPLOY_DIR) reset --mixed --quiet
+	git --work-tree $(DEPLOY_DIR) add --all
+	git --work-tree $(DEPLOY_DIR) commit -m "gh-pages deployment"
+	# git push origin $(DEPLOY_BRANCH)
+	git checkout master  # This should probably use the "old" branch.
 
 
 # Lint.
