@@ -1,4 +1,4 @@
-const DINGUS_URL = 'http://sampsyo.github.io/staticstaging/dingus/';
+const DINGUS_URL = 'http://microsoft.github.io/staticstaging/dingus/';
 
 function encode_hash(obj: { [key: string]: string }): string {
   let parts: string[] = [];
