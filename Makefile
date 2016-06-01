@@ -120,7 +120,7 @@ deploy: site
 	git --work-tree $(DEPLOY_DIR) reset --mixed --quiet
 	git --work-tree $(DEPLOY_DIR) add --all
 	git --work-tree $(DEPLOY_DIR) commit -m "deploy"
-	# git push origin $(DEPLOY_BRANCH)
+	git push origin $(DEPLOY_BRANCH)
 
 	git symbolic-ref HEAD refs/heads/master  # This should probably use the "old" branch.
 	git reset --mixed
