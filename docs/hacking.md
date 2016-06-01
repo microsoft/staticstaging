@@ -74,7 +74,7 @@ All the other IRs in the compiler are based on variants of this JSON AST, and th
 [grammar]: https://github.com/sampsyo/alltheworld/blob/master/src/grammar.pegjs
 [peg]: https://en.wikipedia.org/wiki/Parsing_expression_grammar
 [peg.js]: http://pegjs.org/
-[dingus]: http://adriansampson.net/atw/
+[dingus]: https://sampsyo.github.io/staticstaging/dingus/
 
 ## Type Checking and Elaboration
 
@@ -262,7 +262,7 @@ compiles to JavaScript that looks roughly like this (stripping away the details)
 Note that the quotation gets compiled to a global string, `q4`.
 The runtime function `run` binds the materialized names (i.e., `p7`) and calls `eval`.
 
-[splice]: http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0A!%3C%2037%20%2B%20%25%5Bx%5D%20%3E
+[splice]: https://sampsyo.github.io/staticstaging/dingus/#code=var%20x%20%3D%205%3B%0A!%3C%2037%20%2B%20%25%5Bx%5D%20%3E
 
 ## Expression Chains
 
@@ -286,7 +286,7 @@ compiles to:
 where the three expressions are chained with commas after the `return` keyword.
 The `var` line pre-declares all the variables that we use in the code to make them into local JavaScript variables.
 
-[exprs]: http://adriansampson.net/atw/#code=var%20x%20%3D%205%3B%0Avar%20y%20%3D%209%3B%0Ax%20%2B%20y
+[exprs]: https://sampsyo.github.io/staticstaging/dingus/#code=var%20x%20%3D%205%3B%0Avar%20y%20%3D%209%3B%0Ax%20%2B%20y
 
 ## `extern`
 
@@ -301,7 +301,7 @@ That program compiles to code that invokes JavaScript's own `Math.pow` by wrappi
     var args = [(7), (2)].concat(closure.env);
     return closure.proc.apply(void 0, args);
 
-[extern]: http://adriansampson.net/atw/#code=extern%20Math.pow%3A%20Int%20Int%20-%3E%20Int%3B%0AMath.pow%207%202
+[extern]: https://sampsyo.github.io/staticstaging/dingus/#code=extern%20Math.pow%3A%20Int%20Int%20-%3E%20Int%3B%0AMath.pow%207%202
 
 Unlike ordinary variables, `extern`s are "ambient": they're available at all (subsequent) stages without the need for materialization.
 

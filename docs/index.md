@@ -472,7 +472,7 @@ This function, `solid`, takes the vertex position array and model-space matrix f
 
 Here's [a more complete example][example-objects] that uses a function-wrapped shader to draw two different objects.
 
-[example-objects]: http://adriansampson.net/atw/#example=objects
+[example-objects]: https://sampsyo.github.io/staticstaging/dingus/#example=objects
 
 
 # Loose Ends
