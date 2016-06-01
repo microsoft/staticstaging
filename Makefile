@@ -119,8 +119,12 @@ deploy: site
 
 	git --work-tree $(DEPLOY_DIR) reset --mixed --quiet
 	git --work-tree $(DEPLOY_DIR) add --all
-	git --work-tree $(DEPLOY_DIR) commit -m "deploy"
-	git push origin $(DEPLOY_BRANCH)
+	if git --work-tree $(DEPLOY_DIR) diff-index --quiet HEAD -- ; then \
+	  echo "no changes" ; \
+	else \
+	  git --work-tree $(DEPLOY_DIR) commit -m "deploy" ; \
+	  git push origin $(DEPLOY_BRANCH) ; \
+	fi
 
 	git symbolic-ref HEAD refs/heads/master  # This should probably use the "old" branch.
 	git reset --mixed
