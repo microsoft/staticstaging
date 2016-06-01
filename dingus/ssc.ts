@@ -9,8 +9,8 @@ import { tree_canvas } from './tree';
 import d3 = require('d3');
 
 import start_gl = require('./gl');
-import ATW_EXAMPLES = require('./examples');
-import ATW_PREAMBLES = require('./preambles');
+import EXAMPLES = require('./examples');
+import PREAMBLES = require('./preambles');
 
 const RUN_DELAY_MS = 200;
 
@@ -169,7 +169,7 @@ function atw_run(code: string, mode: string)
 
   // Add the preamble, if this is WebGL mode.
   if (mode === "webgl") {
-    code = ATW_PREAMBLES[0]['body'] + code;
+    code = PREAMBLES[0]['body'] + code;
   }
 
   // Run the driver.
@@ -496,7 +496,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
     let code: string = null;
     let mode: string = null;
     if (example_name) {
-      for (let example of ATW_EXAMPLES) {
+      for (let example of EXAMPLES) {
         if (example['name'] === example_name) {
           code = example['body'];
           mode = example['mode'];
@@ -549,7 +549,7 @@ export = function atwDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   if (exampleselect) {
     // Populate the example popup.
-    for (let example of ATW_EXAMPLES) {
+    for (let example of EXAMPLES) {
       let option = document.createElement("option");
       option.value = example['name'];
       option.text = example['title'];
