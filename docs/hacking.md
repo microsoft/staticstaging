@@ -22,7 +22,7 @@ Then, you can install the `&tool;` command-line program by typing:
 
 To make sure it's working, you can try running an example:
 
-    $ &tool; test/basic/add.atw
+    $ &tool; test/basic/add.ss
 
 [npm]: https://www.npmjs.com/
 [Node]: https://nodejs.org/
