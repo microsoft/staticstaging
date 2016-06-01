@@ -6,18 +6,18 @@ import { Prog, Variant } from '../compile/ir';
 
 // Utilities used by the various code-generation backends.
 
-// Get a variable name for an ATW variable by its defining node ID.
+// Get a variable name for a variable by its defining node ID.
 export function varsym(defid: number) {
   return 'v' + defid;
 }
 
-// Get a function name for an ATW Proc by its ID, which is the same as the
+// Get a function name for a Proc by its ID, which is the same as the
 // defining `fun` node ID.
 export function procsym(procid: number) {
   return "f" + procid;
 }
 
-// Get a string constant name for an ATW quotation (i.e., a Prog) by its ID,
+// Get a string constant name for a quotation (i.e., a Prog) by its ID,
 // which is the same as the `quote` node ID.
 export function progsym(progid: number) {
   return "q" + progid;

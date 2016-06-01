@@ -168,7 +168,7 @@ export function interpret(config: Config, tree: SyntaxNode,
 
   let val = interp.interpret(sugarfree);
   if (config.generate) {
-    // Produce at ATW program.
+    // Produce an Ssl program.
     executed(interp.pretty_code(val));
   } else {
     // Produce a readable value.

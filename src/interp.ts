@@ -519,7 +519,7 @@ export function pretty_value(v: Value): string {
   }
 }
 
-// Format a *code* value as raw ATW source code. The value must be
+// Format a *code* value as raw Ssl source code. The value must be
 // residualizable: there can be no persists.
 export function pretty_code(v: Value): string {
   if (v instanceof Code) {
