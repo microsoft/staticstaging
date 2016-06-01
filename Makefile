@@ -123,7 +123,7 @@ deploy: site
 	if git --work-tree $(DEPLOY_DIR) diff-index --quiet HEAD -- ; then \
 	  echo "no changes" ; \
 	else \
-	  git --work-tree $(DEPLOY_DIR) commit -m "deploy" ; \
+	  git --work-tree $(DEPLOY_DIR) commit -m "deploy [ci skip]" ; \
 	  git push origin $(DEPLOY_BRANCH) ; \
 	fi
 

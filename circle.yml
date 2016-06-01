@@ -14,8 +14,3 @@ machine:
 test:
     override:
         - make test
-
-general:
-    branches:
-        ignore:
-            - gh-pages
