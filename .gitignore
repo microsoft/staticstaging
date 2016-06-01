@@ -4,3 +4,4 @@ typings
 build/
 parser.js
 tool/munge.js
+_site/

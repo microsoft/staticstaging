@@ -101,13 +101,17 @@ $(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 .PHONY: site deploy
 
 DEPLOY_DIR := _site
-RSYNC := rsync -a --delete --exclude node_modules --exclude *.ts \
-	--exclude Makefile --exclude package.json --exclude typings
+RSYNC := rsync -a --delete --prune-empty-dirs \
+	--exclude node_modules --exclude typings --exclude build
 site: dingus docs
 	mkdir -p $(DEPLOY_DIR)/docs
-	$(RSYNC) docs/build/* $(DEPLOY_DIR)/docs
+	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
+		--include '*/' --exclude '*' \
+		docs/build/* $(DEPLOY_DIR)/docs
 	mkdir -p $(DEPLOY_DIR)/dingus
-	$(RSYNC) --exclude build dingus/* $(DEPLOY_DIR)/dingus
+	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
+		--include '*/' --exclude '*' \
+		dingus/* $(DEPLOY_DIR)/dingus
 
 DEPLOY_BRANCH := gh-pages
 deploy: site
