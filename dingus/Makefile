@@ -47,11 +47,11 @@ $(MUNGE):
 
 EXAMPLES := basics splice persist progfunc extern \
 	presplice macro normcolor objects phong
-EXAMPLE_FILES := $(EXAMPLES:%=examples/%.atw)
+EXAMPLE_FILES := $(EXAMPLES:%=examples/%.ss)
 examples.js: $(MUNGE) $(EXAMPLE_FILES)
 	printf "module.exports = " > $@
 	node $< $(EXAMPLE_FILES) >> $@
 
-preambles.js: $(MUNGE) gl_preamble.atw
+preambles.js: $(MUNGE) gl_preamble.ss
 	printf "module.exports = " > $@
-	node $< gl_preamble.atw >> $@
+	node $< gl_preamble.ss >> $@

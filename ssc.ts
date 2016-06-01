@@ -9,6 +9,7 @@ import * as minimist from 'minimist';
 import * as driver from "./src/driver";
 
 const STDIN_FILENAME = '-';  // Indicates we should read from stdin.
+const EXTENSION = '.ss';
 
 function read_string(filename: string, f: (s: string) => void) {
   fs.readFile(filename, function (err: any, data: any) {
@@ -24,7 +25,7 @@ function read_string(filename: string, f: (s: string) => void) {
 function check_output(filename: string, source: string, result: string):
   boolean
 {
-  let name = path.basename(filename, '.atw');
+  let name = path.basename(filename, EXTENSION);
 
   let [,expected] = source.split('# -> ');
   if (expected === undefined) {
@@ -113,7 +114,7 @@ function run(filename: string, source: string, webgl: boolean,
 
     if (test) {
       // Avoid crashing the test harness.
-      let name = path.basename(filename, '.atw');
+      let name = path.basename(filename, EXTENSION);
       console.log(`${name} ✘: unhandled error`);
       console.error(e.stack || e);
       success = false;

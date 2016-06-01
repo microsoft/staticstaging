@@ -37,11 +37,11 @@ for name in $1 ; do \
 done
 endef
 
-TESTS_BASIC := $(wildcard test/basic/*.atw) $(wildcard test/snippet/*.atw) \
-	$(wildcard test/if/*.atw)
-TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.atw)
-TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.atw) \
-	$(wildcard test/interp/*.atw) $(wildcard test/macro/*.atw)
+TESTS_BASIC := $(wildcard test/basic/*.ss) $(wildcard test/snippet/*.ss) \
+	$(wildcard test/if/*.ss)
+TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.ss)
+TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.ss) \
+	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss)
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
@@ -55,7 +55,7 @@ test-interp: $(CLI_JS)
 # in a function quote.
 .PHONY: test-compile-unsplice
 test-compile-unsplice:
-	@ node $(CLI_JS) -t -cPx $(wildcard test/snippet/*.atw)
+	@ node $(CLI_JS) -t -cPx $(wildcard test/snippet/*.ss)
 
 .PHONY: test
 test: $(CLI_JS)
@@ -69,7 +69,7 @@ test: $(CLI_JS)
 # Just dump the output code for the WebGL examples.
 .PHONY: dump-gl
 dump-gl: $(CLI_JS)
-	@ node $(CLI_JS) -cw $(wildcard test/webgl/*.atw)
+	@ node $(CLI_JS) -cw $(wildcard test/webgl/*.ss)
 
 
 # An asset-munging tool.
