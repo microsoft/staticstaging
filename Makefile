@@ -114,7 +114,7 @@ deploy: site
 	git symbolic-ref HEAD refs/heads/$(DEPLOY_BRANCH)
 	git --work-tree $(DEPLOY_DIR) reset --mixed --quiet
 	git --work-tree $(DEPLOY_DIR) add --all
-	git --work-tree $(DEPLOY_DIR) commit -m "gh-pages deployment"
+	git --work-tree $(DEPLOY_DIR) commit -m "deploy"
 	# git push origin $(DEPLOY_BRANCH)
 	git symbolic-ref HEAD refs/heads/master  # This should probably use the "old" branch.
 
