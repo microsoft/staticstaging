@@ -98,12 +98,12 @@ $(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 
 # Deploy the dingus and docs to the gh-pages branch.
 
-.PHONY: site deploy
+.PHONY: site deploy home
 
 DEPLOY_DIR := _site
 RSYNC := rsync -a --delete --prune-empty-dirs \
 	--exclude node_modules --exclude typings --exclude build
-site: dingus docs
+site: dingus docs home
 	mkdir -p $(DEPLOY_DIR)/docs
 	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
 		--include '*/' --exclude '*' \
@@ -112,7 +112,7 @@ site: dingus docs
 	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
 		--include '*/' --exclude '*' \
 		dingus/* $(DEPLOY_DIR)/dingus
-	cp site/* $(DEPLOY_DIR)
+	cp site/index.html $(DEPLOY_DIR)
 
 DEPLOY_BRANCH := gh-pages
 deploy: site
@@ -129,6 +129,10 @@ deploy: site
 
 	git symbolic-ref HEAD refs/heads/master  # This should probably use the "old" branch.
 	git reset --mixed
+
+home:
+	make -C site
+
 
 
 # Lint.
