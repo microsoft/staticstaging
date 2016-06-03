@@ -1,10 +1,8 @@
 ---
-title: Static Staging
+title: Happy Shader Programming with Static Staging
 ---
-# Happy Shader Programming with Static Staging
+An introduction goes here.
 
-Lorem ipsum dolor.
+## Let's Draw Something
 
-## Sit Amet
-
-Foo bar.
+An example here.

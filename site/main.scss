@@ -1,1 +1,18 @@
+// Some colors.
+$dark: #050400;
+
+// Bootstrap customization.
+$brand-primary: #A63F92 !default;
+
+// Bootstrap.
 @import "bower_components/bootstrap/scss/bootstrap.scss";
+
+main {
+    @extend .container;
+}
+
+h1 {
+    background: $brand-primary;
+    color: white;
+    padding: 1em 0.5em 0.5em;
+}
