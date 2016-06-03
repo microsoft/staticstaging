@@ -27,13 +27,28 @@ main {
 @import "dingus/dingus.tools.scss";
 
 .sscdingus {
+    // Bootstrap "grid" row.
     @extend .row;
-    .input {
+    .input, .output {
         @include make-col();
-        @include make-col-span(8);
     }
-    .output {
-        @include make-col();
-        @include make-col-span(4);
+
+    // On "small" devices and up, show in two columns.
+    @include media-breakpoint-up(sm) {
+        .input {
+            @include make-col();
+            @include make-col-span(8);
+        }
+        .output {
+            @include make-col();
+            @include make-col-span(4);
+        }
+    }
+
+    // Output box takes up the whole width on small devices.
+    @include media-breakpoint-down(sm) {
+        .output {
+            width: 100%;
+        }
     }
 }
