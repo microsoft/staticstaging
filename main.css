@@ -4632,6 +4632,8 @@ header {
     width: 33.33333%; } }
 
 @media (max-width: 767px) {
+  .sscdingus .input {
+    width: 100%; }
   .sscdingus .output {
     width: 100%; } }
 
