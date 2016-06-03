@@ -4,9 +4,10 @@ all: index.html main.css
 %.html: %.md template.html
 	pandoc -s --template template.html -o $@ $<
 
-%.css: %.scss bower_components/concise/src/concise.scss
+FRAMEWORK := bower_components/bootstrap/scss/bootstrap.scss
+%.css: %.scss $(FRAMEWORK)
 	sassc $< > $@
 
-bower_components/concise/src/concise.scss:
-	bower install concise
+$(FRAMEWORK):
+	bower install bootstrap\#v4.0.0-alpha.2
 	@touch $@

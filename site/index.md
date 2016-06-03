@@ -1,7 +1,7 @@
 ---
 title: Static Staging
 ---
-# Better Graphics Programming with Static Staging
+# Happy Shader Programming with Static Staging
 
 Lorem ipsum dolor.
 
