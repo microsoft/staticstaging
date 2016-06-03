@@ -23,6 +23,27 @@ function instantiate(tmpl: DocumentFragment): Node {
 }
 
 /**
+ * Find a separator line, ---, in a code listing and separate it into the code
+ * *before* that line and the code *after* it. We use this to separate the
+ * code we show to the user from a preamble.
+ */
+function split_code(s: string): [string, string] {
+  let index = s.search(/---\n/);
+  if (index === -1) {
+    // No marker: put all the code in the second half.
+    return ['', s.trim()];
+  } else {
+    let front = s.slice(0, index);
+    front = front.slice(0, front.lastIndexOf("\n"));
+
+    let back = s.slice(index);
+    back = back.slice(back.indexOf("\n"));
+
+    return [front.trim(), back.trim()];
+  }
+}
+
+/**
  * Replace a code block in the HTML with a dingus that initially contains the
  * same code.
  */
@@ -37,8 +58,9 @@ function dingusify(orig: Element, tmpl: DocumentFragment) {
 
   // Fill in the code.
   let code = orig.textContent.trim();
-  // dingus.set_preamble(preamble);
-  dingus.run(code, "webgl");
+  let [front, back] = split_code(code);
+  dingus.set_preamble(front);
+  dingus.run(back, "webgl");
 
   // Replace the old element with the new dingus.
   replace(dingusEl, orig);
