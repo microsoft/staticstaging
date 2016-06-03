@@ -21,24 +21,7 @@ You can also check out [the code on GitHub][ssc] or read the more technical [lan
 
 ## Let's Draw Something
 
-In modern graphics programming, [*shader programs*][shader] are little chunks of code that run on the GPU to define objects' appearance.
-Traditionally, you write shaders in special programming languages and then use OpenGL or Direct3D APIs to communicate with them from your CPU-side code.
-
-With static staging, CPU and GPU code co-exist in the same program.
-You use angle brackets like `< this >` to decide when and where code runs.
-These annotations delimit a nested hierarchy of *stages*.
-To write a graphics program with SSC, you use four stages:
-
-* The *setup stage*, which appears outside of any angle brackets and runs once when the program starts up.
-* The *render stage*, which runs on the CPU to draw every frame.
-* The *vertex stage*, which corresponds to the [vertex shader][vtx] in WebGL: it runs code on the GPU for every vertex in an object to determine its position.
-* The *fragment stage*, which abstracts the [pixel shader][frag] and determines the color of every pixel on the surface of an object.
-
-[shader]: https://en.wikipedia.org/wiki/Shader
-[vtx]: https://www.opengl.org/wiki/Vertex_Shader
-[frag]: https://www.opengl.org/wiki/Fragment_Shader
-
-Here's what it looks like:
+Here's a tiny SSC program that draws a bunny:
 
     # Position the model.
     var model = mat4.create();
@@ -64,6 +47,22 @@ Here's what it looks like:
      >;
      draw_mesh(indices, size);
     >
+
+In modern graphics programming, [*shader programs*][shader] are little chunks of code that run on the GPU to define objects' appearance.
+Traditionally, you write shaders in special programming languages and then use OpenGL or Direct3D APIs to communicate with them from your CPU-side code.
+
+With static staging, CPU and GPU code co-exist in the same program.
+Those angle brackets in the SSC example above, like `< this >`, delimit the boundaries between different kinds of code, called *stages.
+This example uses four stages:
+
+* The *setup stage*, which appears outside of any angle brackets and runs once when the program starts up.
+* The *render stage*, which runs on the CPU to draw every frame.
+* The *vertex stage*, which corresponds to the [vertex shader][vtx] in WebGL: it runs code on the GPU for every vertex in an object to determine its position.
+* The *fragment stage*, which abstracts the [pixel shader][frag] and determines the color of every pixel on the surface of an object.
+
+[shader]: https://en.wikipedia.org/wiki/Shader
+[vtx]: https://www.opengl.org/wiki/Vertex_Shader
+[frag]: https://www.opengl.org/wiki/Fragment_Shader
 
 Those `render`, `vertex`, and `fragment` intrinsics decide when and where code runs.
 You can annotate each stage with its kind: the GPU-side stages get the `glsl` annotation and the render stage gets a `js` annotation so it gets compiled to plain JavaScript.
