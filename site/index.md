@@ -43,7 +43,7 @@ Here's what it looks like:
     # Position the model.
     var model = mat4.create();
     mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
-    mat4.translate(model, model, vec3(0.0, -2.0, 0.0));
+    mat4.translate(model, model, vec3(0.0, -5.0, 0.0));
 
     # Load buffers and parameters for the model.
     var mesh = bunny;

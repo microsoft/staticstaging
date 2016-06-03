@@ -42,6 +42,8 @@ main {
 .sscdingus {
     // Bootstrap "grid" row.
     @extend .row;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
     .input, .output {
         @include make-col();
     }
@@ -64,8 +66,12 @@ main {
         }
     }
 
+    // Compact display, which expands for longer code.
     .CodeMirror {
         height: auto;
+    }
+    .visual {
+        height: 250px;
     }
 }
 
