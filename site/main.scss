@@ -1,0 +1,6 @@
+$container-width: 50rem;
+@import "bower_components/concise/src/concise.scss";
+
+body {
+    @include container();
+}

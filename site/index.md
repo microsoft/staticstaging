@@ -1,4 +1,10 @@
 ---
 title: Static Staging
 ---
-Static staging.
+# Better Graphics Programming with Static Staging
+
+Lorem ipsum dolor.
+
+## Sit Amet
+
+Foo bar.
