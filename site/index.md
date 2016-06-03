@@ -21,7 +21,7 @@ You can also check out [the code on GitHub][ssc] or read the more technical [lan
 
 ## Let's Draw Something
 
-Here's a tiny SSC program that draws a bunny:
+Here's a tiny SSC program that draws a [bunny][]:
 
     # Position the model.
     var model = mat4.create();
@@ -63,6 +63,7 @@ This example uses four stages:
 [shader]: https://en.wikipedia.org/wiki/Shader
 [vtx]: https://www.opengl.org/wiki/Vertex_Shader
 [frag]: https://www.opengl.org/wiki/Fragment_Shader
+[bunny]: http://graphics.stanford.edu/data/3Dscanrep/
 
 Those `render`, `vertex`, and `fragment` intrinsics decide when and where code runs.
 You can annotate each stage with its kind: the GPU-side stages get the `glsl` annotation and the render stage gets a `js` annotation so it gets compiled to plain JavaScript.
