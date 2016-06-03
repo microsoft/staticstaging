@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>$pagetitle$</title>
-<link rel="stylesheet" href="main.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>$pagetitle$</title>
+  <link rel="stylesheet" href="dingus/dingus.css">
+  <link rel="stylesheet" href="dingus/codemirror.css">
+  <link rel="stylesheet" href="main.css">
 </head>
 <body>
 
@@ -17,7 +19,31 @@
 $body$
 </main>
 
+<div class="sscdingus">
+  <div class="input">
+      <textarea class="code"></textarea>
+  </div>
+
+  <div class="output">
+      <div class="error"></div>
+      <div class="primary">
+        <pre class="result"></pre>
+        <div class="visual"></div>
+        <div class="fps"></div>
+      </div>
+      <div class="secondary">
+        <pre class="compiled"></pre>
+      </div>
+  </div>
+</div>
+
 <script type="text/javascript" src="dingus/ssc.bundle.js"></script>
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", function () {
+  var base = document.querySelector('.sscdingus');
+  sscDingus(base);
+});
+</script>
 
 </body>
 </html>
