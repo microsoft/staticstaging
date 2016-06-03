@@ -25,3 +25,15 @@ main {
 
 // Dingus style.
 @import "dingus/dingus.tools.scss";
+
+.sscdingus {
+    @extend .row;
+    .input {
+        @include make-col();
+        @include make-col-span(8);
+    }
+    .output {
+        @include make-col();
+        @include make-col-span(4);
+    }
+}
