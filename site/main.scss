@@ -3,8 +3,8 @@ $dark: #050400;
 $highlight: #FD8B55;
 
 // Bootstrap customization.
-@import "bower_components/bootstrap/scss/_variables.scss";
 $brand-primary: #A63F92;
+@import "bower_components/bootstrap/scss/_variables.scss";
 $font-family-sans-serif: Verdana, Tahoma, Geneva, sans-serif;
 $code-color: $body-color;  // No pink code.
 
