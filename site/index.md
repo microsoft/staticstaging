@@ -7,7 +7,10 @@ An introduction goes here.
 
 An example here.
 
+    # Position the model.
     var model = mat4.create();
+    mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
+    mat4.translate(model, model, vec3(0.0, -2.0, 0.0));
 
     # Load buffers and parameters for the model.
     var mesh = bunny;
@@ -20,7 +23,7 @@ An example here.
 
     render js<
      vertex glsl<
-      gl_Position = projection * view *
+      gl_Position = projection * view * model *
        vec4(position, 1.0);
       fragment glsl<
        gl_FragColor =
