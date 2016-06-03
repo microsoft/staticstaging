@@ -7,12 +7,18 @@ $brand-primary: #A63F92 !default;
 // Bootstrap.
 @import "bower_components/bootstrap/scss/bootstrap.scss";
 
-main {
-    @extend .container;
+// A full-width, colorful section of the page.
+.page-section {
+    @extend .container-fluid;
+    padding: 1rem 2rem;
 }
 
-h1 {
+header {
+    @extend .page-section;
     background: $brand-primary;
     color: white;
-    padding: 1em 0.5em 0.5em;
+}
+
+main {
+    @extend .page-section;
 }
