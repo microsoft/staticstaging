@@ -398,7 +398,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   // Lazily constructed tools.
   let draw_tree: (tree_data: any) => void;
-  let update_gl: (code: string) => void;
+  let update_gl: (code?: string) => void;
 
   let last_mode: string = null;
   let custom_preamble = "";
@@ -594,5 +594,15 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
     },
 
     cm: codemirror,
+
+    /**
+     * Redraw components in the dingus to adapt to screen size changes, etc.
+     */
+    redraw() {
+      codemirror.refresh();
+      if (update_gl) {
+        update_gl();
+      }
+    }
   };
 }

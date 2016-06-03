@@ -190,11 +190,15 @@ export = function start_gl(container: HTMLElement, fps_element: HTMLElement) {
   window.requestAnimationFrame(render);
 
   // Return a function that lets the client update the render body.
-  return function (shfl_code: string) {
-    // Execute the compiled SHFL code in context.
-    let shfl_program = shfl_eval(shfl_code, gl, projection, view);
+  return function (shfl_code?: string) {
+    if (shfl_code) {
+      // Execute the compiled SHFL code in context.
+      let shfl_program = shfl_eval(shfl_code, gl, projection, view);
 
-    // Invoke the setup stage.
-    shfl_render = shfl_program();
+      // Invoke the setup stage.
+      shfl_render = shfl_program();
+    }
+
+    fit();
   };
 }

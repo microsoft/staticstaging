@@ -42,9 +42,7 @@ function dingusify(orig: Element, tmpl: DocumentFragment) {
 
   // Replace the old element with the new dingus.
   replace(dingusEl, orig);
-
-  // Redraw the CodeMirror box.
-  dingus.cm.refresh();
+  dingus.redraw();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
