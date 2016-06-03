@@ -19,3 +19,8 @@ $(RIBBON):
 
 %.js: %.ts
 	tsc $^
+
+.PHONY: watch
+SOURCE := index.md main.scss main.ts
+watch:
+	liveserve $(SOURCE:%=-w %) -x make
