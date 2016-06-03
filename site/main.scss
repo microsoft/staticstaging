@@ -25,7 +25,7 @@ header {
     padding-bottom: 2rem;
 
     a {
-        color: $dark;
+        color: saturate(lighten($link-color, 35%), 100%);
     }
     a:hover {
         color: $highlight;
