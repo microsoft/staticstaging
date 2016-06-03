@@ -257,7 +257,7 @@ html {
   -webkit-tap-highlight-color: transparent; }
 
 body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: Verdana, Tahoma, Geneva, sans-serif;
   font-size: 1rem;
   line-height: 1.5;
   color: #373a3c;
@@ -637,10 +637,10 @@ pre {
     display: table;
     clear: both; }
 
-.row {
+.row, .sscdingus {
   margin-left: -0.9375rem;
   margin-right: -0.9375rem; }
-  .row::after {
+  .row::after, .sscdingus::after {
     content: "";
     display: table;
     clear: both; }
@@ -3740,7 +3740,7 @@ button.close {
   position: absolute;
   z-index: 1070;
   display: block;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: Verdana, Tahoma, Geneva, sans-serif;
   font-style: normal;
   font-weight: normal;
   letter-spacing: normal;
@@ -3819,7 +3819,7 @@ button.close {
   display: block;
   max-width: 276px;
   padding: 1px;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: Verdana, Tahoma, Geneva, sans-serif;
   font-style: normal;
   font-weight: normal;
   letter-spacing: normal;
@@ -4563,4 +4563,171 @@ a.bg-danger:focus, a.bg-danger:hover {
 
 header {
   background: #A63F92;
-  color: white; }
+  color: white;
+  padding-top: 4rem;
+  padding-bottom: 2rem; }
+
+.sscdingus {
+  /* The toolbar. */
+  /* Output boxes hidden initially. */
+  /* Tiny output code. */
+  /* When the output is a WebGL canvas, make it big. */
+  /* Framerate display. */
+  /* The syntax tree diagram. */ }
+  .sscdingus .tools {
+    height: 2em;
+    margin-top: 0.5ex; }
+  .sscdingus .tools > * {
+    float: left;
+    margin: 0 0.5em 0 0; }
+  .sscdingus .error, .sscdingus .result {
+    display: none;
+    clear: both; }
+  .sscdingus .fps {
+    display: none; }
+  .sscdingus .compiled {
+    font-size: 60%;
+    overflow: auto; }
+  .sscdingus .visual {
+    height: 300px; }
+  .sscdingus .fps {
+    text-align: right;
+    font-size: 80%; }
+  .sscdingus .fps::after {
+    content: " fps"; }
+  .sscdingus .tree {
+    height: 30ex; }
+  .sscdingus .tree .node text {
+    font-size: 80%; }
+  .sscdingus .tree .link {
+    fill: none;
+    stroke: #ddd;
+    stroke-width: 2px; }
+
+.sscdingus .input, .sscdingus .output {
+  position: relative;
+  float: left;
+  min-height: 1px;
+  padding-left: 0.9375rem;
+  padding-right: 0.9375rem; }
+
+@media (min-width: 768px) {
+  .sscdingus .input {
+    position: relative;
+    float: left;
+    min-height: 1px;
+    padding-left: 0.9375rem;
+    padding-right: 0.9375rem;
+    width: 66.66667%; }
+  .sscdingus .output {
+    position: relative;
+    float: left;
+    min-height: 1px;
+    padding-left: 0.9375rem;
+    padding-right: 0.9375rem;
+    width: 33.33333%; } }
+
+@media (max-width: 767px) {
+  .sscdingus .output {
+    width: 100%; } }
+
+/*!
+ * "Fork me on GitHub" CSS ribbon v0.2.0 | MIT License
+ * https://github.com/simonwhitaker/github-fork-ribbon-css
+*/
+.github-fork-ribbon {
+  width: 12.1em;
+  height: 12.1em;
+  position: absolute;
+  overflow: hidden;
+  top: 0;
+  right: 0;
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 13px;
+  text-decoration: none;
+  text-indent: -999999px; }
+
+.github-fork-ribbon.fixed {
+  position: fixed; }
+
+.github-fork-ribbon:before, .github-fork-ribbon:after {
+  /* The right and left classes determine the side we attach our banner to */
+  position: absolute;
+  display: block;
+  width: 15.38em;
+  height: 1.54em;
+  top: 3.23em;
+  right: -3.23em;
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  transform: rotate(45deg); }
+
+.github-fork-ribbon:before {
+  content: "";
+  /* Add a bit of padding to give some substance outside the "stitching" */
+  padding: .38em 0;
+  /* Set the base colour */
+  background-color: #a00;
+  /* Set a gradient: transparent black at the top to almost-transparent black at the bottom */
+  background-image: -webkit-gradient(linear, left top, left bottom, from(transparent), to(rgba(0, 0, 0, 0.15)));
+  background-image: -webkit-linear-gradient(top, transparent, rgba(0, 0, 0, 0.15));
+  background-image: -moz-linear-gradient(top, transparent, rgba(0, 0, 0, 0.15));
+  background-image: -ms-linear-gradient(top, transparent, rgba(0, 0, 0, 0.15));
+  background-image: -o-linear-gradient(top, transparent, rgba(0, 0, 0, 0.15));
+  background-image: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.15));
+  /* Add a drop shadow */
+  -webkit-box-shadow: 0 0.15em 0.23em 0 rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 0 0.15em 0.23em 0 rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0.15em 0.23em 0 rgba(0, 0, 0, 0.5);
+  pointer-events: auto; }
+
+.github-fork-ribbon:after {
+  /* Set the text from the title attribute */
+  content: attr(title);
+  /* Set the text properties */
+  color: #fff;
+  font: 700 1em "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.54em;
+  text-decoration: none;
+  text-shadow: 0 -0.08em rgba(0, 0, 0, 0.5);
+  text-align: center;
+  text-indent: 0;
+  /* Set the layout properties */
+  padding: .15em 0;
+  margin: .15em 0;
+  /* Add "stitching" effect */
+  border-width: .08em 0;
+  border-style: dotted;
+  border-color: #fff;
+  border-color: rgba(255, 255, 255, 0.7); }
+
+.github-fork-ribbon.left-top, .github-fork-ribbon.left-bottom {
+  right: auto;
+  left: 0; }
+
+.github-fork-ribbon.left-bottom, .github-fork-ribbon.right-bottom {
+  top: auto;
+  bottom: 0; }
+
+.github-fork-ribbon.left-top:before, .github-fork-ribbon.left-top:after, .github-fork-ribbon.left-bottom:before, .github-fork-ribbon.left-bottom:after {
+  right: auto;
+  left: -3.23em; }
+
+.github-fork-ribbon.left-bottom:before, .github-fork-ribbon.left-bottom:after, .github-fork-ribbon.right-bottom:before, .github-fork-ribbon.right-bottom:after {
+  top: auto;
+  bottom: 3.23em; }
+
+.github-fork-ribbon.left-top:before, .github-fork-ribbon.left-top:after, .github-fork-ribbon.right-bottom:before, .github-fork-ribbon.right-bottom:after {
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg); }
+
+.github-fork-ribbon:before, .github-fork-ribbon:after {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box; }

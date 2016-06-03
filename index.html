@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Happy Shader Programming with Static Staging</title>
-  <link rel="stylesheet" href="dingus/dingus.css">
   <link rel="stylesheet" href="dingus/codemirror.css">
   <link rel="stylesheet" href="main.css">
 </head>
@@ -13,14 +12,67 @@
 
 <header>
 <h1>Happy Shader Programming with Static Staging</h1>
+<section>
+<p>An introduction goes here.</p>
+</section>
 </header>
 
 <main>
-<p>An introduction goes here.</p>
+<p>More intro text.</p>
 <h2 id="lets-draw-something">Let’s Draw Something</h2>
 <p>An example here.</p>
+<pre><code># Position the model.
+var model = mat4.create();
+mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
+mat4.translate(model, model, vec3(0.0, -2.0, 0.0));
+
+# Load buffers and parameters for the model.
+var mesh = bunny;
+var position = mesh_positions(mesh);
+var normal = mesh_normals(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
+
+# ---
+
+render js&lt;
+ vertex glsl&lt;
+  gl_Position = projection * view * model *
+   vec4(position, 1.0);
+  fragment glsl&lt;
+   gl_FragColor = vec4(abs(normal), 1.0);
+  &gt;
+ &gt;;
+ draw_mesh(indices, size);
+&gt;</code></pre>
+<p>More text goes here.</p>
+<h2 id="another-example">Another Example</h2>
+<p>We can use as many examples as we want!</p>
+<pre><code>var model = mat4.create();
+
+# Load buffers and parameters for the model.
+var mesh = bunny;
+var position = mesh_positions(mesh);
+var normal = mesh_normals(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
+
+# ---
+
+render js&lt;
+ vertex glsl&lt;
+  gl_Position = projection * view *
+   vec4(position, 1.0);
+  fragment glsl&lt;
+   gl_FragColor =
+    vec4(0.3, 0.1, 0.9, 1.0);
+  &gt;
+ &gt;;
+ draw_mesh(indices, size);
+&gt;</code></pre>
 </main>
 
+<template id="template-dingus">
 <div class="sscdingus">
   <div class="input">
       <textarea class="code"></textarea>
@@ -31,21 +83,17 @@
       <div class="primary">
         <pre class="result"></pre>
         <div class="visual"></div>
-        <div class="fps"></div>
-      </div>
-      <div class="secondary">
-        <pre class="compiled"></pre>
       </div>
   </div>
 </div>
+</template>
+
+<a class="github-fork-ribbon"
+    href="https://github.com/Microsoft/staticstaging"
+    title="Fork me on GitHub">Fork me on GitHub</a>
 
 <script type="text/javascript" src="dingus/ssc.bundle.js"></script>
-<script type="text/javascript">
-document.addEventListener("DOMContentLoaded", function () {
-  var base = document.querySelector('.sscdingus');
-  sscDingus(base);
-});
-</script>
+<script type="text/javascript" src="main.js"></script>
 
 </body>
 </html>
