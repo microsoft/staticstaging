@@ -26,8 +26,7 @@ An example here.
       gl_Position = projection * view * model *
        vec4(position, 1.0);
       fragment glsl<
-       gl_FragColor =
-        vec4(abs(normal), 1.0);
+       gl_FragColor = vec4(abs(normal), 1.0);
       >
      >;
      draw_mesh(indices, size);

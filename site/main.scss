@@ -52,3 +52,13 @@ main {
         }
     }
 }
+
+// "Fork me on GitHub."
+@import "bower_components/github-fork-ribbon-css/gh-fork-ribbon";
+
+// https://github.com/simonwhitaker/github-fork-ribbon-css/pull/48
+.github-fork-ribbon:before, .github-fork-ribbon:after {
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+}

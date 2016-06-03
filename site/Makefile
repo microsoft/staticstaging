@@ -5,11 +5,16 @@ all: index.html main.css main.js
 	pandoc -s --template template.html -o $@ --smart $<
 
 FRAMEWORK := bower_components/bootstrap/scss/bootstrap.scss
-%.css: %.scss $(FRAMEWORK) dingus/dingus.tools.scss
+RIBBON := bower_components/github-fork-ribbon-css/gh-fork-ribbon.css
+%.css: %.scss $(FRAMEWORK) dingus/dingus.tools.scss $(RIBBON)
 	sassc $< > $@
 
 $(FRAMEWORK):
 	bower install bootstrap\#v4.0.0-alpha.2
+	@touch $@
+
+$(RIBBON):
+	bower install github-fork-ribbon-css
 	@touch $@
 
 %.js: %.ts
