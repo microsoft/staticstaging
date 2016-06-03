@@ -1,5 +1,6 @@
 // Some colors.
 $dark: #050400;
+$highlight: #FD8B55;
 
 // Bootstrap customization.
 $brand-primary: #A63F92 !default;
@@ -20,6 +21,13 @@ header {
     color: white;
     padding-top: 4rem;
     padding-bottom: 2rem;
+
+    a {
+        color: $dark;
+    }
+    a:hover {
+        color: $highlight;
+    }
 }
 
 main {

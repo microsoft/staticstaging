@@ -1,7 +1,16 @@
 ---
-title: Happy Shader Programming with Static Staging
+title: Happy Graphics Coding with Static Staging
 abstract: |
-    An introduction goes here.
+    Graphics programming should be fun.
+    But today, you have to choose between pre-packaged engines like Unity and low-level nitty-gritty APIs like OpenGL and Direct3D.
+    If you want to control the GPU directly with shaders, you're in for a steep learning curve.
+
+    *Static staging* is a new programming language concept from [Microsoft Research][msr] that makes it easy to program across the CPU--GPU boundary. The [Static Staging Compiler][ssc] is an open-source prorotype compiler that generates [WebGL][] and [GLSL][] code from a single program with *staging annotations*.
+
+    [msr]: http://research.microsoft.com
+    [ssc]: https://github.com/Microsoft/staticstaging
+    [webgl]: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
+    [glsl]: https://www.opengl.org/documentation/glsl/
 ---
 More intro text.
 
