@@ -46,25 +46,21 @@ main {
         @include make-col();
     }
 
-    // On "small" devices and up, show in two columns.
+    // On "small" devices and down, the pieces are full-width.
+    .input, .output {
+        width: 100%;
+    }
+
+    // On "medium" devices and up, show in two columns.
     @include media-breakpoint-up(md) {
-        .input {
+        .input, .output {
             @include make-col();
+        }
+        .input {
             @include make-col-span(8);
         }
         .output {
-            @include make-col();
             @include make-col-span(4);
-        }
-    }
-
-    // Output box takes up the whole width on small devices.
-    @include media-breakpoint-down(sm) {
-        .input {
-            width: 100%;
-        }
-        .output {
-            width: 100%;
         }
     }
 
