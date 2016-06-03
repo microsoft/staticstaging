@@ -4566,6 +4566,10 @@ header {
   color: white;
   padding-top: 4rem;
   padding-bottom: 2rem; }
+  header a {
+    color: #050400; }
+  header a:hover {
+    color: #FD8B55; }
 
 .sscdingus {
   /* The toolbar. */
@@ -4726,6 +4730,9 @@ header {
   -ms-transform: rotate(-45deg);
   -o-transform: rotate(-45deg);
   transform: rotate(-45deg); }
+
+.github-fork-ribbon:before {
+  background-color: #333; }
 
 .github-fork-ribbon:before, .github-fork-ribbon:after {
   -webkit-box-sizing: content-box;
