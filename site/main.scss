@@ -58,6 +58,9 @@ main {
 
     // Output box takes up the whole width on small devices.
     @include media-breakpoint-down(sm) {
+        .input {
+            width: 100%;
+        }
         .output {
             width: 100%;
         }
