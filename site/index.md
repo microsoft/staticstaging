@@ -1,7 +1,9 @@
 ---
 title: Happy Shader Programming with Static Staging
+abstract: |
+    An introduction goes here.
 ---
-An introduction goes here.
+More intro text.
 
 ## Let's Draw Something
 

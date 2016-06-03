@@ -17,6 +17,8 @@ header {
     @extend .page-section;
     background: $brand-primary;
     color: white;
+    padding-top: 4rem;
+    padding-bottom: 2rem;
 }
 
 main {
