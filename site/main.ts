@@ -38,7 +38,7 @@ function dingusify(orig: Element, tmpl: DocumentFragment) {
   // Fill in the code.
   let code = orig.textContent.trim();
   // dingus.set_preamble(preamble);
-  dingus.run(code, "interp");
+  dingus.run(code, "webgl");
 
   // Replace the old element with the new dingus.
   replace(dingusEl, orig);
