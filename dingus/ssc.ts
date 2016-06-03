@@ -456,7 +456,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       if (mode === "webgl" && glcode) {
         // Start the WebGL viewer.
         visualbox.style.display = 'block';
-        fpsbox.style.display = 'block';
+        if (fpsbox) {
+          fpsbox.style.display = 'block';
+        }
         show(null, outbox);
 
         console.log(glcode);
@@ -467,7 +469,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       } else {
         // Just show the output value.
         visualbox.style.display = 'none';
-        fpsbox.style.display = 'none';
+        if (fpsbox) {
+          fpsbox.style.display = 'none';
+        }
         show(res, outbox);
       }
 
