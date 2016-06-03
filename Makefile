@@ -112,7 +112,7 @@ site: dingus docs home
 	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
 		--include '*/' --exclude '*' \
 		dingus/* $(DEPLOY_DIR)/dingus
-	cp site/index.html site/main.css $(DEPLOY_DIR)
+	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
 
 DEPLOY_BRANCH := gh-pages
 deploy: site
