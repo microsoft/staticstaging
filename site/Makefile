@@ -5,7 +5,7 @@ all: index.html main.css main.js
 	pandoc -s --template template.html -o $@ --smart $<
 
 FRAMEWORK := bower_components/bootstrap/scss/bootstrap.scss
-%.css: %.scss $(FRAMEWORK)
+%.css: %.scss $(FRAMEWORK) dingus/dingus.tools.scss
 	sassc $< > $@
 
 $(FRAMEWORK):

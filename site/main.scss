@@ -22,3 +22,6 @@ header {
 main {
     @extend .page-section;
 }
+
+// Dingus style.
+@import "dingus/dingus.tools.scss";
