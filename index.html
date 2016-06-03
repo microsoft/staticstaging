@@ -19,9 +19,17 @@
 </header>
 
 <main>
-<p>More intro text.</p>
+<p>This tutorial will show you how to write some simple graphics programs using the <a href="https://github.com/Microsoft/staticstaging">Static Staging Compiler</a>. Try editing any of the examples to see the result immediately. You can also check out <a href="https://github.com/Microsoft/staticstaging">the code on GitHub</a> or read the more technical <a href="http://microsoft.github.io/staticstaging/docs/">language manual</a> for details.</p>
 <h2 id="lets-draw-something">Let’s Draw Something</h2>
-<p>An example here.</p>
+<p>In modern graphics programming, <a href="https://en.wikipedia.org/wiki/Shader"><em>shader programs</em></a> are little chunks of code that run on the GPU to define objects’ appearance. Traditionally, you write shaders in special programming languages and then use OpenGL or Direct3D APIs to communicate with them from your CPU-side code.</p>
+<p>With static staging, CPU and GPU code co-exist in the same program. You use angle brackets like <code>&lt; this &gt;</code> to decide when and where code runs. These annotations delimit a nested hierarchy of <em>stages</em>. To write a graphics program with SSC, you use four stages:</p>
+<ul>
+<li>The <em>setup stage</em>, which appears outside of any angle brackets and runs once when the program starts up.</li>
+<li>The <em>render stage</em>, which runs on the CPU to draw every frame.</li>
+<li>The <em>vertex stage</em>, which corresponds to the <a href="https://www.opengl.org/wiki/Vertex_Shader">vertex shader</a> in WebGL: it runs code on the GPU for every vertex in an object to determine its position.</li>
+<li>The <em>fragment stage</em>, which abstracts the <a href="https://www.opengl.org/wiki/Fragment_Shader">pixel shader</a> and determines the color of every pixel on the surface of an object.</li>
+</ul>
+<p>Here’s what it looks like:</p>
 <pre><code># Position the model.
 var model = mat4.create();
 mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
@@ -46,7 +54,7 @@ render js&lt;
  &gt;;
  draw_mesh(indices, size);
 &gt;</code></pre>
-<p>More text goes here.</p>
+<p>Those <code>render</code>, <code>vertex</code>, and <code>fragment</code> intrinsics decide when and where code runs. You can annotate each stage with its kind: the GPU-side stages get the <code>glsl</code> annotation and the render stage gets a <code>js</code> annotation so it gets compiled to plain JavaScript.</p>
 <h2 id="another-example">Another Example</h2>
 <p>We can use as many examples as we want!</p>
 <pre><code>var model = mat4.create();
