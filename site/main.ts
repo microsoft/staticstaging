@@ -22,12 +22,29 @@ function instantiate(tmpl: DocumentFragment): Node {
   return document.importNode(tmpl, true);
 }
 
+/**
+ * Replace a code block in the HTML with a dingus that initially contains the
+ * same code.
+ */
 function dingusify(orig: Element, tmpl: DocumentFragment) {
-  let code = orig.textContent;
-  console.log(code);
+  // Set up the dingus.
+  let dingusEl = instantiate(tmpl);
+  let dingus = sscDingus(dingusEl, {
+    history: false,
+    lineNumbers: false,
+    scrollbars: false,
+  });
 
-  let dingus = instantiate(tmpl);
-  replace(dingus, orig);
+  // Fill in the code.
+  let code = orig.textContent.trim();
+  // dingus.set_preamble(preamble);
+  dingus.run(code, "interp");
+
+  // Replace the old element with the new dingus.
+  replace(dingusEl, orig);
+
+  // Redraw the CodeMirror box.
+  dingus.cm.refresh();
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -40,11 +57,4 @@ document.addEventListener("DOMContentLoaded", function () {
     let pre = pres[i];
     dingusify(pre, dingusTmpl);
   }
-
-  let base = document.querySelector('.sscdingus');
-  sscDingus(base, {
-    history: false,
-    lineNumbers: false,
-    scrollbars: false,
-  });
 });
