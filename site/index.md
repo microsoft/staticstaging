@@ -12,11 +12,33 @@ abstract: |
     [webgl]: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
     [glsl]: https://www.opengl.org/documentation/glsl/
 ---
-More intro text.
+This tutorial will show you how to write some simple graphics programs using the [Static Staging Compiler][ssc].
+Try editing any of the examples to see the result immediately.
+You can also check out [the code on GitHub][ssc] or read the more technical [language manual][docs] for details.
+
+[ssc]: https://github.com/Microsoft/staticstaging
+[docs]: http://microsoft.github.io/staticstaging/docs/
 
 ## Let's Draw Something
 
-An example here.
+In modern graphics programming, [*shader programs*][shader] are little chunks of code that run on the GPU to define objects' appearance.
+Traditionally, you write shaders in special programming languages and then use OpenGL or Direct3D APIs to communicate with them from your CPU-side code.
+
+With static staging, CPU and GPU code co-exist in the same program.
+You use angle brackets like `< this >` to decide when and where code runs.
+These annotations delimit a nested hierarchy of *stages*.
+To write a graphics program with SSC, you use four stages:
+
+* The *setup stage*, which appears outside of any angle brackets and runs once when the program starts up.
+* The *render stage*, which runs on the CPU to draw every frame.
+* The *vertex stage*, which corresponds to the [vertex shader][vtx] in WebGL: it runs code on the GPU for every vertex in an object to determine its position.
+* The *fragment stage*, which abstracts the [pixel shader][frag] and determines the color of every pixel on the surface of an object.
+
+[shader]: https://en.wikipedia.org/wiki/Shader
+[vtx]: https://www.opengl.org/wiki/Vertex_Shader
+[frag]: https://www.opengl.org/wiki/Fragment_Shader
+
+Here's what it looks like:
 
     # Position the model.
     var model = mat4.create();
@@ -43,7 +65,8 @@ An example here.
      draw_mesh(indices, size);
     >
 
-More text goes here.
+Those `render`, `vertex`, and `fragment` intrinsics decide when and where code runs.
+You can annotate each stage with its kind: the GPU-side stages get the `glsl` annotation and the render stage gets a `js` annotation so it gets compiled to plain JavaScript.
 
 ## Another Example
 
