@@ -429,7 +429,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       // Show the compiled code or the AST visualization.
       if (mode !== "interp") {
         // Show the compiled code.
-        show(compiled, compiledbox);
+        if (compiledbox) {
+          show(compiled, compiledbox);
+        }
         if (treebox) {
           treebox.style.display = 'none';
         }
@@ -445,7 +447,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
           treebox.style.display = 'block';
         }
 
-        show(null, compiledbox);
+        if (compiledbox) {
+          show(null, compiledbox);
+        }
       }
 
       // Show the output, either as text or in the WebGL viewer.
@@ -480,7 +484,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       if (treebox) {
         treebox.style.display = 'none';
       }
-      show(null, compiledbox);
+      if (compiledbox) {
+        show(null, compiledbox);
+      }
 
       if (navigate && config.history) {
         history.replaceState(null, null, '#');
