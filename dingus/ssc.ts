@@ -357,6 +357,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
     mode: "alltheworld",
     scrollbarStyle: config.scrollbars ? "native" : null,
     tabSize: 2,
+    lineWrapping: true,
   } as any);
 
   // Accessors for the current code in the box.

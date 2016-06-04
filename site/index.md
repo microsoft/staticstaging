@@ -39,8 +39,7 @@ Here's a tiny SSC program that draws a [bunny][]:
 
     render js<
      vertex glsl<
-      gl_Position = projection * view * model *
-       vec4(position, 1.0);
+      gl_Position = projection * view * model * vec4(position, 1.0);
       fragment glsl<
        gl_FragColor = vec4(abs(normal), 1.0);
       >
