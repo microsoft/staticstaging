@@ -36,17 +36,24 @@ var size = mesh_size(mesh);
 
 # ---
 
+# Per-frame render loop.
 render js&lt;
- vertex glsl&lt;
-  gl_Position = projection * view * model * vec4(position, 1.0);
-  fragment glsl&lt;
-   gl_FragColor = vec4(abs(normal), 1.0);
-  &gt;
- &gt;;
- draw_mesh(indices, size);
+
+  # Vertex shader.
+  vertex glsl&lt;
+    gl_Position = projection * view * model * vec4(position, 1.0);
+
+    # Fragment shader.
+    fragment glsl&lt;
+      gl_FragColor = vec4(abs(normal), 1.0);
+    &gt;
+  &gt;;
+
+  # Draw the object with the above shader pair.
+  draw_mesh(indices, size);
 &gt;</code></pre>
 <p>In modern graphics programming, <a href="https://en.wikipedia.org/wiki/Shader"><em>shader programs</em></a> are little chunks of code that run on the GPU to define objects’ appearance. Traditionally, you write shaders in special programming languages and then use OpenGL or Direct3D APIs to communicate with them from your CPU-side code.</p>
-<p>With static staging, CPU and GPU code co-exist in the same program. Those angle brackets in the SSC example above, like <code>&lt; this &gt;</code>, delimit the boundaries between different kinds of code, called *stages. This example uses four stages:</p>
+<p>With static staging, CPU and GPU code co-exist in the same program. Those angle brackets in the SSC example above, like <code>&lt; this &gt;</code>, delimit the boundaries between different kinds of code, called <em>stages</em>. This example uses four stages:</p>
 <ul>
 <li>The <em>setup stage</em>, which appears outside of any angle brackets and runs once when the program starts up.</li>
 <li>The <em>render stage</em>, which runs on the CPU to draw every frame.</li>
@@ -54,9 +61,13 @@ render js&lt;
 <li>The <em>fragment stage</em>, which abstracts the <a href="https://www.opengl.org/wiki/Fragment_Shader">pixel shader</a> and determines the color of every pixel on the surface of an object.</li>
 </ul>
 <p>Those <code>render</code>, <code>vertex</code>, and <code>fragment</code> intrinsics decide when and where code runs. You can annotate each stage with its kind: the GPU-side stages get the <code>glsl</code> annotation and the render stage gets a <code>js</code> annotation so it gets compiled to plain JavaScript.</p>
-<h2 id="another-example">Another Example</h2>
-<p>We can use as many examples as we want!</p>
-<pre><code>var model = mat4.create();
+<h2 id="placement-and-communication">Placement and Communication</h2>
+<p>As the example above shows, variables in SSC programs can be shared between stages. Cross-stage variable references are actually a special case of a more general communication construct in SSC called <em>materialization</em>. Materialization lets you take an expression and run it at an earlier stage. SSC automatically sets up a communication pipe to bring the resulting value back to the current stage.</p>
+<p>In this example, we’ll rotate the model’s position on the CPU. The materialization expression <code>%[ model * rot ]</code> multiplies the pre-defined model position matrix, <code>model</code>, by a rotation matrix <code>rot</code> and then sends the result to the GPU:</p>
+<pre><code># Original model position.
+var model = mat4.create();
+mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
+mat4.translate(model, model, vec3(0.0, -5.0, 0.0));
 
 # Load buffers and parameters for the model.
 var mesh = bunny;
@@ -67,16 +78,115 @@ var size = mesh_size(mesh);
 
 # ---
 
+# Create two identity matrices.
+var id = mat4.create();
+var rot = mat4.create();
+
 render js&lt;
- vertex glsl&lt;
-  gl_Position = projection * view *
-   vec4(position, 1.0);
-  fragment glsl&lt;
-   gl_FragColor =
-    vec4(0.3, 0.1, 0.9, 1.0);
-  &gt;
- &gt;;
- draw_mesh(indices, size);
+  # Rotate the identity matrix to create a
+  # rotaiton matrix.
+  var phase = Math.sin(Date.now() / 200);
+  mat4.rotateY(rot, id, phase);
+
+  vertex glsl&lt;
+    # Multiply the model position by the rotation
+    # matrix *on the CPU* and communicate it to
+    # the GPU.
+    gl_Position = projection * view * %[ model * rot ] * vec4(position, 1.0);
+    fragment glsl&lt;
+      gl_FragColor = vec4(abs(normal), 1.0);
+    &gt;
+  &gt;;
+  draw_mesh(indices, size);
+&gt;</code></pre>
+<p>This example also calls a couple of JavaScript functions, <code>Math.sin</code> and <code>Date.now</code>. We also used the <code>mat4.rotateY</code> function from the <a href="https://github.com/stackgl/gl-mat4"><code>gl-mat4</code></a> library of matrix utilities. SSC compiles to plain JavaScript, so interop is easy.</p>
+<h1 id="a-full-example">A Full Example</h1>
+<p>This example shows how to build larger programs using SSC. You can abstract shaders into functions to keep your code clean when you draw scenes with more than one object.</p>
+<p>This code listing elides the definitions of the <code>phong</code> and <code>solid</code> functions that wrap the two shaders. You can see the full code in this page’s source or <a href="https://github.com/Microsoft/staticstaging/blob/master/site/index.md#a-full-example">on GitHub</a>. Try playing with the <code>light_color</code> variable at the top here to change the color of the light:</p>
+<pre><code># Phong shader.
+def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
+  var camera_pos = eye(view);
+
+  vertex glsl&lt;
+    gl_Position = projection * view * model * vec4(pos, 1.0);
+
+    fragment glsl&lt;
+      # Convert to world space.
+      var position_world = vec3(model * vec4(pos, 1.0));
+      var normal_world = normalize(vec3(model * vec4(pos, 0.0)));
+      var view_dir_world = normalize(camera_pos - position_world);
+
+      # Light.
+      var light_direction = normalize(lightpos - position_world);
+
+      # Diffuse.
+      var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
+
+      # Specular.
+      var angle = normalize(view_dir_world + light_direction);
+      var spec_comp_b = max(0.0, dot(normal_world, angle));
+      var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
+
+      gl_FragColor = vec4(color * ndl + vec3(spec_comp), 1.0);
+    &gt;
+  &gt;;
+);
+
+# Simple, solid-color shader.
+def solid(pos: Float3 Array, model: Mat4, color: Vec3) (
+  vertex glsl&lt;
+    gl_Position = projection * view * model * vec4(pos, 1.0);
+    fragment glsl&lt;
+      gl_FragColor = vec4(color, 1.0);
+    &gt;
+  &gt;;
+);
+
+# Load buffers and parameters for the main model.
+var mesh = teapot;
+var position = mesh_positions(mesh);
+var normal = mesh_normals(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
+
+# Light-source marker model.
+var b_position = mesh_positions(bunny);
+var b_normal = mesh_normals(bunny);
+var b_indices = mesh_indices(bunny);
+var b_size = mesh_size(bunny);
+var b_model = mat4.create();
+
+# An identity matrix, which we&#39;ll use for model positioning.
+var id = mat4.create();
+
+# ---
+
+# The parameters for the Phong shader.
+var specular = 50.0;
+var light_color = vec3(1.0, 0.2, 0.5);
+
+render js&lt;
+  # Rotate a light-source point in a circle.
+  var t = Date.now();
+  var light_position = vec3(
+    Math.cos(t / 200) * 14.0,
+    0.0,
+    Math.sin(t / 200) * 14.0
+  );
+
+  # Draw the teapot using the Phong shader.
+  phong(position, normal, id,
+        light_position, light_color,
+        specular);
+  draw_mesh(indices, size);
+
+  # Place the bunny at the light source,
+  # for illustrative purposes.
+  mat4.translate(b_model, id, light_position);
+  mat4.scale(b_model, b_model,
+             vec3(0.1, 0.1, 0.1));
+  solid(b_position, b_model, light_color);
+  draw_mesh(b_indices, b_size);
 &gt;</code></pre>
 </main>
 
