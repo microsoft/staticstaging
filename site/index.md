@@ -11,6 +11,12 @@ abstract: |
     [ssc]: https://github.com/Microsoft/staticstaging
     [webgl]: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API
     [glsl]: https://www.opengl.org/documentation/glsl/
+epilogue: |
+    There's a lot more to programming with static stages!
+    Next, you might be interested in reading the full [SSC documentation][docs].
+    We're working on expanding this tutorial, so check back soon.
+
+    [docs]: http://microsoft.github.io/staticstaging/docs/
 ---
 This tutorial will show you how to write some simple graphics programs using the [Static Staging Compiler][ssc].
 Try editing any of the examples to see the result immediately.

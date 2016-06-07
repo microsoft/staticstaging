@@ -17,12 +17,10 @@ $code-color: $body-color;  // No pink code.
     padding: 1rem 2rem;
 }
 
-header {
-    @extend .page-section;
+// A colorful block for the top and bottom.
+.inverted {
     background: $brand-primary;
     color: white;
-    padding-top: 4rem;
-    padding-bottom: 2rem;
 
     a {
         color: saturate(lighten($link-color, 35%), 100%);
@@ -32,8 +30,20 @@ header {
     }
 }
 
+header {
+    @extend .page-section;
+    @extend .inverted;
+    padding-top: 4rem;
+    padding-bottom: 2rem;
+}
+
 main {
     @extend .page-section;
+}
+
+footer {
+    @extend .page-section;
+    @extend .inverted;
 }
 
 // Dingus style.

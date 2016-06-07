@@ -1,8 +1,10 @@
 .PHONY: all
 all: index.html main.css main.js
 
+PANDOC_ARGS := --standalone -t html5 --section-divs \
+	--template template.html --smart
 %.html: %.md template.html
-	pandoc -s --template template.html -o $@ --smart $<
+	pandoc $(PANDOC_ARGS) -o $@ $<
 
 FRAMEWORK := bower_components/bootstrap/scss/bootstrap.scss
 RIBBON := bower_components/github-fork-ribbon-css/gh-fork-ribbon.css
