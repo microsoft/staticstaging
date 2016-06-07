@@ -103,9 +103,8 @@ The materialization expression `%[ model * rot ]` multiplies the pre-defined mod
     var rot = mat4.create();
 
     render js<
-      # Rotate the identity matrix to create a
-      # rotaiton matrix.
-      var phase = Math.sin(Date.now() / 200);
+      # Rotate the identity matrix.
+      var phase = Date.now() / 300;
       mat4.rotateY(rot, id, phase);
 
       vertex glsl<
