@@ -121,4 +121,7 @@ The materialization expression `%[ model * rot ]` multiplies the pre-defined mod
     >
 
 This example also calls a couple of JavaScript functions, `Math.sin` and `Date.now`.
-Since SSC compiles to plain JavaScript, interop is easy.
+We also used the `mat4.rotateY` function from the [`gl-mat4`][mat4] library of matrix utilities.
+SSC compiles to plain JavaScript, so interop is easy.
+
+[mat4]: https://github.com/stackgl/gl-mat4
