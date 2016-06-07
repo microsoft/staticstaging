@@ -20,7 +20,8 @@
 
 <main>
 <p>This tutorial will show you how to write some simple graphics programs using the <a href="https://github.com/Microsoft/staticstaging">Static Staging Compiler</a>. Try editing any of the examples to see the result immediately. You can also check out <a href="https://github.com/Microsoft/staticstaging">the code on GitHub</a> or read the more technical <a href="http://microsoft.github.io/staticstaging/docs/">language manual</a> for details.</p>
-<h2 id="lets-draw-something">Let’s Draw Something</h2>
+<section id="lets-draw-something" class="level2">
+<h2>Let’s Draw Something</h2>
 <p>Here’s a tiny SSC program that draws a <a href="http://graphics.stanford.edu/data/3Dscanrep/">bunny</a>:</p>
 <pre><code># Position the model.
 var model = mat4.create();
@@ -61,7 +62,9 @@ render js&lt;
 <li>The <em>fragment stage</em>, which abstracts the <a href="https://www.opengl.org/wiki/Fragment_Shader">pixel shader</a> and determines the color of every pixel on the surface of an object.</li>
 </ul>
 <p>Those <code>render</code>, <code>vertex</code>, and <code>fragment</code> intrinsics decide when and where code runs. You can annotate each stage with its kind: the GPU-side stages get the <code>glsl</code> annotation and the render stage gets a <code>js</code> annotation so it gets compiled to plain JavaScript.</p>
-<h2 id="placement-and-communication">Placement and Communication</h2>
+</section>
+<section id="placement-and-communication" class="level2">
+<h2>Placement and Communication</h2>
 <p>As the example above shows, variables in SSC programs can be shared between stages. Cross-stage variable references are actually a special case of a more general communication construct in SSC called <em>materialization</em>. Materialization lets you take an expression and run it at an earlier stage. SSC automatically sets up a communication pipe to bring the resulting value back to the current stage.</p>
 <p>In this example, we’ll rotate the model’s position on the CPU. The materialization expression <code>%[ model * rot ]</code> multiplies the pre-defined model position matrix, <code>model</code>, by a rotation matrix <code>rot</code> and then sends the result to the GPU:</p>
 <pre><code># Original model position.
@@ -83,9 +86,8 @@ var id = mat4.create();
 var rot = mat4.create();
 
 render js&lt;
-  # Rotate the identity matrix to create a
-  # rotaiton matrix.
-  var phase = Math.sin(Date.now() / 200);
+  # Rotate the identity matrix.
+  var phase = Date.now() / 300;
   mat4.rotateY(rot, id, phase);
 
   vertex glsl&lt;
@@ -100,7 +102,9 @@ render js&lt;
   draw_mesh(indices, size);
 &gt;</code></pre>
 <p>This example also calls a couple of JavaScript functions, <code>Math.sin</code> and <code>Date.now</code>. We also used the <code>mat4.rotateY</code> function from the <a href="https://github.com/stackgl/gl-mat4"><code>gl-mat4</code></a> library of matrix utilities. SSC compiles to plain JavaScript, so interop is easy.</p>
-<h1 id="a-full-example">A Full Example</h1>
+</section>
+<section id="a-full-example" class="level1">
+<h1>A Full Example</h1>
 <p>This example shows how to build larger programs using SSC. You can abstract shaders into functions to keep your code clean when you draw scenes with more than one object.</p>
 <p>This code listing elides the definitions of the <code>phong</code> and <code>solid</code> functions that wrap the two shaders. You can see the full code in this page’s source or <a href="https://github.com/Microsoft/staticstaging/blob/master/site/index.md#a-full-example">on GitHub</a>. Try playing with the <code>light_color</code> variable at the top here to change the color of the light:</p>
 <pre><code># Phong shader.
@@ -188,7 +192,12 @@ render js&lt;
   solid(b_position, b_model, light_color);
   draw_mesh(b_indices, b_size);
 &gt;</code></pre>
+</section>
 </main>
+
+<footer>
+<p>There’s a lot more to programming with static stages! Next, you might be interested in reading the full <a href="http://microsoft.github.io/staticstaging/docs/">SSC documentation</a>. We’re working on expanding this tutorial, so check back soon.</p>
+</footer>
 
 <template id="template-dingus">
 <div class="sscdingus">

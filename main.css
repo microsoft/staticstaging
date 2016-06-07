@@ -627,12 +627,12 @@ pre {
     .container {
       max-width: 1140px; } }
 
-.container-fluid, .page-section, header, main {
+.container-fluid, .page-section, header, main, footer {
   margin-left: auto;
   margin-right: auto;
   padding-left: 0.9375rem;
   padding-right: 0.9375rem; }
-  .container-fluid::after, .page-section::after, header::after, main::after {
+  .container-fluid::after, .page-section::after, header::after, main::after, footer::after {
     content: "";
     display: table;
     clear: both; }
@@ -4558,18 +4558,20 @@ a.bg-danger:focus, a.bg-danger:hover {
   .hidden-print {
     display: none !important; } }
 
-.page-section, header, main {
+.page-section, header, main, footer {
   padding: 1rem 2rem; }
 
-header {
+.inverted, header, footer {
   background: #A63F92;
-  color: white;
+  color: white; }
+  .inverted a, header a, footer a {
+    color: #ff99eb; }
+  .inverted a:hover, header a:hover, footer a:hover {
+    color: #FD8B55; }
+
+header {
   padding-top: 4rem;
   padding-bottom: 2rem; }
-  header a {
-    color: #ff99eb; }
-  header a:hover {
-    color: #FD8B55; }
 
 .sscdingus {
   /* The toolbar. */
