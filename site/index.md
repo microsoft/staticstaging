@@ -110,7 +110,7 @@ The materialization expression `%[ model * rot ]` multiplies the pre-defined mod
 
     render js<
       # Rotate the identity matrix.
-      var phase = Date.now() / 300;
+      var phase = Date.now() / 1000;
       mat4.rotateY(rot, id, phase);
 
       vertex glsl<
@@ -208,9 +208,9 @@ Try playing with the `light_color` variable at the top here to change the color 
       # Rotate a light-source point in a circle.
       var t = Date.now();
       var light_position = vec3(
-        Math.cos(t / 200) * 14.0,
+        Math.cos(t / 400) * 14.0,
         0.0,
-        Math.sin(t / 200) * 14.0
+        Math.sin(t / 400) * 14.0
       );
 
       # Draw the teapot using the Phong shader.
