@@ -133,6 +133,7 @@ You can abstract shaders into functions to keep your code clean when you draw sc
 
 This code listing elides the definitions of the `phong` and `solid` functions that wrap the two shaders.
 You can see the full code in this page's source or [on GitHub][ex-full].
+Try playing with the `light_color` variable at the top here to change the color of the light:
 
 [ex-full]: https://github.com/Microsoft/staticstaging/blob/master/site/index.md#a-full-example
 
