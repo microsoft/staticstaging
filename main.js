@@ -3,7 +3,20 @@
  */
 function getTemplate(selector) {
     var tmpl = document.querySelector(selector);
-    return tmpl.content;
+    if ("content" in tmpl) {
+        // Browser supports <template>.
+        return tmpl.content;
+    }
+    else {
+        // Backwards compatibility (for IE).
+        // http://stackoverflow.com/a/33138997/39182
+        var fragment = document.createDocumentFragment();
+        var children = tmpl.childNodes;
+        for (var i = 0; i < children.length; ++i) {
+            fragment.appendChild(children[i].cloneNode(true));
+        }
+        return fragment;
+    }
 }
 /**
  * Replace a node in the DOM.
@@ -15,6 +28,7 @@ function replace(new_, old) {
  * Instantiate a template.
  */
 function instantiate(tmpl) {
+    console.log(tmpl.nodeType);
     return document.importNode(tmpl, true);
 }
 /**
