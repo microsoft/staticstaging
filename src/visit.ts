@@ -18,6 +18,7 @@ export interface ASTVisit<P, R> {
   visit_extern(tree: ast.ExternNode, param: P): R;
   visit_persist(tree: ast.PersistNode, param: P): R;
   visit_if(tree: ast.IfNode, param: P): R;
+  visit_while(tree: ast.WhileNode, param: P): R;
   visit_macrocall(tree: ast.MacroCallNode, param: P): R;
   visit_param?(tree: ast.ParamNode, param: P): R;
 }
@@ -57,6 +58,8 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
       return visitor.visit_persist(<ast.PersistNode> tree, param);
     case "if":
       return visitor.visit_if(<ast.IfNode> tree, param);
+    case "while":
+      return visitor.visit_while(<ast.WhileNode> tree, param);
     case "macrocall":
       return visitor.visit_macrocall(<ast.MacroCallNode> tree, param);
     case "param":
@@ -85,6 +88,7 @@ interface PartialASTVisit<P, R> {
   visit_extern? (tree: ast.ExternNode, param: P): R;
   visit_persist? (tree: ast.PersistNode, param: P): R;
   visit_if? (tree: ast.IfNode, param: P): R;
+  visit_while? (tree: ast.WhileNode, param: P): R;
   visit_macrocall? (tree: ast.MacroCallNode, param: P): R;
   visit_param? (tree: ast.ParamNode, param: P): R;
 }
@@ -216,6 +220,13 @@ export function ast_translate_rules(fself: ASTTranslate): ASTVisit<void, ast.Syn
       });
     },
 
+    visit_while(tree: ast.WhileNode, param: void): ast.SyntaxNode {
+      return merge(tree, {
+        cond: fself(tree.cond),
+        body: fself(tree.body),
+      });
+    },
+
     visit_macrocall(tree: ast.MacroCallNode, param: void): ast.SyntaxNode {
       let arg_trees: ast.SyntaxNode[] = [];
       for (let arg of tree.args) {
@@ -335,6 +346,12 @@ export function ast_fold_rules <T> (fself: ASTFold<T>): ASTVisit<T, T> {
       let p2 = fself(tree.truex, p1);
       let p3 = fself(tree.falsex, p2);
       return p3;
+    },
+
+    visit_while(tree: ast.WhileNode, p: T): T {
+      let p1 = fself(tree.cond, p);
+      let p2 = fself(tree.body, p1);
+      return p2;
     },
 
     visit_macrocall(tree: ast.MacroCallNode, p: T): T {

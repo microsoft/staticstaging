@@ -13,7 +13,7 @@ Program
 // Expression syntax.
 
 Expr
-  = Var / Extern / Fun / CDef / If / Binary / Unary / Assign /
+  = Var / Extern / Fun / CDef / If / While / Binary / Unary / Assign /
   CCall / Call / MacroCall / TermExpr
 
 SeqExpr
@@ -154,6 +154,10 @@ If
   = if _ c:TermExpr _ t:TermExpr _ f:TermExpr
   { return {tag: "if", cond: c, truex: t, falsex: f}; }
 
+While
+  = while _ c:TermExpr _ b:TermExpr
+  { return {tag: "while", cond: c, body: b}; }
+
 
 // Type syntax.
 
@@ -273,6 +277,9 @@ snippet_marker
 
 if
   = "if"
+
+while
+  = "while"
 
 macromark
   = "@"

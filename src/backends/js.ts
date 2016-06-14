@@ -1,6 +1,7 @@
 import { Type, OverloadedType, FunType, CodeType } from '../type';
-import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
-  paren, splicesym, persistsym, procsym, progsym, variantsym } from './emitutil';
+import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
+  emit_body, paren, splicesym, persistsym, procsym, progsym,
+  emit_while, variantsym } from './emitutil';
 import { Emitter, emit, emit_scope, emit_main,
   specialized_prog } from './emitter';
 import * as ast from '../ast';
@@ -269,6 +270,10 @@ export let compile_rules = {
 
   visit_if(tree: ast.IfNode, emitter: Emitter): string {
     return emit_if(emitter, tree);
+  },
+
+  visit_while(tree: ast.WhileNode, emitter: Emitter): string {
+    return emit_while(emitter, tree);
   },
 
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {

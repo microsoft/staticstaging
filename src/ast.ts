@@ -113,9 +113,15 @@ export interface ExternNode extends ExpressionNode {
 
 export interface IfNode extends ExpressionNode {
   tag: "if";
-  cond: ExpressionNode,
-  truex: ExpressionNode,
-  falsex: ExpressionNode,
+  cond: ExpressionNode;
+  truex: ExpressionNode;
+  falsex: ExpressionNode;
+}
+
+export interface WhileNode extends ExpressionNode {
+  tag: "while";
+  cond: ExpressionNode;
+  body: ExpressionNode;
 }
 
 export interface MacroCallNode extends ExpressionNode {

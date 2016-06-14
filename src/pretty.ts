@@ -110,6 +110,11 @@ let Pretty: ASTVisit<void, string> = {
       " " + pretty_paren(tree.falsex, nonterm);
   },
 
+  visit_while(tree: ast.WhileNode, _: void): string {
+    return "while " + pretty_paren(tree.cond, nonterm) +
+      " " + pretty_paren(tree.body, nonterm);
+  },
+
   visit_macrocall(tree: ast.MacroCallNode, _: void): string {
     let s = tree.macro;
     for (let arg of tree.args) {

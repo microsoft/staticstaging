@@ -274,6 +274,19 @@ let Interp: ASTVisit<State, [Value, State]> = {
     return interp(flag ? tree.truex : tree.falsex, s);
   },
 
+  visit_while(tree: ast.WhileNode, state: State): [Value, State] {
+    let s = state;
+    while (true) {
+      let flag: Value;
+      [flag, s] = interp(tree.cond, s);
+      if (!flag) {
+        break;
+      }
+      [, s] = interp(tree.body, s);
+    }
+    return [null, s];
+  },
+
   visit_macrocall(tree: ast.MacroCallNode, state: State): [Value, State] {
     throw "error: macro invocations are sugar";
   },
@@ -487,6 +500,14 @@ let QuoteInterp : ASTVisit<[number, State, Pers],
     let [t, s2, p2] = quote_interp(tree.truex, stage, s1, p1);
     let [f, s3, p3] = quote_interp(tree.falsex, stage, s2, p2);
     return [merge(tree, { cond: c, truex: t, falsex: f }), s3, p3];
+  },
+
+  visit_while(tree: ast.WhileNode,
+      [stage, state, pers]: [number, State, Pers]):
+      [ast.SyntaxNode, State, Pers] {
+    let [c, s1, p1] = quote_interp(tree.cond, stage, state, pers);
+    let [b, s2, p2] = quote_interp(tree.body, stage, s1, p1);
+    return [merge(tree, { cond: c, body: b }), s2, p2];
   },
 }
 

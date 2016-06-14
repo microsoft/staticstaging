@@ -116,12 +116,23 @@ export function emit_lookup(emitter: Emitter,
   }
 }
 
-// A helper for emitting if/then/else.
+/**
+ * A helper for emitting if/then/else.
+ */
 export function emit_if(emitter: Emitter, tree: ast.IfNode): string {
   let cond = emit(emitter, tree.cond);
   let truex = emit(emitter, tree.truex);
   let falsex = emit(emitter, tree.falsex);
   return `${paren(cond)} ? ${paren(truex)} : ${paren(falsex)}`;
+}
+
+/**
+ * A helper for emitting `while` loops (with no return value).
+ */
+export function emit_while(emitter: Emitter, tree: ast.WhileNode): string {
+  let cond = emit(emitter, tree.cond);
+  let body = emit(emitter, tree.body);
+  return `while ${paren(cond)} { ${body} }`;
 }
 
 // Flatten sequence trees. This is used at the top level of a function, where

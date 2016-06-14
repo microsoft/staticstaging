@@ -7,8 +7,8 @@ import { _unwrap_array, _is_cpu_scope, _attribute_type, TYPE_NAMES,
   shadervarsym, frag_expr, Glue, ProgKind, prog_kind,
   SHADER_ANNOTATION, emit_glue } from './gl';
 import { Emitter, emit, specialized_prog } from './emitter';
-import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if, emit_body,
-  paren, splicesym } from './emitutil';
+import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
+  emit_while, emit_body, paren, splicesym } from './emitutil';
 import { CompilerIR, nearest_quote, Variant } from '../compile/ir';
 
 // Type checking for uniforms, which are automatically demoted from arrays to
@@ -190,6 +190,10 @@ let compile_rules: ASTVisit<Emitter, string> = {
 
   visit_if(tree: ast.IfNode, emitter: Emitter): string {
     return emit_if(emitter, tree);
+  },
+
+  visit_while(tree: ast.WhileNode, emitter: Emitter): string {
+    return emit_while(emitter, tree);
   },
 
   visit_macrocall(tree: ast.MacroCallNode, emitter: Emitter): string {

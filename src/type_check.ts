@@ -1,6 +1,6 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, pretty_type, TypeVisit, TypeVariable,
+  QuantifiedType, INT, FLOAT, ANY, VOID, pretty_type, TypeVisit, TypeVariable,
   type_visit } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
@@ -385,7 +385,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
       if (cond_type !== INT) {
-        throw "type error: conditions must be integers";
+        throw "type error: `if` condition must be an integer";
       }
 
       let [true_type,] = check(tree.truex, e);
@@ -396,6 +396,16 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       }
 
       return [true_type, e];
+    },
+
+    visit_while(tree: ast.WhileNode, env: TypeEnv): [Type, TypeEnv] {
+      let [cond_type, e] = check(tree.cond, env);
+      if (cond_type !== INT) {
+        throw "type error: `while` condition must be an integer";
+      }
+
+      let [body_type,] = check(tree.body, e);
+      return [VOID, e];
     },
 
     visit_macrocall(tree: ast.MacroCallNode, env: TypeEnv): [Type, TypeEnv] {
