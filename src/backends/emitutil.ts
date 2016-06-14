@@ -132,7 +132,7 @@ export function emit_if(emitter: Emitter, tree: ast.IfNode): string {
 export function emit_while(emitter: Emitter, tree: ast.WhileNode): string {
   let cond = emit(emitter, tree.cond);
   let body = emit(emitter, tree.body);
-  return `while ${paren(cond)} { ${body} }`;
+  return `while ${paren(cond)} {\n${indent(body, true)}\n}`;
 }
 
 // Flatten sequence trees. This is used at the top level of a function, where
