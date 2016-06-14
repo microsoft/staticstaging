@@ -153,19 +153,41 @@ function flatten_seq(tree: ast.SyntaxNode): ast.ExpressionNode[] {
   return ast_visit(rules, tree, null);
 };
 
-// A simple predicate to decide whether an expression is worth emitting,
-// given a choice. This is used when emitting sequences to avoid generating
-// worthless code.
+/**
+ * A predicate for use with `emit_body` that decides whether an expression is
+ * "worth" emitting---i.e., whether it could potentially be effectful.
+ * This way, expressions with no effect avoid getting emitted unless their
+ * results are actually used.
+ */
 function useful_pred(tree: ast.ExpressionNode): boolean {
   return ["extern", "lookup", "literal"].indexOf(tree.tag) === -1;
 }
 
-// Compile a top-level expression for the body of a function. The emitted code
-// returns value of the function. The optional `pred` function can decide
-// whether to emit (non-terminal) expressions.
+/**
+ * A predicate that decides whether an expression needs to be emitted as a
+ * *statement* instead of as an *expression* in the generated code.
+ */
+function statement_pred(tree: ast.ExpressionNode): boolean {
+  return tree.tag === "while";
+}
+
+/**
+ * Compile a top-level expression for the body of a backend function. The
+ * emitted code includes a `return` statement at the end.
+ *
+ * The optional `pred` function can be used to decide whether an expression is
+ * potentially effectful an should be emitted when its result is ignored
+ * (i.e., because it is on the LHS of some sequence). The *last* expression in
+ * a sequence nesting is always emitted (as the return value of the function).
+ *
+ * The optional `stmt_pred` can classify expression as needing to be emitted
+ * in "statement position". This means they cannot be returned, so "null" is
+ * returned instead.
+ */
 export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
     ret="return ", sep=";",
-    pred: (_: ast.ExpressionNode) => boolean = useful_pred): string
+    pred: (_: ast.ExpressionNode) => boolean = useful_pred,
+    stmt_pred: (_: ast.ExpressionNode) => boolean = statement_pred): string
 {
   let exprs = flatten_seq(tree);
   let statements: string[] = [];
@@ -174,7 +196,14 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
     let s = emit(emitter, expr);
     if (s.length) {
       if (i === exprs.length - 1) {
-        statements.push(ret + emit(emitter, expr));
+        if (stmt_pred(expr)) {
+          // Return null.
+          statements.push(emit(emitter, expr));
+          statements.push(ret + "null");
+        } else {
+          // Return the expression's value.
+          statements.push(ret + emit(emitter, expr));
+        }
       } else if (pred(expr)) {
         statements.push(emit(emitter, expr));
       }
