@@ -60,6 +60,9 @@ let GetChildren: ASTVisit<void, ast.SyntaxNode[]> = {
   visit_if(tree: ast.IfNode, _: void): ast.SyntaxNode[] {
     return [tree.cond, tree.truex, tree.falsex];
   },
+  visit_while(tree: ast.WhileNode, _: void): ast.SyntaxNode[] {
+    return [tree.cond, tree.body];
+  },
   visit_macrocall(tree: ast.MacroCallNode, _: void): ast.SyntaxNode[] {
     return tree.args;
   },
@@ -122,6 +125,9 @@ let GetName: ASTVisit<void, string> = {
   },
   visit_if(tree: ast.IfNode, _: void): string {
     return "if";
+  },
+  visit_while(tree: ast.WhileNode, _: void): string {
+    return "while";
   },
   visit_macrocall(tree: ast.MacroCallNode, _: void): string {
     return "@" + tree.macro;
