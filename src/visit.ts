@@ -95,7 +95,7 @@ interface PartialASTVisit<P, R> {
 
 let AST_TYPES = ["literal", "seq", "let", "assign", "lookup", "unary",
                  "binary", "quote", "escape", "run", "fun", "call", "extern",
-                 "persist", "param", "if", "macro", "macrocall"];
+                 "persist", "param", "if", "while", "macro", "macrocall"];
 
 // Use a fallback function for any unhandled cases in a PartialASTVisit. This
 // is some messy run-time metaprogramming!
