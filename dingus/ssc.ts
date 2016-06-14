@@ -245,7 +245,7 @@ function encode_hash(obj: { [key: string]: string }): string {
 
 // CodeMirror syntax mode.
 CodeMirror.defineMode("alltheworld", function (config, pconfig) {
-  const keywords = ["var", "def", "fun", "extern", "if"];
+  const keywords = ["var", "def", "fun", "extern", "if", "while"];
   const brackets = "<>[]()";
   const punctuation = [":", "->"];
   const operators = ["+", "-", "*", "/", "=", "!"];
