@@ -131,7 +131,7 @@ export function emit_if(emitter: Emitter, tree: ast.IfNode): string {
  */
 export function emit_while(emitter: Emitter, tree: ast.WhileNode): string {
   let cond = emit(emitter, tree.cond);
-  let body = emit(emitter, tree.body);
+  let body = emit_body(emitter, tree.body, null);
   return `while ${paren(cond)} {\n${indent(body, true)}\n}`;
 }
 
@@ -172,8 +172,12 @@ function statement_pred(tree: ast.ExpressionNode): boolean {
 }
 
 /**
- * Compile a top-level expression for the body of a backend function. The
- * emitted code includes a `return` statement at the end.
+ * Compile a top-level expression for a backend C-like block, like the body of
+ * a function. The idea is to emit a flattish sequence of semicolon-separated
+ * statements.
+ *
+ * The emitted code includes a `return` statement at the end unless the `ret`
+ * parameter is null.
  *
  * The optional `pred` function can be used to decide whether an expression is
  * potentially effectful an should be emitted when its result is ignored
@@ -195,7 +199,8 @@ export function emit_body(emitter: Emitter, tree: ast.SyntaxNode,
     let expr = exprs[i];
     let s = emit(emitter, expr);
     if (s.length) {
-      if (i === exprs.length - 1) {
+      if (ret && i === exprs.length - 1) {
+        // Last statement, and we need to emit a `return`.
         if (stmt_pred(expr)) {
           // Return null.
           statements.push(emit(emitter, expr));
