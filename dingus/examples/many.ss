@@ -21,13 +21,17 @@ def shade(model: Mat4) (
 );
 
 render js<
-  var i = 100;
-  while (i) (
-    i = i - 1;
+  var x = 5;
+  while (x) (
+    x = x - 1;
+    var y = 5;
+    while (y) (
+      y = y - 1;
 
-    var model = mat4.create();
-    mat4.translate(model, id, vec3(i - 10, 0.0, 0.0));
-    shade(model);
-    draw_mesh(indices, size);
+      var model = mat4.create();
+      mat4.translate(model, id, vec3((x - 2) * 10, (y - 2) * 10, 0.0));
+      shade(model);
+      draw_mesh(indices, size);
+    )
   )
 >
