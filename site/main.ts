@@ -5,7 +5,20 @@ declare function sscDingus(el: any, config: any);
  */
 function getTemplate(selector: string) {
   let tmpl = document.querySelector(selector) as HTMLTemplateElement;
-  return tmpl.content;
+
+  if ("content" in tmpl) {
+    // Browser supports <template>.
+    return tmpl.content;
+  } else {
+    // Backwards compatibility (for IE).
+    // http://stackoverflow.com/a/33138997/39182
+    let fragment = document.createDocumentFragment();
+    let children = tmpl.childNodes;
+    for (let i = 0; i < children.length; ++i) {
+      fragment.appendChild(children[i].cloneNode(true));
+    }
+    return fragment;
+  }
 }
 
 /**
@@ -19,6 +32,7 @@ function replace(new_: Node, old: Element) {
  * Instantiate a template.
  */
 function instantiate(tmpl: DocumentFragment): Node {
+  console.log(tmpl.nodeType);
   return document.importNode(tmpl, true);
 }
 
