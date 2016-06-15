@@ -11,6 +11,24 @@ var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
 
+# A triply-nested loop to draw lots of objects in a grid.
+def grid(count: Int, f:(Int Int Int -> Void)) (
+  var x = count;
+  while (x) (
+    x = x - 1;
+    var y = count;
+    while (y) (
+      y = y - 1;
+      var z = count;
+      while (z) (
+        z = z - 1;
+        f(x, y, z);
+      )
+    )
+  )
+);
+
+# World's simplest shader.
 def shade(model: Mat4) (
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
@@ -21,21 +39,15 @@ def shade(model: Mat4) (
 );
 
 render js<
-  var x = 5;
-  while (x) (
-    x = x - 1;
-    var y = 5;
-    while (y) (
-      y = y - 1;
-      var z = 5;
-      while (z) (
-        z = z - 1;
-
-        var model = mat4.create();
-        mat4.translate(model, id, vec3((x - 2) * 10, (y - 2) * 10, (z - 2) * 10));
-        shade(model);
-        draw_mesh(indices, size);
-      )
-    )
-  )
+  grid(5, fun x:Int y:Int z:Int -> (
+    var model = mat4.create();
+    var pos = vec3(
+      (x - 2) * 10,
+      (y - 2) * 10,
+      (z - 2) * 10
+    );
+    mat4.translate(model, id, pos);
+    shade(model);
+    draw_mesh(indices, size);
+  ))
 >
