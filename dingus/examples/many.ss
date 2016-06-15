@@ -39,12 +39,12 @@ def shade(model: Mat4) (
 );
 
 render js<
-  grid(5, fun x:Int y:Int z:Int -> (
+  grid(10, fun x:Int y:Int z:Int -> (
     var model = mat4.create();
     var pos = vec3(
-      (x - 2) * 10,
-      (y - 2) * 10,
-      (z - 2) * 10
+      (x - 5) * 10,
+      (y - 5) * 10,
+      (z - 5) * 10
     );
     mat4.translate(model, id, pos);
     shade(model);
