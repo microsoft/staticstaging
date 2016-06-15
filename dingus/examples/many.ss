@@ -47,6 +47,7 @@ render js<
       (z - 5) * 10
     );
     mat4.translate(model, id, pos);
+    mat4.translate(model, model, vec3(0.0, 3.0, -4.0));
     shade(model);
     draw_mesh(indices, size);
   ))
