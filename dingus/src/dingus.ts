@@ -1,26 +1,30 @@
 import * as driver from '../../src/driver';
 import * as ast from '../../src/ast';
 
-import CodeMirror = require('codemirror');
 import { tree_canvas } from './tree';
 import { get_children, get_name } from './astsumm';
 import d3 = require('d3');
 
-import start_gl = require('./gl');
+import start_gl from './gl';
 import EXAMPLES = require('../examples');
 import PREAMBLES = require('../preambles');
 
+import CodeMirror = require('codemirror');
+import mode from './mode';
+CodeMirror.defineMode("alltheworld", mode);
+
 const RUN_DELAY_MS = 200;
 
-
-// Run code and return:
-// - an error, if any
-// - the parse tree
-// - the type
-// - the compiled code (if compiling)
-// - the result of interpretation or execution
-// - the complete WebGL code (if in WebGL mode)
-// The mode can be "interp", "compile", or "webgl".
+/**
+ * Run code and return:
+ * - an error, if any
+ * - the parse tree
+ * - the type
+ * - the compiled code (if compiling)
+ * - the result of interpretation or execution
+ * - the complete WebGL code (if in WebGL mode)
+ * The mode can be "interp", "compile", or "webgl".
+ */
 function ssc_run(code: string, mode: string)
   : [string, ast.SyntaxNode, string, string, string, string]
 {
@@ -117,94 +121,6 @@ function encode_hash(obj: { [key: string]: string }): string {
   }
   return '#' + parts.join('&');
 }
-
-// CodeMirror syntax mode.
-CodeMirror.defineMode("alltheworld", function (config, pconfig) {
-  const keywords = ["var", "def", "fun", "extern", "if", "while"];
-  const brackets = "<>[]()";
-  const punctuation = [":", "->"];
-  const operators = ["+", "-", "*", "/", "=", "!"];
-  const builtins = ["render", "vertex", "fragment"];
-  const quote_begin = /[A-Za-z0-9]+\</;
-  const escape_begin = /(\$|\%)?\d*\[/;
-  const macro = /@[A-Za-z][A-Za-z0-9]*[\?\!]*/;
-
-  return {
-    startState() {
-      return {
-        paren_depth: 0,
-      };
-    },
-
-    token(stream, state) {
-      // Language keywords.
-      for (let keyword of keywords) {
-        if (stream.match(keyword)) {
-          return "keyword";
-        }
-      }
-
-      // Built-in functions.
-      for (let builtin of builtins) {
-        if (stream.match(builtin)) {
-          return "builtin";
-        }
-      }
-
-      // Line noise, basically.
-      for (let symbol of punctuation) {
-        if (stream.match(symbol)) {
-          return "operator";
-        }
-      }
-
-      // Macro invocations.
-      if (stream.match(macro)) {
-        return "builtin";
-      }
-
-      // Annotated quotes.
-      if (stream.match(quote_begin)) {
-        return "bracket";
-      }
-
-      // Escapes in their various forms.
-      if (stream.match(escape_begin)) {
-        return "bracket";
-      }
-
-      // Single characters.
-      let ch = stream.next().toString();
-      if (ch === "(") {
-        ++state.paren_depth;
-      } else if (ch === ")") {
-        --state.paren_depth;
-      }
-
-      for (let op of operators) {
-        if (ch === op) {
-          return "operator";
-        }
-      }
-      if (brackets.indexOf(ch) !== -1) {
-        return "bracket";
-      }
-      if (ch === "#") {
-        stream.skipToEnd();
-        return "comment";
-      }
-      return null;
-    },
-
-    /*
-    indent(state, textAfter) {
-      return
-    },
-    */
-
-    lineComment: "#",
-  };
-});
 
 interface Config {
   history?: boolean;
