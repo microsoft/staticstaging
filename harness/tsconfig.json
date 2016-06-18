@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "module": "commonjs",
+        "allowJs": true,
+        "outDir": "build"
+    },
+    "files": [
+        "harness.ts"
+    ]
+}
