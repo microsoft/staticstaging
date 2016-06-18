@@ -1,4 +1,4 @@
-DINGUS_JS := build/dingus/ssc.js
+DINGUS_JS := build/src/dingus/dingus.js
 GENERATED := examples.js preambles.js ssc.bundle.js codemirror.css dingus.css
 
 .PHONY: all clean
