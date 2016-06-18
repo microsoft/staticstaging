@@ -6,6 +6,7 @@
         "outDir": "build"
     },
     "files": [
-        "ssc.ts"
+        "src/dingus.ts",
+        "typings/browser.d.ts"
     ]
 }

@@ -1,16 +1,14 @@
-/// <reference path="typings/browser.d.ts" />
-
-import * as driver from '../src/driver';
-import * as ast from '../src/ast';
-import { ASTVisit, ast_visit } from '../src/visit';
+import * as driver from '../../src/driver';
+import * as ast from '../../src/ast';
+import { ASTVisit, ast_visit } from '../../src/visit';
 
 import CodeMirror = require('codemirror');
 import { tree_canvas } from './tree';
 import d3 = require('d3');
 
 import start_gl = require('./gl');
-import EXAMPLES = require('./examples');
-import PREAMBLES = require('./preambles');
+import EXAMPLES = require('../examples');
+import PREAMBLES = require('../preambles');
 
 const RUN_DELAY_MS = 200;
 

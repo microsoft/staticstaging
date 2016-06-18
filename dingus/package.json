@@ -4,7 +4,7 @@
   "private": true,
 
   "scripts": {
-    "bundle": "webpack --output-library sscDingus build/dingus/ssc.js ssc.bundle.js",
+    "bundle": "webpack --output-library sscDingus build/dingus/src/dingus.js ssc.bundle.js",
     "build": "tsc && npm run bundle"
   },
 
