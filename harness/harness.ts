@@ -5,6 +5,8 @@ function serve() {
   let qp = restify.queryParser({ mapParams: false });
   server.get('/log', qp, (req: any, res: any, next: any) => {
     console.log(req.query['msg']);
+    res.send('done');
+    next();
   });
   server.listen(4700, () => {
     console.log("listening on %s", server.url);
