@@ -6,6 +6,7 @@
         "outDir": "build"
     },
     "files": [
-        "harness.ts"
+        "harness.ts",
+        "../typings/browser.d.ts"
     ]
 }
