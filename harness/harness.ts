@@ -11,12 +11,16 @@ function serve() {
     next();
   });
 
-  // Serve the main HTML file.
+  // Serve the main HTML and JS files.
   server.get('/', restify.serveStatic({
     // `directory: '.'` appears to be broken:
     // https://github.com/restify/node-restify/issues/549
     directory: '../harness',
     file: 'index.html',
+  }));
+  server.get('/client.js', restify.serveStatic({
+    directory: './build',
+    file: 'client.js',
   }));
 
   // Serve the dingus assets.
