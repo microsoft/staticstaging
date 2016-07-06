@@ -149,13 +149,16 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   let visualbox = <HTMLElement> base.querySelector('.visual');
 
   // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
-  let codemirror = CodeMirror.fromTextArea(codebox, {
-    lineNumbers: !!config.lineNumbers,
-    mode: "alltheworld",
-    scrollbarStyle: config.scrollbars ? "native" : null,
-    tabSize: 2,
-    lineWrapping: true,
-  } as any);
+  let codemirror: CodeMirror.Editor;
+  if (codebox) {
+    codemirror = CodeMirror.fromTextArea(codebox, {
+      lineNumbers: !!config.lineNumbers,
+      mode: "alltheworld",
+      scrollbarStyle: config.scrollbars ? "native" : null,
+      tabSize: 2,
+      lineWrapping: true,
+    } as any);
+  }
 
   // Accessors for the current code in the box.
   function get_code() {
@@ -190,7 +193,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         handle_code();
       }
     });
-  } else {
+  } else if (codebox) {
     codebox.addEventListener('change', handle_code);
   }
 
