@@ -171,7 +171,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   function set_code(s: string) {
     if (codemirror) {
       codemirror.getDoc().setValue(s);
-    } else {
+    } else if (codebox) {
       codebox.value = s;
     }
   }
@@ -203,8 +203,10 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   let last_mode: string = null;
   let custom_preamble = "";
-  function run_code(navigate = true, mode:string = null) {
-    let code = get_code();
+  function run_code(navigate = true, mode: string = null, code: string = null) {
+    if (code === null) {
+      code = get_code();
+    }
 
     // Get the mode from the popup, if available, or a variable if we don't
     // have the popup.
@@ -222,7 +224,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
       let [err, tree, typ, compiled, res, glcode] =
         ssc_run(custom_preamble + code, mode);
 
-      show(err, errbox);
+      if (errbox) {
+        show(err, errbox);
+      }
       if (typebox) {
         show(typ, typebox);
       }
@@ -260,7 +264,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         if (fpsbox) {
           fpsbox.style.display = 'block';
         }
-        show(null, outbox);
+        if (outbox) {
+          show(null, outbox);
+        }
 
         console.log(glcode);
         if (!update_gl) {
@@ -273,7 +279,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         if (fpsbox) {
           fpsbox.style.display = 'none';
         }
-        show(res, outbox);
+        if (outbox) {
+          show(res, outbox);
+        }
       }
 
       if (navigate && config.history) {
@@ -281,11 +289,15 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         history.replaceState(null, null, hash);
       }
     } else {
-      show(null, errbox);
+      if (errbox) {
+        show(null, errbox);
+      }
       if (typebox) {
         show(null, typebox);
       }
-      show(null, outbox);
+      if (outbox) {
+        show(null, outbox);
+      }
       if (treebox) {
         treebox.style.display = 'none';
       }
@@ -397,7 +409,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   return {
     run(code: string, mode: string = null) {
       set_code(code);
-      run_code(true, mode);
+      run_code(true, mode, code);
     },
 
     set_preamble(code?: string) {
