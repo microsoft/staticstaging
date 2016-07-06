@@ -1,4 +1,20 @@
 const restify = require('restify');
+const open_url = require('open');
+const querystring = require('querystring');
+const fs = require('fs');
+
+/**
+ * Read a file to a string.
+ */
+function read_string(filename: string, f: (s: string) => void) {
+  fs.readFile(filename, function (err: any, data: any) {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+    f(data.toString());
+  });
+}
 
 function serve() {
   let server = restify.createServer();
@@ -29,8 +45,22 @@ function serve() {
     default: 'index.html',
   }));
 
-  server.listen(4700, () => {
-    console.log("listening on %s", server.url);
+  // Start the server.
+  let port = 4700;
+  let url = "http://localhost:" + port;
+  server.listen(port, () => {
+    console.log(url);
+
+    // Execute a program.
+    let fn = process.argv[2];
+    if (fn) {
+      console.log("executing " + fn);
+      read_string(fn, (code) => {
+        // Open the thing.
+        let query = querystring.stringify({ code });
+        open_url(url + '/#' + query);
+      });
+    }
   });
 }
 
