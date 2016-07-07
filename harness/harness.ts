@@ -16,7 +16,10 @@ function read_string(filename: string, f: (s: string) => void) {
   });
 }
 
-function serve() {
+/**
+ * Start the server and return its URL.
+ */
+function serve(): Promise<string> {
   let server = restify.createServer();
   let qp = restify.queryParser({ mapParams: false });
 
@@ -48,7 +51,15 @@ function serve() {
   // Start the server.
   let port = 4700;
   let url = "http://localhost:" + port;
-  server.listen(port, () => {
+  return new Promise((resolve, reject) => {
+    server.listen(port, () => {
+      resolve(url);
+    });
+  });
+}
+
+function main() {
+  serve().then((url) => {
     console.log(url);
 
     // Execute a program.
@@ -56,7 +67,7 @@ function serve() {
     if (fn) {
       console.log("executing " + fn);
       read_string(fn, (code) => {
-        // Open the thing.
+        // Open the program in the browser.
         let query = querystring.stringify({ code });
         open_url(url + '/#' + query);
       });
@@ -64,4 +75,4 @@ function serve() {
   });
 }
 
-serve();
+main();
