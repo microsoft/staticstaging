@@ -137,7 +137,7 @@ export default function start_gl(
 
   // Bookkeeping for calculating framerate.
   let frame_count = 0;
-  let last_sample = new Date();
+  let last_sample = performance.now();
   let sample_rate = 1000;
 
   // Initially, the SHFL function does nothing. The client needs to call us
@@ -170,8 +170,8 @@ export default function start_gl(
 
     // Framerate tracking.
     ++frame_count;
-    let now = new Date();
-    let elapsed = now.getTime() - last_sample.getTime();  // Milliseconds.
+    let now = performance.now();
+    let elapsed = now - last_sample;  // Milliseconds.
     if (elapsed > sample_rate) {
       let fps = frame_count / elapsed * 1000;
       if (fps_cbk) {
@@ -180,7 +180,7 @@ export default function start_gl(
         console.log(fps + " fps");
       }
 
-      last_sample = now;
+      last_sample = performance.now();
       frame_count = 0;
     }
 
