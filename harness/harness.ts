@@ -50,6 +50,14 @@ function serve(log: (msg: any) => any): Promise<string> {
     default: 'index.html',
   }));
 
+  server.on('uncaughtException', (req: any, res: any, route: any, err: any) => {
+    if (err.stack) {
+      console.error(err.stack);
+    } else {
+      console.error(err);
+    }
+  });
+
   // Start the server.
   let port = 4700;
   let url = "http://localhost:" + port;
@@ -63,26 +71,50 @@ function serve(log: (msg: any) => any): Promise<string> {
 // The number of messages to receive before terminating.
 let MESSAGE_COUNT = 4;
 
+/**
+ * Called when a performance experiment has finished with data about the
+ * experiment.
+ */
+function experiment_finished(data: any) {
+  process.stdout.write(JSON.stringify(data));
+}
+
+/**
+ * Write a message to stderr.
+ */
+function plog(s: any) {
+  if (typeof(s) === "string") {
+    process.stderr.write(s);
+  } else {
+    process.stderr.write(JSON.stringify(s));
+  }
+  process.stderr.write("\n");
+}
+
 function main() {
   // Get the program to execute.
   let fn = process.argv[2];
   let code: string;
-  console.log("executing " + fn);
+  plog("executing " + fn);
   read_string(fn).then((code) => {
     // Handler for logged messages.
     let messages: any[] = []
-    let log = (msg: any) => {
-      console.log(msg);
+    let handle_log = (msg: any) => {
+      plog(msg);
       messages.push(msg);
       if (messages.length >= MESSAGE_COUNT) {
+        experiment_finished({
+          fn,
+          messages,
+        });
         return "done";
       } else {
         return "ok";
       }
     };
 
-    serve(log).then((url) => {
-      console.log(url);
+    serve(handle_log).then((url) => {
+      plog(url);
 
       // Open the program in the browser.
       let query = querystring.stringify({ code });
