@@ -5,7 +5,7 @@ import { tree_canvas } from './tree';
 import { get_children, get_name } from './astsumm';
 import d3 = require('d3');
 
-import start_gl from './gl';
+import { start_gl, PerfHandler } from './gl';
 import EXAMPLES = require('../examples');
 import PREAMBLES = require('../preambles');
 
@@ -126,7 +126,7 @@ interface Config {
   history?: boolean;
   lineNumbers?: boolean;
   scrollbars?: boolean;
-  fpsCallback?: (frames: number, ms: number) => void;
+  fpsCallback?: PerfHandler;
 };
 
 let DEFAULT: Config = {
@@ -271,9 +271,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
         console.log(glcode);
         if (!update_gl) {
-          update_gl = start_gl(visualbox, (frames, ms) => {
+          update_gl = start_gl(visualbox, (frames, ms, latencies) => {
             if (config.fpsCallback) {
-              config.fpsCallback(frames, ms);
+              config.fpsCallback(frames, ms, latencies);
             }
             if (fpsbox) {
               let fps = frames / ms * 1000;

@@ -104,13 +104,14 @@ function projection_matrix(out: Mat4, width: number, height: number) {
 /**
  * The type of a callback that handles performance information.
  */
-type PerfHandler = (frames: number, ms: number, latencies: number[]) => void;
+export type PerfHandler =
+  (frames: number, ms: number, latencies: number[]) => void;
 
 /**
  * Set up a canvas inside a container element. Return a function that sets the
  * render function (given compiled SHFL code as a string).
  */
-export default function start_gl(
+export function start_gl(
   container: HTMLElement, fps_cbk?: PerfHandler
 ) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
