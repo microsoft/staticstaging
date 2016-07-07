@@ -46,6 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
     fpsCallback: (frames: number, ms: number, latencies: number[]) => {
       log({ frames, ms, latencies });
     },
+    perfMode: true,
   });
 
   // Load code into the dingus.

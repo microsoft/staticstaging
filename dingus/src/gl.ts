@@ -112,7 +112,7 @@ export type PerfHandler =
  * render function (given compiled SHFL code as a string).
  */
 export function start_gl(
-  container: HTMLElement, fps_cbk?: PerfHandler
+  container: HTMLElement, perfCbk?: PerfHandler, perfMode?: boolean
 ) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -152,6 +152,17 @@ export function start_gl(
   // back to fill in the function. Then, we will update this variable.
   let shfl_render: { proc: any, env: any } = null;
 
+  // This function requests to render the next frame. In performance
+  // measurement mode, we ask to run as quickly as possible. In ordinary mode,
+  // we ask to run in the browser's render loop---i.e., only at a reasonable
+  // frame rate like 60fps or whatever the browser likes.
+  let nextFrame: () => void;
+  if (perfMode) {
+    nextFrame = () => setTimeout(render, 0);
+  } else {
+    nextFrame = () => window.requestAnimationFrame(render);
+  }
+
   // The main render loop.
   function render() {
     // Get the current size of the canvas.
@@ -177,14 +188,14 @@ export function start_gl(
     }
 
     // Framerate tracking.
-    if (fps_cbk) {
+    if (perfCbk) {
       ++frame_count;
       let now = performance.now();
       let elapsed = now - last_sample;  // Milliseconds.
       latencies.push(now - last_frame);
       last_frame = now;
       if (elapsed > sample_rate) {
-        fps_cbk(frame_count, elapsed, latencies);
+        perfCbk(frame_count, elapsed, latencies);
         last_sample = performance.now();
         frame_count = 0;
         latencies = [];
@@ -192,11 +203,11 @@ export function start_gl(
     }
 
     // Ask to be run again.
-    window.requestAnimationFrame(render);
+    nextFrame();
   };
 
-  // Request that the render function get called in the browser's render loop.
-  window.requestAnimationFrame(render);
+  // Start the first frame.
+  nextFrame();
 
   // Return a function that lets the client update the render body.
   return function (shfl_code?: string) {

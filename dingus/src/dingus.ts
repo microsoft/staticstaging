@@ -123,16 +123,39 @@ function encode_hash(obj: { [key: string]: string }): string {
 }
 
 interface Config {
+  /**
+   * Record source code changes in the browser's navigation history.
+   */
   history?: boolean;
+
+  /**
+   * Show line numbers in the code editor.
+   */
   lineNumbers?: boolean;
+
+  /**
+   * Show scrollbars in the code editor.
+   */
   scrollbars?: boolean;
+
+  /**
+   * A callback for measuring graphics performance.
+   */
   fpsCallback?: PerfHandler;
+
+  /**
+   * In "performance measurement mode," the graphics context runs as fast as
+   * possible instead of respecting the host browser's render loop.
+   */
+  perfMode?: boolean;
 };
 
 let DEFAULT: Config = {
   history: true,
   lineNumbers: true,
   scrollbars: true,
+  fpsCallback: null,
+  perfMode: false,
 };
 
 export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
@@ -279,7 +302,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
               let fps = frames / ms * 1000;
               fpsbox.textContent = fps.toFixed(2);
             }
-          });
+          }, config.perfMode);
         }
         update_gl(glcode);
       } else {

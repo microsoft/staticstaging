@@ -21,7 +21,7 @@ def summarize_run(data):
         # TODO Skip the first message as a "warmup" period.
 
     mean = uncertain.umean(latencies)
-    print('frame latency:', mean)
+    print('frame latency:', mean, 'ms')
     print('fps:', 1000.0 / mean)
 
 
