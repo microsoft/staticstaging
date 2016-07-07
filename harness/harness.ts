@@ -19,6 +19,13 @@ function read_string(filename: string): Promise<string> {
 }
 
 /**
+ * Defines the headers when serving our static files.
+ */
+function staticHeaders(res: any, path: string) {
+  res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+}
+
+/**
  * Start the server and return its URL.
  */
 function serve(log: (msg: any) => any): Promise<string> {
@@ -38,16 +45,19 @@ function serve(log: (msg: any) => any): Promise<string> {
     // https://github.com/restify/node-restify/issues/549
     directory: '../harness',
     file: 'index.html',
+    setHeaders: staticHeaders,
   }));
   server.get('/client.js', restify.serveStatic({
     directory: './build',
     file: 'client.js',
+    setHeaders: staticHeaders,
   }));
 
   // Serve the dingus assets.
   server.get(/\/.*/, restify.serveStatic({
     directory: '../dingus',
     default: 'index.html',
+    setHeaders: staticHeaders,
   }));
 
   server.on('uncaughtException', (req: any, res: any, route: any, err: any) => {
