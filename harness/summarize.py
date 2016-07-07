@@ -36,6 +36,7 @@ def summarize_run(data):
 
     mean, err = _mean_err(latencies)
     print('frame latency:', mean, '+/-', err, 'ms')
+    print('fps:', 1000 / mean)
 
 
 def summarize():
