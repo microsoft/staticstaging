@@ -60,12 +60,18 @@ function serve(log: (msg: any) => any): Promise<string> {
     setHeaders: staticHeaders,
   }));
 
+  // Show errors. This should be a Restify default.
   server.on('uncaughtException', (req: any, res: any, route: any, err: any) => {
     if (err.stack) {
       console.error(err.stack);
     } else {
       console.error(err);
     }
+  });
+
+  // More filling in the blanks: log each request as it comes in.
+  server.on('after', (req: any, res: any, route: any, err: any) => {
+    plog(res.statusCode + " " + req.method + " " + req.url);
   });
 
   // Start the server.
