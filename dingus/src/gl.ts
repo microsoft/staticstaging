@@ -102,11 +102,16 @@ function projection_matrix(out: Mat4, width: number, height: number) {
 }
 
 /**
+ * The type of a callback that handles performance information.
+ */
+type PerfHandler = (frames: number, ms: number, latencies: number[]) => void;
+
+/**
  * Set up a canvas inside a container element. Return a function that sets the
  * render function (given compiled SHFL code as a string).
  */
 export default function start_gl(
-  container: HTMLElement, fps_cbk?: (frames: number, ms: number) => void
+  container: HTMLElement, fps_cbk?: PerfHandler
 ) {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -138,7 +143,8 @@ export default function start_gl(
   // Bookkeeping for calculating framerate.
   let frame_count = 0;
   let last_sample = performance.now();
-  let sample_rate = 1000;
+  let sample_rate = 1000;  // Measure every second.
+  let latencies: number[] = [];
 
   // Initially, the SHFL function does nothing. The client needs to call us
   // back to fill in the function. Then, we will update this variable.
@@ -172,16 +178,12 @@ export default function start_gl(
     ++frame_count;
     let now = performance.now();
     let elapsed = now - last_sample;  // Milliseconds.
+    latencies.push(elapsed);
     if (elapsed > sample_rate) {
-      let fps = frame_count / elapsed * 1000;
-      if (fps_cbk) {
-        fps_cbk(frame_count, elapsed);
-      } else {
-        console.log(fps + " fps");
-      }
-
+      fps_cbk(frame_count, elapsed, latencies);
       last_sample = performance.now();
       frame_count = 0;
+      latencies = [];
     }
 
     // Ask to be run again.
