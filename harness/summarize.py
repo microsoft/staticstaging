@@ -2,6 +2,7 @@
 import os
 import json
 import math
+import uncertain
 
 TIMINGS_DIR = 'collected'
 
@@ -34,9 +35,13 @@ def summarize_run(data):
 
         # TODO Skip the first message as a "warmup" period.
 
+    umean = uncertain.umean(latencies)
     mean, err = _mean_err(latencies)
     print('frame latency:', mean, '+/-', err, 'ms')
     print('fps:', 1000 / mean)
+
+    print('frame latency:', umean)
+    print('fps:', 1000.0 / umean)
 
 
 def summarize():

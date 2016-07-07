@@ -1,26 +1,24 @@
 import math
 
+
 class Uncertain(object):
     def __init__(self, value, error):
         self.value = value
         self.error = error
 
-    def __unicode__(self):
+    def __str__(self):
         if not self.error:
-            return u'{:g}'.format(self.value)
+            return '{:g}'.format(self.value)
 
         position = math.log(self.error, 10)
         # Round away from zero.
         position = (math.ceil if position > 0.0 else math.floor)(position)
         position = abs(int(position)) if position < 0.0 else 1
 
-        return u'{value:.{position}f} +/- {error:.{position}f}'.format(
+        return '{value:.{position}f} +/- {error:.{position}f}'.format(
             value=self.value, error=self.error,
             position=position
         )
-
-    def __str__(self):
-        return str(unicode(self))
 
     def __repr__(self):
         return 'Uncertain({}, {})'.format(self.value, self.error)
@@ -43,6 +41,9 @@ class Uncertain(object):
 
     def __truediv__(self, other):
         return self * other ** -1.0
+
+    def __rtruediv__(self, other):
+        return other * self ** -1.0
 
     def __pow__(self, other):
         if isinstance(other, Uncertain):
@@ -81,6 +82,7 @@ class Uncertain(object):
     def __lt__(self, other):
         return -self > -other
 
+
 def umean(nums):
     """Given a list of numbers, return their mean with standard error as
     an Uncertain.
@@ -89,4 +91,3 @@ def umean(nums):
     stdev = math.sqrt(sum((x - mean) ** 2 for x in nums) * (1.0 / len(nums)))
     stderr = stdev / math.sqrt(len(nums))
     return Uncertain(mean, stderr)
-
