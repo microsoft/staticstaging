@@ -88,6 +88,6 @@ def umean(nums):
     an Uncertain.
     """
     mean = sum(nums) / len(nums)
-    stdev = math.sqrt(sum((x - mean) ** 2 for x in nums) * (1.0 / len(nums)))
+    stdev = math.sqrt(sum((x - mean) ** 2 for x in nums) / (len(nums) - 1.0))
     stderr = stdev / math.sqrt(len(nums))
     return Uncertain(mean, stderr)
