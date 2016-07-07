@@ -1,3 +1,7 @@
+// Eventually, it would be nice to import the .d.ts for the dingus, but it's
+// not currently possible to emit those definitions.
+declare function sscDingus(el: any, config: any): any;
+
 /**
  * Decode the window's hash component as if it were a query string. Return a
  * key--value map.
@@ -15,7 +19,15 @@ function decode_hash(s: string): { [key: string]: string } {
   return out;
 }
 
-declare function sscDingus(el: any, config: any): any;
+/**
+ * Log a message to the harness server.
+ */
+function log(obj: any) {
+  let msg = JSON.stringify(obj);
+  var req = new XMLHttpRequest();
+  req.open("GET", "/log?msg=" + encodeURIComponent(msg));
+  req.send();
+}
 
 document.addEventListener("DOMContentLoaded", function () {
   // Set up the dingus.
@@ -23,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let dingus = sscDingus(base, {
     history: false,
     fpsCallback: (fps: number) => {
-      console.log("FPS!", fps);
+      log({ fps });
     },
   });
 
