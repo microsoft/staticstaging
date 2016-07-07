@@ -144,6 +144,7 @@ export function start_gl(
   // Bookkeeping for calculating framerate.
   let frame_count = 0;
   let last_sample = performance.now();
+  let last_frame = performance.now();
   let sample_rate = 1000;  // Measure every second.
   let latencies: number[] = [];
 
@@ -176,15 +177,18 @@ export function start_gl(
     }
 
     // Framerate tracking.
-    ++frame_count;
-    let now = performance.now();
-    let elapsed = now - last_sample;  // Milliseconds.
-    latencies.push(elapsed);
-    if (elapsed > sample_rate) {
-      fps_cbk(frame_count, elapsed, latencies);
-      last_sample = performance.now();
-      frame_count = 0;
-      latencies = [];
+    if (fps_cbk) {
+      ++frame_count;
+      let now = performance.now();
+      let elapsed = now - last_sample;  // Milliseconds.
+      latencies.push(now - last_frame);
+      last_frame = now;
+      if (elapsed > sample_rate) {
+        fps_cbk(frame_count, elapsed, latencies);
+        last_sample = performance.now();
+        frame_count = 0;
+        latencies = [];
+      }
     }
 
     // Ask to be run again.
