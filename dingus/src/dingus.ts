@@ -126,7 +126,7 @@ interface Config {
   history?: boolean;
   lineNumbers?: boolean;
   scrollbars?: boolean;
-  fpsCallback?: (fps: number) => void;
+  fpsCallback?: (frames: number, ms: number) => void;
 };
 
 let DEFAULT: Config = {
@@ -271,11 +271,12 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
         console.log(glcode);
         if (!update_gl) {
-          update_gl = start_gl(visualbox, (fps) => {
+          update_gl = start_gl(visualbox, (frames, ms) => {
             if (config.fpsCallback) {
-              config.fpsCallback(fps);
+              config.fpsCallback(frames, ms);
             }
             if (fpsbox) {
+              let fps = frames / ms * 1000;
               fpsbox.textContent = fps.toFixed(2);
             }
           });
