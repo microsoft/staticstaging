@@ -21,14 +21,14 @@ function read_string(filename: string): Promise<string> {
 /**
  * Start the server and return its URL.
  */
-function serve(log: (msg: any) => void): Promise<string> {
+function serve(log: (msg: any) => any): Promise<string> {
   let server = restify.createServer();
   let qp = restify.queryParser({ mapParams: false });
 
   // Log messages to a file.
   server.get('/log', qp, (req: any, res: any, next: any) => {
-    log(JSON.parse(req.query['msg']));
-    res.send('done');
+    let out = log(JSON.parse(req.query['msg']));
+    res.send(out);
     next();
   });
 
@@ -60,6 +60,9 @@ function serve(log: (msg: any) => void): Promise<string> {
   });
 }
 
+// The number of messages to receive before terminating.
+let MESSAGE_COUNT = 4;
+
 function main() {
   // Get the program to execute.
   let fn = process.argv[2];
@@ -71,6 +74,11 @@ function main() {
     let log = (msg: any) => {
       console.log(msg);
       messages.push(msg);
+      if (messages.length >= MESSAGE_COUNT) {
+        return "done";
+      } else {
+        return "ok";
+      }
     };
 
     serve(log).then((url) => {

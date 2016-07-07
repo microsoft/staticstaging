@@ -25,6 +25,15 @@ function decode_hash(s: string): { [key: string]: string } {
 function log(obj: any) {
   let msg = JSON.stringify(obj);
   var req = new XMLHttpRequest();
+  req.addEventListener('load', (evt) => {
+    if (req.readyState === 4 && req.status === 200) {
+      let res = JSON.parse(req.responseText);
+      console.log(res);
+      if (res === "done") {
+        window.close();
+      }
+    }
+  });
   req.open("GET", "/log?msg=" + encodeURIComponent(msg));
   req.send();
 }
