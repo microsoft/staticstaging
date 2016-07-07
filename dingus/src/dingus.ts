@@ -270,7 +270,11 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
         console.log(glcode);
         if (!update_gl) {
-          update_gl = start_gl(visualbox, fpsbox);
+          update_gl = start_gl(visualbox, (fps) => {
+            if (fpsbox) {
+              fpsbox.textContent = fps.toFixed(2);
+            }
+          });
         }
         update_gl(glcode);
       } else {

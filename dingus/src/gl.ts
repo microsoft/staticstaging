@@ -106,7 +106,7 @@ function projection_matrix(out: Mat4, width: number, height: number) {
  * render function (given compiled SHFL code as a string).
  */
 export default function start_gl(container: HTMLElement,
-                                 fps_element?: HTMLElement)
+                                 fps_cbk?: (fps: number) => void)
 {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -174,8 +174,8 @@ export default function start_gl(container: HTMLElement,
     let elapsed = now.getTime() - last_sample.getTime();  // Milliseconds.
     if (elapsed > sample_rate) {
       let fps = frame_count / elapsed * 1000;
-      if (fps_element) {
-        fps_element.textContent = fps.toFixed(2);
+      if (fps_cbk) {
+        fps_cbk(fps);
       } else {
         console.log(fps + " fps");
       }
