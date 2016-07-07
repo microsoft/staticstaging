@@ -29,12 +29,7 @@ function serve(log: (msg: any) => any): Promise<string> {
   server.get('/log', qp, (req: any, res: any, next: any) => {
     let out = log(JSON.parse(req.query['msg']));
     res.send(out);
-    next();
-
-    // When the server returns "done", we shut it down.
-    if (out === "done") {
-      server.close();  // Undocumented, because Restify is terrible.
-    }
+    return next();
   });
 
   // Serve the main HTML and JS files.
@@ -82,6 +77,11 @@ let MESSAGE_COUNT = 4;
  */
 function experiment_finished(data: any) {
   process.stdout.write(JSON.stringify(data));
+
+  // Stop.
+  setTimeout(() => {
+    process.exit();
+  }, 500);
 }
 
 /**
