@@ -1,24 +1,9 @@
 #!/usr/bin/env python3
 import os
 import json
-import math
 import uncertain
 
 TIMINGS_DIR = 'collected'
-
-
-def _mean(values):
-    """The arithmetic mean."""
-    return sum(values) / len(values)
-
-
-def _mean_err(vals):
-    """The mean and standard error of the mean."""
-    if len(vals) <= 1:
-        return 0.0
-    mean = _mean(vals)
-    stdev = math.sqrt(sum((x - mean) ** 2 for x in vals) / (len(vals) - 1))
-    return mean, stdev / math.sqrt(len(vals))
 
 
 def summarize_run(data):
@@ -35,13 +20,9 @@ def summarize_run(data):
 
         # TODO Skip the first message as a "warmup" period.
 
-    umean = uncertain.umean(latencies)
-    mean, err = _mean_err(latencies)
-    print('frame latency:', mean, '+/-', err, 'ms')
-    print('fps:', 1000 / mean)
-
-    print('frame latency:', umean)
-    print('fps:', 1000.0 / umean)
+    mean = uncertain.umean(latencies)
+    print('frame latency:', mean)
+    print('fps:', 1000.0 / mean)
 
 
 def summarize():
