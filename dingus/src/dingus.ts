@@ -126,6 +126,7 @@ interface Config {
   history?: boolean;
   lineNumbers?: boolean;
   scrollbars?: boolean;
+  fpsCallback?: (fps: number) => void;
 };
 
 let DEFAULT: Config = {
@@ -271,6 +272,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         console.log(glcode);
         if (!update_gl) {
           update_gl = start_gl(visualbox, (fps) => {
+            if (config.fpsCallback) {
+              config.fpsCallback(fps);
+            }
             if (fpsbox) {
               fpsbox.textContent = fps.toFixed(2);
             }

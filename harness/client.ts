@@ -20,7 +20,12 @@ declare function sscDingus(el: any, config: any): any;
 document.addEventListener("DOMContentLoaded", function () {
   // Set up the dingus.
   let base = document.querySelector('.sscdingus');
-  let dingus = sscDingus(base, { history: false });
+  let dingus = sscDingus(base, {
+    history: false,
+    fpsCallback: (fps: number) => {
+      console.log("FPS!", fps);
+    },
+  });
 
   // Load code into the dingus.
   function handle_hash() {
