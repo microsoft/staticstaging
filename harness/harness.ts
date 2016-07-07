@@ -30,6 +30,11 @@ function serve(log: (msg: any) => any): Promise<string> {
     let out = log(JSON.parse(req.query['msg']));
     res.send(out);
     next();
+
+    // When the server returns "done", we shut it down.
+    if (out === "done") {
+      server.close();  // Undocumented, because Restify is terrible.
+    }
   });
 
   // Serve the main HTML and JS files.
