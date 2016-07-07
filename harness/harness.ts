@@ -61,24 +61,24 @@ function serve(log: (msg: any) => void): Promise<string> {
 }
 
 function main() {
-  // Execute a program.
+  // Get the program to execute.
   let fn = process.argv[2];
   let code: string;
   console.log("executing " + fn);
   read_string(fn).then((code) => {
     // Handler for logged messages.
+    let messages: any[] = []
     let log = (msg: any) => {
-      console.log("got!", msg);
+      console.log(msg);
+      messages.push(msg);
     };
 
     serve(log).then((url) => {
       console.log(url);
 
       // Open the program in the browser.
-      if (code) {
-        let query = querystring.stringify({ code });
-        open_url(url + '/#' + query);
-      }
+      let query = querystring.stringify({ code });
+      open_url(url + '/#' + query);
     });
   });
 }
