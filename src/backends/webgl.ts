@@ -21,6 +21,7 @@ function compile_glsl(gl, type, src) {
   }
   return shader;
 }
+
 function get_shader(gl, vertex_source, fragment_source) {
   var vert = compile_glsl(gl, gl.VERTEX_SHADER, vertex_source);
   var frag = compile_glsl(gl, gl.FRAGMENT_SHADER, fragment_source);
@@ -34,6 +35,7 @@ function get_shader(gl, vertex_source, fragment_source) {
   }
   return program;
 }
+
 function bind_attribute(gl, location, buffer) {
   if (!buffer) {
     throw "no buffer";
@@ -41,6 +43,16 @@ function bind_attribute(gl, location, buffer) {
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(location);
+}
+
+// Binds texture zero (i.e., only one texture for now).
+function bind_texture(gl, location, texture) {
+  if (!texture) {
+    throw "no texture";
+  }
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.uniform1i(location, 0);
 }
 
 // WebGL equivalents of GLSL functions.
