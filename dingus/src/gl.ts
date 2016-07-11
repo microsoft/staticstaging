@@ -95,8 +95,9 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
     let tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
-    gl.generateMipmaps(gl.TEXTURE_2D);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE,
+                  data as any);
+    // gl.generateMipmaps(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 

@@ -33,6 +33,9 @@ extern mat4.invert: Mat4 Mat4 -> Void;
 # Get the camera position (in world space) from a view matrix.
 extern eye: Mat4 -> Vec3;
 
+# Textures.
+extern a_texture: -> Texture;  # FIXME EXPERIMENTAL
+
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
 extern Math.cos: Float -> Float;
