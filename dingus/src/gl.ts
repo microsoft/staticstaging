@@ -86,10 +86,10 @@ function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
   // Inspired by: https://twgljs.org
   function a_texture() {
     let data = new Uint8ClampedArray([
-      255,255,255,255,
+      192,0,0,255,
+      0,192,0,255,
+      0,0,192,255,
       192,192,192,255,
-      192,192,192,255,
-      255,255,255,255,
     ]);
 
     let tex = gl.createTexture();
