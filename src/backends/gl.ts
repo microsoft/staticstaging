@@ -22,6 +22,7 @@ import { FUNC_ANNOTATION } from './js';
 // Special GLSL matrix and vector types.
 // Someday, a more structured notion of generic vector and matrix types would
 // be better. For now, we just support a handful of common types.
+export const FLOAT2 = new PrimitiveType("Float2");
 export const FLOAT3 = new PrimitiveType("Float3");
 export const FLOAT4 = new PrimitiveType("Float4");
 export const FLOAT3X3 = new PrimitiveType("Float3x3");
@@ -29,6 +30,9 @@ export const FLOAT4X4 = new PrimitiveType("Float4x4");
 export const ARRAY = new ConstructorType("Array");
 export const INT3 = new PrimitiveType("Int3");
 export const INT4 = new PrimitiveType("Int4");
+
+// A type for textures (on the CPU) and sampler IDs (on the GPU).
+export const TEXTURE = new PrimitiveType("Texture");
 
 export const GL_TYPES: TypeMap = {
   "Float3": FLOAT3,
@@ -47,6 +51,8 @@ export const GL_TYPES: TypeMap = {
   // be nice if the dingus could declare the Mesh type itself rather than
   // needing to bake it in here.
   "Mesh": new PrimitiveType("Mesh"),
+
+  "Texture": TEXTURE,
 };
 
 export const NUMERIC_TYPES: Type[] = [
@@ -131,6 +137,9 @@ export const INTRINSICS: TypeMap = {
   '-': _GL_UNARY_BINARY_TYPE,
   '*': _GL_MUL_TYPE,
   '/': _GL_BINARY_TYPE,
+
+  // Texture sampling.
+  texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
 };
 
 
