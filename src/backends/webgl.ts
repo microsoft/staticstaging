@@ -2,7 +2,7 @@ import { CompilerIR, Prog, Variant } from '../compile/ir';
 import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
-  FLOAT4X4, SHADER_ANNOTATION } from './gl';
+  FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
 import { progsym, paren } from './emitutil';
 import { Type, PrimitiveType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
@@ -170,7 +170,16 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
     value: string, attribute: boolean): string
 {
   if (!attribute) {
-    if (type instanceof PrimitiveType) {
+    if (type === TEXTURE) {
+      // Bind a texture sampler.
+      let out = `gl.activeTexture(gl.TEXTURE0),\n`;  // Texture zero for now.
+      out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
+      let locname = locsym(scopeid, varid);
+      out += `gl.uniform1i(${locname}, 0)`;
+      return out;
+
+    } else if (type instanceof PrimitiveType) {
+      // Ordinary uniform.
       let fname = GL_UNIFORM_FUNCTIONS[type.name];
       if (fname === undefined) {
         throw "error: unsupported uniform type " + type.name;
@@ -186,6 +195,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       }
       out += `, ${paren(value)})`;
       return out;
+
     } else {
       throw "error: uniforms must be primitive types";
     }

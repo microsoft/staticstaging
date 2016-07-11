@@ -70,6 +70,7 @@ export const TYPE_NAMES: { [_: string]: string } = {
   "Float4": "vec4",
   "Float3x3": "mat3",
   "Float4x4": "mat4",
+  "Texture": "sampler2D",
 };
 
 export const FRAG_INTRINSIC = "fragment";
