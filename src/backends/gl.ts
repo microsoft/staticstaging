@@ -121,6 +121,9 @@ export const INTRINSICS: TypeMap = {
     new FunType([FLOAT, FLOAT, FLOAT], FLOAT3),
     new FunType([FLOAT], FLOAT3),
   ]),
+  vec2: new OverloadedType([
+    new FunType([FLOAT, FLOAT], FLOAT2),
+  ]),
   abs: _GL_UNARY_TYPE,
   normalize: _GL_UNARY_TYPE,
   pow: _GL_BINARY_TYPE,
