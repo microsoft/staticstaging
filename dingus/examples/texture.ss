@@ -1,3 +1,7 @@
+# title: texture
+# mode: webgl
+# ---
+
 var model = mat4.create();
 
 # Load buffers and parameters for the model.
