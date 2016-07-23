@@ -1,7 +1,7 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
   QuantifiedType, INT, FLOAT, ANY, VOID, pretty_type, TypeVisit, TypeVariable,
-  type_visit } from './type';
+  type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
   stack_put, zip } from './util';
@@ -468,11 +468,37 @@ export let gen_check : Gen<TypeCheck> = function(check) {
   }
 }
 
-// Check that a function call is well-typed. Return the result type or a
-// string indicating the error.
+/**
+ * An error message for argument types.
+ */
+function param_error(i: number, param: Type, arg: Type): string {
+  return "type error: mismatched argument type at index " + i +
+    ": expected " + pretty_type(param) +
+    ", got " + pretty_type(arg);
+}
+
+/**
+ * Check that a function call is well-typed. Return the result type or a
+ * string indicating the error.
+ */
 function check_call(target: Type, args: Type[]): Type | string {
+  // The target is a variadic function.
+  if (target instanceof VariadicFunType) {
+    if (target.params.length != 1) {
+      return "type error: variadic function with multiple argument types";
+    }
+    let param = target.params[0];
+    for (let i = 0; i < args.length; ++i) {
+      let arg = args[i];
+      if (!compatible(param, arg)) {
+        return param_error(i, param, arg);
+      }
+    }
+
+    return target.ret;
+
   // The target is an ordinary function.
-  if (target instanceof FunType) {
+  } else if (target instanceof FunType) {
     // Check that the arguments are the right type.
     if (args.length != target.params.length) {
       return "type error: mismatched argument length";
@@ -481,9 +507,7 @@ function check_call(target: Type, args: Type[]): Type | string {
       let param = target.params[i];
       let arg = args[i];
       if (!compatible(param, arg)) {
-        return "type error: mismatched argument type at index " + i +
-          ": expected " + pretty_type(param) +
-          ", got " + pretty_type(arg);
+        return param_error(i, param, arg);
       }
     }
 

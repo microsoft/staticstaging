@@ -51,6 +51,14 @@ export class FunType extends Type {
 };
 
 /**
+ * Variadic function types. These functions can take any number of arguments
+ * of a single type: the `params` array must have length 1.
+ */
+export class VariadicFunType extends FunType {
+  _brand_VariadicFunType: void;
+}
+
+/**
  * Code types.
  */
 export class CodeType extends Type {
