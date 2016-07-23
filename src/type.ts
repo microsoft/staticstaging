@@ -1,8 +1,13 @@
+/**
+ * The base type for all types.
+ */
 export abstract class Type {
   _brand_Type: void;
 }
 
-// Primitive types are singular instances.
+/**
+ * Primitive types. Each primitive type is a (shared) instance of this class.
+ */
 export class PrimitiveType extends Type {
   constructor(public name: string) { super() };
 
@@ -11,23 +16,43 @@ export class PrimitiveType extends Type {
   _brand_PrimitiveType: void;
 };
 
-// Simple top and bottom types.
+/**
+ * A "top" type: a supertype of everything.
+ */
 export class AnyType extends Type {
   _brand_AnyType: void;
 };
+export const ANY = new AnyType();
+
+/**
+ * A "bottom" type: a subtype of everything.
+ */
 export class VoidType extends Type {
   _brand_AnyType: void;
 };
-export const ANY = new AnyType();
 export const VOID = new VoidType();
 
-// Function types are more complicated. Really wishing for ADTs here.
+/**
+ * Function types.
+ */
 export class FunType extends Type {
-  constructor(public params: Type[], public ret: Type) { super() };
+  constructor(
+    /**
+     * The parameter types.
+     */
+    public params: Type[],
+
+    /**
+     * The return type.
+     */
+    public ret: Type
+  ) { super() };
   _brand_FunType: void;
 };
 
-// Same with code types.
+/**
+ * Code types.
+ */
 export class CodeType extends Type {
   constructor(
     public inner: Type,
