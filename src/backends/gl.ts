@@ -2,6 +2,7 @@ import { Type, TypeMap } from '../type';
 import {
   PrimitiveType,
   FunType,
+  VariadicFunType,
   OverloadedType,
   ConstructorType,
   InstanceType,
@@ -144,6 +145,10 @@ export const INTRINSICS: TypeMap = {
 
   // Texture sampling.
   texture2D: new FunType([TEXTURE, FLOAT2], FLOAT4),
+
+  // Buffer construction. Eventually, it would be nice to use overloading here
+  // instead of distinct names for each type.
+  float_array: new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
 };
 
 

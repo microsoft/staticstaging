@@ -21,8 +21,7 @@ type Mat4 = Float32Array;
 
 /**
  * Evaluate the compiled JavaScript code with `eval` in the context of the
- * runtime library, `glrt`. Its contents are exposed as the JavaScript
- * variable `g`. Also include a `dingus` object containing some
+ * runtime library, `glrt`. Also include a `dingus` object containing some
  * dingus-specific matrices.
  */
 function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,

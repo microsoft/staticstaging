@@ -9,6 +9,8 @@ import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
 import * as ast from '../ast';
 
+// Run-time functions invoked by generated code. These could eventually be
+// moved to the `glrt` library.
 export const RUNTIME = `
 // Shader management.
 function compile_glsl(gl, type, src) {

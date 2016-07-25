@@ -113,5 +113,16 @@ export function runtime(gl: WebGLRenderingContext) {
 
       return tex;
     },
+
+    // Create a buffer of values.
+    float_array() {
+      let arr = new Float32Array(arguments);
+
+      let buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW);
+
+      return buf;
+    },
   };
 }
