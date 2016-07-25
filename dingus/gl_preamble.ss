@@ -1,3 +1,7 @@
+# This is the SCC preamble for WebGL programs. It includes the functions
+# provided by the `glrt` runtime library. It also includes some
+# dingus-specific matrices from the `dingus` map.
+
 # Externs for the dingus parameter matrices.
 extern dingus.projection: Mat4;
 extern dingus.view: Mat4;
@@ -36,6 +40,7 @@ extern eye: Mat4 -> Vec3;
 # Textures.
 extern a_texture: -> Texture;  # FIXME EXPERIMENTAL
 
+# Standard JavaScript functions.
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
 extern Math.cos: Float -> Float;

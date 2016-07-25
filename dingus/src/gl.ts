@@ -11,107 +11,43 @@
 // definition file.
 declare function require(name: string): any;
 
+import * as glrt from './glrt';
+
 const mat4 = require('gl-mat4');
-const normals = require('normals');
 const canvasOrbitCamera = require('canvas-orbit-camera');
-const pack = require('array-pack-2d');
-const eye = require('eye-vector');
 
-const bunny: Mesh = require('bunny');
-const teapot: Mesh = require('teapot');
-const snowden: Mesh = require('snowden');
-
-// Some type aliases for GL data structures.
+// A type alias for a GL data structure.
 type Mat4 = Float32Array;
-interface Mesh {
-  positions: [number, number, number][];
-  cells: [number, number, number][];
-};
 
 /**
- * Create a WebGL buffer object containing the given data.
- */
-function make_buffer(gl: WebGLRenderingContext, data: number[][],
-                     type: string, mode: number)
-{
-  // Initialize a buffer.
-  let buf = gl.createBuffer();
-
-  // Flatten the data to a packed array.
-  let arr = pack(data, type);
-
-  // Insert the data into the buffer.
-  gl.bindBuffer(mode, buf);
-  gl.bufferData(mode, arr, gl.STATIC_DRAW);
-
-  return buf;
-}
-
-/**
- * Evaluate the compiled SHFL code in the context of the globals we provide
- * as externs. Return a setup function that takes no arguments and returns a
- * per-frame function.
+ * Evaluate the compiled JavaScript code with `eval` in the context of the
+ * runtime library, `glrt`. Its contents are exposed as the JavaScript
+ * variable `g`. Also include a `dingus` object containing some
+ * dingus-specific matrices.
  */
 function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
                    view: Mat4)
 {
+  // Get the runtime functions.
+  let rt = glrt.runtime(gl);
+
+  // Add our projection and view matrices.
   let dingus = {
-    projection: projection,
-    view: view,
+    projection,
+    view,
   };
 
-  // Operations exposed to the language for getting data for meshes.
-  function mesh_indices(obj: Mesh) {
-    return make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER);
+  // Construct variable bindings for everything in `rt`. This is essentially a
+  // replacement for JavaScript's deprecated `with` statement.
+  let bindings: string[] = [];
+  for (let name in rt) {
+    bindings.push(`var ${name} = rt.${name};`);
   }
-  function mesh_positions(obj: Mesh) {
-    return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
-  }
-  function mesh_normals(obj: Mesh) {
-    let norm = normals.vertexNormals(obj.cells, obj.positions);
-    return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
-  }
-  function mesh_size(obj: Mesh) {
-    return obj.cells.length * obj.cells[0].length;
-  }
-
-  // And, similarly, a function for actually drawing a mesh. This takes the
-  // indices buffer for the mesh and its size (in the number of scalars).
-  function draw_mesh(indices: WebGLBuffer, size: number) {
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
-    gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
-  }
-
-  // FIXME EXPERIMENTAL: Trying out textures.
-  // Inspired by: https://twgljs.org
-  function a_texture() {
-    let data = new Uint8ClampedArray([
-      192,0,0,255,
-      0,192,0,255,
-      0,0,192,255,
-      192,192,192,255,
-    ]);
-
-    let tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
-
-    let img = new ImageData(data, 2, 2);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    // gl.generateMipmaps(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
-    gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
-
-    return tex;
-  }
+  let bindings_js = bindings.join('\n');
 
   // Evaluate the code, but wrap it in a function to avoid scope pollution.
   return (function () {
-    return eval(code);
+    return eval(bindings_js + code);
   })();
 }
 
@@ -162,9 +98,8 @@ export function start_gl(
   let gl = (canvas.getContext("webgl") ||
     canvas.getContext("experimental-webgl")) as WebGLRenderingContext;
 
-  // Create the base matrices to be used
-  // when rendering the bunny. Alternatively, can
-  // be created using `new Float32Array(16)`
+  // Create the transform matrices. Alternatively, these can be created using
+  // `new Float32Array(16)`.
   let projection = mat4.create();
   let view = mat4.create();
 
