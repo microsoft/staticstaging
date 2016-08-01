@@ -24,7 +24,7 @@ parser.js: src/grammar.pegjs $(call npmdep,pegjs)
 # The command-line Node tool.
 
 TS_SRC := $(shell find src/ -type f -name '*.ts')
-$(CLI_JS): $(TS_SRC) $(CLI_TS) parser.js $(TYPINGS_MAIN) $(TSC)
+$(CLI_JS): $(TS_SRC) $(CLI_TS) parser.js $(TYPINGS) $(TSC)
 	$(TSC)
 
 
@@ -74,7 +74,7 @@ dump-gl: $(CLI_JS)
 
 # An asset-munging tool.
 
-tool/munge.js: tool/munge.ts $(TSC) $(TYPINGS_MAIN)
+tool/munge.js: tool/munge.ts $(TSC) $(TYPINGS)
 	$(TSC) --out $@ $<
 
 

@@ -23,15 +23,13 @@ node_modules/%/package.json: package.json
 TSC := $(call npmbin,tsc)
 $(TSC): $(call npmdep,typescript)
 
-TYPINGS := $(call npmbin,typings)
-$(TYPINGS): $(call npmdep,typings)
+TYPINGS_CMD := $(call npmbin,typings)
+$(TYPINGS_CMD): $(call npmdep,typings)
 
 
 # Fetch TypeScript typing headers.
 
-typings/%.d.ts: typings.json $(TYPINGS)
-	$(TYPINGS) install
+TYPINGS := typings/index.d.ts
+$(TYPINGS): typings.json $(TYPINGS_CMD)
+	$(TYPINGS_CMD) install
 	touch $@
-
-TYPINGS_MAIN := typings/main.d.ts
-TYPINGS_BROWSER := typings/browser.d.ts
