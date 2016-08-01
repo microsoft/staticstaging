@@ -184,9 +184,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       return tex;
     },
 
-    // FIXME EXPERIMENTAL
-    sample_obj() {
-      let obj_src = get_asset(assets, "cube.obj");
+    // Load a mesh from an OBJ file.
+    load_obj(name: string) {
+      let obj_src = get_asset(assets, name);
       let mesh = new obj_loader.Mesh(obj_src);
 
       // Match the interface we're using for Mesh objects that come from
