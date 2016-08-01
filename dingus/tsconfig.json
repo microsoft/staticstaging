@@ -7,6 +7,6 @@
     },
     "files": [
         "src/dingus.ts",
-        "typings/browser.d.ts"
+        "typings/index.d.ts"
     ]
 }

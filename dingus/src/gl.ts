@@ -25,10 +25,10 @@ type Mat4 = Float32Array;
  * dingus-specific matrices.
  */
 function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
-                   view: Mat4)
+                   view: Mat4, assets: glrt.Assets)
 {
   // Get the runtime functions.
-  let rt = glrt.runtime(gl);
+  let rt = glrt.runtime(gl, assets);
 
   // Add our projection and view matrices.
   let dingus = {
@@ -61,6 +61,15 @@ function projection_matrix(out: Mat4, width: number, height: number) {
   let far  = 100;
 
   mat4.perspective(out, fieldOfView, aspectRatio, near, far)
+}
+
+/**
+ * Load assets for the dingus.
+ */
+function load_assets(): Promise<glrt.Assets> {
+  return glrt.load_assets([
+    "cube.obj",
+  ]);
 }
 
 /**
@@ -170,16 +179,33 @@ export function start_gl(
   // Start the first frame.
   nextFrame();
 
-  // Return a function that lets the client update the render body.
-  return function (shfl_code?: string) {
+  // A function that lets the client update the render body. This is what
+  // we'll return to the caller.
+  function update(shfl_code?: string) {
     if (shfl_code) {
       // Execute the compiled SHFL code in context.
-      let shfl_program = shfl_eval(shfl_code, gl, projection, view);
+      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets);
 
       // Invoke the setup stage.
       shfl_render = shfl_program();
     }
 
     fit();
+  };
+
+  // Load the assets when the code is first updated.
+  let assets: glrt.Assets = null;
+  return function(shfl_code?: string) {
+    // At the moment, this race makes the assets load twice if the code is
+    // updated quickly. We could check whether the request has started yet to
+    // avoid this.
+    if (assets) {
+      update(shfl_code);
+    } else {
+      load_assets().then((loaded_assets) => {
+        assets = loaded_assets;
+        update(shfl_code);
+      });
+    }
   };
 }
