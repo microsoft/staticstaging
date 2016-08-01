@@ -39,6 +39,7 @@ extern eye: Mat4 -> Vec3;
 
 # Textures.
 extern a_texture: -> Texture;  # FIXME EXPERIMENTAL
+extern sample_obj: -> Mesh;  # FIXME EXPERIMENTAL
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;
