@@ -28,7 +28,7 @@ export interface ExpressionNode extends SyntaxNode {
 export interface LiteralNode extends ExpressionNode {
   tag: "literal";
   value: number;
-  type: string;  // int or float
+  type: "int" | "float" | "string";
 }
 
 export interface SeqNode extends ExpressionNode {

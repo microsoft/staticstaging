@@ -154,8 +154,10 @@ export function emit_var(name: string, value: string, verbose=false): string {
 
 // Like `pretty_value`, but for values in the *compiled* JavaScript world.
 export function pretty_value(v: any): string {
-  if (typeof v == 'number') {
+  if (typeof v === 'number') {
     return v.toString();
+  } else if (typeof v === 'string') {
+    return JSON.stringify(v);
   } else if (v.proc !== undefined) {
     return "(fun)";
   } else if (v.prog !== undefined) {
@@ -172,7 +174,11 @@ export function pretty_value(v: any): string {
 
 export let compile_rules = {
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
-    return tree.value.toString();
+    if (tree.type === "string") {
+      return JSON.stringify(tree.value);
+    } else {
+      return tree.value.toString();
+    }
   },
 
   visit_seq(tree: ast.SeqNode, emitter: Emitter): string {

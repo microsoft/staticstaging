@@ -21,7 +21,8 @@ SeqExpr
 
 // Expressions that usually don't need parenthesization.
 TermExpr
-  = Quote / CCall / Lookup / Escape / Run / FloatLiteral / IntLiteral / Paren
+  = Quote / CCall / Lookup / Escape / Run / FloatLiteral / IntLiteral /
+  StringLiteral / Paren
 
 // Expressions that can be operands to binary/unary operators.
 Operand
@@ -43,6 +44,14 @@ IntLiteral
 FloatLiteral
   = n:float
   { return {tag: "literal", type: "float", value: n}; }
+
+StringLiteral "string"
+  = strquote chars:StringChar* strquote
+  { return {tag: "literal", type: "string", value: chars.join("")}; }
+
+StringChar
+  = !strquote .
+  { return text(); }
 
 Lookup
   = i:ident
@@ -283,6 +292,9 @@ while
 
 macromark
   = "@"
+
+strquote
+  = '"'
 
 
 // Empty space.

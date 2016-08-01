@@ -1,7 +1,7 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, VOID, pretty_type, TypeVisit, TypeVariable,
-  type_visit, VariadicFunType } from './type';
+  QuantifiedType, INT, FLOAT, ANY, VOID, STRING, pretty_type, TypeVisit,
+  TypeVariable, type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
   stack_put, zip } from './util';
@@ -120,6 +120,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [INT, env];
       } else if (tree.type === "float") {
         return [FLOAT, env];
+      } else if (tree.type === "string") {
+        return [STRING, env];
       } else {
         throw "error: unknown literal type";
       }

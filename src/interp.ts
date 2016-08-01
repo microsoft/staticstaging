@@ -6,7 +6,7 @@ import { overlay, merge } from './util';
 
 // Dynamic syntax.
 
-type Value = number | Code | Fun | Extern;
+type Value = number | string | Code | Fun | Extern;
 
 interface Env {
   [key: string]: Value;
@@ -529,6 +529,8 @@ export function interpret(program: ast.SyntaxNode, e: Env = {}, p: Pers = []):
 export function pretty_value(v: Value): string {
   if (typeof v == 'number') {
     return v.toString();
+  } else if (typeof v === 'string') {
+    return JSON.stringify(v);
   } else if (v instanceof Code) {
     return v.annotation + "< " + pretty(v.expr) + " >";
   } else if (v instanceof Fun) {
