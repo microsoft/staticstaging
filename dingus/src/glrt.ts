@@ -195,6 +195,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
         positions: group_array(mesh.vertices, 3),
         cells: group_array(mesh.indices, 3),
         normals: group_array(mesh.vertexNormals, 3),
+
+        // This name I invented -- it's not in the StackGL models.
+        texcoords: group_array(mesh.textures, 3),
       };
     },
 
