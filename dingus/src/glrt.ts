@@ -82,7 +82,15 @@ function ajax_get(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
-      resolve(xhr.responseText);
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        if (xhr.status === 200) {
+          resolve(xhr.responseText);
+        } else {
+          let err = "asset loading failed with status " + xhr.status;
+          console.error(err);
+          reject(err);
+        }
+      }
     };
     xhr.open("GET", url);
     xhr.send();
