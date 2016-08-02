@@ -38,15 +38,6 @@ function get_shader(gl, vertex_source, fragment_source) {
   return program;
 }
 
-function bind_attribute(gl, location, buffer) {
-  if (!buffer) {
-    throw "no buffer";
-  }
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(location);
-}
-
 // Binds texture zero (i.e., only one texture for now).
 function bind_texture(gl, location, texture) {
   if (!texture) {
@@ -205,10 +196,17 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
   // Array types are bound as attributes.
   } else {
     if (type instanceof PrimitiveType) {
-      // Call our runtime function to bind the attribute. The parameters are
-      // the WebGL context, the attribute location, and the buffer.
-      return `bind_attribute(gl, ${locsym(scopeid, varid)}, ${paren(value)})`;
+      let buf_expr = paren(value);  // The value is a WebGL buffer object.
+      let loc_expr = locsym(scopeid, varid);  // Location handle.
+
       // TODO Actually use the type.
+
+      // Bind the attribute.
+      return [
+        `gl.bindBuffer(gl.ARRAY_BUFFER, ${buf_expr}),\n`,
+        `gl.vertexAttribPointer(${loc_expr}, 3, gl.FLOAT, false, 0, 0),\n`,
+        `gl.enableVertexAttribArray(location)`
+      ].join('');
     } else {
       throw "error: attributes must be primitive types";
     }
