@@ -24,7 +24,7 @@ render js<
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
     fragment glsl<
-      gl_FragColor = texture2D(tex, vec2(0.0, 0.0));
+      gl_FragColor = texture2D(tex, texcoord);
     >
   >;
   draw_mesh(indices, size);
