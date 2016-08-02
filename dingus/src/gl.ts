@@ -70,6 +70,8 @@ function load_assets(): Promise<glrt.Assets> {
   return glrt.load_assets([
     "cube.obj",
     "teapot.obj",
+    "head.obj",
+    "lambertian.jpg",
   ]);
 }
 
