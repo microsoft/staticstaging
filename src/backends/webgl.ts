@@ -83,6 +83,7 @@ const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
  * consists of the dimension and the primitive type.
  */
 const GL_ATTRIBUTE_TYPES: { [_: string]: [string, string] } = {
+  "Float2": ["2", "gl.FLOAT"],
   "Float3": ["3", "gl.FLOAT"],
 };
 
