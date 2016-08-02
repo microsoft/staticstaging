@@ -5,7 +5,7 @@
 var model = mat4.create();
 
 # Load buffers and parameters for the model.
-var mesh = load_obj("cube.obj");
+var mesh = load_obj("teapot.obj");
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
