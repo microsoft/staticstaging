@@ -15,9 +15,17 @@ var size = mesh_size(mesh);
 
 var tex = a_texture();
 
+# Identity and rotation matrix.
+var id = mat4.create();
+var rot = mat4.create();
+
 render js<
+  # Rotate the identity matrix.
+  var phase = Date.now() / 1000;
+  mat4.rotateY(rot, id, phase);
+
   vertex glsl<
-    gl_Position = projection * view * model * vec4(position, 1.0);
+    gl_Position = projection * view * %[ model * rot ] * vec4(position, 1.0);
     fragment glsl<
       gl_FragColor = texture2D(tex, vec2(0.0, 0.0));
     >
