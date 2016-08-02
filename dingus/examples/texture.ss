@@ -1,0 +1,30 @@
+# title: texture
+# mode: webgl
+# ---
+
+# Simple texture mapping on a cube.
+
+# Scale the model up.
+var model = mat4.create();
+# mat4.scale(model, model, vec3(50.0, 50.0, 50.0));
+
+# Load buffers and parameters for the model.
+var mesh = load_obj("cube.obj");
+var position = mesh_positions(mesh);
+var normal = mesh_normals(mesh);
+var indices = mesh_indices(mesh);
+var size = mesh_size(mesh);
+var texcoord = mesh_texcoords(mesh);
+
+# Load a texture from an image.
+var tex = load_texture("default.png");
+
+render js<
+  vertex glsl<
+    gl_Position = projection * view * model * vec4(position, 1.0);
+    fragment glsl<
+      gl_FragColor = vec4(normal, 1.0);  # texture2D(tex, vec2(0.0, 0.0));
+    >
+  >;
+  draw_mesh(indices, size);
+>
