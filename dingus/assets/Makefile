@@ -25,10 +25,6 @@ lambertian.jpg: head.zip
 head.zip:
 	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
 
-cube.obj: cube.zip
-	unzip $^ $@
-	touch $@
-
 default.png: cube.zip
 	unzip $^ $@
 	touch $@
