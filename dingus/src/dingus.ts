@@ -171,6 +171,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   let exampleselect = <HTMLSelectElement> base.querySelector('.example');
   let fpsbox = <HTMLElement> base.querySelector('.fps');
   let visualbox = <HTMLElement> base.querySelector('.visual');
+  let loadingmsg = <HTMLElement> base.querySelector('.loading');
 
   // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
   let codemirror: CodeMirror.Editor;
@@ -297,6 +298,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
           update_gl(glcode);
         } else {
           console.log("Loading GL resources...");
+          if (loadingmsg) {
+            loadingmsg.style.display = 'block';
+          }
           start_gl(visualbox, (frames, ms, latencies) => {
             if (config.fpsCallback) {
               config.fpsCallback(frames, ms, latencies);
@@ -308,6 +312,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
           }, config.perfMode).then((update) => {
             update_gl = update;
             console.log("...loaded.");
+            if (loadingmsg) {
+              loadingmsg.style.display = 'none';
+            }
             update(glcode);
           });
         }
