@@ -182,7 +182,11 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       return obj.cells.length * obj.cells[0].length;
     },
     mesh_texcoords(obj: Mesh) {
-      return obj.texcoords;
+      let coords = obj.texcoords;
+      if (!coords) {
+        throw "mesh does not have texture coordinates";
+      }
+      return make_buffer(gl, coords, 'float32', gl.ARRAY_BUFFER);
     },
 
     // And, similarly, a function for actually drawing a mesh. This takes the
