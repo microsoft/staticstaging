@@ -67,6 +67,20 @@ function group_array<T>(a: T[], size: number) {
 }
 
 /**
+ * The opposite of `group_array`: flatten an array of arrays to a plain array
+ * of the element type.
+ */
+function flat_array<T>(a: T[][]) {
+  let out: T[] = [];
+  for (let vec of a) {
+    for (let el of vec) {
+      out.push(el);
+    }
+  }
+  return out;
+}
+
+/**
  * Pre-loaded assets for the WebGL demos, keyed by filename.
  */
 export type Assets = { [path: string]: string | HTMLImageElement };
@@ -186,7 +200,13 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       if (!coords) {
         throw "mesh does not have texture coordinates";
       }
-      return make_buffer(gl, coords, 'float32', gl.ARRAY_BUFFER);
+
+      // Create a WebGL buffer.
+      let data = flat_array(coords);
+      let buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+      return buf;
     },
 
     // And, similarly, a function for actually drawing a mesh. This takes the
