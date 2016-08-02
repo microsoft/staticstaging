@@ -4,9 +4,10 @@
 
 # Simple texture mapping on a cube.
 
-# Scale the model up.
+# Position the model.
 var model = mat4.create();
-# mat4.scale(model, model, vec3(50.0, 50.0, 50.0));
+mat4.scale(model, model, vec3(10.0, 10.0, 10.0));
+mat4.rotateY(model, model, 1.0);
 
 # Load buffers and parameters for the model.
 var mesh = load_obj("cube.obj");
@@ -23,7 +24,7 @@ render js<
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
     fragment glsl<
-      gl_FragColor = vec4(normal, 1.0);  # texture2D(tex, vec2(0.0, 0.0));
+      gl_FragColor = texture2D(tex, vec2(0.0, 0.0));
     >
   >;
   draw_mesh(indices, size);
