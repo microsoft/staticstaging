@@ -24,6 +24,7 @@ const teapot: Mesh = require('teapot');
 const snowden: Mesh = require('snowden');
 
 type Vec3Array = [number, number, number][];
+type Vec2Array = [number, number][];
 
 /**
  * The type of the sample meshes we use.
@@ -31,7 +32,7 @@ type Vec3Array = [number, number, number][];
 interface Mesh {
   positions: Vec3Array;
   cells: Vec3Array;
-  texcoords: Vec3Array;
+  texcoords?: Vec2Array;
 };
 
 /**
@@ -242,7 +243,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
         normals: group_array(mesh.vertexNormals, 3),
 
         // This name I invented -- it's not in the StackGL models.
-        texcoords: group_array(mesh.textures, 3),
+        texcoords: group_array(mesh.textures, 2),
       };
     },
 
