@@ -2,7 +2,9 @@
 # mode: webgl
 # ---
 
+# Scale the model up.
 var model = mat4.create();
+mat4.scale(model, model, vec3(50.0, 50.0, 50.0));
 
 # Load buffers and parameters for the model.
 var mesh = load_obj("head.obj");
