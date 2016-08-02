@@ -69,6 +69,7 @@ function projection_matrix(out: Mat4, width: number, height: number) {
 function load_assets(): Promise<glrt.Assets> {
   return glrt.load_assets([
     "cube.obj",
+    "default.png",
     "teapot.obj",
     "head.obj",
     "lambertian.jpg",

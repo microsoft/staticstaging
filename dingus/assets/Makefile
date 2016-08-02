@@ -2,14 +2,14 @@
 # someone else in this source repository).
 
 .PHONY: all
-all: teapot.obj head.obj lambertian.jpg
+all: teapot.obj head.obj lambertian.jpg cube.obj default.png
 
 teapot.obj: teapot.zip
 	unzip $^ $@
 	touch $@
 
 teapot.zip:
-	curl -LO "http://graphics.cs.williams.edu/data/meshes/teapot.zip"
+	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
 
 head.OBJ: head.zip
 	unzip $^ $@
@@ -23,4 +23,15 @@ lambertian.jpg: head.zip
 	touch $@
 
 head.zip:
-	curl -LO "http://graphics.cs.williams.edu/data/meshes/head.zip"
+	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
+
+cube.obj: cube.zip
+	unzip $^ $@
+	touch $@
+
+default.png: cube.zip
+	unzip $^ $@
+	touch $@
+
+cube.zip:
+	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
