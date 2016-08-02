@@ -223,7 +223,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
         `gl.bindBuffer(gl.ARRAY_BUFFER, ${buf_expr}),\n`,
         `gl.vertexAttribPointer(${loc_expr}, ${dims}, ${eltype}, `,
           `false, 0, 0),\n`,
-        `gl.enableVertexAttribArray(location)`
+        `gl.enableVertexAttribArray(${loc_expr})`
       ].join('');
     } else {
       throw "error: attributes must be primitive types";
