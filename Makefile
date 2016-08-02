@@ -110,7 +110,7 @@ site: dingus docs home
 		docs/build/* $(DEPLOY_DIR)/docs
 	mkdir -p $(DEPLOY_DIR)/dingus
 	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
-		--include '*/' --exclude '*' \
+		--include 'assets/*' --include '*/' --exclude '*' \
 		dingus/* $(DEPLOY_DIR)/dingus
 	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
 
