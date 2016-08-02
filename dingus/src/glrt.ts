@@ -23,12 +23,15 @@ const bunny: Mesh = require('bunny');
 const teapot: Mesh = require('teapot');
 const snowden: Mesh = require('snowden');
 
+type Vec3Array = [number, number, number][];
+
 /**
  * The type of the sample meshes we use.
  */
 interface Mesh {
-  positions: [number, number, number][];
-  cells: [number, number, number][];
+  positions: Vec3Array;
+  cells: Vec3Array;
+  texcoords: Vec3Array;
 };
 
 /**
@@ -176,6 +179,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
     },
     mesh_size(obj: Mesh) {
       return obj.cells.length * obj.cells[0].length;
+    },
+    mesh_texcoords(obj: Mesh) {
+      return obj.texcoords;
     },
 
     // And, similarly, a function for actually drawing a mesh. This takes the
