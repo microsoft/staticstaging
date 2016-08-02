@@ -293,8 +293,11 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         }
 
         console.log(glcode);
-        if (!update_gl) {
-          update_gl = start_gl(visualbox, (frames, ms, latencies) => {
+        if (update_gl) {
+          update_gl(glcode);
+        } else {
+          console.log("Loading GL resources...");
+          start_gl(visualbox, (frames, ms, latencies) => {
             if (config.fpsCallback) {
               config.fpsCallback(frames, ms, latencies);
             }
@@ -302,9 +305,12 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
               let fps = frames / ms * 1000;
               fpsbox.textContent = fps.toFixed(2);
             }
-          }, config.perfMode);
+          }, config.perfMode).then((update) => {
+            update_gl = update;
+            console.log("...loaded.");
+            update(glcode);
+          });
         }
-        update_gl(glcode);
       } else {
         // Just show the output value.
         visualbox.style.display = 'none';

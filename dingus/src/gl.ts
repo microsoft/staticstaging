@@ -85,9 +85,10 @@ export type PerfHandler =
  * Set up a canvas inside a container element. Return a function that sets the
  * render function (given compiled SHFL code as a string).
  */
-export function start_gl(
-  container: HTMLElement, perfCbk?: PerfHandler, perfMode?: boolean
-) {
+export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
+                         perfMode?: boolean):
+                           Promise<(code?: string) => void>
+{
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
   let canvas = document.createElement('canvas');
@@ -182,9 +183,9 @@ export function start_gl(
   // Start the first frame.
   nextFrame();
 
-  // A function that lets the client update the render body. This is what
-  // we'll return to the caller.
-  function update(shfl_code?: string) {
+  // Load the assets, then return a function that lets the client update the
+  // code.
+  return load_assets().then((assets) => (shfl_code?: string) => {
     if (shfl_code) {
       // Execute the compiled SHFL code in context.
       let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets);
@@ -194,21 +195,5 @@ export function start_gl(
     }
 
     fit();
-  };
-
-  // Load the assets when the code is first updated.
-  let assets: glrt.Assets = null;
-  return function(shfl_code?: string) {
-    // At the moment, this race makes the assets load twice if the code is
-    // updated quickly. We could check whether the request has started yet to
-    // avoid this.
-    if (assets) {
-      update(shfl_code);
-    } else {
-      load_assets().then((loaded_assets) => {
-        assets = loaded_assets;
-        update(shfl_code);
-      });
-    }
-  };
+  });
 }
