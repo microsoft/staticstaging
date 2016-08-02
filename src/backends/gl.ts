@@ -68,6 +68,7 @@ export const TYPE_NAMES: { [_: string]: string } = {
   "Int3": "ivec3",
   "Int4": "ivec4",
   "Float": "float",
+  "Float2": "vec2",
   "Float3": "vec3",
   "Float4": "vec4",
   "Float3x3": "mat3",
