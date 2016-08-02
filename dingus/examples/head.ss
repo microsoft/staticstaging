@@ -1,6 +1,10 @@
-# title: texture
+# title: head
 # mode: webgl
 # ---
+
+# This example renders a textured model. The head model and its texture
+# are from the Computer Graphics Archive at Williams:
+# http://graphics.cs.williams.edu/data/meshes.xml
 
 # Scale the model up.
 var model = mat4.create();
