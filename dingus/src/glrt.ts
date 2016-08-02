@@ -240,8 +240,32 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       };
     },
 
+    /**
+     * Load an image asset as a WebGL texture object.
+     */
     load_texture(name: string) {
-      let tex_data = get_asset(assets, name);
+      let img = get_asset(assets, name);
+      if (img instanceof HTMLImageElement) {
+        let tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
+                      gl.UNSIGNED_BYTE, img);
+
+        // ???
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+                         gl.LINEAR_MIPMAP_NEAREST);
+
+        // ???
+        gl.generateMipmap(gl.TEXTURE_2D);
+
+        gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
+
+        return tex;
+     } else {
+        throw "non-image used as image";
+      }
     },
 
     // Create a buffer of values.
