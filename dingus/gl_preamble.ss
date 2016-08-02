@@ -39,9 +39,8 @@ extern mat4.invert: Mat4 Mat4 -> Void;
 extern eye: Mat4 -> Vec3;
 
 # Textures.
-extern a_texture: -> Texture;  # FIXME EXPERIMENTAL
-extern load_obj: String -> Mesh;  # FIXME EXPERIMENTAL
-extern load_texture: String -> Texture;  # FIXME EXPERIMENTAL
+extern load_obj: String -> Mesh;
+extern load_texture: String -> Texture;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;

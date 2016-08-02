@@ -227,33 +227,6 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
     // Eye vector calculation.
     eye,
 
-    // FIXME EXPERIMENTAL: Trying out textures.
-    // Inspired by: https://twgljs.org
-    a_texture() {
-      let data = new Uint8ClampedArray([
-        192,0,0,255,
-        0,192,0,255,
-        0,0,192,255,
-        192,192,192,255,
-      ]);
-
-      let tex = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-
-      let img = new ImageData(data, 2, 2);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-      // gl.generateMipmaps(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
-      gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
-
-      return tex;
-    },
-
     // Load a mesh from an OBJ file.
     load_obj(name: string) {
       let obj_src = get_asset(assets, name);
@@ -283,13 +256,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
                       gl.UNSIGNED_BYTE, img);
 
-        // ???
+        // No mipmaps.
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
-                         gl.LINEAR_MIPMAP_NEAREST);
-
-        // ???
-        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
         gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
 
