@@ -64,6 +64,9 @@ function mat4mult(a, b) {
 }
 `.trim();
 
+/**
+ * The WebGL functions for binding uniforms.
+ */
 const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
   "Int": "uniform1i",
   "Int3": "uniform3iv",
@@ -73,6 +76,14 @@ const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
   "Float4": "uniform4fv",
   "Float3x3": "uniformMatrix3fv",
   "Float4x4": "uniformMatrix4fv",
+};
+
+/**
+ * The WebGL `vertexAttribPointer` arguments for binding attributes. This
+ * consists of the dimension and the primitive type.
+ */
+const GL_ATTRIBUTE_TYPES: { [_: string]: [string, string] } = {
+  "Float3": ["3", "gl.FLOAT"],
 };
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID
@@ -199,12 +210,18 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       let buf_expr = paren(value);  // The value is a WebGL buffer object.
       let loc_expr = locsym(scopeid, varid);  // Location handle.
 
-      // TODO Actually use the type.
+      // Choose the `vertexAttribPointer` arguments based on the type.
+      let pair = GL_ATTRIBUTE_TYPES[type.name];
+      if (!pair) {
+        throw `error: unknown attribute type ${type.name}`;
+      }
+      let [dims, eltype] = pair;
 
       // Bind the attribute.
       return [
         `gl.bindBuffer(gl.ARRAY_BUFFER, ${buf_expr}),\n`,
-        `gl.vertexAttribPointer(${loc_expr}, 3, gl.FLOAT, false, 0, 0),\n`,
+        `gl.vertexAttribPointer(${loc_expr}, ${dims}, ${eltype}, `,
+          `false, 0, 0),\n`,
         `gl.enableVertexAttribArray(location)`
       ].join('');
     } else {
