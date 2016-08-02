@@ -12,8 +12,10 @@ var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
+var texcoord = mesh_texcoords(mesh);
 
-var tex = a_texture();
+# Load a texture from an image.
+var tex = load_texture("lambertian.jpg");
 
 # Identity and rotation matrix.
 var id = mat4.create();
