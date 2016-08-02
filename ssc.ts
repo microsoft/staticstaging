@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/// <reference path="typings/main.d.ts" />
 
 import * as fs from 'fs';
 import * as util from 'util';

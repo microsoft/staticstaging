@@ -5,6 +5,7 @@
         "outDir": "build"
     },
     "files": [
+        "typings/index.d.ts",
         "ssc.ts"
     ]
 }
