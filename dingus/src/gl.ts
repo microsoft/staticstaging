@@ -186,6 +186,8 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   // Load the assets, then return a function that lets the client update the
   // code.
   return load_assets().then((assets) => (shfl_code?: string) => {
+    console.log('starting with assets', assets);
+
     if (shfl_code) {
       // Execute the compiled SHFL code in context.
       let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets);

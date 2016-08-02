@@ -62,7 +62,10 @@ function group_array<T>(a: T[], size: number) {
   return out;
 }
 
-export type Assets = { [path: string]: string };
+/**
+ * Pre-loaded assets for the WebGL demos, keyed by filename.
+ */
+export type Assets = { [path: string]: string | HTMLImageElement };
 
 /**
  * Get an asset string or throw an error.
@@ -98,15 +101,51 @@ function ajax_get(url: string): Promise<string> {
 }
 
 /**
+ * Image loader with the DOM's `new Image` API.
+ */
+function image_get(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    let img = new Image();
+    img.onload = function() {
+      resolve(img);
+    }
+    img.src = url;
+  });
+}
+
+/**
+ * Image extensions.
+ */
+const IMAGE_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif'];
+
+/**
+ * Check whether a path seems to be an image.
+ */
+function is_image(path: string): boolean {
+  for (let ext of IMAGE_EXTENSIONS) {
+    let pos = path.length - ext.length;
+    if (path.indexOf(ext) === pos) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Load some assets from the server.
  */
 export function load_assets(paths: string[], baseurl="assets/"):
   Promise<Assets>
 {
   // Kick off async requests for all the assets.
-  let requests: Promise<string>[] = [];
+  let requests: Promise<string | HTMLImageElement>[] = [];
   for (let path of paths) {
-    requests.push(ajax_get(baseurl + path));
+    let url = baseurl + path;
+    if (is_image(path)) {
+      requests.push(image_get(url));
+    } else {
+      requests.push(ajax_get(url));
+    }
   }
 
   // When all return, construct a map from the returned data strings.
@@ -199,6 +238,10 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
         // This name I invented -- it's not in the StackGL models.
         texcoords: group_array(mesh.textures, 3),
       };
+    },
+
+    load_texture(name: string) {
+      let tex_data = get_asset(assets, name);
     },
 
     // Create a buffer of values.
