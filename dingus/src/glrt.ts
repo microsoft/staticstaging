@@ -169,7 +169,7 @@ const BINARY_EXTENSIONS = ['.vtx', '.raw'];
  * Check whether a path seems to be an image.
  */
 function has_extension(path: string, extensions: string[]): boolean {
-  for (let ext of IMAGE_EXTENSIONS) {
+  for (let ext of extensions) {
     let pos = path.length - ext.length;
     if (path.indexOf(ext) === pos) {
       return true;
