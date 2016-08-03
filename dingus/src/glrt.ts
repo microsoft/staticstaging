@@ -81,9 +81,14 @@ function flat_array<T>(a: T[][]) {
 }
 
 /**
- * Pre-loaded assets for the WebGL demos, keyed by filename.
+ * The kinds of assets we support.
  */
-export type Assets = { [path: string]: string | HTMLImageElement };
+export type Asset = string | HTMLImageElement | ArrayBuffer;
+
+/**
+ * Pre-loaded assets, keyed by filename.
+ */
+export type Assets = { [path: string]: Asset };
 
 /**
  * Get an asset string or throw an error.
@@ -149,14 +154,19 @@ function image_get(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Image extensions.
+ * File extensions to fetch as images.
  */
 const IMAGE_EXTENSIONS = ['.jpeg', '.jpg', '.png', '.gif'];
 
 /**
+ * File extensions to fetch as binary data.
+ */
+const BINARY_EXTENSIONS = ['.vtx', '.raw'];
+
+/**
  * Check whether a path seems to be an image.
  */
-function is_image(path: string): boolean {
+function has_extension(path: string, extensions: string[]): boolean {
   for (let ext of IMAGE_EXTENSIONS) {
     let pos = path.length - ext.length;
     if (path.indexOf(ext) === pos) {
@@ -173,11 +183,14 @@ export function load_assets(paths: string[], baseurl="assets/"):
   Promise<Assets>
 {
   // Kick off async requests for all the assets.
-  let requests: Promise<string | HTMLImageElement>[] = [];
+  let requests: Promise<Asset>[] = [];
   for (let path of paths) {
+    // Fetch the URL either as an image, binary, or string file.
     let url = baseurl + path;
-    if (is_image(path)) {
+    if (has_extension(path, IMAGE_EXTENSIONS)) {
       requests.push(image_get(url));
+    } else if (has_extension(path, BINARY_EXTENSIONS)) {
+      requests.push(ajax_get_binary(url));
     } else {
       requests.push(ajax_get(url));
     }
