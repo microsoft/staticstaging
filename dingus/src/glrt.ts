@@ -97,15 +97,18 @@ function get_asset(assets: Assets, path: string) {
 }
 
 /**
- * Simple AJAX wrapper.
+ * Simple AJAX wrapper for GET requests.
  */
-function ajax_get(url: string): Promise<string> {
+function ajax(url: string, responseType: "text" | "arraybuffer" | "blob" |
+              "document" | "json"): Promise<XMLHttpRequest>
+{
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
+    xhr.responseType = responseType;
     xhr.onreadystatechange = function () {
       if (xhr.readyState === XMLHttpRequest.DONE) {
         if (xhr.status === 200) {
-          resolve(xhr.responseText);
+          resolve(xhr);
         } else {
           let err = "asset loading failed with status " + xhr.status;
           console.error(err);
@@ -116,6 +119,20 @@ function ajax_get(url: string): Promise<string> {
     xhr.open("GET", url);
     xhr.send();
   });
+}
+
+/**
+ * Get data via AJAX as a string.
+ */
+function ajax_get(url: string): Promise<string> {
+  return ajax(url, "text").then((xhr) => xhr.response);
+}
+
+/**
+ * Get binary data via AJAX>
+ */
+function ajax_get_binary(url: string): Promise<ArrayBuffer> {
+  return ajax(url, "arraybuffer").then((xhr) => xhr.response);
 }
 
 /**
