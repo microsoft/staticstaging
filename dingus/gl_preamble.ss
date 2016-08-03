@@ -41,6 +41,7 @@ extern eye: Mat4 -> Vec3;
 # Textures.
 extern load_obj: String -> Mesh;
 extern load_texture: String -> Texture;
+extern load_raw: String -> Mesh;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;

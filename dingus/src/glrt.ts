@@ -358,6 +358,18 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       }
     },
 
+    /**
+     * Load a mesh from a `.vtx.raw` file (from the Spire examples).
+     */
+    load_raw(name: string) {
+      let buffer = get_asset(assets, name);
+      if (buffer instanceof ArrayBuffer) {
+        return parse_vtx_raw(buffer);
+      } else {
+        throw "non-binary data used as raw mesh";
+      }
+    },
+
     // Create a buffer of values.
     float_array() {
       let arr = new Float32Array(arguments);
