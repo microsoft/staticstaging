@@ -13,7 +13,6 @@
 
 declare function require(name: string): any;
 
-const pack = require('array-pack-2d');
 const eye = require('eye-vector');
 const mat4 = require('gl-mat4');
 const normals = require('normals');
@@ -36,25 +35,6 @@ interface Mesh {
   normals?: Vec3Array;
   tangents?: Vec3Array;
 };
-
-/**
- * Create a WebGL buffer object containing the given data.
- */
-function make_buffer(gl: WebGLRenderingContext, data: number[][],
-                     type: string, mode: number)
-{
-  // Initialize a buffer.
-  let buf = gl.createBuffer();
-
-  // Flatten the data to a packed array.
-  let arr = pack(data, type);
-
-  // Insert the data into the buffer.
-  gl.bindBuffer(mode, buf);
-  gl.bufferData(mode, arr, gl.STATIC_DRAW);
-
-  return buf;
-}
 
 /**
  * Given a flat array, return an array with the elements grouped into
@@ -267,13 +247,25 @@ function parse_vtx_raw(buffer: ArrayBuffer): Mesh {
  */
 export function runtime(gl: WebGLRenderingContext, assets: Assets) {
   return {
-    // Operations exposed to the language for getting data for meshes.
+    // Operations exposed to the language for getting data for meshes as WebGL
+    // buffers.
     mesh_indices(obj: Mesh) {
-      return make_buffer(gl, obj.cells, 'uint16', gl.ELEMENT_ARRAY_BUFFER);
+      let data = flat_array(obj.cells);
+      let buf = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data),
+                    gl.STATIC_DRAW);
+      return buf;
     },
+
     mesh_positions(obj: Mesh) {
-      return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
+      let data = flat_array(obj.positions);
+      let buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+      return buf;
     },
+
     mesh_normals(obj: Mesh) {
       // Some mesh formats come with normals. Others need them to be
       // calculated.
@@ -283,11 +275,18 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       } else {
         norm = normals.vertexNormals(obj.cells, obj.positions);
       }
-      return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
+
+      let data = flat_array(norm);
+      let buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+      return buf;
     },
+
     mesh_size(obj: Mesh) {
       return obj.cells.length * obj.cells[0].length;
     },
+
     mesh_texcoords(obj: Mesh) {
       let coords = obj.texcoords;
       if (!coords) {
