@@ -242,7 +242,7 @@ function parse_vtx_raw(buffer: ArrayBuffer): Mesh {
   let normals: Vec3Array = [];
   let tangents: Vec3Array = [];
   let texcoords: Vec2Array = [];
-  while (offset < buffer.byteLength) {
+  while (offset < array.length) {
     positions.push(read_vec3());
     normals.push(read_vec3());
     tangents.push(read_vec3());
@@ -290,13 +290,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
     },
 
+    // The size, in scalar numbers, of the vertex position array.
     mesh_size(obj: Mesh) {
-      if (obj.cells) { // TODO
-        return obj.cells.length * obj.cells[0].length;
-      } else {
-        console.log(obj);
-        return obj.positions.length * 3 / 4;  // TODO ???
-      }
+      return obj.positions.length * obj.positions[0].length;
     },
 
     mesh_texcoords(obj: Mesh) {
