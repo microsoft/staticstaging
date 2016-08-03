@@ -63,6 +63,20 @@ function flat_array<T>(a: T[][]) {
 }
 
 /**
+ * Create and fill a WebGL buffer with a typed array.
+ *
+ * `mode` should be either `ELEMENT_ARRAY_BUFFER` or `ARRAY_BUFFER`.
+ */
+function gl_buffer(gl: WebGLRenderingContext, mode: number,
+                   data: Float32Array | Uint16Array)
+{
+  let buf = gl.createBuffer();
+  gl.bindBuffer(mode, buf);
+  gl.bufferData(mode, data, gl.STATIC_DRAW);
+  return buf;
+}
+
+/**
  * The kinds of assets we support.
  */
 export type Asset = string | HTMLImageElement | ArrayBuffer;
@@ -251,19 +265,12 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
     // buffers.
     mesh_indices(obj: Mesh) {
       let data = flat_array(obj.cells);
-      let buf = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buf);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data),
-                    gl.STATIC_DRAW);
-      return buf;
+      return gl_buffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data));
     },
 
     mesh_positions(obj: Mesh) {
       let data = flat_array(obj.positions);
-      let buf = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-      return buf;
+      return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
     },
 
     mesh_normals(obj: Mesh) {
@@ -277,10 +284,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       }
 
       let data = flat_array(norm);
-      let buf = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-      return buf;
+      return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
     },
 
     mesh_size(obj: Mesh) {
@@ -295,10 +299,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
 
       // Create a WebGL buffer.
       let data = flat_array(coords);
-      let buf = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-      return buf;
+      return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
     },
 
     // And, similarly, a function for actually drawing a mesh. This takes the
