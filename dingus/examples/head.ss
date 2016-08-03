@@ -2,8 +2,9 @@
 # mode: webgl
 # ---
 
-# This example renders a textured model. The head model and its texture
-# are from the Computer Graphics Archive at Williams:
+# This example renders a textured model. The head model
+# and its texture are from the Computer Graphics Archive
+# at Williams:
 # http://graphics.cs.williams.edu/data/meshes.xml
 
 # Scale the model up.
@@ -33,7 +34,12 @@ render js<
   vertex glsl<
     gl_Position = projection * view * %[ model * rot ] * vec4(position, 1.0);
     fragment glsl<
-      gl_FragColor = texture2D(tex, texcoord);
+      # For some reason, the texture is given "upside
+      # down." So we invert the Y coordinate in the
+      # texture lookup.
+      var coord = vec2(swizzle(texcoord, "x"),
+                       4096.0 - swizzle(texcoord, "y"));
+      gl_FragColor = texture2D(tex, coord);
     >
   >;
   draw_mesh(indices, size);
