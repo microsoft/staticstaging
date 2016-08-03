@@ -309,6 +309,12 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
     },
 
+    // An alternative to `draw_mesh` for using `glDrawArrays`, i.e., without
+    // an explicit vertex indices.
+    draw_arrays(size: number) {
+      gl.drawArrays(gl.TRIANGLES, 0, size);
+    },
+
     // Sample meshes.
     bunny,
     teapot,

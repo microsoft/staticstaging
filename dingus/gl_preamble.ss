@@ -22,6 +22,7 @@ extern mesh_normals: Mesh -> (Float3 Array);
 extern mesh_size: Mesh -> Int;
 extern mesh_texcoords: Mesh -> (Float2 Array);
 extern draw_mesh: (Int3 Array) Int -> Void;
+extern draw_arrays: Int -> Void;
 
 # Matrix manipulation library.
 extern mat4.create: -> Mat4;
