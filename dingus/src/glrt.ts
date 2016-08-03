@@ -218,25 +218,21 @@ export function load_assets(paths: string[], baseurl="assets/"):
  * > Normal: vec3 (byte 12-23)
  * > Tangent: vec3 (byte 24-35)
  * > UV: vec2 (byte 36-43)
+ *
+ * This current version turns the raw data into inefficient JavaScript arrays,
+ * just for uniformity. Eventually, it would be nice to keep this data as
+ * binary.
  */
 function parse_vtx_raw(buffer: ArrayBuffer): Mesh {
   let offset = 0;
-  let view = new DataView(buffer);
+  let array = new Float32Array(buffer);
 
-  // Read a float32 from the array and advance the offset accordingly.
-  function read_float() {
-    let out = view.getFloat32(offset);
-    offset += 4;
-    return out;
-  }
-
-  // Read `count` floats.
-  function read_floats(count: number) {
-    let out: number[] = [];
-    for (let i = 0; i < count; ++i) {
-      out.push(read_float());
-    }
-    return out;
+  // Read `count` floats from the array and advance the offset accordingly.
+  // Return an ordinary JavaScript array.
+  function read_floats(count: number): number[] {
+    let out = array.slice(offset, offset + count);
+    offset += count;
+    return Array.prototype.slice.call(out);
   }
 
   // Type-safety helpers for reading vectors of fixed sizes.
