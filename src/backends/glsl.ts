@@ -5,7 +5,7 @@ import { stack_lookup } from '../util';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { _unwrap_array, _is_cpu_scope, _attribute_type, TYPE_NAMES,
   shadervarsym, frag_expr, Glue, ProgKind, prog_kind,
-  SHADER_ANNOTATION, emit_glue } from './gl';
+  SHADER_ANNOTATION, emit_glue, is_intrinsic_call } from './gl';
 import { Emitter, emit, specialized_prog } from './emitter';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
   emit_while, emit_body, paren, splicesym } from './emitutil';
@@ -163,6 +163,22 @@ let compile_rules: ASTVisit<Emitter, string> = {
     // The fragment call emits nothing here.
     if (frag_expr(tree)) {
       return "";
+    }
+
+    // "Swizzle" intrinsic for vectors.
+    if (is_intrinsic_call(tree, "swizzle")) {
+      if (tree.args[1].tag === "literal") {
+        let literal = tree.args[1] as ast.LiteralNode;
+        if (literal.type === "string") {
+          let vec = emit(emitter, tree.args[0]);
+          let spec = literal.value as string;
+          return `${vec}.${spec}`;
+        } else {
+          throw "error: swizzle argument must be a string";
+        }
+      } else {
+        throw "error: swizzle argument must be a literal";
+      }
     }
 
     // Check that it's a static call.

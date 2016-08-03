@@ -10,7 +10,8 @@ import {
   INT,
   FLOAT,
   ANY,
-  VOID
+  VOID,
+  STRING
 } from '../type';
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
@@ -151,6 +152,15 @@ export const INTRINSICS: TypeMap = {
   // Buffer construction. Eventually, it would be nice to use overloading here
   // instead of distinct names for each type.
   float_array: new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+
+  // Vector "swizzling" in GLSL code for destructuring vectors. This is the
+  // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is
+  // an intrinsic where the second argument must be a string *literal*.
+  swizzle: new OverloadedType([
+    new FunType([FLOAT2, STRING], FLOAT),
+    new FunType([FLOAT3, STRING], FLOAT),
+    new FunType([FLOAT4, STRING], FLOAT),
+  ]),
 };
 
 
@@ -167,7 +177,7 @@ function is_intrinsic(tree: ast.CallNode, name: string) {
   return false;
 }
 
-function is_intrinsic_call(tree: ast.ExpressionNode, name: string) {
+export function is_intrinsic_call(tree: ast.ExpressionNode, name: string) {
   if (tree.tag === "call") {
     return is_intrinsic(tree as ast.CallNode, name);
   }
