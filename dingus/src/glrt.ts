@@ -264,6 +264,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
     // Operations exposed to the language for getting data for meshes as WebGL
     // buffers.
     mesh_indices(obj: Mesh) {
+      if (!obj.cells) {
+        throw "mesh has no indices";
+      }
       let data = flat_array(obj.cells);
       return gl_buffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data));
     },
