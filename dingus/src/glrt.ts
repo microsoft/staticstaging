@@ -244,10 +244,10 @@ function parse_vtx_raw(buffer: ArrayBuffer): Mesh {
   }
 
   // Read the attributes for each vertex.
-  let positions: Vec3Array;
-  let normals: Vec3Array;
-  let tangents: Vec3Array;
-  let texcoords: Vec2Array;
+  let positions: Vec3Array = [];
+  let normals: Vec3Array = [];
+  let tangents: Vec3Array = [];
+  let texcoords: Vec2Array = [];
   while (offset < buffer.byteLength) {
     positions.push(read_vec3());
     normals.push(read_vec3());
