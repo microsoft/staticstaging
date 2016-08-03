@@ -31,8 +31,10 @@ type Vec2Array = [number, number][];
  */
 interface Mesh {
   positions: Vec3Array;
-  cells: Vec3Array;
+  cells?: Vec3Array;
   texcoords?: Vec2Array;
+  normals?: Vec3Array;
+  tangents?: Vec3Array;
 };
 
 /**
@@ -204,6 +206,64 @@ export function load_assets(paths: string[], baseurl="assets/"):
     }
     return assets;
   });
+}
+
+/**
+ * Parse the `.vtx.raw` mesh data format converted from the Spire examples.
+ *
+ * Format notes:
+ *
+ * > 44 bytes for each vertex.
+ * > Position: vec3 (byte 0-11)
+ * > Normal: vec3 (byte 12-23)
+ * > Tangent: vec3 (byte 24-35)
+ * > UV: vec2 (byte 36-43)
+ */
+function parse_vtx_raw(buffer: ArrayBuffer): Mesh {
+  let offset = 0;
+  let view = new DataView(buffer);
+
+  // Read a float32 from the array and advance the offset accordingly.
+  function read_float() {
+    let out = view.getFloat32(offset);
+    offset += 4;
+    return out;
+  }
+
+  // Read `count` floats.
+  function read_floats(count: number) {
+    let out: number[] = [];
+    for (let i = 0; i < count; ++i) {
+      out.push(read_float());
+    }
+    return out;
+  }
+
+  // Type-safety helpers for reading vectors of fixed sizes.
+  function read_vec3() {
+    return read_floats(3) as [number, number, number];
+  }
+  function read_vec2() {
+    return read_floats(2) as [number, number];
+  }
+
+  // Read the attributes for each vertex.
+  let positions: Vec3Array;
+  let normals: Vec3Array;
+  let tangents: Vec3Array;
+  let texcoords: Vec2Array;
+  while (offset < buffer.byteLength) {
+    positions.push(read_vec3());
+    normals.push(read_vec3());
+    tangents.push(read_vec3());
+    texcoords.push(read_vec2());
+  }
+  return {
+    positions,
+    normals,
+    tangents,
+    texcoords,
+  };
 }
 
 /**
