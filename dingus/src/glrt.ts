@@ -290,8 +290,13 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       return gl_buffer(gl, gl.ARRAY_BUFFER, new Float32Array(data));
     },
 
-    // The size, in scalar numbers, of the vertex position array.
+    // The size, in scalar numbers, of the index array.
     mesh_size(obj: Mesh) {
+      return obj.cells.length * obj.cells[0].length;
+    },
+
+    // The size, in scalar numbers, of the vertex position array.
+    mesh_count(obj: Mesh) {
       return obj.positions.length * obj.positions[0].length;
     },
 

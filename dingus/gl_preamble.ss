@@ -20,6 +20,7 @@ extern mesh_indices: Mesh -> (Int3 Array);
 extern mesh_positions: Mesh -> (Float3 Array);
 extern mesh_normals: Mesh -> (Float3 Array);
 extern mesh_size: Mesh -> Int;
+extern mesh_count: Mesh -> Int;
 extern mesh_texcoords: Mesh -> (Float2 Array);
 extern draw_mesh: (Int3 Array) Int -> Void;
 extern draw_arrays: Int -> Void;

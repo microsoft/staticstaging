@@ -4,7 +4,7 @@
 
 # Position the model.
 var model = mat4.create();
-mat4.scale(model, model, vec3(0.4, 0.4, 0.4));
+mat4.scale(model, model, vec3(0.35, 0.35, 0.35));
 mat4.rotateX(model, model, 0.4);
 mat4.rotateY(model, model, 1.2);
 mat4.rotateZ(model, model, 0.5);
@@ -13,7 +13,7 @@ mat4.rotateZ(model, model, 0.5);
 var mesh = load_raw("couch.vtx.raw");
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
-var size = mesh_size(mesh);
+var size = mesh_count(mesh);
 var texcoord = mesh_texcoords(mesh);
 
 # Load a texture from an image.
