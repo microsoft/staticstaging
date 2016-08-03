@@ -275,7 +275,14 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       return make_buffer(gl, obj.positions, 'float32', gl.ARRAY_BUFFER);
     },
     mesh_normals(obj: Mesh) {
-      let norm = normals.vertexNormals(obj.cells, obj.positions);
+      // Some mesh formats come with normals. Others need them to be
+      // calculated.
+      let norm: Vec3Array;
+      if (obj.normals) {
+        norm = obj.normals;
+      } else {
+        norm = normals.vertexNormals(obj.cells, obj.positions);
+      }
       return make_buffer(gl, norm, 'float32', gl.ARRAY_BUFFER);
     },
     mesh_size(obj: Mesh) {
