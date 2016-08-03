@@ -291,7 +291,11 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
     },
 
     mesh_size(obj: Mesh) {
-      return obj.cells.length * obj.cells[0].length;
+      if (obj.cells) { // TODO
+        return obj.cells.length * obj.cells[0].length;
+      } else {
+        return obj.positions.length / 3;  // TODO
+      }
     },
 
     mesh_texcoords(obj: Mesh) {
@@ -313,9 +317,10 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
     },
 
     // An alternative to `draw_mesh` for using `glDrawArrays`, i.e., without
-    // an explicit vertex indices.
+    // an explicit vertex indices. `size` is the number of primitives to draw
+    // (I think).
     draw_arrays(size: number) {
-      gl.drawArrays(gl.TRIANGLES, 0, size);
+      gl.drawArrays(gl.TRIANGLES, 0, size / 3);
     },
 
     // Sample meshes.
