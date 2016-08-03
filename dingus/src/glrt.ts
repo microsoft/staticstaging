@@ -294,7 +294,8 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       if (obj.cells) { // TODO
         return obj.cells.length * obj.cells[0].length;
       } else {
-        return obj.positions.length / 3;  // TODO
+        console.log(obj);
+        return obj.positions.length * 3 / 4;  // TODO ???
       }
     },
 
