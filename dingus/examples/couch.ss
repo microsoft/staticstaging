@@ -2,7 +2,12 @@
 # mode: webgl
 # ---
 
+# Position the model.
 var model = mat4.create();
+mat4.scale(model, model, vec3(0.4, 0.4, 0.4));
+mat4.rotateX(model, model, 0.4);
+mat4.rotateY(model, model, 1.2);
+mat4.rotateZ(model, model, 0.5);
 
 # Load buffers and parameters for the model.
 var mesh = load_raw("couch.vtx.raw");
