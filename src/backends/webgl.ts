@@ -38,16 +38,6 @@ function get_shader(gl, vertex_source, fragment_source) {
   return program;
 }
 
-// Binds texture zero (i.e., only one texture for now).
-function bind_texture(gl, location, texture) {
-  if (!texture) {
-    throw "no texture";
-  }
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.uniform1i(location, 0);
-}
-
 // WebGL equivalents of GLSL functions.
 function vec3(x, y, z) {
   var out = new Float32Array(3);
@@ -177,10 +167,11 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
   if (!attribute) {
     if (type === TEXTURE) {
       // Bind a texture sampler.
-      let out = `gl.activeTexture(gl.TEXTURE0),\n`;  // Texture zero for now.
+      let unit = 0;  // Texture zero for now.
+      let out = `gl.activeTexture(gl.TEXTURE0 + ${unit}),\n`;
       out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
       let locname = locsym(scopeid, varid);
-      out += `gl.uniform1i(${locname}, 0)`;
+      out += `gl.uniform1i(${locname}, ${unit})`;
       return out;
 
     } else if (type instanceof PrimitiveType) {
