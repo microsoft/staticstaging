@@ -12,7 +12,7 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
     fragment glsl<
       # Convert to world space.
       var position_world = vec3(model * vec4(pos, 1.0));
-      var normal_world = normalize(vec3(model * vec4(pos, 0.0)));
+      var normal_world = normalize(vec3(model * vec4(norm, 0.0)));
       var view_dir_world = normalize(camera_pos - position_world);
 
       # Light.
