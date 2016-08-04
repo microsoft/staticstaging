@@ -77,6 +77,7 @@ function load_assets(): Promise<glrt.Assets> {
     "couch/T_Leather_D.png",
     "couch/T_Couch_AO.png",
     "couch/T_Couch_Mask.png",
+    "couch/T_Leather_S.png",
     "rock0.vtx.raw",
     "rock1.vtx.raw",
   ]);
