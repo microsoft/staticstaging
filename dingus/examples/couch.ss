@@ -158,8 +158,8 @@ render js<
         0.0,
         seam
       );
-      var metallic = mix(0.5, 0.1, leatherSpec);
-      var specular = 1.0;
+      var metallic = mix(0.2, 0.1, leatherSpec);
+      var specular = 3.0;
 
       # Locations and conversions.
       var position_world = vec3(model * vec4(position, 1.0));
