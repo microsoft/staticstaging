@@ -13,7 +13,7 @@ mat4.rotateZ(modelBase, modelBase, 0.5);
 var mesh = load_raw("couch/couch.vtx.raw");
 var position = mesh_positions(mesh);
 var vert_normal = mesh_normals(mesh);
-var vert_tanget = mesh_tangents(mesh);
+var vert_tangent = mesh_tangents(mesh);
 var size = mesh_count(mesh);
 var texcoord = mesh_texcoords(mesh);
 
@@ -32,6 +32,9 @@ var leatherNormalTex = load_texture("couch/T_Leather_N.png");
 # A model matrix with rotation.
 var id = mat4.create();
 var model = mat4.create();
+
+# ???
+var normalMatrix = id;
 
 render js<
   var cameraPos = eye(view);
@@ -126,19 +129,17 @@ render js<
       ) * 0.5 + 0.5;
 
       # ???
-      # var vNormal = (normalMatrix * vec4(vert_normal, 1.0)).xyz;
-      # var vTangent = (normalMatrix * vec4(vert_tangent, 1.0)).xyz;
-      # var vBiTangent = cross(vTangent, vNormal);
+      var vNormal = vec3(normalMatrix * vec4(vert_normal, 1.0));
+      var vTangent = vec3(normalMatrix * vec4(vert_tangent, 1.0));
+      var vBiTangent = cross(vTangent, vNormal);
 
       # Tangent space transform?
-      # var signed_n = normal_in * 2.0 - 1.0;
-      # var normal = normalize(
-      #   swizzle(signed_n, "x") * vTangent
-      #   + swizzle(signed_n, "y") * vBiTangent
-      #   + swizzle(signed_n, "z") * vNormal
-      # );
-
-      var normal = vert_normal;
+      var signed_n = normal_in * 2.0 - 1.0;
+      var normal = normalize(
+        swizzle(signed_n, "x") * vTangent
+        + swizzle(signed_n, "y") * vBiTangent
+        + swizzle(signed_n, "z") * vNormal
+      );
 
       # Lighting parameters.
       var roughness =

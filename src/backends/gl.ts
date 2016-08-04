@@ -115,6 +115,9 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT2, FLOAT], FLOAT2),
   new FunType([FLOAT3, FLOAT], FLOAT3),
   new FunType([FLOAT4, FLOAT], FLOAT4),
+  new FunType([FLOAT, FLOAT2], FLOAT2),
+  new FunType([FLOAT, FLOAT3], FLOAT3),
+  new FunType([FLOAT, FLOAT4], FLOAT4),
 
   // Multiplication gets special type cases for matrix-vector multiply.
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
@@ -155,6 +158,7 @@ export const INTRINSICS: TypeMap = {
     new FunType([FLOAT3, FLOAT, FLOAT], FLOAT3),
   ]),
   exp2: new FunType([FLOAT], FLOAT),
+  cross: new FunType([FLOAT3, FLOAT3], FLOAT3),
 
   // `mix` is a GLSL interpolation operator. The last operand is the amount.
   mix: new OverloadedType([
