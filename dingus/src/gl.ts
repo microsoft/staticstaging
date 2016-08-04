@@ -71,6 +71,7 @@ function load_assets(): Promise<glrt.Assets> {
     "cube.obj",
     "default.png",
     "teapot.obj",
+    "bunny.obj",
     "head.obj",
     "lambertian.jpg",
     "bump-lowRes.png",

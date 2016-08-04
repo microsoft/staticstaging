@@ -2,7 +2,7 @@
 # someone else in this source repository).
 
 .PHONY: all
-all: teapot.obj head.obj lambertian.jpg bump-lowRes.png default.png
+all: teapot.obj head.obj lambertian.jpg bump-lowRes.png default.png bunny.obj
 
 # Teapot.
 teapot.obj: teapot.zip
@@ -32,3 +32,7 @@ default.png: cube.zip
 	touch $@
 cube.zip:
 	curl -LO "http://graphics.cs.williams.edu/data/meshes/$@"
+
+# Bunny.
+bunny.obj:
+	curl -LO "https://raw.githubusercontent.com/McNopper/OpenGL/master/Binaries/bunny.obj"

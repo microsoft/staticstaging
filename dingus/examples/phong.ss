@@ -44,7 +44,7 @@ def solid(pos: Float3 Array, model: Mat4, color: Vec3) (
 # ---
 
 # Load buffers and parameters for the main model.
-var mesh = load_obj("teapot.obj");
+var mesh = load_obj("bunny.obj");
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
@@ -60,8 +60,8 @@ var b_model = mat4.create();
 # Position the model.
 var id = mat4.create();
 var model = mat4.create();
-mat4.scale(model, id, vec3(0.2, 0.2, 0.2));
-mat4.translate(model, model, vec3(0.0, -35.0, 0.0));
+mat4.translate(model, model, vec3(0.0, -10.0, 0.0));
+mat4.scale(model, model, vec3(15.0, 15.0, 15.0));
 
 # The parameters for the Phong shader.
 var specular = 50.0;
