@@ -34,12 +34,7 @@ render js<
   vertex glsl<
     gl_Position = projection * view * %[ model * rot ] * vec4(position, 1.0);
     fragment glsl<
-      # For some reason, the texture is given "upside
-      # down." So we invert the Y coordinate in the
-      # texture lookup.
-      var coord = vec2(swizzle(texcoord, "x"),
-                       4096.0 - swizzle(texcoord, "y"));
-      gl_FragColor = texture2D(tex, coord);
+      gl_FragColor = texture2D(tex, texcoord);
     >
   >;
   draw_mesh(indices, size);

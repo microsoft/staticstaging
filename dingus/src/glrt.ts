@@ -373,6 +373,11 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 
+        // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
+        // but it appears to have been invented to convert between the DOM
+        // coordinate convention for images and WebGL's convention.
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+
         gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
 
         return tex;
