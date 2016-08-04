@@ -8,8 +8,8 @@
 # http://graphics.cs.williams.edu/data/meshes.xml
 
 # Scale the model up.
-var model = mat4.create();
-mat4.scale(model, model, vec3(50.0, 50.0, 50.0));
+var model_base = mat4.create();
+mat4.scale(model_base, model_base, vec3(50.0, 50.0, 50.0));
 
 # Load buffers and parameters for the model.
 var mesh = load_obj("head.obj");
@@ -23,14 +23,13 @@ var texcoord = mesh_texcoords(mesh);
 var tex = load_texture("lambertian.jpg");
 var bumpTex = load_texture("bump-lowRes.png");
 
-# Identity and rotation matrix.
-var id = mat4.create();
-var rot = mat4.create();
+# Rotated model matrix.
+var model = mat4.create();
 
 render js<
-  # Rotate the identity matrix.
+  # Rotate the model matrix.
   var phase = Date.now() / 1000;
-  mat4.rotateY(rot, id, phase);
+  mat4.rotateY(model, model_base, phase);
 
   # Set up for lighting.
   var camera_pos = eye(view);
@@ -39,7 +38,7 @@ render js<
   var specular = 1.0;
 
   vertex glsl<
-    gl_Position = projection * view * %[ model * rot ] * vec4(position, 1.0);
+    gl_Position = projection * view * model * vec4(position, 1.0);
     fragment glsl<
       # Look up the surface color from a texture.
       var color = vec3(texture2D(tex, texcoord));
@@ -56,14 +55,14 @@ render js<
 
       # Phong lighting.
       var position_world = vec3(model * vec4(position, 1.0));
-      var normal_world = normalize(vec3(model * vec4(position, 0.0)));
+      var normal_world = normalize(vec3(model * vec4(normal, 0.0)));
       var view_dir_world = normalize(camera_pos - position_world);
       var light_direction = normalize(lightpos - position_world);
       var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
       var angle = normalize(view_dir_world + light_direction);
       var spec_comp_b = max(0.0, dot(normal_world, angle));
       var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
-      var light = lightcolor * ndl + vec3(spec_comp);
+      var light = color * ndl + vec3(spec_comp);
 
       gl_FragColor = vec4(color, 1.0);
     >
