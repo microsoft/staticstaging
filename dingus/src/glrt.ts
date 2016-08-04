@@ -351,18 +351,18 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
 
       // Match the interface we're using for Mesh objects that come from
       // StackGL.
-      let out = {
-        positions: group_array(mesh.vertices, 3),
-        cells: group_array(mesh.indices, 3),
+      let out: Mesh = {
+        positions: group_array(mesh.vertices, 3) as Vec3Array,
+        cells: group_array(mesh.indices, 3) as Vec3Array,
 
         // This name I invented -- it's not in the StackGL models.
-        texcoords: group_array(mesh.textures, 2),
+        texcoords: group_array(mesh.textures, 2) as Vec3Array,
       };
 
       // .obj files can have normals, but if they don't, this parser library
       // (confusingly) fills the array with NaN.
       if (!isNaN(mesh.vertexNormals[0])) {
-        out.normals = group_array(mesh.vertexNormals, 3);
+        out.normals = group_array(mesh.vertexNormals, 3) as Vec3Array;
       }
 
       return out;

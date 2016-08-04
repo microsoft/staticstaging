@@ -55,7 +55,7 @@ render js<
 
       # Phong lighting.
       var position_world = vec3(model * vec4(position, 1.0));
-      var normal_world = normalize(vec3(model * vec4(bumpNormal, 0.0)));
+      var normal_world = normalize(vec3(model * vec4(normal, 0.0)));
       var view_dir_world = normalize(camera_pos - position_world);
       var light_direction = normalize(lightpos - position_world);
       var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
