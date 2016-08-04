@@ -15,7 +15,7 @@ declare function require(name: string): any;
 
 const eye = require('eye-vector');
 const mat4 = require('gl-mat4');
-const normals = require('normals');
+const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
 
 const bunny: Mesh = require('bunny');
@@ -283,7 +283,7 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       if (obj.normals) {
         norm = obj.normals;
       } else {
-        norm = normals.vertexNormals(obj.cells, obj.positions);
+        norm = angle_normals(obj.cells, obj.positions);
       }
 
       let data = flat_array(norm);
