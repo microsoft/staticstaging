@@ -149,6 +149,11 @@ export const INTRINSICS: TypeMap = {
   ]),
   min: _GL_BINARY_TYPE,
   max: _GL_BINARY_TYPE,
+  clamp: new OverloadedType([
+    new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
+    new FunType([FLOAT2, FLOAT, FLOAT], FLOAT2),
+    new FunType([FLOAT3, FLOAT, FLOAT], FLOAT3),
+  ]),
 
   // `mix` is a GLSL interpolation operator. The last operand is the amount.
   mix: new OverloadedType([
