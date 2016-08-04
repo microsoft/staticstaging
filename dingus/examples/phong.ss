@@ -51,10 +51,11 @@ var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
 
 # Light-source marker model.
-var b_position = mesh_positions(bunny);
-var b_normal = mesh_normals(bunny);
-var b_indices = mesh_indices(bunny);
-var b_size = mesh_size(bunny);
+var l_mesh = load_obj("teapot.obj");
+var b_position = mesh_positions(l_mesh);
+var b_normal = mesh_normals(l_mesh);
+var b_indices = mesh_indices(l_mesh);
+var b_size = mesh_size(l_mesh);
 var b_model = mat4.create();
 
 # Position the model.
@@ -78,9 +79,9 @@ render js<
   phong(position, normal, model, light_position, light_color, specular);
   draw_mesh(indices, size);
 
-  # Place the bunny at the light source, for illustrative purposes.
+  # Place the light model at the light source, for illustrative purposes.
   mat4.translate(b_model, id, light_position);
-  mat4.scale(b_model, b_model, vec3(0.1, 0.1, 0.1));
+  mat4.scale(b_model, b_model, vec3(0.01, 0.01, 0.01));
   solid(b_position, b_model, light_color);
   draw_mesh(b_indices, b_size);
 >
