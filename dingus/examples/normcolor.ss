@@ -2,14 +2,17 @@
 # mode: webgl
 # ---
 
-var model = mat4.create();
-
 # Load buffers and parameters for the model.
-var mesh = bunny;
+var mesh = load_obj("teapot.obj");
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
+
+# Position the model.
+var model = mat4.create();
+mat4.translate(model, model, vec3(0.0, -5.0, 0.0));
+mat4.scale(model, model, vec3(0.2, 0.2, 0.2));
 
 render js<
   vertex glsl<
