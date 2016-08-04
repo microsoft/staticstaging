@@ -33,7 +33,7 @@ var leatherNormalTex = load_texture("couch/T_Leather_N.png");
 var id = mat4.create();
 var model = mat4.create();
 
-# ???
+# I'm not sure what this should be -- perhaps identity?
 var normalMatrix = id;
 
 render js<
@@ -128,12 +128,10 @@ render js<
         + (leatherNormal + macroNormal) * maskx
       ) * 0.5 + 0.5;
 
-      # ???
+      # Tangent space transform.
       var vNormal = vec3(normalMatrix * vec4(vert_normal, 1.0));
       var vTangent = vec3(normalMatrix * vec4(vert_tangent, 1.0));
       var vBiTangent = cross(vTangent, vNormal);
-
-      # Tangent space transform?
       var signed_n = normal_in * 2.0 - 1.0;
       var normal = normalize(
         swizzle(signed_n, "x") * vTangent
