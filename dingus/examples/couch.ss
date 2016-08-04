@@ -27,6 +27,8 @@ render js<
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
     fragment glsl<
+      # BASE COLOR: TEXTURE LOOKUPS
+
       # The leather texture repeats more quickly than
       # the per-couch textures.
       var leatherTexCoord = texcoord * 5.79;
@@ -37,13 +39,17 @@ render js<
       var ao = swizzle(aoVec, "x");
       var seam = swizzle(aoVec, "y");
 
-      # Mask (?).
+      # The mask texture has a few different intensities.
       var mask = texture2D(maskTex, texcoord);
       var blackMix = swizzle(mask, "x");
       var grayMix = swizzle(mask, "y");
       var wearFactor = swizzle(mask, "z") * 0.381;
 
-      # Desaturate the leather color according to the wear factor.
+      # Start with the leather texture.
+      var bcol = vec3(leatherColor);
+
+      # Desaturate the leather color according to the
+      # wear factor.
       var wearDesatMin = 0.0;
       var wearDesatMax = 0.0896;
       var wearDesat = mix(wearDesatMin, wearDesatMax, wearFactor);
@@ -54,23 +60,28 @@ render js<
       var leatherGray = vec3(leatherLuminance,
                              leatherLuminance,
                              leatherLuminance);
-      var desatLeather = mix(vec3(leatherColor), leatherGray, wearDesat);
+      bcol = mix(bcol, leatherGray, wearDesat);
 
       # Mix with a wear color.
       var wearColorMin = vec3(1.0, 0.86,0.833);
       var wearColorMax = vec3(0.628,0.584, 0.584);
-      var wornLeather = desatLeather * mix(wearColorMin, wearColorMax, wearFactor);
+      bcol = bcol * mix(wearColorMin, wearColorMax, wearFactor);
 
-      # Mix with black and then gray according to the mask's x and y channels.
-      var darkLeather = mix(vec3(0.0, 0.0, 0.0), wornLeather, blackMix);
-      var grayedLeather = mix(darkLeather, vec3(0.823, 0.823, 0.823), grayMix);
+      # Mix with black and then gray according to the
+      # mask's x and y channels.
+      bcol = mix(vec3(0.0, 0.0, 0.0), bcol, blackMix);
+      bcol = mix(bcol, vec3(0.823, 0.823, 0.823), grayMix);
 
-      # Mix in a seam color according to the AO texture's y channel.
+      # Mix in a seam color according to the AO
+      # texture's y channel.
       var seamColor = vec3(0.522, 0.270, 0.105);
-      var leatherWithSeams = mix(grayedLeather, seamColor, seam);
+      bcol = mix(bcol, seamColor, seam);
+
+      # Ambient occlusion.
+      bcol = bcol * ao;
 
       # Final color composition.
-      gl_FragColor = vec4(leatherWithSeams * ao, 1.0);
+      gl_FragColor = vec4(bcol, 1.0);
     >
   >;
   draw_arrays(size);
