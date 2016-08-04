@@ -29,14 +29,9 @@ render js<
   var cameraPos = eye(view);
 
   # Position a light.
-  var t = Date.now();
-  var lightPos = vec3(
-    Math.cos(t / 200) * 20.0,
-    0.0,
-    Math.sin(t / 200) * 20.0
-  );
-
-  var lightColor = vec3(1.0, 0.2, 0.5);
+  var t = Date.now() / 400;
+  var lightPos = vec3(-40.0, 40.0, 30.0);
+  var lightColor = vec3(1.0, 1.0, 1.0);
 
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
