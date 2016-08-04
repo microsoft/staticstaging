@@ -73,7 +73,8 @@ function load_assets(): Promise<glrt.Assets> {
     "teapot.obj",
     "head.obj",
     "lambertian.jpg",
-    "couch.vtx.raw",
+    "couch/couch.vtx.raw",
+    "couch/T_Leather_D.png",
     "rock0.vtx.raw",
     "rock1.vtx.raw",
   ]);

@@ -10,14 +10,14 @@ mat4.rotateY(model, model, 1.2);
 mat4.rotateZ(model, model, 0.5);
 
 # Load buffers and parameters for the model.
-var mesh = load_raw("couch.vtx.raw");
+var mesh = load_raw("couch/couch.vtx.raw");
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var size = mesh_count(mesh);
 var texcoord = mesh_texcoords(mesh);
 
 # Load a texture from an image.
-var tex = load_texture("default.png");
+var tex = load_texture("couch/T_Leather_D.png");
 
 render js<
   vertex glsl<
