@@ -33,7 +33,9 @@ render js<
       var leatherColor = texture2D(leatherTex, leatherTexCoord);
 
       # Look up the ambient occlusion amount.
-      var ao = swizzle(texture2D(aoTex, texcoord), "x");
+      var aoVec = texture2D(aoTex, texcoord);
+      var ao = swizzle(aoVec, "x");
+      var seam = swizzle(aoVec, "y");
 
       # Mask (?).
       var mask = texture2D(maskTex, texcoord);
@@ -63,8 +65,12 @@ render js<
       var darkLeather = mix(vec3(0.0, 0.0, 0.0), wornLeather, blackMix);
       var grayedLeather = mix(darkLeather, vec3(0.823, 0.823, 0.823), grayMix);
 
+      # Mix in a seam color according to the AO texture's y channel.
+      var seamColor = vec3(0.522, 0.270, 0.105);
+      var leatherWithSeams = mix(grayedLeather, seamColor, seam);
+
       # Final color composition.
-      gl_FragColor = vec4(grayedLeather * ao, 1.0);
+      gl_FragColor = vec4(leatherWithSeams * ao, 1.0);
     >
   >;
   draw_arrays(size);
