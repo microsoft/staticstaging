@@ -52,7 +52,12 @@ render js<
       var leatherGray = vec3(leatherLuminance,
                              leatherLuminance,
                              leatherLuminance);
-      var wornLeather = mix(vec3(leatherColor), leatherGray, wearDesat);
+      var desatLeather = mix(vec3(leatherColor), leatherGray, wearDesat);
+
+      # Mix with a wear color.
+      var wearColorMin = vec3(1.0, 0.86,0.833);
+      var wearColorMax = vec3(0.628,0.584, 0.584);
+      var wornLeather = desatLeather * mix(wearColorMin, wearColorMax, wearFactor);
 
       # Final color composition.
       gl_FragColor = vec4(wornLeather * ao, 1.0);
