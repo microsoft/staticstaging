@@ -37,7 +37,7 @@ render js<
 
       # Mask (?).
       var mask = texture2D(maskTex, texcoord);
-      var maskx = swizzle(mask, "x");
+      var brightness = swizzle(mask, "x");
       var masky = swizzle(mask, "y");
       var wearFactor = swizzle(mask, "z") * 0.381;
 
@@ -59,8 +59,11 @@ render js<
       var wearColorMax = vec3(0.628,0.584, 0.584);
       var wornLeather = desatLeather * mix(wearColorMin, wearColorMax, wearFactor);
 
+      # Mix with black according to the mask's X channel.
+      var darkLeather = mix(vec3(0.0, 0.0, 0.0), wornLeather, brightness);
+
       # Final color composition.
-      gl_FragColor = vec4(wornLeather * ao, 1.0);
+      gl_FragColor = vec4(darkLeather * ao, 1.0);
     >
   >;
   draw_arrays(size);
