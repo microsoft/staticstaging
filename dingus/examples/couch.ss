@@ -20,6 +20,8 @@ var texcoord = mesh_texcoords(mesh);
 var leatherTex = load_texture("couch/T_Leather_D.png");
 # Ambient occlusion (AO) texture for highlighting.
 var aoTex = load_texture("couch/T_Couch_AO.png");
+# Mask (?).
+var maskTex = load_texture("couch/T_Couch_Mask.png");
 
 render js<
   vertex glsl<
@@ -32,6 +34,12 @@ render js<
 
       # Look up the ambient occlusion amount.
       var ao = swizzle(texture2D(aoTex, texcoord), "x");
+
+      # Mask (?).
+      var mask = texture2D(maskTex, texcoord);
+      var maskx = swizzle(mask, "x");
+      var masky = swizzle(mask, "y");
+      var maskz = swizzle(mask, "z");
 
       # Final color composition.
       gl_FragColor = leatherColor * ao;
