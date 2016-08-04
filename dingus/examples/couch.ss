@@ -23,7 +23,7 @@ render js<
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
     fragment glsl<
-      gl_FragColor = texture2D(tex, texcoord);
+      gl_FragColor = texture2D(tex, texcoord * 5.79);
     >
   >;
   draw_arrays(size);

@@ -94,6 +94,11 @@ const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([FLOAT4, FLOAT4], FLOAT4),
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
   new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Vector-by-scalar.
+  new FunType([FLOAT2, FLOAT], FLOAT2),
+  new FunType([FLOAT3, FLOAT], FLOAT3),
+  new FunType([FLOAT4, FLOAT], FLOAT4),
 ]);
 const _GL_UNARY_BINARY_TYPE = new OverloadedType(
   _GL_UNARY_TYPE.types.concat(_GL_BINARY_TYPE.types)
@@ -105,6 +110,11 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT4, FLOAT4], FLOAT4),
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
   new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Vector-by-scalar.
+  new FunType([FLOAT2, FLOAT], FLOAT2),
+  new FunType([FLOAT3, FLOAT], FLOAT3),
+  new FunType([FLOAT4, FLOAT], FLOAT4),
 
   // Multiplication gets special type cases for matrix-vector multiply.
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
