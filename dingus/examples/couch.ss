@@ -34,7 +34,7 @@ render js<
 
   # Position a light.
   var lightPos = vec3(-40.0, 40.0, 30.0);
-  var lightColor = vec3(1.0, 1.0, 1.0);
+  var lightColor = vec3(0.9, 0.8, 0.8);
 
   # Rotate the model matrix.
   var phase = Math.sin(Date.now() / 2000) / 3;
