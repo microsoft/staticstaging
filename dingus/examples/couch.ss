@@ -20,10 +20,24 @@ var texcoord = mesh_texcoords(mesh);
 var leatherTex = load_texture("couch/T_Leather_D.png");
 # Ambient occlusion (AO) texture for highlighting.
 var aoTex = load_texture("couch/T_Couch_AO.png");
-# Mask (?).
+# The mask texture has a few different parameters.
 var maskTex = load_texture("couch/T_Couch_Mask.png");
+# Specular lighting for the leather texture.
+var leatherSpecularTex = load_texture("couch/T_Leather_S.png");
 
 render js<
+  var cameraPos = eye(view);
+
+  # Position a light.
+  var t = Date.now();
+  var lightPos = vec3(
+    Math.cos(t / 200) * 20.0,
+    0.0,
+    Math.sin(t / 200) * 20.0
+  );
+
+  var lightColor = vec3(1.0, 0.2, 0.5);
+
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
     fragment glsl<
@@ -41,8 +55,8 @@ render js<
 
       # The mask texture has a few different intensities.
       var mask = texture2D(maskTex, texcoord);
-      var blackMix = swizzle(mask, "x");
-      var grayMix = swizzle(mask, "y");
+      var maskx = swizzle(mask, "x");
+      var masky = swizzle(mask, "y");
       var wearFactor = swizzle(mask, "z") * 0.381;
 
       # Start with the leather texture.
@@ -69,8 +83,8 @@ render js<
 
       # Mix with black and then gray according to the
       # mask's x and y channels.
-      bcol = mix(vec3(0.0, 0.0, 0.0), bcol, blackMix);
-      bcol = mix(bcol, vec3(0.823, 0.823, 0.823), grayMix);
+      bcol = mix(vec3(0.0, 0.0, 0.0), bcol, maskx);
+      bcol = mix(bcol, vec3(0.823, 0.823, 0.823), masky);
 
       # Mix in a seam color according to the AO
       # texture's y channel.
@@ -80,8 +94,67 @@ render js<
       # Ambient occlusion.
       bcol = bcol * ao;
 
-      # Final color composition.
-      gl_FragColor = vec4(bcol, 1.0);
+
+      # LIGHTING
+
+      # Texture lookups for lighting model.
+      var leatherSpec = swizzle(
+        vec3(texture2D(leatherSpecularTex, leatherTexCoord)),
+        "x"
+      );
+
+      # Lighting parameters.
+      var roughness =
+        mix(
+          mix(
+            mix(
+              0.2,
+              mix(
+                mix(0.659, 2.01, leatherSpec),
+                -0.154,
+                wearFactor
+              ),
+            maskx
+          ),
+          0.0,
+          masky
+        ),
+        0.0,
+        seam
+      );
+      var metallic = mix(0.5, 0.1, leatherSpec);
+      var specular = 1.0;
+
+      # Locations and conversions.
+      var position_world = vec3(model * vec4(position, 1.0));
+      var normal_world = normalize(vec3(model * vec4(position, 0.0)));
+      var view_dir_world = normalize(cameraPos - position_world);
+      var lightDir = normalize(lightPos - position_world);
+
+      # Diffuse lighting.
+      var brightness = clamp(dot(lightDir, normal), 0.0, 1.0);
+
+      # Phong.
+      var L = lightDir;
+      var H = normalize(view_dir_world + L);
+      var dotNL = clamp(dot(normal,L), 0.01, 0.99);
+      var dotLH = clamp(dot(L, H), 0.01, 0.99);
+      var dotNH = clamp(dot(normal,H), 0.01, 0.99);
+      var alpha = roughness * roughness;
+      var p = 6.644/(alpha*alpha) - 6.644;
+      var pi = 3.14159;
+      var highlight = dotNL * exp2(p * dotNH - p) / (pi * (alpha*alpha)) *
+        specular;
+
+      # Compose the Phong specular lighting with the albedo color and
+      # diffuse brightness.
+      var albedo = bcol;
+      var lighting = lightColor *
+        (albedo * (brightness + 0.7) * (1.0 - metallic) +
+        mix(albedo, vec3(1.0), 1.0 - metallic) * highlight);
+
+      # Color output.
+      gl_FragColor = vec4(lighting, 1.0);
     >
   >;
   draw_arrays(size);
