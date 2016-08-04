@@ -12,7 +12,8 @@ mat4.rotateZ(modelBase, modelBase, 0.5);
 # Load buffers and parameters for the model.
 var mesh = load_raw("couch/couch.vtx.raw");
 var position = mesh_positions(mesh);
-var normal = mesh_normals(mesh);
+var vert_normal = mesh_normals(mesh);
+var vert_tanget = mesh_tangents(mesh);
 var size = mesh_count(mesh);
 var texcoord = mesh_texcoords(mesh);
 
@@ -24,6 +25,9 @@ var aoTex = load_texture("couch/T_Couch_AO.png");
 var maskTex = load_texture("couch/T_Couch_Mask.png");
 # Specular lighting for the leather texture.
 var leatherSpecularTex = load_texture("couch/T_Leather_S.png");
+# Normal maps for lighting the surface.
+var normalTex = load_texture("couch/T_Couch_N.png");
+var leatherNormalTex = load_texture("couch/T_Leather_N.png");
 
 # A model matrix with rotation.
 var id = mat4.create();
@@ -99,11 +103,42 @@ render js<
 
       # LIGHTING
 
-      # Texture lookups for lighting model.
+      # Specular texture for the leather.
       var leatherSpec = swizzle(
         vec3(texture2D(leatherSpecularTex, leatherTexCoord)),
         "x"
       );
+
+      # Normal textures for the couch and leather.
+      var macroNormalCoord = texcoord * 0.372;
+      var macroNormal = (
+        vec3(texture2D(leatherNormalTex, macroNormalCoord)) * 2.0
+        - vec3(1.0, 1.0, 1.0)
+      ) * vec3(0.274, 0.274, 0.0);
+      var leatherNormal = (
+        vec3(texture2D(leatherNormalTex, leatherTexCoord)) * 2.0
+        - vec3(1.0,1.0,1.0)
+      ) * vec3(1.0,1.0,0.0);
+      var normal_in = normalize(
+        vec3(texture2D(normalTex, texcoord)) * 2.0
+        - vec3(1.0,1.0,1.0)
+        + (leatherNormal + macroNormal) * maskx
+      ) * 0.5 + 0.5;
+
+      # ???
+      # var vNormal = (normalMatrix * vec4(vert_normal, 1.0)).xyz;
+      # var vTangent = (normalMatrix * vec4(vert_tangent, 1.0)).xyz;
+      # var vBiTangent = cross(vTangent, vNormal);
+
+      # Tangent space transform?
+      # var signed_n = normal_in * 2.0 - 1.0;
+      # var normal = normalize(
+      #   swizzle(signed_n, "x") * vTangent
+      #   + swizzle(signed_n, "y") * vBiTangent
+      #   + swizzle(signed_n, "z") * vNormal
+      # );
+
+      var normal = vert_normal;
 
       # Lighting parameters.
       var roughness =
