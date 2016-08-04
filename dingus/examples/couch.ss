@@ -33,11 +33,11 @@ var leatherNormalTex = load_texture("couch/T_Leather_N.png");
 var id = mat4.create();
 var model = mat4.create();
 
-# I'm not sure what this should be -- perhaps identity?
-var normalMatrix = id;
-
 render js<
   var cameraPos = eye(view);
+
+  # Normal transformation matrix.
+  var normalMatrix = model * view;
 
   # Position a light.
   var lightPos = vec3(-40.0, 40.0, 30.0);
