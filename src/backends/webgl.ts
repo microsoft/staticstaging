@@ -162,16 +162,18 @@ function emit_shader_setup(emitter: Emitter, progid: number): string
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
 function emit_param_binding(scopeid: number, type: Type, varid: number,
-    value: string, attribute: boolean): string
+    value: string, attribute: boolean, texture_index?: number): string
 {
   if (!attribute) {
     if (type === TEXTURE) {
       // Bind a texture sampler.
-      let unit = 0;  // Texture zero for now.
-      let out = `gl.activeTexture(gl.TEXTURE0 + ${unit}),\n`;
+      if (texture_index === undefined) {
+        throw "missing texture index";
+      }
+      let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`;
       out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
       let locname = locsym(scopeid, varid);
-      out += `gl.uniform1i(${locname}, ${unit})`;
+      out += `gl.uniform1i(${locname}, ${texture_index})`;
       return out;
 
     } else if (type instanceof PrimitiveType) {
@@ -222,9 +224,11 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
   }
 }
 
-// Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
-// shader). This includes both the `useProgram` call and the `bindX` calls to
-// set up the uniforms and attributes.
+/**
+ * Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
+ * shader). This includes both the `useProgram` call and the `bindX` calls to
+ * set up the uniforms and attributes.
+ */
 function emit_shader_binding(emitter: Emitter,
     progid: number) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
@@ -242,7 +246,7 @@ function emit_shader_binding(emitter: Emitter,
       value = paren(emit(emitter, g.value_expr));
     }
     out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
-        g.attribute);
+        g.attribute, g.texture_index);
   }
 
   return out;

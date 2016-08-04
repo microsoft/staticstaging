@@ -331,11 +331,18 @@ export interface Glue {
    * plain old `T`. This occurs only at the first shader stage.
    */
   attribute: boolean,
+
+  /**
+   * If `type` is `TEXTURE`, the unique index of this texture. Textures are
+   * assigned to texture units, which have unique indices.
+   */
+  texture_index?: number,
 }
 
 // Find all the incoming Glue values for a given shader program.
 function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   let glue: Glue[] = [];
+  let texture_index = 0;
 
   // Get glue for the persists.
   for (let esc of prog.persist) {
@@ -366,6 +373,12 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     } else if (esc.owner === prog.id) {
       // A uniform or varying whose value is produced here.
       g.value_expr = esc.body;
+
+      // If this is a texture, assign its index.
+      if (g.type === TEXTURE) {
+        g.texture_index = texture_index;
+        ++texture_index;
+      }
 
     } else if (!g.from_host) {
       // A varying produced by a previous shader stage.
@@ -411,6 +424,12 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
         // Get the value from the host.
         g.value_name = varsym(fv);
+
+        // If this is a texture, assign its index.
+        if (g.type === TEXTURE) {
+          g.texture_index = texture_index;
+          ++texture_index;
+        }
       }
 
     } else {
