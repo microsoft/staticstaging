@@ -3,11 +3,11 @@
 # ---
 
 # Position the model.
-var model = mat4.create();
-mat4.scale(model, model, vec3(0.35, 0.35, 0.35));
-mat4.rotateX(model, model, 0.4);
-mat4.rotateY(model, model, 1.2);
-mat4.rotateZ(model, model, 0.5);
+var modelBase = mat4.create();
+mat4.scale(modelBase, modelBase, vec3(0.35, 0.35, 0.35));
+mat4.rotateX(modelBase, modelBase, 0.4);
+mat4.rotateY(modelBase, modelBase, 1.2);
+mat4.rotateZ(modelBase, modelBase, 0.5);
 
 # Load buffers and parameters for the model.
 var mesh = load_raw("couch/couch.vtx.raw");
@@ -25,13 +25,20 @@ var maskTex = load_texture("couch/T_Couch_Mask.png");
 # Specular lighting for the leather texture.
 var leatherSpecularTex = load_texture("couch/T_Leather_S.png");
 
+# A model matrix with rotation.
+var id = mat4.create();
+var model = mat4.create();
+
 render js<
   var cameraPos = eye(view);
 
   # Position a light.
-  var t = Date.now() / 400;
   var lightPos = vec3(-40.0, 40.0, 30.0);
   var lightColor = vec3(1.0, 1.0, 1.0);
+
+  # Rotate the model matrix.
+  var phase = Math.sin(Date.now() / 2000) / 3;
+  mat4.rotateY(model, modelBase, phase);
 
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
