@@ -129,7 +129,6 @@ render js<
 
       # Locations and conversions.
       var position_world = vec3(model * vec4(position, 1.0));
-      var normal_world = normalize(vec3(model * vec4(position, 0.0)));
       var view_dir_world = normalize(cameraPos - position_world);
       var lightDir = normalize(lightPos - position_world);
 
@@ -139,9 +138,9 @@ render js<
       # Phong.
       var L = lightDir;
       var H = normalize(view_dir_world + L);
-      var dotNL = clamp(dot(normal,L), 0.01, 0.99);
+      var dotNL = clamp(dot(normal, L), 0.01, 0.99);
       var dotLH = clamp(dot(L, H), 0.01, 0.99);
-      var dotNH = clamp(dot(normal,H), 0.01, 0.99);
+      var dotNH = clamp(dot(normal, H), 0.01, 0.99);
       var alpha = roughness * roughness;
       var p = 6.644/(alpha*alpha) - 6.644;
       var pi = 3.14159;
