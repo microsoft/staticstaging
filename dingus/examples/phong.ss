@@ -44,7 +44,7 @@ def solid(pos: Float3 Array, model: Mat4, color: Vec3) (
 # ---
 
 # Load buffers and parameters for the main model.
-var mesh = teapot;
+var mesh = load_obj("teapot.obj");
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
@@ -57,8 +57,11 @@ var b_indices = mesh_indices(bunny);
 var b_size = mesh_size(bunny);
 var b_model = mat4.create();
 
-# An identity matrix, which we'll use for model positioning.
+# Position the model.
 var id = mat4.create();
+var model = mat4.create();
+mat4.scale(model, id, vec3(0.2, 0.2, 0.2));
+mat4.translate(model, model, vec3(0.0, -35.0, 0.0));
 
 # The parameters for the Phong shader.
 var specular = 50.0;
@@ -72,7 +75,7 @@ render js<
     Math.sin(t / 200) * 20.0
   );
 
-  phong(position, normal, id, light_position, light_color, specular);
+  phong(position, normal, model, light_position, light_color, specular);
   draw_mesh(indices, size);
 
   # Place the bunny at the light source, for illustrative purposes.
