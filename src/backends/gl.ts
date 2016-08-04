@@ -154,6 +154,7 @@ export const INTRINSICS: TypeMap = {
     new FunType([FLOAT2, FLOAT, FLOAT], FLOAT2),
     new FunType([FLOAT3, FLOAT, FLOAT], FLOAT3),
   ]),
+  exp2: new FunType([FLOAT], FLOAT),
 
   // `mix` is a GLSL interpolation operator. The last operand is the amount.
   mix: new OverloadedType([
