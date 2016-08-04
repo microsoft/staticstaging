@@ -14,7 +14,6 @@ mat4.scale(model_base, model_base, vec3(50.0, 50.0, 50.0));
 # Load buffers and parameters for the model.
 var mesh = load_obj("head.obj");
 var position = mesh_positions(mesh);
-var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
 var texcoord = mesh_texcoords(mesh);
@@ -55,14 +54,14 @@ render js<
 
       # Phong lighting.
       var position_world = vec3(model * vec4(position, 1.0));
-      var normal_world = normalize(vec3(model * vec4(normal, 0.0)));
+      var normal_world = normalize(vec3(model * vec4(bumpNormal, 0.0)));
       var view_dir_world = normalize(camera_pos - position_world);
       var light_direction = normalize(lightpos - position_world);
       var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
       var angle = normalize(view_dir_world + light_direction);
       var spec_comp_b = max(0.0, dot(normal_world, angle));
       var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
-      var light = color * ndl + vec3(spec_comp);
+      var light = lightcolor * ndl + vec3(spec_comp);
 
       gl_FragColor = vec4(color, 1.0);
     >
