@@ -16,14 +16,25 @@ var normal = mesh_normals(mesh);
 var size = mesh_count(mesh);
 var texcoord = mesh_texcoords(mesh);
 
-# Load a texture from an image.
-var tex = load_texture("couch/T_Leather_D.png");
+# Repeating leather texture.
+var leatherTex = load_texture("couch/T_Leather_D.png");
+# Ambient occlusion (AO) texture for highlighting.
+var aoTex = load_texture("couch/T_Couch_AO.png");
 
 render js<
   vertex glsl<
     gl_Position = projection * view * model * vec4(position, 1.0);
     fragment glsl<
-      gl_FragColor = texture2D(tex, texcoord * 5.79);
+      # The leather texture repeats more quickly than
+      # the per-couch textures.
+      var leatherTexCoord = texcoord * 5.79;
+      var leatherColor = texture2D(leatherTex, leatherTexCoord);
+
+      # Look up the ambient occlusion amount.
+      var ao = swizzle(texture2D(aoTex, texcoord), "x");
+
+      # Final color composition.
+      gl_FragColor = leatherColor * ao;
     >
   >;
   draw_arrays(size);
