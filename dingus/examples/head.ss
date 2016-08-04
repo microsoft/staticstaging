@@ -15,6 +15,7 @@ mat4.scale(model_base, model_base, vec3(50.0, 50.0, 50.0));
 var mesh = load_obj("head.obj");
 var position = mesh_positions(mesh);
 var indices = mesh_indices(mesh);
+var normal = mesh_normals(mesh);
 var size = mesh_size(mesh);
 var texcoord = mesh_texcoords(mesh);
 
@@ -61,7 +62,10 @@ render js<
       var angle = normalize(view_dir_world + light_direction);
       var spec_comp_b = max(0.0, dot(normal_world, angle));
       var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
-      var light = lightcolor * ndl + vec3(spec_comp);
+
+      # Compose the light with the base color.
+      var lit = lightcolor * (color * (ndl + 0.7) +
+        color * spec_comp);
 
       gl_FragColor = vec4(color, 1.0);
     >

@@ -361,8 +361,8 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
 
       // .obj files can have normals, but if they don't, this parser library
       // (confusingly) fills the array with NaN.
-      if (!isNaN(mesh.vertexNormals[0][0])) {
-        mesh.normals = group_array(mesh.vertexNormals, 3);
+      if (!isNaN(mesh.vertexNormals[0])) {
+        out.normals = group_array(mesh.vertexNormals, 3);
       }
 
       return out;
