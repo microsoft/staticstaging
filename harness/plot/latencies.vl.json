@@ -3,14 +3,20 @@
   "layers": [
     {
       "mark": "bar",
+      "config": {
+        "mark": {"color": "#999"}
+      },
       "encoding": {
-        "x": {"field": "name", "type": "ordinal"},
+        "x": {
+          "field": "name",
+          "type": "ordinal",
+          "axis": {"title": null}
+        },
         "y": {
           "field": "value",
           "type": "quantitative",
           "axis": {"title": "frame latency (ms)"}
-        },
-        "size": {"value": 2}
+        }
       }
     }
   ]
