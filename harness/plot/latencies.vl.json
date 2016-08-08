@@ -1,5 +1,11 @@
 {
   "data": {"url": "../latencies.json"},
+  "transform": {
+    "calculate": [
+      {"field": "min", "expr": "datum.value - datum.error"},
+      {"field": "max", "expr": "datum.value + datum.error"}
+    ]
+  },
   "layers": [
     {
       "mark": "bar",
@@ -16,6 +22,21 @@
           "field": "value",
           "type": "quantitative",
           "axis": {"title": "frame latency (ms)"}
+        }
+      }
+    },
+
+    {
+      "mark": "rule",
+      "encoding": {
+        "x": {"field": "name", "type": "ordinal"},
+        "y": {
+          "field": "min",
+          "type": "quantitative"
+        },
+        "y2": {
+          "field": "max",
+          "type": "quantitative"
         }
       }
     }
