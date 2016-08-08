@@ -22,16 +22,29 @@
 
     {
       "mark": "rule",
+      "config": {"mark": {"color": "#000"}},
       "encoding": {
         "x": {"field": "name", "type": "ordinal"},
-        "y": {
-          "field": "err_min",
-          "type": "quantitative"
-        },
-        "y2": {
-          "field": "err_max",
-          "type": "quantitative"
-        }
+        "y": {"field": "err_min", "type": "quantitative"},
+        "y2": {"field": "err_max", "type": "quantitative"}
+      }
+    },
+    {
+      "mark": "tick",
+      "config": {"mark": {"color": "#000"}},
+      "encoding": {
+        "x": {"field": "name", "type": "ordinal"},
+        "y": {"field": "err_min", "type": "quantitative"},
+        "size": {"value": 5}
+      }
+    },
+    {
+      "mark": "tick",
+      "config": {"mark": {"color": "#000"}},
+      "encoding": {
+        "x": {"field": "name", "type": "ordinal"},
+        "y": {"field": "err_max", "type": "quantitative"},
+        "size": {"value": 5}
       }
     }
   ]
