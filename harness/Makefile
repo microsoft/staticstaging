@@ -5,7 +5,8 @@ build:
 	tsc
 
 .PHONY: collect
-collect: $(patsubst bench/%.ss,collected/%.json,$(wildcard bench/*.ss))
+COLLECTED := $(patsubst bench/%.ss,collected/%.json,$(wildcard bench/*.ss))
+collect: $(COLLECTED)
 
 collected/%.json: bench/%.ss
 	@mkdir -p collected
@@ -15,5 +16,5 @@ collected/%.json: bench/%.ss
 summarize:
 	python3 summarize.py
 
-latencies.json: summarize.py $(wildcard collected/*.json)
+latencies.json: summarize.py $(COLLECTED)
 	python3 $< -j > $@
