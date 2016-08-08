@@ -23,52 +23,70 @@ var texcoord = mesh_texcoords(mesh);
 var tex = load_texture("lambertian.jpg");
 var bumpTex = load_texture("bump-lowRes.png");
 
-# Rotated model matrix.
+# Translated model matrix.
 var model = mat4.create();
 
-render js<
-  # Rotate the model matrix.
-  var phase = Date.now() / 1000;
-  mat4.rotateY(model, model_base, phase);
+# A triply-nested loop to draw lots of objects in a grid.
+def grid(count: Int, f:(Int Int Int -> Void)) (
+  var x = count;
+  while (x) (
+    x = x - 1;
+    var y = count;
+    while (y) (
+      y = y - 1;
+      var z = count;
+      while (z) (
+        z = z - 1;
+        f(x, y, z);
+      )
+    )
+  )
+);
 
+render js<
   # Set up for lighting.
   var camera_pos = eye(view);
   var lightpos = vec3(-40.0, 40.0, 30.0);
   var lightcolor = vec3(0.9, 0.8, 0.8);
   var specular = 50.0;
 
-  vertex glsl<
-    gl_Position = projection * view * model * vec4(position, 1.0);
-    fragment glsl<
-      # Look up the surface color from a texture.
-      var color = vec3(texture2D(tex, texcoord));
+  grid(8, fun x:Int y:Int z:Int -> (
+    mat4.translate(model, model_base, vec3((x - 5) * 0.1, y * 0.1, (z - 5) * 0.1));
 
-      # Approximate the derivative.
-      var delta = 1.0 / 1024.0;
-      var bMd = swizzle(texture2D(bumpTex, texcoord), "x");
-      var bUp = swizzle(texture2D(bumpTex, texcoord + vec2(0.0, delta)), "x");
-      var bRt = swizzle(texture2D(bumpTex, texcoord + vec2(delta, 0.0)), "x");
-      var bumpNormal = normalize(vec3(bUp - bMd, bRt - bMd, 0.01));
+    vertex glsl<
+      gl_Position = projection * view * model * vec4(position, 1.0);
+      fragment glsl<
+        # Look up the surface color from a texture.
+        var color = vec3(texture2D(tex, texcoord));
 
-      # Combine the bump normal with the surface normal.
-      var bumpedN = normalize(normal + bumpNormal * 0.2);
+        # Approximate the derivative.
+        var delta = 1.0 / 1024.0;
+        var bMd = swizzle(texture2D(bumpTex, texcoord), "x");
+        var bUp = swizzle(texture2D(bumpTex, texcoord + vec2(0.0, delta)), "x");
+        var bRt = swizzle(texture2D(bumpTex, texcoord + vec2(delta, 0.0)), "x");
+        var bumpNormal = normalize(vec3(bUp - bMd, bRt - bMd, 0.01));
 
-      # Phong lighting.
-      var position_world = vec3(model * vec4(position, 1.0));
-      var normal_world = normalize(vec3(model * vec4(bumpedN, 0.0)));
-      var view_dir_world = normalize(camera_pos - position_world);
-      var light_direction = normalize(lightpos - position_world);
-      var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
-      var angle = normalize(view_dir_world + light_direction);
-      var spec_comp_b = max(0.0, dot(normal_world, angle));
-      var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
+        # Combine the bump normal with the surface normal.
+        var bumpedN = normalize(normal + bumpNormal * 0.2);
 
-      # Compose the light with the base color.
-      var lit = lightcolor * (color * (ndl + 0.7) +
-        color * spec_comp * 0.3);
+        # Phong lighting.
+        var position_world = vec3(model * vec4(position, 1.0));
+        var normal_world = normalize(vec3(model * vec4(bumpedN, 0.0)));
+        var view_dir_world = normalize(camera_pos - position_world);
+        var light_direction = normalize(lightpos - position_world);
+        var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
+        var angle = normalize(view_dir_world + light_direction);
+        var spec_comp_b = max(0.0, dot(normal_world, angle));
+        var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
 
-      gl_FragColor = vec4(lit, 1.0);
-    >
-  >;
-  draw_mesh(indices, size);
+        # Compose the light with the base color.
+        var lit = lightcolor * (color * (ndl + 0.7) +
+          color * spec_comp * 0.3);
+
+        gl_FragColor = vec4(lit, 1.0);
+      >
+    >;
+
+    draw_mesh(indices, size);
+  ));
 >
