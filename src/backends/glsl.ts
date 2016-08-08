@@ -75,6 +75,19 @@ function emit_type(type: Type): string {
   }
 }
 
+/**
+ * Like `nearest_quote`, finds the closest containing quote expression. This
+ * version, however, "passes through" prespliced quotes to their parents.
+ */
+function nearest_prespliced_quote(ir: CompilerIR, id: number): number {
+  let qid = nearest_quote(ir, id);
+  let quote = ir.progs[qid];
+  if (quote && quote.snippet_escape) {
+    return nearest_prespliced_quote(ir, quote.snippet_escape);
+  }
+  return qid;
+}
+
 let compile_rules: ASTVisit<Emitter, string> = {
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
     let [t,] = emitter.ir.type_table[tree.id];
@@ -99,27 +112,27 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_let(tree: ast.LetNode, emitter: Emitter): string {
-    let varname = shadervarsym(nearest_quote(emitter.ir, tree.id), tree.id);
+    let varname = shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), tree.id);
     return varname + " = " + paren(emit(emitter, tree.expr));
   },
 
   visit_assign(tree: ast.AssignNode, emitter: Emitter): string {
     // TODO Prevent assignment to nonlocal variables.
-    let vs = (id:number) => shadervarsym(nearest_quote(emitter.ir, tree.id), id);
+    let vs = (id:number) => shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), id);
     return emit_assign(emitter, tree, vs);
   },
 
   visit_lookup(tree: ast.LookupNode, emitter: Emitter): string {
     return emit_lookup(emitter, emit_extern, tree, function (id:number) {
       let [type,] = emitter.ir.type_table[id];
-      if (_is_cpu_scope(emitter.ir, nearest_quote(emitter.ir, id)) && !_attribute_type(type)) {
+      if (_is_cpu_scope(emitter.ir, nearest_prespliced_quote(emitter.ir, id)) && !_attribute_type(type)) {
         // References to variables defined on the CPU ("uniforms") get a
         // special naming convention so they can be shared between multiple
         // shaders in the same program.
         return varsym(id);
       } else {
         // Ordinary shader-scoped variable.
-        return shadervarsym(nearest_quote(emitter.ir, tree.id), id);
+        return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), id);
       }
     });
   },
@@ -143,7 +156,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
     if (tree.kind === "splice") {
       return splicesym(tree.id);
     } else if (tree.kind === "persist") {
-      return shadervarsym(nearest_quote(emitter.ir, tree.id), tree.id);
+      return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), tree.id);
     } else if (tree.kind === "snippet") {
       return splicesym(tree.id);  // SNIPPET TODO
     } else {
