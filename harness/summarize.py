@@ -25,7 +25,7 @@ def mean_latency(data):
 
 def summarize(as_json):
     """Summarize all the collected data."""
-    means = {}
+    out = []
     for fn in os.listdir(TIMINGS_DIR):
         path = os.path.join(TIMINGS_DIR, fn)
         with open(path) as f:
@@ -34,7 +34,11 @@ def summarize(as_json):
 
         if as_json:
             # Emit as a (mean, standard error) pair.
-            means[os.path.basename(data['fn'])] = mean.value, mean.error
+            out.append({
+                'name': os.path.basename(data['fn']),
+                'value': mean.value,
+                'error': mean.error,
+            })
         else:
             # Human-readable.
             print(data['fn'])
@@ -42,7 +46,7 @@ def summarize(as_json):
             print('fps:', 1000.0 / mean)
 
     if as_json:
-        json.dump(means, sys.stdout, sort_keys=True, indent=2)
+        json.dump(out, sys.stdout, sort_keys=True, indent=2)
 
 
 if __name__ == '__main__':

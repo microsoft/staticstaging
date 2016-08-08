@@ -1,0 +1,17 @@
+{
+  "data": {"url": "../latencies.json"},
+  "layers": [
+    {
+      "mark": "bar",
+      "encoding": {
+        "x": {"field": "name", "type": "ordinal"},
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "axis": {"title": "frame latency (ms)"}
+        },
+        "size": {"value": 2}
+      }
+    }
+  ]
+}
