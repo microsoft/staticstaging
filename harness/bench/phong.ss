@@ -2,6 +2,15 @@
 # mode: webgl
 # ---
 
+# Specializing if.
+def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
+  if !c t f;
+
+# Compile-time parameters.
+var shiny = 0;
+
+!<
+
 # Phong shader.
 def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
   var camera_pos = eye(view);
@@ -26,7 +35,11 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
       var spec_comp_b = max(0.0, dot(normal_world, angle));
       var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
 
-      gl_FragColor = vec4(color * ndl + vec3(spec_comp), 1.0);
+      # Compose.
+      var diffuse = color * ndl;
+      var highlight = vec3(spec_comp);
+      var out = @spif shiny diffuse (diffuse + highlight);
+      gl_FragColor = vec4(out, 1.0);
     >
   >;
 );
@@ -80,4 +93,6 @@ render js<
     phong(position, normal, trans * model, light_position, light_color, specular);
     draw_mesh(indices, size);
   ));
+>
+
 >
