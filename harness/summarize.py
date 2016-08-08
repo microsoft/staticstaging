@@ -33,7 +33,7 @@ def summarize(as_json):
         mean = mean_latency(data)
 
         if as_json:
-            # Emit as a (mean, standard error) pair.
+            # Emit a Vega-ready data record.
             name, _ = os.path.splitext(os.path.basename(data['fn']))
             out.append({
                 'name': name,
