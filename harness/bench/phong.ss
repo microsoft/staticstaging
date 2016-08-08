@@ -1,13 +1,9 @@
-# title: phong lighting
-# mode: webgl
-# ---
-
 # Specializing if.
 def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
   if !c t f;
 
 # Compile-time parameters.
-var shiny = 0;
+var shiny = (0);  # knob: 1
 
 !<
 
