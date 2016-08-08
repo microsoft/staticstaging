@@ -1,3 +1,9 @@
+/**
+ * The server-side component of the performance test harness. This serves the
+ * static files for the dingus, instructs it to load scenes, and collects
+ * performance data to disk.
+ */
+
 const restify = require('restify');
 const open_url = require('open');
 const querystring = require('querystring');
