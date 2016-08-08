@@ -33,6 +33,25 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
 
 # ---
 
+# A triply-nested loop to draw lots of objects in a grid.
+def grid(count: Int, f:(Int Int Int -> Void)) (
+  var x = count;
+  while (x) (
+    x = x - 1;
+    var y = count;
+    while (y) (
+      y = y - 1;
+      var z = count;
+      while (z) (
+        z = z - 1;
+        f(x, y, z);
+      )
+    )
+  )
+);
+
+# ---
+
 # Load buffers and parameters for the main model.
 var mesh = load_obj("bunny.obj");
 var position = mesh_positions(mesh);
@@ -44,21 +63,21 @@ var size = mesh_size(mesh);
 var id = mat4.create();
 var model = mat4.create();
 mat4.translate(model, model, vec3(0.0, -10.0, 0.0));
-mat4.scale(model, model, vec3(15.0, 15.0, 15.0));
+mat4.scale(model, model, vec3(5.0, 5.0, 5.0));
 
 # The parameters for the Phong shader.
 var specular = 100.0;
 var light_color = vec3(1.0, 0.2, 0.5);
 var light_position = vec3(20.0, 0.0, 20.0);
 
-# Rotation matrix.
-var rot = mat4.create();
+# Instance positioning.
+var id = mat4.create();
+var trans = mat4.create();
 
 render js<
-  # Rotation animation.
-  var t = Date.now();
-  mat4.rotateY(rot, id, t / 1000);
-
-  phong(position, normal, rot * model, light_position, light_color, specular);
-  draw_mesh(indices, size);
+  grid(8, fun x:Int y:Int z:Int -> (
+    mat4.translate(trans, id, vec3((x - 5) * 10, y * 10, (z - 5) * 10));
+    phong(position, normal, trans * model, light_position, light_color, specular);
+    draw_mesh(indices, size);
+  ));
 >
