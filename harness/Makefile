@@ -14,3 +14,6 @@ collected/%.json: bench/%.ss
 .PHONY: summarize
 summarize:
 	python3 summarize.py
+
+latencies.json: summarize.py $(wildcard collected/*.json)
+	python3 $< -j > $@

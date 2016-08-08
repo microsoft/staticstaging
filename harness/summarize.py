@@ -2,13 +2,13 @@
 import os
 import json
 import uncertain
+import sys
 
 TIMINGS_DIR = 'collected'
 
 
-def summarize_run(data):
+def mean_latency(data):
     """Summarize the data from a single run."""
-    print(data['fn'])
     all_latencies = []
     for msg in data['messages']:
         # As a sanity check, we can get an average frame latency for the
@@ -20,19 +20,30 @@ def summarize_run(data):
 
         # TODO Skip the first message as a "warmup" period.
 
-    mean = uncertain.umean(latencies)
-    print('frame latency:', mean, 'ms')
-    print('fps:', 1000.0 / mean)
+    return uncertain.umean(latencies)
 
 
-def summarize():
-    """Sumarrize all the collected data."""
+def summarize(as_json):
+    """Summarize all the collected data."""
+    means = {}
     for fn in os.listdir(TIMINGS_DIR):
         path = os.path.join(TIMINGS_DIR, fn)
         with open(path) as f:
             data = json.load(f)
-        summarize_run(data)
+        mean = mean_latency(data)
+
+        if as_json:
+            # Emit as a (mean, standard error) pair.
+            means[os.path.basename(data['fn'])] = mean.value, mean.error
+        else:
+            # Human-readable.
+            print(data['fn'])
+            print('frame latency:', mean, 'ms')
+            print('fps:', 1000.0 / mean)
+
+    if as_json:
+        json.dump(means, sys.stdout, sort_keys=True, indent=2)
 
 
 if __name__ == '__main__':
-    summarize()
+    summarize('-j' in sys.argv)
