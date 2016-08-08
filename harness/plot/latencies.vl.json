@@ -1,11 +1,5 @@
 {
   "data": {"url": "../latencies.json"},
-  "transform": {
-    "calculate": [
-      {"field": "min", "expr": "datum.value - datum.error"},
-      {"field": "max", "expr": "datum.value + datum.error"}
-    ]
-  },
   "layers": [
     {
       "mark": "bar",
@@ -31,11 +25,11 @@
       "encoding": {
         "x": {"field": "name", "type": "ordinal"},
         "y": {
-          "field": "min",
+          "field": "err_min",
           "type": "quantitative"
         },
         "y2": {
-          "field": "max",
+          "field": "err_max",
           "type": "quantitative"
         }
       }

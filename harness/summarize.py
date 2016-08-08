@@ -38,6 +38,8 @@ def summarize(as_json):
                 'name': os.path.basename(data['fn']),
                 'value': mean.value,
                 'error': mean.error,
+                'err_min': mean.value - mean.error,
+                'err_max': mean.value + mean.error,
             })
         else:
             # Human-readable.
