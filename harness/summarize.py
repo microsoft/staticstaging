@@ -34,8 +34,9 @@ def summarize(as_json):
 
         if as_json:
             # Emit as a (mean, standard error) pair.
+            name, _ = os.path.splitext(os.path.basename(data['fn']))
             out.append({
-                'name': os.path.basename(data['fn']),
+                'name': name,
                 'value': mean.value,
                 'error': mean.error,
                 'err_min': mean.value - mean.error,
