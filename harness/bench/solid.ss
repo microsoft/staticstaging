@@ -2,8 +2,7 @@
 # mode: webgl
 # ---
 
-# Phong shader.
-def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
+def solid(pos: Float3 Array, model: Mat4, color: Vec3) (
   var camera_pos = eye(view);
 
   vertex glsl<
@@ -49,10 +48,8 @@ var model = mat4.create();
 mat4.translate(model, model, vec3(0.0, -10.0, 0.0));
 mat4.scale(model, model, vec3(5.0, 5.0, 5.0));
 
-# The parameters for the Phong shader.
-var specular = 100.0;
+# The solid color to use.
 var light_color = vec3(1.0, 0.2, 0.5);
-var light_position = vec3(20.0, 0.0, 20.0);
 
 # Instance positioning.
 var id = mat4.create();
@@ -61,7 +58,7 @@ var trans = mat4.create();
 render js<
   grid(8, fun x:Int y:Int z:Int -> (
     mat4.translate(trans, id, vec3((x - 5) * 10, y * 10, (z - 5) * 10));
-    phong(position, normal, trans * model, light_position, light_color, specular);
+    solid(position, trans * model, light_color);
     draw_mesh(indices, size);
   ));
 >
