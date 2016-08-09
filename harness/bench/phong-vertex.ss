@@ -2,9 +2,6 @@
 def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
   if !c t f;
 
-# Compile-time parameters.
-var shiny = (0);  # knob: 1
-
 !<
 
 # Phong shader.
@@ -15,26 +12,28 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
     gl_Position = projection * view * model * vec4(pos, 1.0);
 
     fragment glsl<
-      # Convert to world space.
-      var position_world = vec3(model * vec4(pos, 1.0));
-      var normal_world = normalize(vec3(model * vec4(norm, 0.0)));
-      var view_dir_world = normalize(camera_pos - position_world);
+      var out = %[
+        # Convert to world space.
+        var position_world = vec3(model * vec4(pos, 1.0));
+        var normal_world = normalize(vec3(model * vec4(norm, 0.0)));
+        var view_dir_world = normalize(camera_pos - position_world);
 
-      # Light.
-      var light_direction = normalize(lightpos - position_world);
+        # Light.
+        var light_direction = normalize(lightpos - position_world);
 
-      # Diffuse.
-      var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
+        # Diffuse.
+        var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
 
-      # Specular.
-      var angle = normalize(view_dir_world + light_direction);
-      var spec_comp_b = max(0.0, dot(normal_world, angle));
-      var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
+        # Specular.
+        var angle = normalize(view_dir_world + light_direction);
+        var spec_comp_b = max(0.0, dot(normal_world, angle));
+        var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
 
-      # Compose.
-      var diffuse = color * ndl;
-      var highlight = vec3(spec_comp);
-      var out = @spif shiny diffuse (diffuse + highlight);
+        # Compose.
+        var diffuse = color * ndl;
+        var highlight = vec3(spec_comp);
+        diffuse + highlight
+      ];
 
       gl_FragColor = vec4(out, 1.0);
     >
