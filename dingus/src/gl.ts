@@ -93,13 +93,14 @@ function load_assets(): Promise<glrt.Assets> {
 export type PerfHandler =
   (frames: number, ms: number, latencies: number[]) => void;
 
+export type Update = (code?: string, dl?: boolean) => void;
+
 /**
  * Set up a canvas inside a container element. Return a function that sets the
  * render function (given compiled SHFL code as a string).
  */
 export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
-                         perfMode?: boolean):
-                           Promise<(code?: string) => void>
+                         perfMode?: boolean): Promise<Update>
 {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -149,6 +150,9 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     nextFrame = () => window.requestAnimationFrame(render);
   }
 
+  // A flag that, when set, saves the current image as a PNG.
+  let download_image = false;
+
   // The main render loop.
   function render() {
     // Get the current size of the canvas.
@@ -188,6 +192,15 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
       }
     }
 
+    // Possibly download an image of this frame.
+    if (download_image) {
+      console.log('download');
+      let png = canvas.toDataURL('image/png');
+      console.log(png);
+      window.location.href = png;
+      download_image = false;
+    }
+
     // Ask to be run again.
     nextFrame();
   };
@@ -197,7 +210,7 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
 
   // Load the assets, then return a function that lets the client update the
   // code.
-  return load_assets().then((assets) => (shfl_code?: string) => {
+  return load_assets().then((assets) => (shfl_code?: string, dl?: boolean) => {
     console.log('starting with assets', assets);
 
     if (shfl_code) {
@@ -206,6 +219,10 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
 
       // Invoke the setup stage.
       shfl_render = shfl_program();
+    }
+
+    if (dl !== undefined) {
+      download_image = dl;
     }
 
     fit();
