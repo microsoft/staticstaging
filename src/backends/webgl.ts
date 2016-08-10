@@ -164,7 +164,8 @@ function emit_shader_setup(emitter: Emitter, progid: number,
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
 function emit_param_binding(scopeid: number, type: Type, varid: number,
-    value: string, attribute: boolean, texture_index?: number): string
+    value: string, attribute: boolean, texture_index?: number,
+    variant?: Variant): string
 {
   if (!attribute) {
     if (type === TEXTURE) {
@@ -174,7 +175,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
       }
       let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`;
       out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
-      let locname = locsym(scopeid, varid);
+      let locname = locsym(scopeid, varid) + variant_suffix(variant);
       out += `gl.uniform1i(${locname}, ${texture_index})`;
       return out;
 
@@ -187,7 +188,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
 
       // Construct the call to gl.uniformX.
       let is_matrix = fname.indexOf("Matrix") !== -1;
-      let locname = locsym(scopeid, varid);
+      let locname = locsym(scopeid, varid) + variant_suffix(variant);
       let out = `gl.${fname}(${locname}`;
       if (is_matrix) {
         // Transpose parameter.
@@ -236,7 +237,8 @@ function emit_shader_binding_variant(emitter: Emitter,
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
-  let out = `gl.useProgram(${shadersym(vertex_prog.id)})`;
+  let shader_name = shadersym(vertex_prog.id) + variant_suffix(variant);
+  let out = `gl.useProgram(${shader_name})`;
 
   // Emit and bind the uniforms and attributes.
   let glue = emit_glue(emitter, progid);
