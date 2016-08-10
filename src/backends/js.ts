@@ -429,6 +429,34 @@ function emit_quote_expr(emitter: Emitter, prog: Prog, name: string) {
 }
 
 /**
+ * Emit the `switch` construct that chooses a prespliced program variant.
+ */
+function emit_variant_selector(emitter: Emitter, prog: Prog,
+                               variants: Variant[]) {
+  // Emit a "switch" construct that chooses the program variant.
+  let body = "";
+  for (let variant of variants) {
+    let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
+    let condition = cond_parts.join(" && ");
+    let prog_variant = variant.progs[variant.progid] ||
+      specialized_prog(emitter, variant.progid);
+    let progval = emit_quote_expr(emitter, prog_variant,
+                                  variantsym(variant));
+    body += `if (${condition}) return ${progval};\n`;
+  }
+  body += `throw "unknown configuration";`;
+  let argnames = variants[0].config.map((id, i) => `a${i}`);
+  let selector = emit_fun(null, argnames, [], body);
+
+  // Invoke the selector switch with expressions for each snippet escape.
+  let id_exprs: string[] = [];
+  for (let esc of prog.owned_snippet) {
+    id_exprs.push(paren(emit(emitter, esc.body)));
+  }
+  return `${selector}(${ id_exprs.join(", ") })`;
+}
+
+/**
  * Emit code for a quote expression.
  *
  * The quote can be a pre-spliced snippet or an ordinary program value.
@@ -448,29 +476,8 @@ function emit_quote(emitter: Emitter, scopeid: number): string
   if (variants === null) {
     // No snippets to pre-splice.
     return emit_quote_expr(emitter, prog, progsym(scopeid));
-
   } else {
-    // Emit a "switch" construct that chooses the program variant.
-    let body = "";
-    for (let variant of variants) {
-      let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
-      let condition = cond_parts.join(" && ");
-      let prog_variant = variant.progs[variant.progid] ||
-        specialized_prog(emitter, variant.progid);
-      let progval = emit_quote_expr(emitter, prog_variant,
-                                    variantsym(variant));
-      body += `if (${condition}) return ${progval};\n`;
-    }
-    body += `throw "unknown configuration";`;
-    let argnames = variants[0].config.map((id, i) => `a${i}`);
-    let selector = emit_fun(null, argnames, [], body);
-
-    // Invoke the selector switch with expressions for each snippet escape.
-    let id_exprs: string[] = [];
-    for (let esc of prog.owned_snippet) {
-      id_exprs.push(paren(emit(emitter, esc.body)));
-    }
-    return `${selector}(${ id_exprs.join(", ") })`;
+    return emit_variant_selector(emitter, prog, variants);
   }
 }
 
