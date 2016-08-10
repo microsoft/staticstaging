@@ -110,7 +110,7 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
     varid: number, variant?: Variant): string
 {
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
-  let shader = shadersym(scopeid);
+  let shader = shadersym(scopeid) + variant_suffix(variant);
   return js.emit_var(
     locsym(scopeid, varid) + variant_suffix(variant),
     `gl.${func}(${shader}, ${js.emit_string(varname)})`
@@ -124,8 +124,8 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
  * This doesn't quite work yet because we always set up shaders at startup
  * time, not in the context of normal execution.
  */
-function emit_shader_code_ref(emitter: Emitter, prog: Prog) {
-  let code_expr = progsym(prog.id);
+function emit_shader_code_ref(emitter: Emitter, prog: Prog, variant?: Variant) {
+  let code_expr = progsym(prog.id) + variant_suffix(variant);
   for (let esc of prog.owned_splice) {
     let esc_expr = emit(emitter, esc.body);
     code_expr += `.replace('__SPLICE_${esc.id}__', ${esc_expr})`;
@@ -141,8 +141,8 @@ function emit_shader_setup(emitter: Emitter, progid: number,
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
-  let vtx_code = emit_shader_code_ref(emitter, vertex_prog);
-  let frag_code = emit_shader_code_ref(emitter, fragment_prog);
+  let vtx_code = emit_shader_code_ref(emitter, vertex_prog, variant);
+  let frag_code = emit_shader_code_ref(emitter, fragment_prog, variant);
   let name = shadersym(vertex_prog.id) + variant_suffix(variant);
   let out = js.emit_var(
     name,
