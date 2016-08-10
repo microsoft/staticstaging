@@ -50,3 +50,7 @@ extern load_raw: String -> Mesh;
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
 extern Math.cos: Float -> Float;
+
+# Random numbers.
+extern random.seed: -> Void;
+extern random.flip: -> Float;

@@ -17,10 +17,7 @@ const eye = require('eye-vector');
 const mat4 = require('gl-mat4');
 const angle_normals = require('angle-normals');
 const obj_loader = require('webgl-obj-loader');
-
-const bunny: Mesh = require('bunny');
-const teapot: Mesh = require('teapot');
-const snowden: Mesh = require('snowden');
+const seedrandom = require('seedrandom');
 
 type Vec3Array = [number, number, number][];
 type Vec2Array = [number, number][];
@@ -95,6 +92,28 @@ function get_asset(assets: Assets, path: string) {
     throw `asset not loaded: ${path}`;
   }
   return asset;
+}
+
+/**
+ * A little stateful wrapper for `seedrandom`.
+ */
+class Random {
+  rng: any;
+
+  constructor() {
+    this.seed();
+  }
+
+  seed = (s = 'the seed') => {
+    this.rng = seedrandom(s);
+  }
+
+  /**
+   * Floating point boolean coin flip: returns either 1.0 or 0.0.
+   */
+  flip = () => {
+    return this.rng() > 0.5 ? 1.0 : 0.0;
+  }
 }
 
 /**
@@ -333,11 +352,6 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       gl.drawArrays(gl.TRIANGLES, 0, size / 3);
     },
 
-    // Sample meshes.
-    bunny,
-    teapot,
-    snowden,
-
     // Matrix manipulation library.
     mat4,
 
@@ -414,7 +428,9 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
       }
     },
 
-    // Create a buffer of values.
+    /**
+     * Create a buffer of values.
+     */
     float_array() {
       let arr = new Float32Array(arguments);
 
@@ -424,5 +440,10 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
 
       return buf;
     },
+
+    /**
+     * Random numbers (with a seed).
+     */
+    random: new Random(),
   };
 }

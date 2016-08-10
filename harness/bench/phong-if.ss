@@ -8,7 +8,7 @@ def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
 def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
   var camera_pos = eye(view);
 
-  var shiny = (0);  # knob: 1
+  var shiny = (0.0);  # knob: 1.0
 
   vertex glsl<
     gl_Position = projection * view * model * vec4(pos, 1.0);
