@@ -107,13 +107,12 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 // a shader variable. The `scopeid` is the ID of the quote for the shader
 // where the variable is located.
 function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
-    varid: number):
-  string
+    varid: number, variant?: Variant): string
 {
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid);
   return js.emit_var(
-    locsym(scopeid, varid),
+    locsym(scopeid, varid) + variant_suffix(variant),
     `gl.${func}(${shader}, ${js.emit_string(varname)})`
   );
 }
@@ -144,10 +143,7 @@ function emit_shader_setup(emitter: Emitter, progid: number,
   // Compile and link the shader program.
   let vtx_code = emit_shader_code_ref(emitter, vertex_prog);
   let frag_code = emit_shader_code_ref(emitter, fragment_prog);
-  let name = shadersym(vertex_prog.id);
-  if (variant) {
-    name += variant_suffix(variant);
-  }
+  let name = shadersym(vertex_prog.id) + variant_suffix(variant);
   let out = js.emit_var(
     name,
     `get_shader(gl, ${vtx_code}, ${frag_code})`
@@ -157,7 +153,8 @@ function emit_shader_setup(emitter: Emitter, progid: number,
   // variables.
   let glue = emit_glue(emitter, vertex_prog.id);
   for (let g of glue) {
-    out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id) + "\n";
+    out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id,
+                        variant) + "\n";
   }
 
   return out;
@@ -318,12 +315,7 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog,
 
   // Emit the shader program.
   let code = glsl.compile_prog(emitter, prog.id);
-  let name = progsym(prog.id);
-  if (variant) {
-    // In a prespliced variant, all programs get a suffix that describes the
-    // variant of the "root" (vertex) program.
-    name += variant_suffix(variant);
-  }
+  let name = progsym(prog.id) + variant_suffix(variant);
   out += js.emit_var(name, js.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),

@@ -1,5 +1,8 @@
+var x = 1;
+var y = 2;
 vertex glsl<
   fragment glsl<
-    $2[ $glsl< 1.0 > ]
+    y;
+    $2[ if 1 $glsl< x > $glsl< 3 > ]
   >
 >
