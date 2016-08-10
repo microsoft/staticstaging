@@ -42,7 +42,11 @@ export function persistsym(escid: number) {
  * `Prog`).
  */
 export function variantsym(variant: Variant) {
-  return progsym(variant.progid) + "_" + variant.config.join("_");
+  return progsym(variant.progid) + variant_suffix(variant);
+}
+
+export function variant_suffix(variant: Variant) {
+  return "_" + variant.config.join("_");
 }
 
 // Parenthesize an expression.

@@ -3,7 +3,7 @@ import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
-import { progsym, paren } from './emitutil';
+import { progsym, paren, variant_suffix } from './emitutil';
 import { Type, PrimitiveType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
@@ -136,15 +136,20 @@ function emit_shader_code_ref(emitter: Emitter, prog: Prog) {
 
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
-function emit_shader_setup(emitter: Emitter, progid: number): string
+function emit_shader_setup(emitter: Emitter, progid: number,
+                           variant?: Variant): string
 {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
   let vtx_code = emit_shader_code_ref(emitter, vertex_prog);
   let frag_code = emit_shader_code_ref(emitter, fragment_prog);
+  let name = shadersym(vertex_prog.id);
+  if (variant) {
+    name += variant_suffix(variant);
+  }
   let out = js.emit_var(
-    shadersym(vertex_prog.id),
+    name,
     `get_shader(gl, ${vtx_code}, ${frag_code})`
   ) + "\n";
 
@@ -298,7 +303,8 @@ function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
   return ast_visit(compile_rules, tree, emitter);
 };
 
-function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
+function emit_glsl_prog(emitter: Emitter, prog: Prog,
+                        variant?: Variant): string {
   let out = "";
 
   // Emit subprograms.
@@ -307,17 +313,23 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
     if (subprog.annotation !== SHADER_ANNOTATION) {
       throw "error: subprograms not allowed in shaders";
     }
-    out += emit_glsl_prog(emitter, subprog);
+    out += emit_glsl_prog(emitter, subprog, variant);
   }
 
   // Emit the shader program.
   let code = glsl.compile_prog(emitter, prog.id);
-  out += js.emit_var(progsym(prog.id), js.emit_string(code), true) + "\n";
+  let name = progsym(prog.id);
+  if (variant) {
+    // In a prespliced variant, all programs get a suffix that describes the
+    // variant of the "root" (vertex) program.
+    name += variant_suffix(variant);
+  }
+  out += js.emit_var(name, js.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
   if (prog_kind(emitter.ir, prog.id) === ProgKind.vertex) {
-    out += emit_shader_setup(emitter, prog.id);
+    out += emit_shader_setup(emitter, prog.id, variant);
   }
 
   return out;
@@ -340,8 +352,11 @@ export function codegen(ir: CompilerIR): string {
     },
 
     emit_prog_variant(emitter: Emitter, variant: Variant, prog: Prog) {
-      // No GLSL variants yet.
-      return js.emit_prog_variant(emitter, variant, prog);
+      if (prog.annotation === SHADER_ANNOTATION) {
+        return emit_glsl_prog(emitter, prog, variant);
+      } else {
+        return js.emit_prog_variant(emitter, variant, prog);
+      }
     },
 
     variant: null,
