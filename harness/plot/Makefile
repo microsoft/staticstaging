@@ -1,5 +1,11 @@
+PLOTS := latencies.pdf
+
 .PHONY: all
-all: latencies.pdf
+all: $(PLOTS)
+
+.PHONY: view
+view: $(PLOTS)
+	open $(PLOTS)
 
 latencies.svg: latencies.vl.json ../latencies.json
 
