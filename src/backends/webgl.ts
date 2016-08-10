@@ -231,8 +231,8 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
  * shader). This includes both the `useProgram` call and the `bindX` calls to
  * set up the uniforms and attributes.
  */
-function emit_shader_binding(emitter: Emitter,
-    progid: number) {
+function emit_shader_binding_variant(emitter: Emitter,
+    progid: number, variant?: Variant) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
@@ -252,6 +252,15 @@ function emit_shader_binding(emitter: Emitter,
   }
 
   return out;
+}
+
+/**
+ * Like `emit_shader_binding_variant`, but can also emit a `switch` to select
+ * the appropriate variant if the shader is pre-spliced.
+ */
+function emit_shader_binding(emitter: Emitter, progid: number) {
+  // TODO
+  return emit_shader_binding_variant(emitter, progid);
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.

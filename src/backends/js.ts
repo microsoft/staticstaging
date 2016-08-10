@@ -431,7 +431,7 @@ function emit_quote_expr(emitter: Emitter, prog: Prog, name: string) {
 /**
  * Emit the `switch` construct that chooses a prespliced program variant.
  */
-function emit_variant_selector(emitter: Emitter, prog: Prog,
+export function emit_variant_selector(emitter: Emitter, prog: Prog,
                                variants: Variant[],
                                emit_variant: (variant: Variant) => string)
 {

@@ -45,8 +45,16 @@ export function variantsym(variant: Variant) {
   return progsym(variant.progid) + variant_suffix(variant);
 }
 
-export function variant_suffix(variant: Variant) {
-  return "_" + variant.config.join("_");
+/**
+ * Emit a suffix indicating the variant, if any. If no variant is provided,
+ * return the empty string.
+ */
+export function variant_suffix(variant?: Variant) {
+  if (variant) {
+    return "_" + variant.config.join("_");
+  } else {
+    return "";
+  }
 }
 
 // Parenthesize an expression.
