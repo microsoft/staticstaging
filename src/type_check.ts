@@ -386,8 +386,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
-      if (cond_type !== INT) {
-        throw "type error: `if` condition must be an integer";
+      if (cond_type !== INT && cond_type !== FLOAT) {
+        throw "type error: `if` condition must be Int or Float";
       }
 
       let [true_type,] = check(tree.truex, e);

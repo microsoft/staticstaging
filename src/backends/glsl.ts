@@ -218,7 +218,15 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_if(tree: ast.IfNode, emitter: Emitter): string {
-    return emit_if(emitter, tree);
+    let cond = emit(emitter, tree.cond);
+    let truex = emit(emitter, tree.truex);
+    let falsex = emit(emitter, tree.falsex);
+
+    // Emit a ternary operator that uses a != comparison to convert a
+    // floating-point condition to a boolean. WebGL (i.e., OpenGL ES 2.0)
+    // doesn't support integer uniforms---or perhaps integers at all?---so we
+    // need this to use floating-point numbers as conditions.
+    return `(${paren(cond)} != 0.0) ? ${paren(truex)} : ${paren(falsex)}`;
   },
 
   visit_while(tree: ast.WhileNode, emitter: Emitter): string {
