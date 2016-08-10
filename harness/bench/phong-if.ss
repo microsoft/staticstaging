@@ -8,7 +8,7 @@ def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
 def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
   var camera_pos = eye(view);
 
-  var shiny = (0.0);  # knob: 1.0
+  var shiny = random.flip();
 
   vertex glsl<
     gl_Position = projection * view * model * vec4(pos, 1.0);
@@ -84,6 +84,7 @@ var id = mat4.create();
 var trans = mat4.create();
 
 render js<
+  random.seed();
   grid(8, fun x:Int y:Int z:Int -> (
     mat4.translate(trans, id, vec3((x - 5) * 10, y * 10, (z - 5) * 10));
     phong(position, normal, trans * model, light_position, light_color, specular);
