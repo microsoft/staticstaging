@@ -432,16 +432,15 @@ function emit_quote_expr(emitter: Emitter, prog: Prog, name: string) {
  * Emit the `switch` construct that chooses a prespliced program variant.
  */
 function emit_variant_selector(emitter: Emitter, prog: Prog,
-                               variants: Variant[]) {
+                               variants: Variant[],
+                               emit_variant: (variant: Variant) => string)
+{
   // Emit a "switch" construct that chooses the program variant.
   let body = "";
   for (let variant of variants) {
     let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
     let condition = cond_parts.join(" && ");
-    let prog_variant = variant.progs[variant.progid] ||
-      specialized_prog(emitter, variant.progid);
-    let progval = emit_quote_expr(emitter, prog_variant,
-                                  variantsym(variant));
+    let progval = emit_variant(variant);
     body += `if (${condition}) return ${progval};\n`;
   }
   body += `throw "unknown configuration";`;
@@ -477,7 +476,14 @@ function emit_quote(emitter: Emitter, scopeid: number): string
     // No snippets to pre-splice.
     return emit_quote_expr(emitter, prog, progsym(scopeid));
   } else {
-    return emit_variant_selector(emitter, prog, variants);
+    return emit_variant_selector(
+      emitter, prog, variants,
+      (variant) => {
+        let prog_variant = variant.progs[variant.progid] ||
+          specialized_prog(emitter, variant.progid);
+        return emit_quote_expr(emitter, prog_variant, variantsym(variant));
+      }
+    );
   }
 }
 
