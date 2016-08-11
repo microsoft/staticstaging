@@ -181,16 +181,18 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     gl.enable(gl.DEPTH_TEST);  // Prevent triangle overlap.
 
     // Invoke the compiled SHFL code.
+    let start = performance.now();
     if (shfl_render) {
       shfl_render.proc.apply(void 0, shfl_render.env);
     }
+    let end = performance.now();
 
     // Framerate tracking.
     if (perfCbk) {
       ++frame_count;
       let now = performance.now();
       let elapsed = now - last_sample;  // Milliseconds.
-      latencies.push(now - last_frame);
+      latencies.push(end - start);
       last_frame = now;
       if (elapsed > sample_rate) {
         perfCbk(frame_count, elapsed, latencies, draw_latencies);
