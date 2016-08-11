@@ -22,6 +22,13 @@ def mean_latency(data):
         all_latencies += msg['latencies']
         all_draw_latencies += msg['draw_latencies']
 
+    # More sanity checking: we should have the same number of overall and
+    # draw-call latencies, and the draw latency should always be less than the
+    # overall latency.
+    assert len(all_latencies) == len(all_draw_latencies)
+    for l, dl in zip(all_latencies, all_draw_latencies):
+        assert dl < l
+
     return uncertain.umean(all_latencies)
 
 
