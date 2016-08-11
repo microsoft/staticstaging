@@ -204,8 +204,11 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
   // Array types are bound as attributes.
   } else {
     if (type instanceof PrimitiveType) {
-      let buf_expr = paren(value);  // The value is a WebGL buffer object.
-      let loc_expr = locsym(scopeid, varid);  // Location handle.
+      // The value is a WebGL buffer object.
+      let buf_expr = paren(value);
+
+      // Location handle.
+      let loc_expr = locsym(scopeid, varid) + variant_suffix(variant);
 
       // Choose the `vertexAttribPointer` arguments based on the type.
       let pair = GL_ATTRIBUTE_TYPES[type.name];
