@@ -13,7 +13,7 @@
           "axis": {"title": null}
         },
         "y": {
-          "field": "value",
+          "field": "latency.value",
           "type": "quantitative",
           "axis": {"title": "frame latency (ms)"}
         }
@@ -25,8 +25,8 @@
       "config": {"mark": {"color": "#000"}},
       "encoding": {
         "x": {"field": "name", "type": "ordinal"},
-        "y": {"field": "err_min", "type": "quantitative"},
-        "y2": {"field": "err_max", "type": "quantitative"}
+        "y": {"field": "latency.err_min", "type": "quantitative"},
+        "y2": {"field": "latency.err_max", "type": "quantitative"}
       }
     },
     {
@@ -34,7 +34,7 @@
       "config": {"mark": {"color": "#000"}},
       "encoding": {
         "x": {"field": "name", "type": "ordinal"},
-        "y": {"field": "err_min", "type": "quantitative"},
+        "y": {"field": "latency.err_min", "type": "quantitative"},
         "size": {"value": 5}
       }
     },
@@ -43,7 +43,7 @@
       "config": {"mark": {"color": "#000"}},
       "encoding": {
         "x": {"field": "name", "type": "ordinal"},
-        "y": {"field": "err_max", "type": "quantitative"},
+        "y": {"field": "latency.err_max", "type": "quantitative"},
         "size": {"value": 5}
       }
     }

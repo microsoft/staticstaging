@@ -8,7 +8,8 @@ TIMINGS_DIR = 'collected'
 
 
 def mean_latency(data):
-    """Get the average frame latency from a benchmark run.
+    """Get the average frame latency from a benchmark run. Return a pair of
+    uncertain numbers: the overall latency and the draw latency.
     """
     msgs = data['messages'][1:]  # Skip the first message as a "warmup."
 
@@ -26,12 +27,23 @@ def mean_latency(data):
     # draw-call latencies, and the draw latency should always be less than the
     # overall latency.
     assert len(all_latencies) == len(all_draw_latencies)
-    print(data['fn'], file=sys.stderr)
+    # print(data['fn'], file=sys.stderr)
     for l, dl in zip(all_latencies, all_draw_latencies):
-        print(l, dl, file=sys.stderr)
+        # print(l, dl, file=sys.stderr)
         assert dl < l
 
-    return uncertain.umean(all_latencies)
+    return uncertain.umean(all_latencies), uncertain.umean(all_draw_latencies)
+
+
+def summarize_unc(unc):
+    """Format an uncertain value as a Vega-ready JSON-style dictionary.
+    """
+    return {
+        'value': unc.value,
+        'error': unc.error,
+        'err_min': unc.value - unc.error,
+        'err_max': unc.value + unc.error,
+    }
 
 
 def summarize(as_json):
@@ -41,23 +53,22 @@ def summarize(as_json):
         path = os.path.join(TIMINGS_DIR, fn)
         with open(path) as f:
             data = json.load(f)
-        mean = mean_latency(data)
+        latency, draw_latency = mean_latency(data)
 
         if as_json:
             # Emit a Vega-ready data record.
             name, _ = os.path.splitext(os.path.basename(data['fn']))
             out.append({
                 'name': name,
-                'value': mean.value,
-                'error': mean.error,
-                'err_min': mean.value - mean.error,
-                'err_max': mean.value + mean.error,
+                'latency': summarize_unc(latency),
+                'draw_latency': summarize_unc(draw_latency),
             })
         else:
             # Human-readable.
             print(data['fn'])
-            print('frame latency:', mean, 'ms')
-            print('fps:', 1000.0 / mean)
+            print('frame latency:', latency, 'ms')
+            print('draw latency:', draw_latency, 'ms')
+            print('fps:', 1000.0 / latency)
 
     if as_json:
         json.dump(out, sys.stdout, sort_keys=True, indent=2)
