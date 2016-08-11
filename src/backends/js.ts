@@ -441,7 +441,9 @@ export function emit_variant_selector(emitter: Emitter, prog: Prog,
     let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
     let condition = cond_parts.join(" && ");
     let progval = emit_variant(variant);
-    body += `if (${condition}) return ${progval};\n`;
+    body += `if (${condition}) {\n`
+    body += `  return ${progval};\n`;
+    body += `}\n`;
   }
   body += `throw "unknown configuration";`;
   let argnames = variants[0].config.map((id, i) => `a${i}`);

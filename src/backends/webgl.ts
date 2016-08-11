@@ -261,8 +261,20 @@ function emit_shader_binding_variant(emitter: Emitter,
  * the appropriate variant if the shader is pre-spliced.
  */
 function emit_shader_binding(emitter: Emitter, progid: number) {
-  // TODO
-  return emit_shader_binding_variant(emitter, progid);
+  // Check whether this shader has variants.
+  let variants = emitter.ir.presplice_variants[progid];
+  if (variants === null) {
+    // No variants.
+    return emit_shader_binding_variant(emitter, progid);
+  } else {
+    // Variants exist. Emit the selector.
+    return js.emit_variant_selector(
+      emitter, emitter.ir.progs[progid], variants,
+      (variant) => {
+        return emit_shader_binding_variant(emitter, progid, variant);
+      }
+    );
+  }
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
