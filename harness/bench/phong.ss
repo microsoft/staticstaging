@@ -1,9 +1,9 @@
-# Specializing if.
+# Static `if`.
 def stif(c:<Int>, t:$<Float3>, f:$<Float3>)
   if !c t f;
 
 # Compile-time parameters.
-var matte = (1);  # knob: 1
+var matte = (0);  # knob: 1
 
 !<
 
@@ -13,6 +13,7 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
 
   vertex glsl<
     gl_Position = projection * view * model * vec4(pos, 1.0);
+    specular;
 
     fragment glsl<
       # Convert to world space.
@@ -23,18 +24,21 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
       # Light.
       var light_direction = normalize(lightpos - position_world);
 
-      # Diffuse.
-      var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
+      # Diffuse component.
+      var diffuse = (
+        var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
+        color * ndl
+      );
 
-      # Specular.
-      var angle = normalize(view_dir_world + light_direction);
-      var spec_comp_b = max(0.0, dot(normal_world, angle));
-      var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
-
-      # Compose.
-      var diffuse = color * ndl;
-      var highlight = vec3(spec_comp);
-      var out = @stif matte diffuse (diffuse + highlight);
+      # Add specular component if the object is not matte.
+      var out = @stif matte diffuse (diffuse +
+        (
+          var angle = normalize(view_dir_world + light_direction);
+          var spec_comp_b = max(0.0, dot(normal_world, angle));
+          var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
+          vec3(spec_comp)
+        )
+      );
 
       gl_FragColor = vec4(out, 1.0);
     >
