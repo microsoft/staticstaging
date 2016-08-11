@@ -46,6 +46,24 @@
         "y": {"field": "latency.err_max", "type": "quantitative"},
         "size": {"value": 5}
       }
+    },
+
+    {
+      "mark": "bar",
+      "config": {
+        "mark": {"color": "#333"}
+      },
+      "encoding": {
+        "x": {
+          "field": "name",
+          "type": "ordinal",
+          "axis": {"title": null}
+        },
+        "y": {
+          "field": "draw_latency.value",
+          "type": "quantitative"
+        }
+      }
     }
   ]
 }
