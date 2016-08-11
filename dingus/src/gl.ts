@@ -136,7 +136,7 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   let last_frame = performance.now();
   let sample_rate = 1000;  // Measure every second.
   let latencies: number[] = [];
-  let draw_latencies: number[] = [];
+  let draw_latencies: number[] = [0];
   function drawtime(ms: number) {
     if (perfCbk) {
       draw_latencies[draw_latencies.length - 1] += ms;
@@ -192,13 +192,14 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
       let elapsed = now - last_sample;  // Milliseconds.
       latencies.push(now - last_frame);
       last_frame = now;
-      draw_latencies.push(0);
       if (elapsed > sample_rate) {
         perfCbk(frame_count, elapsed, latencies, draw_latencies);
         last_sample = performance.now();
         frame_count = 0;
         latencies = [];
-        draw_latencies = [];
+        draw_latencies = [0];
+      } else {
+        draw_latencies.push(0);
       }
     }
 
