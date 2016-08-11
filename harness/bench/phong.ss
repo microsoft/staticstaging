@@ -3,7 +3,7 @@ def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
   if !c t f;
 
 # Compile-time parameters.
-var shiny = (1);  # knob: 0
+var matte = (0);  # knob: 1
 
 !<
 
@@ -34,7 +34,7 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
       # Compose.
       var diffuse = color * ndl;
       var highlight = vec3(spec_comp);
-      var out = @spif shiny diffuse (diffuse + highlight);
+      var out = @spif matte diffuse (diffuse + highlight);
 
       gl_FragColor = vec4(out, 1.0);
     >
