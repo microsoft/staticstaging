@@ -27,8 +27,13 @@ clean:
 %.svg: %.vl.json
 	vl2svg $< > $@
 
+# A little one-liner to simplify the CSS in the SVGs produced by Vega-Lite.
+# rsvg-convert doesn't seem to support the `font` attribute, but it does work
+# with a separate `font-family` attribute. We can fix that!
+FIX_SVG := perl -pe 's/font: ([^\s]*) ([^;]*);/font-size: \1; font-family: \2;/g'
+
 %.pdf: %.svg
-	rsvg-convert -f pdf $< > $@
+	$(FIX_SVG) < $< | rsvg-convert -f pdf > $@
 
 # A little vega-lite authoring tool.
 prevl.js: prevl.ts
