@@ -10,17 +10,18 @@ TIMINGS_DIR = 'collected'
 def mean_latency(data):
     """Summarize the data from a single run."""
     all_latencies = []
+    all_draw_latencies = []
     for msg in data['messages']:
         # As a sanity check, we can get an average frame latency for the
         # entire message with:
         # avg_latency = msg['ms'] / msg['frames']
 
-        latencies = msg['latencies']
-        all_latencies += latencies
+        all_latencies += msg['latencies']
+        all_draw_latencies += msg['draw_latencies']
 
         # TODO Skip the first message as a "warmup" period.
 
-    return uncertain.umean(latencies)
+    return uncertain.umean(all_latencies)
 
 
 def summarize(as_json):
