@@ -25,10 +25,11 @@ type Mat4 = Float32Array;
  * dingus-specific matrices.
  */
 function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
-                   view: Mat4, assets: glrt.Assets)
+                   view: Mat4, assets: glrt.Assets,
+                   drawtime: (ms: number) => void)
 {
   // Get the runtime functions.
-  let rt = glrt.runtime(gl, assets);
+  let rt = glrt.runtime(gl, assets, drawtime);
 
   // Add our projection and view matrices.
   let dingus = {
@@ -91,7 +92,8 @@ function load_assets(): Promise<glrt.Assets> {
  * The type of a callback that handles performance information.
  */
 export type PerfHandler =
-  (frames: number, ms: number, latencies: number[]) => void;
+  (frames: number, ms: number, latencies: number[], draw_latencies: number[])
+  => void;
 
 export type Update = (code?: string, dl?: boolean) => void;
 
@@ -128,12 +130,18 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   let projection = mat4.create();
   let view = mat4.create();
 
-  // Bookkeeping for calculating framerate.
+  // Performance measurement.
   let frame_count = 0;
   let last_sample = performance.now();
   let last_frame = performance.now();
   let sample_rate = 1000;  // Measure every second.
   let latencies: number[] = [];
+  let draw_latencies: number[] = [];
+  function drawtime(ms: number) {
+    if (perfCbk) {
+      draw_latencies[draw_latencies.length - 1] += ms;
+    }
+  }
 
   // Initially, the SHFL function does nothing. The client needs to call us
   // back to fill in the function. Then, we will update this variable.
@@ -184,11 +192,13 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
       let elapsed = now - last_sample;  // Milliseconds.
       latencies.push(now - last_frame);
       last_frame = now;
+      draw_latencies.push(0);
       if (elapsed > sample_rate) {
-        perfCbk(frame_count, elapsed, latencies);
+        perfCbk(frame_count, elapsed, latencies, draw_latencies);
         last_sample = performance.now();
         frame_count = 0;
         latencies = [];
+        draw_latencies = [];
       }
     }
 
@@ -215,7 +225,8 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
 
     if (shfl_code) {
       // Execute the compiled SHFL code in context.
-      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets);
+      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
+                                   drawtime);
 
       // Invoke the setup stage.
       shfl_render = shfl_program();

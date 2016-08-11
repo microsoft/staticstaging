@@ -277,8 +277,13 @@ function parse_vtx_raw(buffer: ArrayBuffer): Mesh {
 
 /**
  * Get the run-time values to expose to WebGL programs.
+ *
+ * `gl` is the rendering context. `assets` are the pre-loaded data files.
+ * `drawtime` is a callback that is invoked with performance information
+ * whenever an object is drawn.
  */
-export function runtime(gl: WebGLRenderingContext, assets: Assets) {
+export function runtime(gl: WebGLRenderingContext, assets: Assets,
+                        drawtime: (ms: number) => void) {
   return {
     // Operations exposed to the language for getting data for meshes as WebGL
     // buffers.
@@ -342,14 +347,20 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets) {
     // indices buffer for the mesh and its size (in the number of scalars).
     draw_mesh(indices: WebGLBuffer, size: number) {
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indices);
+      let start = performance.now();
       gl.drawElements(gl.TRIANGLES, size, gl.UNSIGNED_SHORT, 0);
+      let end = performance.now();
+      drawtime(end - start);
     },
 
     // An alternative to `draw_mesh` for using `glDrawArrays`, i.e., without
     // an explicit vertex indices. `size` is the number of primitives to draw
     // (I think).
     draw_arrays(size: number) {
+      let start = performance.now();
       gl.drawArrays(gl.TRIANGLES, 0, size / 3);
+      let end = performance.now();
+      drawtime(end - start);
     },
 
     // Matrix manipulation library.

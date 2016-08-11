@@ -308,9 +308,9 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
           if (loadingmsg) {
             loadingmsg.style.display = 'block';
           }
-          start_gl(visualbox, (frames, ms, latencies) => {
+          start_gl(visualbox, (frames, ms, latencies, draw_latencies) => {
             if (config.fpsCallback) {
-              config.fpsCallback(frames, ms, latencies);
+              config.fpsCallback(frames, ms, latencies, draw_latencies);
             }
             if (fpsbox) {
               let fps = frames / ms * 1000;
