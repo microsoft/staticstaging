@@ -8,18 +8,19 @@ TIMINGS_DIR = 'collected'
 
 
 def mean_latency(data):
-    """Summarize the data from a single run."""
+    """Get the average frame latency from a benchmark run.
+    """
+    msgs = data['messages'][1:]  # Skip the first message as a "warmup."
+
     all_latencies = []
     all_draw_latencies = []
-    for msg in data['messages']:
+    for msg in msgs:
         # As a sanity check, we can get an average frame latency for the
         # entire message with:
         # avg_latency = msg['ms'] / msg['frames']
 
         all_latencies += msg['latencies']
         all_draw_latencies += msg['draw_latencies']
-
-        # TODO Skip the first message as a "warmup" period.
 
     return uncertain.umean(all_latencies)
 
