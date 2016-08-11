@@ -24,10 +24,7 @@ latencies.json: summarize.py $(COLLECTED)
 
 # Generate program variants.
 .PHONY: variants
-variants: bench/phong-specular.ss bench/phong-if-specular.ss
+variants: bench/phong-diffuse.ss
 
-bench/phong-specular.ss: bench/phong.ss
-	python3 knob.py < $< > $@
-
-bench/phong-if-specular.ss: bench/phong-if.ss
+bench/phong-diffuse.ss: bench/phong.ss
 	python3 knob.py < $< > $@

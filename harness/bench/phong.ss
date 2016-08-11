@@ -3,7 +3,7 @@ def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
   if !c t f;
 
 # Compile-time parameters.
-var shiny = (0);  # knob: 1
+var shiny = (1);  # knob: 0
 
 !<
 
