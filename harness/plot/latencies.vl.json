@@ -10,6 +10,7 @@
         "x": {
           "field": "name",
           "type": "ordinal",
+          "sort": "none",
           "axis": {"title": null}
         },
         "y": {
