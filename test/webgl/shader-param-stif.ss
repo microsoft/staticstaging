@@ -4,8 +4,8 @@ var x = 1;
 var y = 2;
 vertex glsl<
   fragment glsl<
-    10 * y;
-    20 * $3[ if 1 $glsl< x > $glsl< 3 > ]
+    y *
+    $3[ if 1 $glsl< x > $glsl< 3 > ]
   >
 >
 
