@@ -250,7 +250,7 @@ function emit_shader_binding_variant(emitter: Emitter,
       value = paren(emit(emitter, g.value_expr));
     }
     out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
-        g.attribute, g.texture_index);
+        g.attribute, g.texture_index, variant);
   }
 
   return out;
