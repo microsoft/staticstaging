@@ -25,7 +25,7 @@
       "mark": "rule",
       "config": {"mark": {"color": "#000"}},
       "encoding": {
-        "x": {"field": "name", "type": "ordinal"},
+        "x": {"field": "name"},
         "y": {"field": "latency.err_min", "type": "quantitative"},
         "y2": {"field": "latency.err_max", "type": "quantitative"}
       }
@@ -34,7 +34,7 @@
       "mark": "tick",
       "config": {"mark": {"color": "#000"}},
       "encoding": {
-        "x": {"field": "name", "type": "ordinal"},
+        "x": {"field": "name"},
         "y": {"field": "latency.err_min", "type": "quantitative"},
         "size": {"value": 5}
       }
@@ -43,7 +43,7 @@
       "mark": "tick",
       "config": {"mark": {"color": "#000"}},
       "encoding": {
-        "x": {"field": "name", "type": "ordinal"},
+        "x": {"field": "name"},
         "y": {"field": "latency.err_max", "type": "quantitative"},
         "size": {"value": 5}
       }
