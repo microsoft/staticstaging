@@ -1,9 +1,8 @@
 [
     ["solid", "solid"],
     ["phong-orig", "original"],
-    ["phong-stif", "static if"],
-    ["phong-stif-diffuse", "static if (diffuse)"],
-    ["phong-if", "if"],
+    ["phong-stif-diffuse", "static if"],
+    ["phong-if", "GPU if"],
     ["phong-spif", "specialized if"],
     ["phong-vertex", "per vertex"]
 ]
