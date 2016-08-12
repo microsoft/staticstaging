@@ -30,7 +30,10 @@ clean:
 # A little one-liner to simplify the CSS in the SVGs produced by Vega-Lite.
 # rsvg-convert doesn't seem to support the `font` attribute, but it does work
 # with a separate `font-family` attribute. We can fix that!
-FIX_SVG := perl -pe 's/font: ([^\s]*) ([^;]*);/font-size: \1; font-family: \2;/g'
+FIX_SVG := ( \
+	perl -pe 's/font: bold ([^\s]*) ([^;]*);/font-weight: bold; font-size: \1; font-family: \2;/g' | \
+	perl -pe 's/font: ([^\s]*) ([^;]*);/font-size: \1; font-family: \2;/g' \
+	)
 
 %.pdf: %.svg
 	$(FIX_SVG) < $< | rsvg-convert -f pdf > $@
