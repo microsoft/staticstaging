@@ -12,3 +12,15 @@ To collect and visualize performance numbers for this project:
 4. Aggregate the collected data. `make latencies.json`.
 
 5. Draw the plots. `cd plot ; make`.
+
+
+The `bench` Directory
+=====================
+
+These are the example programs.
+
+# phong
+
+- `phong-orig` is the original Phong lighting, with no metaprogramming tricks.
+- `phong-stif` uses pure compile-time metaprogramming. It uses macro called `@stif`, which like a safe `#ifdef` evaluated at overall compile time.
+- `phong-stif-diffuse` is generated automatically to show the compile-time switch going the "other way".

@@ -24,7 +24,7 @@ latencies.json: summarize.py $(COLLECTED)
 
 # Generate program variants.
 .PHONY: variants
-variants: bench/phong-diffuse.ss
+variants: bench/phong-stif-diffuse.ss
 
-bench/phong-diffuse.ss: bench/phong.ss
+bench/phong-stif-diffuse.ss: bench/phong-stif.ss
 	python3 knob.py < $< > $@
