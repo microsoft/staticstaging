@@ -1,14 +1,8 @@
-# Specializing if.
-def spif(c:<Int>, t:$<Float3>, f:$<Float3>)
-  if !c t f;
-
-!<
-
 # Phong shader.
 def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, color: Vec3, specular: Float) (
   var camera_pos = eye(view);
 
-  var shiny = random.flip();
+  var matte = random.flip();
 
   vertex glsl<
     gl_Position = projection * view * model * vec4(pos, 1.0);
@@ -22,18 +16,21 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
       # Light.
       var light_direction = normalize(lightpos - position_world);
 
-      # Diffuse.
-      var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
+      # Diffuse component.
+      var diffuse = (
+        var ndl = vec3( max(0.0, dot(normal_world, light_direction)) );
+        color * ndl
+      );
 
-      # Specular.
-      var angle = normalize(view_dir_world + light_direction);
-      var spec_comp_b = max(0.0, dot(normal_world, angle));
-      var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
-
-      # Compose.
-      var diffuse = color * ndl;
-      var highlight = vec3(spec_comp);
-      var out = if shiny diffuse (diffuse + highlight);
+      # Add specular component if the object is not matte.
+      var out = if matte diffuse (diffuse +
+        (
+          var angle = normalize(view_dir_world + light_direction);
+          var spec_comp_b = max(0.0, dot(normal_world, angle));
+          var spec_comp = pow( spec_comp_b, max(1.0, specular) ) * 2.0;
+          vec3(spec_comp)
+        )
+      );
 
       gl_FragColor = vec4(out, 1.0);
     >
@@ -90,6 +87,4 @@ render js<
     phong(position, normal, trans * model, light_position, light_color, specular);
     draw_mesh(indices, size);
   ));
->
-
 >

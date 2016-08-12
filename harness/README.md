@@ -24,3 +24,4 @@ These are the example programs.
 - `phong-orig` is the original Phong lighting, with no metaprogramming tricks.
 - `phong-stif` uses pure compile-time metaprogramming. It uses macro called `@stif`, which like a safe `#ifdef` evaluated at overall compile time.
 - `phong-stif-diffuse` is generated automatically to show the compile-time switch going the "other way".
+- `phong-if` uses a run-time GPU-side branch to draw different instances as matte or shiny.
