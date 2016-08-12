@@ -26,3 +26,4 @@ These are the example programs.
 - `phong-stif-diffuse` is generated automatically to show the compile-time switch going the "other way".
 - `phong-if` uses a run-time GPU-side branch to draw different instances as matte or shiny.
 - `phong-spif` converts the `if` in that version to run-time metaprogramming with a macro called `@spif`. This showcases the *presplicing* optimization, which avoids actual code generation and instead switches between two shaders.
+- `phong-vertex` is a version of `phong-orig` that promotes all the shading from the fragment stage to the vertex stage.

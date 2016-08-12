@@ -1,8 +1,9 @@
 [
-    ["phong", "original"],
     ["solid", "solid"],
-    ["phong-diffuse", "diffuse"],
+    ["phong-orig", "original"],
+    ["phong-stif", "static if"],
+    ["phong-stif-diffuse", "static if (diffuse)"],
     ["phong-if", "if"],
-    ["phong-presplice", "spif"],
+    ["phong-spif", "specialized if"],
     ["phong-vertex", "per vertex"]
 ]
