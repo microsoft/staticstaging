@@ -88,19 +88,20 @@ function _desugar_macros(type_table: TypeTable,
         let fun_type = unquantified_type(macro_type) as FunType;
 
         // Create the function call that invokes the macro.
-        let macro_args: ast.QuoteNode[] = [];
+        let macro_args: ast.ExpressionNode[] = [];
         let has_snippets = false;
         for (let [param, arg] of zip(fun_type.params, tree.args)) {
           if (param instanceof CodeType) {
             // Code parameter. Wrap the argument in a quote.
             let as_snippet = !!param.snippet_var;
             has_snippets = has_snippets || as_snippet;
-            macro_args.push({
+            let quote: ast.QuoteNode = {
               tag: "quote",
               expr: arg,
               annotation: "",
               snippet: as_snippet,
-            });
+            };
+            macro_args.push(quote);
           } else {
             // Ordinary parameter.
             macro_args.push(arg);
