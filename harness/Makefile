@@ -22,6 +22,9 @@ summarize:
 latencies.json: summarize.py $(COLLECTED)
 	python3 $< -j > $@
 
+latencies.mdk: summarize.py $(COLLECTED)
+	python3 $< -m > $@
+
 # Generate program variants.
 .PHONY: variants
 variants: bench/phong-stif-diffuse.ss

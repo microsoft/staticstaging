@@ -46,7 +46,7 @@ def summarize_unc(unc):
     }
 
 
-def summarize(as_json):
+def summarize(as_json, as_madoko):
     """Summarize all the collected data."""
     out = []
     for fn in os.listdir(TIMINGS_DIR):
@@ -54,15 +54,19 @@ def summarize(as_json):
         with open(path) as f:
             data = json.load(f)
         latency, draw_latency = mean_latency(data)
+        name, _ = os.path.splitext(os.path.basename(data['fn']))
 
         if as_json:
             # Emit a Vega-ready data record.
-            name, _ = os.path.splitext(os.path.basename(data['fn']))
             out.append({
                 'name': name,
                 'latency': summarize_unc(latency),
                 'draw_latency': summarize_unc(draw_latency),
             })
+        elif as_madoko:
+            # Emit Madoko definitions for inclusion in text.
+            prefix = 'data-{}-'.format(name)
+            print(prefix + 'latency:', latency.format('XXX') + ' ms')
         else:
             # Human-readable.
             print(data['fn'])
@@ -75,4 +79,4 @@ def summarize(as_json):
 
 
 if __name__ == '__main__':
-    summarize('-j' in sys.argv)
+    summarize('-j' in sys.argv, '-m' in sys.argv)
