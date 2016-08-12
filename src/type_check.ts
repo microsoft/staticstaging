@@ -426,27 +426,27 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         throw "type error: macro must be a function";
       }
 
-      // Check arguments in a fresh, quoted environment based at the stage
-      // where the macro was defined.
+      // Check code arguments in a fresh, quoted environment based at the
+      // stage where the macro was defined.
       let arg_env = te_push(te_pop(env, count), {}, "");
       let arg_types: Type[] = [];
       for (let [param, arg] of zip(fun_type.params, tree.args)) {
-        // Check whether the parameter is a snippet. This decides whether we
-        // check this as a snippet quote (open code) or ordinary quote (closed
-        // code).
+        // Check whether the parameter is a snippet (open code), an ordinary
+        // code type, or an eager non-code value.
         let as_snippet = false;
         if (param instanceof CodeType) {
-          if (param.snippet_var) {
-            as_snippet = true;
-          }
-        } else {
-          throw "type error: macro arguments must have code types";
-        }
+          // Code type, either ordinary or snippet.
+          let as_snippet = !!param.snippet_var;
 
-        // Check the argument and record its code type.
-        let [t,] = check(arg, as_snippet ? env : arg_env);
-        let code_t = new CodeType(t, "", as_snippet ? tree.id : null);
-        arg_types.push(code_t);
+          // Check the argument and record its code type.
+          let [t,] = check(arg, as_snippet ? env : arg_env);
+          let code_t = new CodeType(t, "", as_snippet ? tree.id : null);
+          arg_types.push(code_t);
+        } else {
+          // Non-code type. Check the argument in the macro's scope.
+          let [t,] = check(arg, env);
+          arg_types.push(t);
+        }
       }
 
       // Get the return type of the macro function.

@@ -91,14 +91,20 @@ function _desugar_macros(type_table: TypeTable,
         let macro_args: ast.QuoteNode[] = [];
         let has_snippets = false;
         for (let [param, arg] of zip(fun_type.params, tree.args)) {
-          let as_snippet = param instanceof CodeType && !!param.snippet_var;
-          has_snippets = has_snippets || as_snippet;
-          macro_args.push({
-            tag: "quote",
-            expr: arg,
-            annotation: "",
-            snippet: as_snippet,
-          });
+          if (param instanceof CodeType) {
+            // Code parameter. Wrap the argument in a quote.
+            let as_snippet = !!param.snippet_var;
+            has_snippets = has_snippets || as_snippet;
+            macro_args.push({
+              tag: "quote",
+              expr: arg,
+              annotation: "",
+              snippet: as_snippet,
+            });
+          } else {
+            // Ordinary parameter.
+            macro_args.push(arg);
+          }
         }
         let call: ast.CallNode = {
           tag: "call",
