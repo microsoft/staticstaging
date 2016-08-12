@@ -25,3 +25,4 @@ These are the example programs.
 - `phong-stif` uses pure compile-time metaprogramming. It uses macro called `@stif`, which like a safe `#ifdef` evaluated at overall compile time.
 - `phong-stif-diffuse` is generated automatically to show the compile-time switch going the "other way".
 - `phong-if` uses a run-time GPU-side branch to draw different instances as matte or shiny.
+- `phong-spif` converts the `if` in that version to run-time metaprogramming with a macro called `@spif`. This showcases the *presplicing* optimization, which avoids actual code generation and instead switches between two shaders.
