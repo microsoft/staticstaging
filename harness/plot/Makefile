@@ -1,4 +1,4 @@
-PLOTS := latencies.pdf latencies-phong.pdf
+PLOTS := latencies.pdf latencies-phong.pdf latencies-head.pdf
 
 .PHONY: all
 all: $(PLOTS)
@@ -9,13 +9,13 @@ view: $(PLOTS)
 
 latencies.svg: latencies.vl.json ../latencies.json
 
-latencies-phong.svg: latencies-phong.vl.json latencies-phong.json
+latencies-%.svg: latencies-%.vl.json latencies-%.json
 
-latencies-phong.vl.json: latencies.vl.json prevl.js
-	node prevl.js latencies-phong.json < $< > $@
+latencies-%.vl.json: latencies-%.json latencies.vl.json prevl.js
+	node prevl.js $< < latencies.vl.json > $@
 
-latencies-phong.json: ../latencies.json phong.names.json ../subset.py
-	python3 ../subset.py phong.names.json < $< > $@
+latencies-%.json: %.names.json ../latencies.json ../subset.py
+	python3 ../subset.py $< < ../latencies.json > $@
 
 .PHONY: clean
 clean:
