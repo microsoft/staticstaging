@@ -276,6 +276,47 @@ function parse_vtx_raw(buffer: ArrayBuffer): Mesh {
 }
 
 /**
+ * Access an image asset.
+ */
+function load_image(assets: Assets, name: string): HTMLImageElement {
+  let img = get_asset(assets, name);
+  if (img instanceof HTMLImageElement) {
+    return img;
+  } else {
+    throw "non-image used as image";
+  }
+}
+
+/**
+ * Convert an image into a WebGL texture.
+ */
+function texture(gl: WebGLRenderingContext, img: HTMLImageElement) {
+  let tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+
+  // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
+  // but it appears to have been invented to convert between the DOM
+  // coordinate convention for images and WebGL's convention.
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
+                gl.UNSIGNED_BYTE, img);
+
+  // Interpolation.
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+
+  // "Wrap around" the texture on overrun.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+  gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
+
+  return tex;
+}
+
+/**
  * Get the run-time values to expose to WebGL programs.
  *
  * `gl` is the rendering context. `assets` are the pre-loaded data files.
@@ -394,37 +435,25 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
     },
 
     /**
+     * Load an image asset.
+     */
+    load_image(name: string) {
+      return load_image(assets, name);
+    },
+
+    /**
+     * Convert an image to a texture.
+     */
+    texture(img: HTMLImageElement) {
+      return texture(gl, img);
+    },
+
+    /**
      * Load an image asset as a WebGL texture object.
      */
     load_texture(name: string) {
-      let img = get_asset(assets, name);
-      if (img instanceof HTMLImageElement) {
-        let tex = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-
-        // Invert the Y-coordinate. I'm not 100% sure why this is necessary,
-        // but it appears to have been invented to convert between the DOM
-        // coordinate convention for images and WebGL's convention.
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-                      gl.UNSIGNED_BYTE, img);
-
-        // Interpolation.
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-
-        // "Wrap around" the texture on overrun.
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
-        gl.bindTexture(gl.TEXTURE_2D, null);  // Unbind.
-
-        return tex;
-     } else {
-        throw "non-image used as image";
-      }
+      let img = load_image(assets, name);
+      return texture(gl, img);
     },
 
     /**
@@ -450,6 +479,12 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW);
 
       return buf;
+    },
+
+    /**
+     * Get an average color from a texture.
+     */
+    average(img: HTMLImageElement) {
     },
 
     /**

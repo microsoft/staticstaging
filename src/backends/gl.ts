@@ -56,6 +56,7 @@ export const GL_TYPES: TypeMap = {
   "Mesh": new PrimitiveType("Mesh"),
 
   "Texture": TEXTURE,
+  "Image": new PrimitiveType("Image"),
 };
 
 export const NUMERIC_TYPES: Type[] = [

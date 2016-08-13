@@ -18,7 +18,7 @@ var size = mesh_size(mesh);
 var texcoord = mesh_texcoords(mesh);
 
 # Load a texture from an image.
-var tex = load_texture("default.png");
+var tex = texture(load_image("default.png"));
 
 render js<
   vertex glsl<
