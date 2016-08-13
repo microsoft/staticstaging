@@ -47,6 +47,7 @@ extern load_texture: String -> Texture;
 extern load_raw: String -> Mesh;
 extern load_image: String -> Image;
 extern texture: Image -> Texture;
+extern average: Image -> Float4;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;

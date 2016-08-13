@@ -485,6 +485,32 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
      * Get an average color from a texture.
      */
     average(img: HTMLImageElement) {
+      // Apparently, this is the only way to access the image data from an
+      // <img> element.
+      let canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      let context = canvas.getContext('2d');
+      context.drawImage(img, 0, 0, img.width, img.height);
+
+      // Sum the pixels.
+      let totals = [0, 0, 0, 0];  // Red, green, blue, alpha.
+      for (let x = 0; x < img.width; ++x) {
+        for (let y = 0; y < img.height; ++y) {
+          let data = context.getImageData(x, y, 1, 1).data;
+          for (let i = 0; i < 4; ++i) {
+            totals[i] += data[i];
+          }
+        }
+      }
+
+      // Average.
+      let count = img.width * img.height;
+      let averages: number[] = [];
+      for (let i = 0; i < 4; ++i) {
+        averages[i] = totals[i] / 255 / count;
+      }
+      return averages;
     },
 
     /**
