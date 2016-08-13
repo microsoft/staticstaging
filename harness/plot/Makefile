@@ -12,7 +12,10 @@ latencies.svg: latencies.vl.json ../latencies.json
 latencies-%.svg: latencies-%.vl.json latencies-%.json
 
 latencies-%.vl.json: latencies-%.json latencies.vl.json prevl.js
-	node prevl.js data.url=$< < latencies.vl.json > $@
+	node prevl.js data.url=$< $(PREVL) < latencies.vl.json > $@
+
+# No y-axis label on plots other than the leftmost.
+latencies-head.vl.json: PREVL = layers.0.encoding.y.axis.title=
 
 latencies-%.json: %.names.json ../latencies.json ../subset.py
 	python3 ../subset.py $< < ../latencies.json > $@
