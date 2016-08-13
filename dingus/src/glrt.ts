@@ -492,15 +492,17 @@ export function runtime(gl: WebGLRenderingContext, assets: Assets,
       canvas.height = img.height;
       let context = canvas.getContext('2d');
       context.drawImage(img, 0, 0, img.width, img.height);
+      let data = context.getImageData(0, 0, img.width, img.height).data;
 
       // Sum the pixels.
       let totals = [0, 0, 0, 0];  // Red, green, blue, alpha.
+      let offset = 0;
       for (let x = 0; x < img.width; ++x) {
         for (let y = 0; y < img.height; ++y) {
-          let data = context.getImageData(x, y, 1, 1).data;
           for (let i = 0; i < 4; ++i) {
-            totals[i] += data[i];
+            totals[i] += data[offset + i];
           }
+          offset += 4;
         }
       }
 
