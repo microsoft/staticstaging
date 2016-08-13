@@ -171,6 +171,31 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
       variant.procs[id] = scope_variant(procs[id], config, progs);
     }
 
+    // Newly free variables "trickle" up to the parent scope. This is an
+    // incomplete point solution; pre-splicing should probably use a cleaner
+    // strategy to re-attribute variables.
+    for (let id in variant.progs) {
+      let old_prog = progs[id];
+      let new_prog = variant.progs[id];
+      let newly_free = set_diff(new_prog.free, old_prog.free);
+      if (newly_free.length) {
+        let parent_id = old_prog.quote_parent;
+        if (parent_id !== null) {
+          // Get or create the parent variant.
+          let parent: Prog = variant.progs[parent_id];
+          if (!parent) {
+            variant.progs[parent_id] = parent = assign({}, progs[parent_id]);
+          }
+
+          // Add free variables to the parent.
+          let parent_newly_free = set_diff(newly_free, parent.bound);
+          if (parent_newly_free) {
+            parent.free = set_union(parent.free, parent_newly_free);
+          }
+        }
+      }
+    }
+
     out.push(variant);
   }
   return out;
