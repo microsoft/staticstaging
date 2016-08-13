@@ -246,7 +246,9 @@ function emit_shader_binding_variant(emitter: Emitter,
 
   // Emit and bind the uniforms and attributes.
   let subemitter = assign({}, emitter);
-  subemitter.variant = variant;
+  if (!subemitter.variant) {
+    subemitter.variant = variant;
+  }
   let glue = emit_glue(subemitter, progid);
   for (let g of glue) {
     let value: string;
