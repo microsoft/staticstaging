@@ -9,7 +9,10 @@ view: $(PLOTS)
 
 latencies.svg: latencies.vl.json ../latencies.json
 
-latencies-%.svg: latencies-%.vl.json latencies-%.json
+# Sadly, make doesn't seem to let use % in this context (where we're adding
+# dependencies to an existing template rule). :cry:
+latencies-phong.svg: latencies-phong.vl.json latencies-phong.json
+latencies-head.svg: latencies-head.vl.json latencies-head.json
 
 latencies-%.vl.json: latencies-%.json latencies.vl.json prevl.js
 	node prevl.js data.url=$< $(PREVL) < latencies.vl.json > $@
@@ -22,7 +25,7 @@ latencies-%.json: %.names.json ../latencies.json ../subset.py
 
 .PHONY: clean
 clean:
-	rm -f *.png *.svg *.pdf prevl.js
+	rm -f *.png *.svg *.pdf prevl.js latencies-*.json
 
 %.png: %.vl.json
 	vl2png $< > $@

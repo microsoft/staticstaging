@@ -1,4 +1,7 @@
 latencies.svg
 latencies.png
 latencies.pdf
+latencies-*.svg
+latencies-*.png
+latencies-*.pdf
 prevl.json
