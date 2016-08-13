@@ -2,11 +2,6 @@
 # mode: webgl
 # ---
 
-def bump(tex: glsl<Texture>, coord: glsl<Float2>)
-  glsl<texture2D([tex], [coord])>;
-
-!<
-
 # This example renders a textured model. The head model
 # and its texture are from the Computer Graphics Archive
 # at Williams:
@@ -55,14 +50,12 @@ render js<
   var lightcolor = vec3(0.9, 0.8, 0.8);
   var specular = 50.0;
 
-  grid(1, fun x:Int y:Int z:Int -> (
+  grid(8, fun x:Int y:Int z:Int -> (
     mat4.translate(model, model_base, vec3((x - 5) * 0.1, y * 0.1, (z - 5) * 0.1));
 
     vertex glsl<
       gl_Position = projection * view * model * vec4(position, 1.0);
       fragment glsl<
-        var xxx = @bump bumpTex texcoord;
-
         # Look up the surface color from a texture.
         var color = vec3(texture2D(tex, texcoord));
 
@@ -96,6 +89,4 @@ render js<
 
     draw_mesh(indices, size);
   ));
->
-
 >
