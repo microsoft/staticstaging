@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /// <reference path="../../typings/globals/node/index.d.ts" />
+/// <reference path="../../typings/globals/es6-promise/index.d.ts" />
 
 import * as fs from 'fs';
 
@@ -30,13 +31,27 @@ function read_stdin(): Promise<string> {
  * Main function.
  */
 function prevl() {
-  let datafile = process.argv[2];
+  // Each argument has the format `path=value`, where `path` is a
+  // dot-separated list of keys to traverse and `value` is a value that will
+  // replace the current value at that point.
+  let changes: [string[], string][] = [];
+  for (let arg of process.argv.slice(2)) {
+    let [path, value] = arg.split('=');
+    let keys = path.split('.');
+    changes.push([keys, value]);
+  }
+
   read_stdin().then((json) => {
     let data = JSON.parse(json);
 
-    // Adjust the data file.
-    if (datafile) {
-      data['data']['url'] = datafile;
+    // Apply each change.
+    for (let [keys, value] of changes) {
+      let obj = data;
+      let lastkey = keys[keys.length - 1];
+      for (let key of keys.slice(0, -1)) {
+        obj = obj[key];
+      }
+      obj[lastkey] = value;
     }
 
     process.stdout.write(JSON.stringify(data));

@@ -12,7 +12,7 @@ latencies.svg: latencies.vl.json ../latencies.json
 latencies-%.svg: latencies-%.vl.json latencies-%.json
 
 latencies-%.vl.json: latencies-%.json latencies.vl.json prevl.js
-	node prevl.js $< < latencies.vl.json > $@
+	node prevl.js data.url=$< < latencies.vl.json > $@
 
 latencies-%.json: %.names.json ../latencies.json ../subset.py
 	python3 ../subset.py $< < ../latencies.json > $@
@@ -40,4 +40,4 @@ FIX_SVG := ( \
 
 # A little vega-lite authoring tool.
 prevl.js: prevl.ts
-	tsc -target es6 -module commonjs $<
+	tsc -target es5 -module commonjs $<
