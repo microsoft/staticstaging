@@ -7,6 +7,7 @@ import { progsym, paren, variant_suffix } from './emitutil';
 import { Type, PrimitiveType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
+import { assign } from '../util';
 import * as ast from '../ast';
 
 // Run-time functions invoked by generated code. These could eventually be
@@ -244,13 +245,15 @@ function emit_shader_binding_variant(emitter: Emitter,
   let out = `gl.useProgram(${shader_name})`;
 
   // Emit and bind the uniforms and attributes.
-  let glue = emit_glue(emitter, progid);
+  let subemitter = assign({}, emitter);
+  subemitter.variant = variant;
+  let glue = emit_glue(subemitter, progid);
   for (let g of glue) {
     let value: string;
     if (g.value_name) {
       value = g.value_name;
     } else {
-      value = paren(emit(emitter, g.value_expr));
+      value = paren(emit(subemitter, g.value_expr));
     }
     out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
         g.attribute, g.texture_index, variant);
