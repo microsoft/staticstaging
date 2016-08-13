@@ -84,7 +84,7 @@ function serve(log: (msg: any) => any): Promise<string> {
 }
 
 // The number of messages to receive before terminating.
-let MESSAGE_COUNT = 4;
+let MESSAGE_COUNT = 8;
 
 /**
  * Called when a performance experiment has finished with data about the
