@@ -175,16 +175,27 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
     // incomplete point solution; pre-splicing should probably use a cleaner
     // strategy to re-attribute variables.
     function trickle_free(id: any, newly_free: number[]) {
-      let parent_id = variant.progs[id].quote_parent;
+      let parent_id = (variant.progs[id] || variant.procs[id]).parent;
       if (parent_id !== null) {
         // Get or create the parent variant.
-        let parent: Prog = variant.progs[parent_id];
+        let parent: Scope = variant.progs[parent_id] ||
+          variant.procs[parent_id];
         if (!parent) {
-          variant.progs[parent_id] = parent = assign({}, progs[parent_id]);
+          if (procs[parent_id]) {
+            let old_parent = procs[parent_id];
+            variant.procs[parent_id] = parent = assign({}, old_parent);
+          } else {
+            let old_parent = progs[parent_id];
+            variant.progs[parent_id] = parent = assign({}, old_parent);
+          }
         }
 
         // Add free variables to the parent.
-        let parent_newly_free = set_diff(newly_free, parent.bound);
+        let bound = parent.bound;
+        if (!is_prog(parent)) {
+          bound = set_union(bound, (parent as Proc).params);
+        }
+        let parent_newly_free = set_diff(newly_free, bound);
         if (parent_newly_free.length) {
           parent.free = set_union(parent.free, parent_newly_free);
 
