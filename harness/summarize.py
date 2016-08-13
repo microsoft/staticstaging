@@ -67,10 +67,12 @@ def summarize(as_json, as_madoko):
             # Emit Madoko definitions for inclusion in text.
             prefix = 'data-{}-'.format(name)
             ms = '&nbsp;ms'
-            print(prefix + 'latency:', latency.format(None) + ms)
-            print(prefix + 'draw-latency:', draw_latency.format(None) + ms)
-            draw_pct = int(draw_latency.value / latency.value * 100)
-            print(prefix + 'draw-frac: {}%'.format(draw_pct))
+            print(prefix + 'latency:',
+                  '{:.1f}'.format(latency.value) + ms)
+            print(prefix + 'draw-latency:',
+                  '{:.1f}'.format(draw_latency.value) + ms)
+            draw_frac = draw_latency.value / latency.value
+            print(prefix + 'draw-frac: {:.0%}'.format(draw_frac))
         else:
             # Human-readable.
             print(data['fn'])

@@ -7,6 +7,8 @@ To collect and visualize performance numbers for this project:
 
 2. Build the performance test harness. `cd harness ; npm install ; make`.
 
+3. Generate the test variants programs. `make variants`.
+
 3. Collect the data measurements. `make collect`. This produces a directory called `collected` with the raw measurement data reported from the browser.
 
 4. Aggregate the collected data. `make latencies.json`.

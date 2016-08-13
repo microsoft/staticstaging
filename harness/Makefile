@@ -27,7 +27,10 @@ latencies.mdk: summarize.py $(COLLECTED)
 
 # Generate program variants.
 .PHONY: variants
-variants: bench/phong-stif-diffuse.ss
+variants: bench/phong-stif-diffuse.ss bench/head-macro-nobump.ss
 
 bench/phong-stif-diffuse.ss: bench/phong-stif.ss
+	python3 knob.py < $< > $@
+
+bench/head-macro-nobump.ss: bench/head-macro.ss
 	python3 knob.py < $< > $@
