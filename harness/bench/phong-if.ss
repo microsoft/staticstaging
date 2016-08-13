@@ -6,7 +6,6 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
 
   vertex glsl<
     gl_Position = projection * view * model * vec4(pos, 1.0);
-    specular;
 
     fragment glsl<
       # Convert to world space.
