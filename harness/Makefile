@@ -5,6 +5,14 @@ HARNESS := node build/harness.js
 build:
 	tsc
 
+# All outputs.
+.PHONY: all
+all: latencies.json latencies.mdk plot
+
+.PHONY: plot
+plot:
+	make -C plot
+
 # Collect performance data.
 .PHONY: collect
 COLLECTED := $(patsubst bench/%.ss,collected/%.json,$(wildcard bench/*.ss))
