@@ -1,4 +1,4 @@
-PLOTS := latencies.pdf latencies-phong.pdf latencies-head.pdf
+PLOTS := latencies.pdf latencies-phong.pdf latencies-head.pdf latencies-couch.pdf
 
 .PHONY: all
 all: $(PLOTS)
@@ -19,6 +19,7 @@ latencies-%.vl.json: latencies-%.json latencies.vl.json prevl.js
 
 # No y-axis label on plots other than the leftmost.
 latencies-head.vl.json: PREVL = layers.0.encoding.y.axis.title=
+latencies-couch.vl.json: PREVL = layers.0.encoding.y.axis.title=
 
 latencies-%.json: %.names.json ../latencies.json ../subset.py
 	python3 ../subset.py $< < ../latencies.json > $@

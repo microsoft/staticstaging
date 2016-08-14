@@ -30,6 +30,8 @@ def mean_latency(data):
     # print(data['fn'], file=sys.stderr)
     for l, dl in zip(all_latencies, all_draw_latencies):
         # print(l, dl, file=sys.stderr)
+        if l == dl == 0:
+            continue
         assert dl < l
 
     return uncertain.umean(all_latencies), uncertain.umean(all_draw_latencies)
