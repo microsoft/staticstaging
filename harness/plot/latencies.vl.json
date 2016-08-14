@@ -50,6 +50,25 @@
     },
 
     {
+      "mark": "point",
+      "config": {
+        "mark": {"color": "#333"}
+      },
+      "encoding": {
+        "x": {
+          "field": "name",
+          "type": "ordinal",
+          "axis": {"title": null}
+        },
+        "y": {
+          "field": "latency.q95",
+          "type": "quantitative"
+        },
+        "size": { "value": 1 }
+      }
+    },
+
+    {
       "mark": "bar",
       "config": {
         "mark": {"color": "#333"}
