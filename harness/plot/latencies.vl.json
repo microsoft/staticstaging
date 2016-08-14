@@ -14,7 +14,7 @@
           "axis": {"title": null}
         },
         "y": {
-          "field": "latency.value",
+          "field": "latency.mean",
           "type": "quantitative",
           "axis": {"title": "frame latency (ms)"}
         }
@@ -26,8 +26,8 @@
       "config": {"mark": {"color": "#000"}},
       "encoding": {
         "x": {"field": "name"},
-        "y": {"field": "latency.err_min", "type": "quantitative"},
-        "y2": {"field": "latency.err_max", "type": "quantitative"}
+        "y": {"field": "latency.mean_minus_se", "type": "quantitative"},
+        "y2": {"field": "latency.mean_plus_se", "type": "quantitative"}
       }
     },
     {
@@ -35,7 +35,7 @@
       "config": {"mark": {"color": "#000"}},
       "encoding": {
         "x": {"field": "name"},
-        "y": {"field": "latency.err_min", "type": "quantitative"},
+        "y": {"field": "latency.mean_minus_se", "type": "quantitative"},
         "size": {"value": 5}
       }
     },
@@ -44,7 +44,7 @@
       "config": {"mark": {"color": "#000"}},
       "encoding": {
         "x": {"field": "name"},
-        "y": {"field": "latency.err_max", "type": "quantitative"},
+        "y": {"field": "latency.mean_plus_se", "type": "quantitative"},
         "size": {"value": 5}
       }
     },
@@ -61,7 +61,7 @@
           "axis": {"title": null}
         },
         "y": {
-          "field": "draw_latency.value",
+          "field": "draw_latency.mean",
           "type": "quantitative"
         }
       }
