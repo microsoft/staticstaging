@@ -6,7 +6,6 @@
         "outDir": "build"
     },
     "files": [
-        "src/dingus.ts",
-        "typings/index.d.ts"
+        "src/dingus.ts"
     ]
 }

@@ -14,7 +14,7 @@ include ../ts.mk
 TS_SRC := $(shell find ../src/ -type f -name '*.ts') \
 	$(shell find ./src/ -type f -name '*.ts')
 JS_SRC := examples.js preambles.js ../parser.js
-$(DINGUS_JS): $(TS_SRC) $(JS_SRC) $(TYPINGS) $(TSC)
+$(DINGUS_JS): $(TS_SRC) $(JS_SRC) $(TSC)
 	$(TSC)
 
 # It's a shame we have to duplicate this rule here.

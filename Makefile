@@ -9,7 +9,7 @@ dingus:
 
 .PHONY: clean
 clean:
-	rm -rf parser.js build/ tool/munge.js node_modules typings
+	rm -rf parser.js build/ tool/munge.js node_modules
 	make -C dingus clean
 
 include ts.mk
@@ -24,7 +24,7 @@ parser.js: src/grammar.pegjs $(call npmdep,pegjs)
 # The command-line Node tool.
 
 TS_SRC := $(shell find src/ -type f -name '*.ts')
-$(CLI_JS): $(TS_SRC) $(CLI_TS) parser.js $(TYPINGS) $(TSC)
+$(CLI_JS): $(TS_SRC) $(CLI_TS) parser.js $(TSC)
 	$(TSC)
 
 
@@ -74,7 +74,7 @@ dump-gl: $(CLI_JS)
 
 # An asset-munging tool.
 
-tool/munge.js: tool/munge.ts $(TSC) $(TYPINGS)
+tool/munge.js: tool/munge.ts $(TSC)
 	$(TSC) --out $@ $<
 
 
@@ -102,7 +102,7 @@ $(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 
 DEPLOY_DIR := _site
 RSYNC := rsync -a --delete --prune-empty-dirs \
-	--exclude node_modules --exclude typings --exclude build
+	--exclude node_modules --exclude build
 site: dingus docs home
 	mkdir -p $(DEPLOY_DIR)/docs
 	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
