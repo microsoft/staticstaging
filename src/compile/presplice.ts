@@ -174,7 +174,7 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
     // Newly free variables "trickle" up to the parent scope. This is an
     // incomplete point solution; pre-splicing should probably use a cleaner
     // strategy to re-attribute variables.
-    function trickle_free(id: any, newly_free: number[]) {
+    let trickle_free = function(id: any, newly_free: number[]) {
       let parent_id = (variant.progs[id] || variant.procs[id]).parent;
       if (parent_id !== null) {
         // Get or create the parent variant.
