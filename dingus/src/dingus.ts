@@ -148,6 +148,11 @@ interface Config {
    * possible instead of respecting the host browser's render loop.
    */
   perfMode?: boolean;
+
+  /**
+   * Permit the dingus to load assets via AJAX.
+   */
+  assets?: boolean;
 };
 
 let DEFAULT: Config = {
@@ -156,6 +161,7 @@ let DEFAULT: Config = {
   scrollbars: true,
   fpsCallback: null,
   perfMode: false,
+  assets: true,
 };
 
 export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {

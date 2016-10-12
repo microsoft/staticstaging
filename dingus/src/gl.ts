@@ -102,7 +102,8 @@ export type Update = (code?: string, dl?: boolean) => void;
  * render function (given compiled SHFL code as a string).
  */
 export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
-                         perfMode?: boolean): Promise<Update>
+                         perfMode?: boolean,
+                         enableAssets?: boolean): Promise<Update>
 {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
@@ -221,9 +222,8 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   // Start the first frame.
   nextFrame();
 
-  // Load the assets, then return a function that lets the client update the
-  // code.
-  return load_assets().then((assets) => (shfl_code?: string, dl?: boolean) => {
+  // A callback to return a function that lets the client update the code.
+  let start = (assets: glrt.Assets) => (shfl_code?: string, dl?: boolean) => {
     console.log('starting with assets', assets);
 
     if (shfl_code) {
@@ -240,5 +240,12 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
     }
 
     fit();
-  });
+  };
+
+  // Load the assets (or pass empty assets if they're disabled).
+  if (enableAssets) {
+    return load_assets().then(start);
+  } else {
+    return new Promise(() => start({}));
+  }
 }
