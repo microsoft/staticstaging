@@ -246,6 +246,6 @@ export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
   if (enableAssets) {
     return load_assets().then(start);
   } else {
-    return new Promise(() => start({}));
+    return Promise.resolve(start({}));
   }
 }
