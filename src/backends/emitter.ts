@@ -35,9 +35,9 @@ export interface Emitter {
   emit_prog_variant: (emitter: Emitter, variant: Variant, prog: Prog) => string;
 
   /**
-   * The current variant we're compiling (or `null`).
+   * The current variant we're compiling (if any).
    */
-  variant: Variant;
+  variant: Variant | null;
 }
 
 // Compile the main function.

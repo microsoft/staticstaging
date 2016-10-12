@@ -79,7 +79,7 @@ function emit_extern(name: string, type: Type) {
 
 // Create a JavaScript function definition. `name` can be null, in which case
 // this is an anonymous function expression.
-export function emit_fun(name: string, argnames: string[],
+export function emit_fun(name: string | null, argnames: string[],
     localnames: string[], body: string): string
 {
   let anon = (name === null);
@@ -186,7 +186,7 @@ export let compile_rules = {
   },
 
   visit_let(tree: ast.LetNode, emitter: Emitter): string {
-    let jsvar = varsym(tree.id);
+    let jsvar = varsym(tree.id!);
     return jsvar + " = " + paren(emit(emitter, tree.expr));
   },
 
@@ -210,17 +210,17 @@ export let compile_rules = {
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {
-    return emit_quote(emitter, tree.id);
+    return emit_quote(emitter, tree.id!);
   },
 
   visit_escape(tree: ast.EscapeNode, emitter: Emitter): string {
     if (tree.kind === "splice") {
-      return splicesym(tree.id);
+      return splicesym(tree.id!);
     } else if (tree.kind === "persist") {
-      return persistsym(tree.id);
+      return persistsym(tree.id!);
     } else if (tree.kind === "snippet") {
       // We should only see this when pre-splicing is disabled.
-      return splicesym(tree.id);
+      return splicesym(tree.id!);
     } else {
       throw "error: unknown escape kind";
     }
@@ -230,7 +230,7 @@ export let compile_rules = {
     // Compile the expression producing the program we need to invoke.
     let progex = emit(emitter, tree.expr);
 
-    let [t, _] = emitter.ir.type_table[tree.expr.id];
+    let [t, _] = emitter.ir.type_table[tree.expr.id!];
     if (t instanceof CodeType) {
       // Invoke the appropriate runtime function for executing code values.
       // We use a simple call wrapper for "progfuncs" and a more complex
@@ -247,7 +247,7 @@ export let compile_rules = {
 
   // A function expression produces a closure value.
   visit_fun(tree: ast.FunNode, emitter: Emitter): string {
-    return emit_func(emitter, tree.id);
+    return emit_func(emitter, tree.id!);
   },
 
   // An invocation unpacks the closure environment and calls the function
@@ -265,8 +265,8 @@ export let compile_rules = {
   },
 
   visit_extern(tree: ast.ExternNode, emitter: Emitter): string {
-    let name = emitter.ir.externs[tree.id];
-    let [type, _] = emitter.ir.type_table[tree.id];
+    let name = emitter.ir.externs[tree.id!];
+    let [type, _] = emitter.ir.type_table[tree.id!];
     return emit_extern(name, type);
   },
 

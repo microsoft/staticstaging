@@ -2,7 +2,8 @@
     "compilerOptions": {
         "noImplicitAny": true,
         "allowJs": true,
-        "outDir": "build"
+        "outDir": "build",
+        "strictNullChecks": true
     },
     "files": [
         "ssc.ts"

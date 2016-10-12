@@ -18,15 +18,15 @@ function gen_index_tree(table: ast.SyntaxNode[]): Gen<IndexTree> {
       {
         // Visit the parameters (not expressions).
         for (let param of tree.params) {
-          table[param.id] = param;
+          table[param.id!] = param;
         }
-        return fold_rules.visit_fun(tree, null);
+        return fold_rules.visit_fun(tree, undefined);
       },
     });
 
     return function (tree: ast.SyntaxNode, p: void): void
     {
-      table[tree.id] = tree;
+      table[tree.id!] = tree;
       return ast_visit(rules, tree, null);
     };
   };
@@ -35,7 +35,7 @@ function gen_index_tree(table: ast.SyntaxNode[]): Gen<IndexTree> {
 function index_tree(tree: ast.SyntaxNode): ast.SyntaxNode[] {
   let table: ast.ExpressionNode[] = [];
   let _index_tree = fix(gen_index_tree(table));
-  _index_tree(tree, null);
+  _index_tree(tree, undefined);
   return table;
 }
 
@@ -53,12 +53,12 @@ function gen_assoc_snippets(type_table: TypeTable): Gen<AssocSnippets> {
         let ei = fold_rules.visit_quote(tree, escids);
         if (tree.snippet) {
           ei = ei.slice(0);
-          let [t,] = type_table[tree.id];
+          let [t,] = type_table[tree.id!];
           if (t instanceof CodeType) {
             if (t.snippet === null) {
               throw "error: snippet quote without snippet ID";
             }
-            ei[tree.id] = t.snippet;
+            ei[tree.id!] = t.snippet;
           } else {
             throw "error: quote without code type";
           }
@@ -137,24 +137,24 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
             owned_persist: [],
             owned_splice: [],
             owned_snippet: [],
-            snippet_escape: node.snippet ? snippet_escs[node.id] : null,
+            snippet_escape: node.snippet ? snippet_escs[node.id!] : null,
           });
-          progs[node.id] = prog;
-          scopes[node.id] = prog;
+          progs[node.id!] = prog;
+          scopes[node.id!] = prog;
 
         // Function (Proc) specifics.
         } else if (_is_fun(node)) {
           // In Python, [p.id for p in params].
           let param_ids: number[] = [];
           for (let param of node.params) {
-            param_ids.push(param.id);
+            param_ids.push(param.id!);
           }
 
           let proc: Proc = assign(scope, {
             params: param_ids,
           });
-          procs[node.id] = proc;
-          scopes[node.id] = proc;
+          procs[node.id!] = proc;
+          scopes[node.id!] = proc;
         }
       }
     }

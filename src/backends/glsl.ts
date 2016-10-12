@@ -54,7 +54,7 @@ export function type_mixin(fsuper: TypeCheck): TypeCheck {
 
 // The core compiler rules for emitting GLSL code.
 
-function emit_extern(name: string, type: Type): string {
+function emit_extern(name: string): string {
   return name;
 }
 
@@ -90,7 +90,7 @@ function nearest_prespliced_quote(ir: CompilerIR, id: number): number {
 
 let compile_rules: ASTVisit<Emitter, string> = {
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
-    let [t,] = emitter.ir.type_table[tree.id];
+    let [t,] = emitter.ir.type_table[tree.id!];
     if (t === INT) {
       return tree.value.toString();
     } else if (t === FLOAT) {
@@ -112,13 +112,13 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_let(tree: ast.LetNode, emitter: Emitter): string {
-    let varname = shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), tree.id);
+    let varname = shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), tree.id!);
     return varname + " = " + paren(emit(emitter, tree.expr));
   },
 
   visit_assign(tree: ast.AssignNode, emitter: Emitter): string {
     // TODO Prevent assignment to nonlocal variables.
-    let vs = (id:number) => shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), id);
+    let vs = (id:number) => shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), id);
     return emit_assign(emitter, tree, vs);
   },
 
@@ -132,7 +132,7 @@ let compile_rules: ASTVisit<Emitter, string> = {
         return varsym(id);
       } else {
         // Ordinary shader-scoped variable.
-        return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), id);
+        return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), id);
       }
     });
   },
@@ -154,11 +154,11 @@ let compile_rules: ASTVisit<Emitter, string> = {
 
   visit_escape(tree: ast.EscapeNode, emitter: Emitter): string {
     if (tree.kind === "splice") {
-      return splicesym(tree.id);
+      return splicesym(tree.id!);
     } else if (tree.kind === "persist") {
-      return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id), tree.id);
+      return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), tree.id!);
     } else if (tree.kind === "snippet") {
-      return splicesym(tree.id);  // SNIPPET TODO
+      return splicesym(tree.id!);  // SNIPPET TODO
     } else {
       throw "error: unknown escape kind";
     }
@@ -208,9 +208,9 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_extern(tree: ast.ExternNode, emitter: Emitter): string {
-    let defid = emitter.ir.defuse[tree.id];
+    let defid = emitter.ir.defuse[tree.id!];
     let name = emitter.ir.externs[defid];
-    return emit_extern(name, null);
+    return emit_extern(name);
   },
 
   visit_persist(tree: ast.PersistNode, emitter: Emitter): string {
@@ -251,9 +251,10 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
   let emitter: Emitter = {
     ir: ir,
     compile: compile,
-    emit_proc: null,
-    emit_prog: null,
-    emit_prog_variant: null,
+    emit_proc: (e: any, p: any) => { throw "procs unimplemented in GLSL" },
+    emit_prog: (e: any, p: any) => { throw "progs unimplemented in GLSL" },
+    emit_prog_variant:
+      (e: any, p: any) => { throw "progs unimplemented in GLSL" },
     variant: parent_emitter.variant,
   };
 

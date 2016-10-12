@@ -23,7 +23,7 @@ export interface TypeEnv {
    * A stack of *quote annotations*, which allows type system extensions to be
    * sensitive to the quote context.
    */
-  anns: string[],
+  anns: (string | null)[],
 
   /**
    * A single frame for "extern" values, which are always available without
@@ -63,7 +63,7 @@ function te_push(env: TypeEnv, map: TypeMap = {}, ann: string): TypeEnv {
  * Pop a number of scopes off of a `TypeEnv`.
  */
 function te_pop(env: TypeEnv, count: number = 1,
-                snip: [number, TypeEnv] = null): TypeEnv {
+                snip: [number, TypeEnv] | null = null): TypeEnv {
   return merge(env, {
     // Pop one map off of each stack.
     stack: env.stack.slice(count),
@@ -219,7 +219,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       // If this is a snippet quote, we need to "resume" type context from the
       // escape point. Also, we'll record the ID from the environment in the
       // type.
-      let snippet: number = null;
+      let snippet: number | null = null;
       let inner_env: TypeEnv;
       if (tree.snippet) {
         if (env.snip === null) {

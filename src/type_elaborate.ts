@@ -16,7 +16,7 @@ function elaborate_mixin(type_table : TypeTable): Gen<TypeCheck> {
   return function(fsuper: TypeCheck): TypeCheck {
     return function(tree: ast.SyntaxNode, env: TypeEnv): [Type, TypeEnv] {
       let [t, e] = fsuper(tree, env);
-      type_table[tree.id] = [t, e];
+      type_table[tree.id!] = [t, e];
       return [t, e];
     };
   };

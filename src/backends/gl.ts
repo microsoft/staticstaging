@@ -365,12 +365,12 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
   // Get glue for the persists.
   for (let esc of prog.persist) {
-    let [type,] = ir.type_table[esc.body.id];
+    let [type,] = ir.type_table[esc.body.id!];
     let g: Glue = {
       id: esc.id,
       name: shadervarsym(prog.id, esc.id),
       type: _unwrap_array(type),
-      from_host: _is_cpu_scope(ir, nearest_quote(ir, esc.body.id)),
+      from_host: _is_cpu_scope(ir, nearest_quote(ir, esc.body.id!)),
       attribute: false,
     };
 

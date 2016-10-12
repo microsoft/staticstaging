@@ -70,8 +70,7 @@ export interface Prog extends Scope {
   owned_snippet: Escape[];
 
   // If this is a snippet program, the associated escape expression ID.
-  // Otherwise, null.
-  snippet_escape: number;
+  snippet_escape: number | null;
 }
 
 /**
@@ -155,7 +154,7 @@ export interface CompilerIR {
  * Find the nearest containing quote to the syntax node. If the syntax node is
  * already a quote, it is returned.
  */
-export function nearest_quote(ir: CompilerIR, id: number): number {
+export function nearest_quote(ir: CompilerIR, id: number): number | null {
   // Is this the top-level scope already?
   if (id === null) {
     return null;

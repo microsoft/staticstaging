@@ -322,7 +322,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
               let fps = frames / ms * 1000;
               fpsbox.textContent = fps.toFixed(2);
             }
-          }, config.perfMode).then((update) => {
+          }, config.perfMode, config.assets).then((update) => {
             update_gl = update;
             console.log("...loaded.");
             if (loadingmsg) {

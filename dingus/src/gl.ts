@@ -103,7 +103,7 @@ export type Update = (code?: string, dl?: boolean) => void;
  */
 export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
                          perfMode?: boolean,
-                         enableAssets?: boolean): Promise<Update>
+                         enableAssets: boolean = true): Promise<Update>
 {
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
