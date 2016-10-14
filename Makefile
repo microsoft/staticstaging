@@ -114,6 +114,7 @@ site: dingus docs home
 		--include '*/' --exclude '*' \
 		dingus/* $(DEPLOY_DIR)/dingus
 	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
+	cd $(DEPLOY_DIR) ; ln -fs dingus/assets assets
 
 DEPLOY_BRANCH := gh-pages
 deploy: site
