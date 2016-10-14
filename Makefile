@@ -102,7 +102,8 @@ $(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 
 DEPLOY_DIR := _site
 RSYNC := rsync -a --delete --prune-empty-dirs \
-	--exclude node_modules --exclude build
+	--exclude node_modules --exclude build \
+	--links
 site: dingus docs home
 	mkdir -p $(DEPLOY_DIR)/docs
 	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
