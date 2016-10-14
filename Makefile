@@ -102,8 +102,7 @@ $(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 
 DEPLOY_DIR := _site
 RSYNC := rsync -a --delete --prune-empty-dirs \
-	--exclude node_modules --exclude build \
-	--links
+	--exclude node_modules --exclude build
 site: dingus docs home
 	mkdir -p $(DEPLOY_DIR)/docs
 	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
@@ -115,7 +114,7 @@ site: dingus docs home
 		--include '*/' --exclude '*' \
 		dingus/* $(DEPLOY_DIR)/dingus
 	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
-	cd $(DEPLOY_DIR) ; ln -fs dingus/assets assets
+	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
 
 DEPLOY_BRANCH := gh-pages
 deploy: site
