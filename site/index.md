@@ -31,8 +31,8 @@ Here's a tiny SSC program that draws a [bunny][]:
 
     # Position the model.
     var model = mat4.create();
-    mat4.scale(model, model, vec3(10.0, 10.0, 10.0));
-    mat4.translate(model, model, vec3(0.0, -5.0, 0.0));
+    mat4.scale(model, model, vec3(14.0, 14.0, 14.0));
+    mat4.translate(model, model, vec3(0.0, -0.7, 0.0));
 
     # Load buffers and parameters for the model.
     var mesh = load_obj("bunny.obj");
@@ -92,8 +92,8 @@ The materialization expression `%[ model * rot ]` multiplies the pre-defined mod
 
     # Original model position.
     var model = mat4.create();
-    mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
-    mat4.translate(model, model, vec3(0.0, -5.0, 0.0));
+    mat4.scale(model, model, vec3(3.5, 3.5, 3.5));
+    mat4.translate(model, model, vec3(0.0, -0.7, 0.0));
 
     # Load buffers and parameters for the model.
     var mesh = load_obj("bunny.obj");
