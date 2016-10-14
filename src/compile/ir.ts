@@ -12,7 +12,7 @@ export type DefUseTable = number[];
  * A lexical program scope. This is shared among quotes and function bodies.
  */
 export interface Scope {
-  id: number,  // or null for the top-level scope
+  id: number | null,  // null for the top-level scope
   body: ExpressionNode,
   free: number[],  // variables referenced here, defined elsewhere
   bound: number[],  // variables defined here
@@ -24,11 +24,11 @@ export interface Scope {
   snippet: Escape[],
 
   // Containing and contained scopes.
-  parent: number,
+  parent: number | null,
   children: number[],
 
   // Similarly, for jumping directly through functions to quotes.
-  quote_parent: number,
+  quote_parent: number | null,
   quote_children: number[],
 }
 
@@ -147,7 +147,7 @@ export interface CompilerIR {
    * escapes. Programs with no snippet escapes have a `null` value in this
    * map.
    */
-  presplice_variants: Variant[][],
+  presplice_variants: (Variant[] | null)[],
 }
 
 /**

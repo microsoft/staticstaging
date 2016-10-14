@@ -108,7 +108,7 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 // a shader variable. The `scopeid` is the ID of the quote for the shader
 // where the variable is located.
 function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
-    varid: number, variant?: Variant): string
+    varid: number, variant: Variant | null): string
 {
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
   let shader = shadersym(scopeid) + variant_suffix(variant);
@@ -125,8 +125,8 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
  * This doesn't quite work yet because we always set up shaders at startup
  * time, not in the context of normal execution.
  */
-function emit_shader_code_ref(emitter: Emitter, prog: Prog, variant?: Variant) {
-  let code_expr = progsym(prog.id) + variant_suffix(variant);
+function emit_shader_code_ref(emitter: Emitter, prog: Prog, variant: Variant | null) {
+  let code_expr = progsym(prog.id!) + variant_suffix(variant);
   for (let esc of prog.owned_splice) {
     let esc_expr = emit(emitter, esc.body);
     code_expr += `.replace('__SPLICE_${esc.id}__', ${esc_expr})`;
@@ -137,14 +137,14 @@ function emit_shader_code_ref(emitter: Emitter, prog: Prog, variant?: Variant) {
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
 function emit_shader_setup(emitter: Emitter, progid: number,
-                           variant?: Variant): string
+                           variant: Variant | null): string
 {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
   let vtx_code = emit_shader_code_ref(emitter, vertex_prog, variant);
   let frag_code = emit_shader_code_ref(emitter, fragment_prog, variant);
-  let name = shadersym(vertex_prog.id) + variant_suffix(variant);
+  let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
   let out = js.emit_var(
     name,
     `get_shader(gl, ${vtx_code}, ${frag_code})`
@@ -152,9 +152,9 @@ function emit_shader_setup(emitter: Emitter, progid: number,
 
   // Get the variable locations, for both explicit persists and for free
   // variables.
-  let glue = emit_glue(emitter, vertex_prog.id);
+  let glue = emit_glue(emitter, vertex_prog.id!);
   for (let g of glue) {
-    out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id,
+    out += emit_loc_var(vertex_prog.id!, g.attribute, g.name, g.id,
                         variant) + "\n";
   }
 
@@ -165,8 +165,8 @@ function emit_shader_setup(emitter: Emitter, progid: number,
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
 function emit_param_binding(scopeid: number, type: Type, varid: number,
-    value: string, attribute: boolean, texture_index?: number,
-    variant?: Variant): string
+    value: string, attribute: boolean, texture_index: number | undefined,
+    variant: Variant | null): string
 {
   if (!attribute) {
     if (type === TEXTURE) {
@@ -237,11 +237,11 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
  * set up the uniforms and attributes.
  */
 function emit_shader_binding_variant(emitter: Emitter,
-    progid: number, variant?: Variant) {
+    progid: number, variant: Variant | null) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
-  let shader_name = shadersym(vertex_prog.id) + variant_suffix(variant);
+  let shader_name = shadersym(vertex_prog.id!) + variant_suffix(variant);
   let out = `gl.useProgram(${shader_name})`;
 
   // Emit and bind the uniforms and attributes.
@@ -255,9 +255,9 @@ function emit_shader_binding_variant(emitter: Emitter,
     if (g.value_name) {
       value = g.value_name;
     } else {
-      value = paren(emit(subemitter, g.value_expr));
+      value = paren(emit(subemitter, g.value_expr!));
     }
-    out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
+    out += ",\n" + emit_param_binding(vertex_prog.id!, g.type, g.id, value,
         g.attribute, g.texture_index, variant);
   }
 
@@ -273,7 +273,7 @@ function emit_shader_binding(emitter: Emitter, progid: number) {
   let variants = emitter.ir.presplice_variants[progid];
   if (variants === null) {
     // No variants.
-    return emit_shader_binding_variant(emitter, progid);
+    return emit_shader_binding_variant(emitter, progid, null);
   } else {
     // Variants exist. Emit the selector.
     return js.emit_variant_selector(
@@ -296,7 +296,7 @@ let compile_rules: ASTVisit<Emitter, string> =
         // emit the bindings.
         if (tree.args[0].tag === "quote") {
           let quote = tree.args[0] as ast.QuoteNode;
-          return emit_shader_binding(emitter, quote.id);
+          return emit_shader_binding(emitter, quote.id!);
         } else {
           throw "dynamic `vtx` calls unimplemented";
         }
@@ -314,7 +314,7 @@ let compile_rules: ASTVisit<Emitter, string> =
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
       // If this is a matrix/matrix multiply, emit a function call.
       if (tree.op === "*") {
-        let [typ,] = emitter.ir.type_table[tree.id];
+        let [typ,] = emitter.ir.type_table[tree.id!];
         if (typ === FLOAT4X4) {
           let lhs = paren(emit(emitter, tree.lhs));
           let rhs = paren(emit(emitter, tree.rhs));
@@ -332,7 +332,7 @@ function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
 };
 
 function emit_glsl_prog(emitter: Emitter, prog: Prog,
-                        variant?: Variant): string {
+                        variant: Variant | null): string {
   let out = "";
 
   // Emit subprograms.
@@ -345,14 +345,14 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog,
   }
 
   // Emit the shader program.
-  let code = glsl.compile_prog(emitter, prog.id);
-  let name = progsym(prog.id) + variant_suffix(variant);
+  let code = glsl.compile_prog(emitter, prog.id!);
+  let name = progsym(prog.id!) + variant_suffix(variant);
   out += js.emit_var(name, js.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
-  if (prog_kind(emitter.ir, prog.id) === ProgKind.vertex) {
-    out += emit_shader_setup(emitter, prog.id, variant);
+  if (prog_kind(emitter.ir, prog.id!) === ProgKind.vertex) {
+    out += emit_shader_setup(emitter, prog.id!, variant);
   }
 
   return out;
@@ -368,7 +368,7 @@ export function codegen(ir: CompilerIR): string {
     emit_prog(emitter: Emitter, prog: Prog) {
       // Choose between emitting JavaScript and GLSL.
       if (prog.annotation === SHADER_ANNOTATION) {
-        return emit_glsl_prog(emitter, prog);
+        return emit_glsl_prog(emitter, prog, null);
       } else {
         return js.emit_prog(emitter, prog);
       }

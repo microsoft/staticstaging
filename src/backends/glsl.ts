@@ -80,7 +80,7 @@ function emit_type(type: Type): string {
  * version, however, "passes through" prespliced quotes to their parents.
  */
 function nearest_prespliced_quote(ir: CompilerIR, id: number): number {
-  let qid = nearest_quote(ir, id);
+  let qid = nearest_quote(ir, id)!;
   let quote = ir.progs[qid];
   if (quote && quote.snippet_escape) {
     return nearest_prespliced_quote(ir, quote.snippet_escape);
@@ -295,7 +295,7 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
     throw "error: too many subprograms";
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
-    for (let g of emit_glue(parent_emitter, subprog.id)) {
+    for (let g of emit_glue(parent_emitter, subprog.id!)) {
       if (!g.from_host) {
         decls.push(emit_decl("varying", emit_type(g.type), g.name));
 
@@ -303,7 +303,7 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
         if (g.value_name) {
           value = g.value_name;
         } else {
-          value = paren(emit(emitter, g.value_expr));
+          value = paren(emit(emitter, g.value_expr!));
         }
         varying_asgts.push(`${g.name} = ${value}`);
       }

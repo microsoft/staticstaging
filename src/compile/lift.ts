@@ -113,9 +113,9 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
     if (node !== undefined) {
       if (_is_quote(node) || _is_fun(node)) {
         // Common data for any scope.
-        let parent = containers[node.id];
+        let parent = containers[node.id!];
         let scope: Scope = {
-          id: node.id,
+          id: node.id!,
           body: _is_quote(node) ? node.expr : (node as ast.FunNode).body,
 
           free: [],
@@ -186,7 +186,7 @@ function skeleton_scopes(tree: ast.SyntaxNode, containers: number[],
  * so if the scope is already a quote, it is returned.
  */
 function _nearest_quote(containers: number[], progs: Prog[],
-    where: number): number {
+    where: number): number | null {
   if (where === null) {
     return null;
   } else if (progs[where] !== undefined) {
@@ -199,10 +199,10 @@ function _nearest_quote(containers: number[], progs: Prog[],
 /**
  * Like `_nearest_quote`, but looks *n* levels up instead of just 1.
  */
-function _nearest_quote_n(containers: number[], progs: Prog[], where: number,
+function _nearest_quote_n(containers: number[], progs: Prog[], where: number | null,
                           count: number) {
   for (let i = 0; i < count; ++i) {
-    where = _nearest_quote(containers, progs, containers[where]);
+    where = _nearest_quote(containers, progs, containers[where!]);
   }
   return where;
 }
@@ -217,12 +217,12 @@ function assign_children(scopes: Scope[], main: Proc, progs: Prog[],
       // Nearest scope of either kind.
       let parent_scope = scope.parent === null ? main :
         scopes[scope.parent];
-      parent_scope.children.push(scope.id);
+      parent_scope.children.push(scope.id!);
 
       // Nearest quote.
       let parent_quote = scope.quote_parent === null ? main :
         progs[scope.quote_parent];
-      parent_quote.quote_children.push(scope.id);
+      parent_quote.quote_children.push(scope.id!);
     }
   }
 }
@@ -260,7 +260,7 @@ function attribute_uses(scopes: Scope[], progs: Prog[], containers: number[],
         if (prog === undefined || prog.snippet_escape === null) {
           break;
         }
-        cur_prog = _nearest_quote(containers, progs, prog.snippet_escape);
+        cur_prog = _nearest_quote(containers, progs, prog.snippet_escape)!;
         if (cur_prog === def_scope_id) {
           found_via_snippet = true;
           break;
@@ -287,9 +287,9 @@ function attribute_defs(scopes: Scope[], main: Proc, containers: number[],
   for (let node of index) {
     if (node !== undefined) {
       if (_is_let(node)) {
-        let def_scope_id = containers[node.id];
+        let def_scope_id = containers[node.id!];
         let def_scope = def_scope_id === null ? main : scopes[def_scope_id];
-        def_scope.bound = set_add(def_scope.bound, node.id);
+        def_scope.bound = set_add(def_scope.bound, node.id!);
       }
     }
   }
@@ -306,15 +306,15 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
         // Get the quote that "owns" this escape: this is the quote that is N
         // steps up the quote containment chain, where N is the "level" of the
         // escape.
-        let quote_id = _nearest_quote_n(containers, progs, node.id,
-                                        node.count);
+        let quote_id = _nearest_quote_n(containers, progs, node.id!,
+                                        node.count)!;
 
         let esc: Escape = {
-          id: node.id,
+          id: node.id!,
           body: node.expr,
           count: node.count,
           owner: quote_id,
-          container: containers[node.id],
+          container: containers[node.id!],
         };
 
         // Attribute the unique "owner" of this escape.
@@ -333,7 +333,7 @@ function attribute_escapes(scopes: Scope[], progs: Prog[],
         // aware that there's an escape in their body, which can work like a
         // free variable. In the case of multi-level escapes, this can also
         // affect quotes.
-        let cur_scope = containers[node.id];
+        let cur_scope = containers[node.id!];
         while (1) {
           if (node.kind === "persist") {
             scopes[cur_scope].persist.push(esc);

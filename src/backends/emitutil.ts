@@ -49,7 +49,7 @@ export function variantsym(variant: Variant) {
  * Emit a suffix indicating the variant, if any. If no variant is provided,
  * return the empty string.
  */
-export function variant_suffix(variant?: Variant) {
+export function variant_suffix(variant: Variant | null) {
   if (variant) {
     return "_" + variant.config.join("_");
   } else {

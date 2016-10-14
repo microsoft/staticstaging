@@ -371,13 +371,13 @@ function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
   // quotation and the place where the expression needs to be inserted. This
   // is the number of string-escaping rounds we need.
   let eval_quotes = 0;
-  let cur_quote = nearest_quote(emitter.ir, esc.id);
+  let cur_quote = nearest_quote(emitter.ir, esc.id)!;
   for (let i = 0; i < esc.count - 1; ++i) {
     let prog = emitter.ir.progs[cur_quote];
     if (prog.annotation !== FUNC_ANNOTATION) {
       ++eval_quotes;
     }
-    cur_quote = prog.quote_parent;
+    cur_quote = prog.quote_parent!;
   }
 
   // Emit the call to the `splice` runtime function.
@@ -614,7 +614,7 @@ function emit_prog_decl(emitter: Emitter, prog: Prog, name: string): string {
  * Emit a single-variant program.
  */
 export function emit_prog(emitter: Emitter, prog: Prog): string {
-  return emit_prog_decl(emitter, prog, progsym(prog.id));
+  return emit_prog_decl(emitter, prog, progsym(prog.id!));
 }
 
 /**

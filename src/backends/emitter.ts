@@ -78,7 +78,7 @@ function emit_prog(emitter: Emitter, prog: Prog) {
   }
 
   // Check for variants. If there are none, just emit a single program.
-  let variants = emitter.ir.presplice_variants[prog.id];
+  let variants = emitter.ir.presplice_variants[prog.id!];
   if (variants === null) {
     return emitter.emit_prog(emitter, prog);
   }

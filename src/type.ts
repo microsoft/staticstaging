@@ -65,8 +65,8 @@ export class CodeType extends Type {
   constructor(
     public inner: Type,
     public annotation: string,
-    public snippet: number = null,  // Corresponding escape ID.
-    public snippet_var: TypeVariable = null  // Snippet polymorphism.
+    public snippet: number | null = null,  // Corresponding escape ID.
+    public snippet_var: TypeVariable | null = null  // Snippet polymorphism.
   ) { super() };
   _brand_CodeType: void;
 };

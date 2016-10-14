@@ -72,7 +72,7 @@ interface State {
    * of "levels" for that escape (so we can resume at the appropriate distance
    * when we hit a snippet quote).
    */
-  snipdist: number;
+  snipdist: number | null;
 }
 
 // This first set of rules applies at the "top level", for ordinary execution.
@@ -124,7 +124,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
 
   visit_quote(tree: ast.QuoteNode, state: State): [Value, State] {
     // Jump to any escapes and execute them.
-    let level = tree.snippet ? state.snipdist : 1;
+    let level = tree.snippet ? state.snipdist! : 1;
     let [t, s, p] = quote_interp(tree.expr, level, state, []);
 
     // Wrap the resulting AST as a code value.
@@ -284,7 +284,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
       }
       [, s] = interp(tree.body, s);
     }
-    return [null, s];
+    return [null as any, s];  // FIXME: A bit of a cheat.
   },
 
   visit_macrocall(tree: ast.MacroCallNode, state: State): [Value, State] {

@@ -42,7 +42,7 @@ export interface TypeEnv {
    * consists of the ID of the escape and the environment at that point that
    * should be "resumed" on quote.
    */
-  snip: [number, TypeEnv],
+  snip: [number, TypeEnv] | null,
 };
 
 /**
@@ -262,8 +262,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
       // Construct the environment for checking the escape's body. If this is
       // a snippet escape, record it. Otherwise, the nearest snippet is null.
-      let snip_inner: [number, TypeEnv] =
-        tree.kind === "snippet" ? [tree.id, env] : null;
+      let snip_inner: [number, TypeEnv] | null =
+        tree.kind === "snippet" ? [tree.id!, env] : null;
       let inner_env = te_pop(env, count, snip_inner);
 
       // Check the contents of the escape.
@@ -529,8 +529,8 @@ function check_call(target: Type, args: Type[]): Type | string {
   } else if (target instanceof QuantifiedType) {
     // Special case for unifying polymorphic snippet function types with
     // snippet arguments.
-    let snippet: number = null;
-    let snippet_var: TypeVariable = null;
+    let snippet: number | null = null;
+    let snippet_var: TypeVariable | null = null;
     for (let arg of args) {
       if (arg instanceof CodeType) {
         if (arg.snippet) {
@@ -629,8 +629,8 @@ function rectify_fun_type(type: FunType): Type {
  * As with `rectify_fun_type`, but just for the parameters. This is
  * necessary when checking functions, where return types are not known yet.
  */
-function rectify_fun_params(params: Type[]): TypeVariable {
-  let tvar: TypeVariable = null;
+function rectify_fun_params(params: Type[]): TypeVariable | null {
+  let tvar: TypeVariable | null = null;
 
   for (let param of params) {
     if (param instanceof CodeType && param.snippet_var) {

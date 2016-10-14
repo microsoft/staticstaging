@@ -171,10 +171,10 @@ function main() {
         } else if (m instanceof Array) {
           for (let i = 0; i < m.length; ++i) {
             out.push("\n" + i + ": " +
-                util.inspect(m[i], { depth: null, colors: true }));
+                util.inspect(m[i], { depth: undefined, colors: true }));
           }
         } else {
-          out.push(util.inspect(m, { depth: null, colors: true }));
+          out.push(util.inspect(m, { depth: undefined, colors: true }));
         }
       }
       // Work around a TypeScript limitation:

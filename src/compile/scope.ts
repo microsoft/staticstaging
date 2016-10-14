@@ -62,7 +62,7 @@ function gen_find_scopes(fself: FindScopesFun): FindScopesFun {
     // Record the scope for every tree.
     let frame = hd(frames);
     let scopes_out = scopes.slice(0);
-    scopes_out[tree.id!] = frame.func !== null ? frame.func : frame.quote;
+    scopes_out[tree.id!] = frame.func !== null ? frame.func : frame.quote!;
     return ast_visit(rules, tree, [frames, scopes_out]);
   };
 }

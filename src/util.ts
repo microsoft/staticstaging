@@ -82,7 +82,7 @@ type MapStack <T> = { [key: string]: T }[];
 export function stack_lookup <T> (
   mapstack: MapStack<T>,
   ident: string):
-  [T, number]
+  [T, number] | [undefined, undefined]
 {
   let i = 0;
   for (let map of mapstack) {
@@ -145,7 +145,8 @@ export function set_diff <T> (a: T[], b: T[]): T[] {
  * Union for set. Also a naive implementation.
  */
 export function set_union <T> (a: T[], b: T[]): T[] {
-  let out: T[] = [].concat(a);
+  let out: T[] = [];
+  out = out.concat(a);
   for (let x of b) {
     if (!set_in(a, x)) {
       out.push(x);

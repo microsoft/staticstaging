@@ -247,7 +247,7 @@ export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   if (prog.annotation === FUNC_ANNOTATION) {
     return ProgKind.render;
   } else if (prog.annotation === SHADER_ANNOTATION) {
-    let parprog = ir.progs[prog.quote_parent];
+    let parprog = ir.progs[prog.quote_parent!];
     if (parprog && parprog.annotation === SHADER_ANNOTATION) {
       // This is nested inside another shader program. It's a fragment shader.
       return ProgKind.fragment;
@@ -275,7 +275,7 @@ export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
 
 // Check whether a scope is a render/ordinary quote or the main, top-level
 // program.
-export function _is_cpu_scope(ir: CompilerIR, progid: number) {
+export function _is_cpu_scope(ir: CompilerIR, progid: number | null) {
   if (progid === null) {
     return true;
   }
@@ -368,7 +368,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     let [type,] = ir.type_table[esc.body.id!];
     let g: Glue = {
       id: esc.id,
-      name: shadervarsym(prog.id, esc.id),
+      name: shadervarsym(prog.id!, esc.id),
       type: _unwrap_array(type),
       from_host: _is_cpu_scope(ir, nearest_quote(ir, esc.body.id!)),
       attribute: false,
@@ -385,7 +385,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       } else {
         // We do not own the escape, so it is not computed. Instead, just get
         // the value from the previous shader stage.
-        g.value_name = shadervarsym(prog.parent, esc.id);
+        g.value_name = shadervarsym(prog.parent!, esc.id);
         g.from_host = false;
       }
 
@@ -401,7 +401,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
     } else if (!g.from_host) {
       // A varying produced by a previous shader stage.
-      g.value_name = shadervarsym(prog.parent, esc.id);
+      g.value_name = shadervarsym(prog.parent!, esc.id);
 
     } else {
       // Neither owned nor passed through. This is not glue for this stage.
@@ -416,7 +416,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     let [type,] = ir.type_table[fv];
     let g: Glue = {
       id: fv,
-      name: shadervarsym(prog.id, fv),
+      name: shadervarsym(prog.id!, fv),
       type: _unwrap_array(type),
       from_host: _is_cpu_scope(ir, nearest_quote(ir, fv)),
       attribute: false,
@@ -424,14 +424,14 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
     if (_attribute_type(type)) {
       // An attribute, originally.
-      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
+      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent!))) {
         // As above, the variable is defined in the containing program. The
         // array-to-element decay occurs here.
         g.value_name = varsym(fv);
         g.attribute = true;
       } else {
         // The value has already decayed; just get its value from the parent.
-        g.value_name = shadervarsym(prog.parent, fv);
+        g.value_name = shadervarsym(prog.parent!, fv);
         g.from_host = false;
       }
 
@@ -440,7 +440,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       // then they are available for free when they are declared with the same
       // name in other shaders.
       g.name = varsym(fv);
-      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
+      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent!))) {
         // Get the value from the host.
         g.value_name = varsym(fv);
 
@@ -454,7 +454,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     } else {
       // A varying (produced at an earlier shader stage). Get the variable
       // from the previous stage.
-      g.value_name = shadervarsym(prog.parent, fv);
+      g.value_name = shadervarsym(prog.parent!, fv);
     }
 
     glue.push(g);

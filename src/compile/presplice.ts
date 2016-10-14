@@ -37,8 +37,8 @@ function cross_product<T> (sets: T[][]): T[][] {
 function substitute(tree: SyntaxNode, subs: SyntaxNode[]): SyntaxNode {
   let rules = ast_translate_rules(fself);
   function fself(tree: SyntaxNode): SyntaxNode {
-    if (subs[tree.id]) {
-      return subs[tree.id];
+    if (subs[tree.id!]) {
+      return subs[tree.id!];
     }
     return ast_visit(rules, tree, null);
   }
@@ -95,10 +95,10 @@ function scope_variant<T extends Scope>(orig: T, config: number[],
     for (let subescs of [var_scope.persist, var_scope.splice]) {
       for (let subesc of subescs) {
         if (subesc.owner === snippet.id) {
-          subesc.owner = orig.id;
+          subesc.owner = orig.id!;
         }
         if (subesc.container === snippet.id) {
-          subesc.container = orig.id;
+          subesc.container = orig.id!;
         }
       }
     }
@@ -115,7 +115,7 @@ function scope_variant<T extends Scope>(orig: T, config: number[],
  * no snippet splices, the result is `null` (rather than a single variant) to
  * indicate that backends should not do variant selection.
  */
-function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
+function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] | null {
   // Get the space of possible options for each snippet escape.
   let options: number[][] = [];
   let i = 0;
@@ -128,7 +128,7 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
     for (let other_prog of progs) {
       if (other_prog !== undefined) {
         if (other_prog.snippet_escape === esc.id) {
-          esc_options.push(other_prog.id);
+          esc_options.push(other_prog.id!);
         }
       }
     }
@@ -147,7 +147,7 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
   for (let config of cross_product(options)) {
     // Create a new Variant object.
     let variant: Variant = {
-      progid: prog.id,
+      progid: prog.id!,
       config,
       progs: [],
       procs: [],
@@ -221,11 +221,11 @@ function get_variants(progs: Prog[], procs: Proc[], prog: Prog): Variant[] {
 /**
  * Get the sets of variants for all programs.
  */
-export function presplice(progs: Prog[], procs: Proc[]): Variant[][] {
-  let variants: Variant[][] = [];
+export function presplice(progs: Prog[], procs: Proc[]): (Variant[] | null)[] {
+  let variants: (Variant[] | null)[] = [];
   for (let prog of progs) {
     if (prog !== undefined) {
-      variants[prog.id] = get_variants(progs, procs, prog);
+      variants[prog.id!] = get_variants(progs, procs, prog);
     }
   }
   return variants;

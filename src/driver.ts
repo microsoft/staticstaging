@@ -110,7 +110,7 @@ export function frontend(config: Config, source: string,
     [elaborated, type_table] =
       elaborate(tree, _intrinsics(config), _types(config),
           _check(config));
-    let [type, _] = type_table[elaborated.id];
+    let [type, _] = type_table[elaborated.id!];
     config.typed(pretty_type(type));
   } catch (e) {
     config.error(e);
