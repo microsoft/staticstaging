@@ -143,7 +143,7 @@ export function emit_if(emitter: Emitter, tree: ast.IfNode): string {
  */
 export function emit_while(emitter: Emitter, tree: ast.WhileNode): string {
   let cond = emit(emitter, tree.cond);
-  let body = emit_body(emitter, tree.body, undefined);
+  let body = emit_body(emitter, tree.body, "");
   return `while ${paren(cond)} {\n${indent(body, true)}\n}`;
 }
 
