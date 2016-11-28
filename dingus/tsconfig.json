@@ -3,7 +3,8 @@
         "noImplicitAny": true,
         "module": "commonjs",
         "allowJs": true,
-        "outDir": "build"
+        "outDir": "build",
+        "lib": ["dom", "es5", "es2015.promise"]
     },
     "files": [
         "src/dingus.ts"

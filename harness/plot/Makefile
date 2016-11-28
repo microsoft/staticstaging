@@ -47,4 +47,4 @@ FIX_SVG := ( \
 
 # A little vega-lite authoring tool.
 prevl.js: prevl.ts
-	tsc -target es5 -module commonjs $<
+	tsc --target es5 --module commonjs --lib es5,es2015.promise $<
