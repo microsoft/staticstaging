@@ -1,4 +1,18 @@
 /**
+ * Information about one location in the source file
+ */
+export interface LocationData {
+  offset: number;
+  line: number;
+  column: number;
+}
+
+export interface Location {
+  start: LocationData;
+  end: LocationData;
+}
+
+/**
  * The base type for all nodes in the AST.
  */
 export interface SyntaxNode {
@@ -16,6 +30,8 @@ export interface SyntaxNode {
    * the node.
    */
   id?: number;
+
+  location?: Location;
 }
 
 /**
