@@ -52,7 +52,7 @@ FloatLiteral
 
 StringLiteral "string"
   = strquote chars:StringChar* strquote
-  { return setLocation({tag: "literal", type: "string", value: chars.join("")}; }
+  { return setLocation({tag: "literal", type: "string", value: chars.join("")}); }
 
 StringChar
   = !strquote .
