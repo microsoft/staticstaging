@@ -4,7 +4,7 @@ import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   TypeVariable, type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
-  stack_put, zip } from './util';
+  stack_put, zip, locationError } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 
 /**
@@ -154,7 +154,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (var_t === undefined) {
         var_t = env.externs[tree.ident];
         if (var_t === undefined) {
-          throw "type error: assignment to undeclared variable " + tree.ident;
+          throw "type error: assignment to undeclared variable " + tree.ident + locationError(tree);
         }
       }
 
@@ -180,7 +180,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [et, env];
       }
 
-      throw "type error: undefined variable " + tree.ident;
+      throw "type error: undefined variable " + tree.ident + locationError(tree);
     },
 
     visit_unary(tree: ast.UnaryNode, env: TypeEnv): [Type, TypeEnv] {
@@ -196,7 +196,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [ret, e];
       } else {
         throw "type error: invalid unary operation (" +
-            tree.op + " " + pretty_type(t) + ")";
+            tree.op + " " + pretty_type(t) + ")" + locationError(tree);
       }
     },
 
@@ -211,7 +211,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [ret, e2];
       } else {
         throw "type error: invalid binary operation (" +
-            pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
+            pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")" + 
+            locationError(tree);
       }
     },
 
@@ -257,7 +258,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let level = env.stack.length;
       let count = tree.count;
       if (count > level) {
-        throw `type error: can't escape ${count}x at level ${level}`;
+        throw `type error: can't escape ${count}x at level ${level}` + locationError(tree);
       }
 
       // Construct the environment for checking the escape's body. If this is
@@ -364,7 +365,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (ret instanceof Type) {
         return [ret, e];
       } else {
-        throw ret;
+        throw ret + locationError(tree);
       }
     },
 
@@ -387,14 +388,14 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
       if (cond_type !== INT && cond_type !== FLOAT) {
-        throw "type error: `if` condition must be Int or Float";
+        throw "type error: `if` condition must be Int or Float" + locationError(tree);
       }
 
       let [true_type,] = check(tree.truex, e);
       let [false_type,] = check(tree.falsex, e);
       if (!(compatible(true_type, false_type) &&
             compatible(false_type, true_type))) {
-        throw "type error: condition branches must have same type";
+        throw "type error: condition branches must have same type" + locationError(tree);
       }
 
       return [true_type, e];
@@ -403,7 +404,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
     visit_while(tree: ast.WhileNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
       if (cond_type !== INT) {
-        throw "type error: `while` condition must be an integer";
+        throw "type error: `while` condition must be an integer" + locationError(tree);
       }
 
       let [body_type,] = check(tree.body, e);

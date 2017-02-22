@@ -1,3 +1,5 @@
+import * as ast from './ast';
+
 // Create a copy of an object `obj`, optionally with its fields updated
 // according to `values`.
 // TODO Opportunistically avoid copying identical expressions? This would work
@@ -160,4 +162,19 @@ export function scope_eval(code: string): any {
   return (function () {
     return eval("'use strict'; " + code);
   })();
+}
+
+// toString for an AST SyntaxNode's location
+export function location(node: ast.SyntaxNode): string {
+  if (node.location === undefined) {
+    return "No location found";
+  }
+  let start: ast.LocationData = node.location.start;
+  let end: ast.LocationData = node.location.end;
+  return "(" + start.line + "," + start.column + ") to (" 
+    + end.line + "," + end.column + ")";
+}
+
+export function locationError(node: ast.SyntaxNode): string {
+  return " at " + location(node);
 }
