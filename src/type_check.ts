@@ -161,7 +161,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (!compatible(var_t, expr_t)) {
         throw "type error: mismatched type in assigment: " +
           "expected " + pretty_type(var_t) +
-          ", got " + pretty_type(expr_t);
+          ", got " + pretty_type(expr_t) + locationError(tree);
       }
 
       return [var_t, e];
@@ -275,14 +275,14 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         // spliced.
         if (t instanceof CodeType) {
           if (t.snippet !== null) {
-            throw "type error: snippet quote in non-snippet splice";
+            throw "type error: snippet quote in non-snippet splice" + locationError(tree);
           } else if (t.annotation !== env.anns[0]) {
-            throw "type error: mismatched annotations in splice";
+            throw "type error: mismatched annotations in splice" + locationError(tree);
           }
           // The result type is the type that was quoted.
           return [t.inner, env];
         } else {
-          throw "type error: splice escape produced non-code value";
+          throw "type error: splice escape produced non-code value" + locationError(tree);
         }
 
       } else if (tree.kind === "persist") {
@@ -292,13 +292,13 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       } else if (tree.kind === "snippet") {
         if (t instanceof CodeType) {
           if (t.snippet === null) {
-            throw "type error: non-snippet code in snippet splice";
+            throw "type error: non-snippet code in snippet splice" + locationError(tree);
           } else if (t.snippet !== tree.id) {
-            throw "type error: mismatched snippet splice";
+            throw "type error: mismatched snippet splice" + locationError(tree);
           }
           return [t.inner, env];
         } else {
-          throw "type error: snippet escape produced non-code value";
+          throw "type error: snippet escape produced non-code value" + locationError(tree);
         }
 
       } else {
@@ -310,11 +310,11 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let [t, e] = check(tree.expr, env);
       if (t instanceof CodeType) {
         if (t.snippet) {
-          throw "type error: cannot run splice quotes individually";
+          throw "type error: cannot run splice quotes individually" + locationError(tree);
         }
         return [t.inner, e];
       } else {
-        throw "type error: running a non-code type " + pretty_type(t);
+        throw "type error: running a non-code type " + pretty_type(t) + locationError(tree);
       }
     },
 
@@ -415,7 +415,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       // Look for the macro definition.
       let [macro_type, count] = stack_lookup(env.stack, tree.macro);
       if (macro_type === undefined) {
-        throw `type error: macro ${tree.macro} not defined`;
+        throw `type error: macro ${tree.macro} not defined` + locationError(tree);
       }
 
       // Get the function type (we need its arguments).
@@ -424,7 +424,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (unq_type instanceof FunType) {
         fun_type = unq_type;
       } else {
-        throw "type error: macro must be a function";
+        throw "type error: macro must be a function" + locationError(tree);
       }
 
       // Check code arguments in a fresh, quoted environment based at the
@@ -457,7 +457,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         if (ret instanceof CodeType) {
           return [ret.inner, env];
         } else {
-          throw "type error: macro must return code";
+          throw "type error: macro must return code" + locationError(tree);
         }
       } else {
         throw ret;
@@ -488,7 +488,7 @@ function check_call(target: Type, args: Type[]): Type | string {
   // The target is a variadic function.
   if (target instanceof VariadicFunType) {
     if (target.params.length != 1) {
-      return "type error: variadic function with multiple argument types";
+      return "type error: variadic function with multiple argument types" + locationError(tree);
     }
     let param = target.params[0];
     for (let i = 0; i < args.length; ++i) {
@@ -654,12 +654,12 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     let t = types[tree.name];
     if (t !== undefined) {
       if (t instanceof ConstructorType) {
-        throw "type error: " + tree.name + " needs a parameter";
+        throw "type error: " + tree.name + " needs a parameter" + locationError(tree);
       } else {
         return t;
       }
     } else {
-      throw "type error: unknown primitive type " + tree.name;
+      throw "type error: unknown primitive type " + tree.name + locationError(tree);
     }
   },
 
@@ -691,10 +691,10 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
         let arg = get_type(tree.arg, types);
         return t.instance(arg);
       } else {
-        throw "type error: " + tree.name + " is not parameterized";
+        throw "type error: " + tree.name + " is not parameterized" + locationError(tree);
       }
     } else {
-      throw "type error: unknown type constructor " + tree.name;
+      throw "type error: unknown type constructor " + tree.name + locationError(tree);
     }
   },
 };
