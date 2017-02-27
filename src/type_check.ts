@@ -488,7 +488,7 @@ function check_call(target: Type, args: Type[]): Type | string {
   // The target is a variadic function.
   if (target instanceof VariadicFunType) {
     if (target.params.length != 1) {
-      return "type error: variadic function with multiple argument types" + locationError(tree);
+      return "type error: variadic function with multiple argument types";
     }
     let param = target.params[0];
     for (let i = 0; i < args.length; ++i) {
