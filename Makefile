@@ -41,7 +41,8 @@ TESTS_BASIC := $(wildcard test/basic/*.ss) $(wildcard test/snippet/*.ss) \
 	$(wildcard test/if/*.ss) $(wildcard test/while/*.ss)
 TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.ss)
 TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.ss) \
-	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss)
+	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss) \
+	$(wildcard test/error/*.ss)
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
