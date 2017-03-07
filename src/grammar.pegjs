@@ -26,8 +26,8 @@ SeqExpr
 
 // Expressions that usually don't need parenthesization.
 TermExpr
-  = Quote / CCall / Lookup / Escape / Run / FloatLiteral / IntLiteral /
-  StringLiteral / Paren
+  = Quote / CCall / Escape / Run / FloatLiteral / IntLiteral /
+  StringLiteral / BooleanLiteral / Paren / Lookup
 
 // Expressions that can be operands to binary/unary operators.
 Operand
@@ -49,6 +49,17 @@ IntLiteral
 FloatLiteral
   = n:float
   { return setLocation({tag: "literal", type: "float", value: n}); }
+
+BooleanLiteral
+  = BooleanLiteralTrue / BooleanLiteralFalse
+
+BooleanLiteralTrue
+  = b:boolean_true
+  { return setLocation({tag: "literal", type: "boolean", value: b}); }
+
+BooleanLiteralFalse
+  = b:boolean_false
+  { return setLocation({tag: "literal", type: "boolean", value: b}); }
 
 StringLiteral "string"
   = strquote chars:StringChar* strquote
@@ -216,6 +227,14 @@ float "float"
   = DIGIT+ [.] DIGIT+
   { return parseFloat(text()); }
 
+boolean_true "boolean_true"
+  = "true"
+  { return true; }
+
+boolean_false "boolean_false"
+  = "false"
+  { return false; }
+
 ident "identifier"
   = (ALPHA / [_]) (ALPHA / DIGIT / [_.])* SUFFIX*
   { return text(); }
@@ -239,7 +258,7 @@ mulbinop
   = [*/]
 
 unop "unary operator"
-  = [+\-]
+  = [+\-\~]
 
 quote_open "quote start"
   = "<"

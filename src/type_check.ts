@@ -1,6 +1,6 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, VOID, STRING, pretty_type, TypeVisit,
+  QuantifiedType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN, pretty_type, TypeVisit,
   TypeVariable, type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
@@ -104,6 +104,7 @@ export const BUILTIN_OPERATORS: TypeMap = {
   '-': _UNARY_BINARY_TYPE,
   '*': _BINARY_TYPE,
   '/': _BINARY_TYPE,
+  '~': new FunType([BOOLEAN], BOOLEAN),
 };
 
 
@@ -122,6 +123,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [FLOAT, env];
       } else if (tree.type === "string") {
         return [STRING, env];
+      } else if (tree.type === "boolean") {
+        return [BOOLEAN, env];
       } else {
         throw "error: unknown literal type";
       }
@@ -387,8 +390,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
-      if (cond_type !== INT && cond_type !== FLOAT) {
-        throw "type error: `if` condition must be Int or Float" + locationError(tree);
+      if (cond_type !== BOOLEAN) {
+        throw "type error: `if` condition must be Boolean" + locationError(tree);
       }
 
       let [true_type,] = check(tree.truex, e);
@@ -403,8 +406,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_while(tree: ast.WhileNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
-      if (cond_type !== INT) {
-        throw "type error: `while` condition must be an integer" + locationError(tree);
+      if (cond_type !== BOOLEAN) {
+        throw "type error: `while` condition must be boolean" + locationError(tree);
       }
 
       let [body_type,] = check(tree.body, e);

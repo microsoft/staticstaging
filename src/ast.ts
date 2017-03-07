@@ -43,8 +43,8 @@ export interface ExpressionNode extends SyntaxNode {
 
 export interface LiteralNode extends ExpressionNode {
   tag: "literal";
-  value: number | string;
-  type: "int" | "float" | "string";
+  value: number | string | boolean;
+  type: "int" | "float" | "string" | "boolean";
 }
 
 export interface SeqNode extends ExpressionNode {

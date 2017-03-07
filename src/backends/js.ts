@@ -158,6 +158,8 @@ export function pretty_value(v: any): string {
     return v.toString();
   } else if (typeof v === 'string') {
     return JSON.stringify(v);
+  } else if (typeof v === 'boolean') {
+    return v.toString();
   } else if (v.proc !== undefined) {
     return "(fun)";
   } else if (v.prog !== undefined) {
@@ -200,6 +202,9 @@ export let compile_rules = {
 
   visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
     let p = emit(emitter, tree.expr);
+    if (tree.op === '~') {
+      return '!' + paren(p);
+    }
     return tree.op + paren(p);
   },
 

@@ -6,7 +6,7 @@ import { overlay, merge } from './util';
 
 // Dynamic syntax.
 
-type Value = number | string | Code | Fun | Extern;
+type Value = number | string | boolean | Code | Fun | Extern;
 
 interface Env {
   [key: string]: Value;
@@ -158,6 +158,15 @@ let Interp: ASTVisit<State, [Value, State]> = {
           out = +v; break;
         case "-":
           out = -v; break;
+        default:
+          throw "error: unknown unary operator " + tree.op;
+      }
+      return [out, s];
+    } else if (typeof v === 'boolean') {
+      let out: Value;
+      switch (tree.op) {
+        case "~":
+          out = !v; break;
         default:
           throw "error: unknown unary operator " + tree.op;
       }
@@ -531,6 +540,8 @@ export function pretty_value(v: Value): string {
     return v.toString();
   } else if (typeof v === 'string') {
     return JSON.stringify(v);
+  } else if (typeof v === 'boolean') {
+    return v.toString();
   } else if (v instanceof Code) {
     return v.annotation + "< " + pretty(v.expr) + " >";
   } else if (v instanceof Fun) {
