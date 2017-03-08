@@ -82,12 +82,15 @@ Unary
   { return setLocation({tag: "unary", expr: e, op: op}); }
 
 Binary
-  = AddBinary / MulBinary
+  = CompareBinary / AddBinary / MulBinary
 AddBinary
   = lhs:(MulBinary / Operand) _ op:addbinop _ rhs:(Binary / Operand)
   { return setLocation({tag: "binary", lhs: lhs, op: op, rhs: rhs}); }
 MulBinary
   = lhs:Operand _ op:mulbinop _ rhs:(MulBinary / Operand)
+  { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
+CompareBinary
+  = lhs:Operand _ op:comparebinop _ rhs:Operand
   { return setLocation({tag: "binary", lhs: lhs, rhs: rhs, op: op}); }
 
 Quote
@@ -256,6 +259,8 @@ addbinop
   = [+\-]
 mulbinop
   = [*/]
+comparebinop
+  = "==" / "!=="
 
 unop "unary operator"
   = [+\-\~]
