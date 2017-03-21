@@ -9,7 +9,7 @@ dingus:
 
 .PHONY: clean
 clean:
-	rm -rf parser.js build/ tool/munge.js node_modules typings
+	rm -rf parser.js build/ tool/munge.js node_modules
 	make -C dingus clean
 
 include ts.mk
@@ -24,7 +24,7 @@ parser.js: src/grammar.pegjs $(call npmdep,pegjs)
 # The command-line Node tool.
 
 TS_SRC := $(shell find src/ -type f -name '*.ts')
-$(CLI_JS): $(TS_SRC) $(CLI_TS) parser.js $(TYPINGS_MAIN) $(TSC)
+$(CLI_JS): $(TS_SRC) $(CLI_TS) parser.js $(TSC)
 	$(TSC)
 
 
@@ -41,7 +41,8 @@ TESTS_BASIC := $(wildcard test/basic/*.ss) $(wildcard test/snippet/*.ss) \
 	$(wildcard test/if/*.ss) $(wildcard test/while/*.ss)
 TESTS_COMPILE := $(TESTS_BASIC) $(wildcard test/compile/*.ss)
 TESTS_INTERP := $(TESTS_BASIC) $(wildcard test/static/*.ss) \
-	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss)
+	$(wildcard test/interp/*.ss) $(wildcard test/macro/*.ss) \
+	$(wildcard test/error/*.ss)
 
 .PHONY: test-compile
 test-compile: $(CLI_JS)
@@ -74,7 +75,7 @@ dump-gl: $(CLI_JS)
 
 # An asset-munging tool.
 
-tool/munge.js: tool/munge.ts $(TSC) $(TYPINGS_MAIN)
+tool/munge.js: tool/munge.ts $(TSC)
 	$(TSC) --out $@ $<
 
 
@@ -102,7 +103,7 @@ $(DOC_BUILD)/docs.js: docs/docs.ts $(TSC)
 
 DEPLOY_DIR := _site
 RSYNC := rsync -a --delete --prune-empty-dirs \
-	--exclude node_modules --exclude typings --exclude build
+	--exclude node_modules --exclude build
 site: dingus docs home
 	mkdir -p $(DEPLOY_DIR)/docs
 	$(RSYNC) --include '*.html' --include '*.js' --include '*.css' \
@@ -110,9 +111,11 @@ site: dingus docs home
 		docs/build/* $(DEPLOY_DIR)/docs
 	mkdir -p $(DEPLOY_DIR)/dingus
 	$(RSYNC) --include '*.html' --include '*.bundle.js' --include '*.css' \
+		--exclude 'assets/*.zip' --include 'assets/*' --include 'assets/*/*' \
 		--include '*/' --exclude '*' \
 		dingus/* $(DEPLOY_DIR)/dingus
 	cp site/index.html site/main.css site/main.js $(DEPLOY_DIR)
+	cd $(DEPLOY_DIR) ; rm -rf assets ; cp -r dingus/assets assets
 
 DEPLOY_BRANCH := gh-pages
 deploy: site

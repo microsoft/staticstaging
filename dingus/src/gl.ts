@@ -25,10 +25,11 @@ type Mat4 = Float32Array;
  * dingus-specific matrices.
  */
 function shfl_eval(code: string, gl: WebGLRenderingContext, projection: Mat4,
-                   view: Mat4)
+                   view: Mat4, assets: glrt.Assets,
+                   drawtime: (ms: number) => void)
 {
   // Get the runtime functions.
-  let rt = glrt.runtime(gl);
+  let rt = glrt.runtime(gl, assets, drawtime);
 
   // Add our projection and view matrices.
   let dingus = {
@@ -64,18 +65,46 @@ function projection_matrix(out: Mat4, width: number, height: number) {
 }
 
 /**
+ * Load assets for the dingus.
+ */
+function load_assets(): Promise<glrt.Assets> {
+  return glrt.load_assets([
+    "cube.obj",
+    "default.png",
+    "teapot.obj",
+    "bunny.obj",
+    "head.obj",
+    "lambertian.jpg",
+    "bump-lowRes.png",
+    "couch/couch.vtx.raw",
+    "couch/T_Leather_D.png",
+    "couch/T_Couch_AO.png",
+    "couch/T_Couch_Mask.png",
+    "couch/T_Leather_S.png",
+    "couch/T_Leather_N.png",
+    "couch/T_Couch_N.png",
+    "rock0.vtx.raw",
+    "rock1.vtx.raw",
+  ]);
+}
+
+/**
  * The type of a callback that handles performance information.
  */
 export type PerfHandler =
-  (frames: number, ms: number, latencies: number[]) => void;
+  (frames: number, ms: number, latencies: number[], draw_latencies: number[])
+  => void;
+
+export type Update = (code?: string, dl?: boolean) => void;
 
 /**
  * Set up a canvas inside a container element. Return a function that sets the
  * render function (given compiled SHFL code as a string).
  */
-export function start_gl(
-  container: HTMLElement, perfCbk?: PerfHandler, perfMode?: boolean
-) {
+export function start_gl(container: HTMLElement, perfCbk?: PerfHandler,
+                         perfMode?: boolean,
+                         enableAssets: boolean = true): Promise<Update>
+{
   // Create a <canvas> element to do our drawing in. Then set it up to fill
   // the container and resize when the window resizes.
   let canvas = document.createElement('canvas');
@@ -102,12 +131,18 @@ export function start_gl(
   let projection = mat4.create();
   let view = mat4.create();
 
-  // Bookkeeping for calculating framerate.
+  // Performance measurement.
   let frame_count = 0;
   let last_sample = performance.now();
   let last_frame = performance.now();
   let sample_rate = 1000;  // Measure every second.
   let latencies: number[] = [];
+  let draw_latencies: number[] = [0];
+  function drawtime(ms: number) {
+    if (perfCbk) {
+      draw_latencies[draw_latencies.length - 1] += ms;
+    }
+  }
 
   // Initially, the SHFL function does nothing. The client needs to call us
   // back to fill in the function. Then, we will update this variable.
@@ -123,6 +158,9 @@ export function start_gl(
   } else {
     nextFrame = () => window.requestAnimationFrame(render);
   }
+
+  // A flag that, when set, saves the current image as a PNG.
+  let download_image = false;
 
   // The main render loop.
   function render() {
@@ -144,23 +182,37 @@ export function start_gl(
     gl.enable(gl.DEPTH_TEST);  // Prevent triangle overlap.
 
     // Invoke the compiled SHFL code.
+    let start = performance.now();
     if (shfl_render) {
       shfl_render.proc.apply(void 0, shfl_render.env);
     }
+    let end = performance.now();
 
     // Framerate tracking.
     if (perfCbk) {
       ++frame_count;
       let now = performance.now();
       let elapsed = now - last_sample;  // Milliseconds.
-      latencies.push(now - last_frame);
+      latencies.push(end - start);
       last_frame = now;
       if (elapsed > sample_rate) {
-        perfCbk(frame_count, elapsed, latencies);
+        perfCbk(frame_count, elapsed, latencies, draw_latencies);
         last_sample = performance.now();
         frame_count = 0;
         latencies = [];
+        draw_latencies = [0];
+      } else {
+        draw_latencies.push(0);
       }
+    }
+
+    // Possibly download an image of this frame.
+    if (download_image) {
+      console.log('download');
+      let png = canvas.toDataURL('image/png');
+      console.log(png);
+      window.location.href = png;
+      download_image = false;
     }
 
     // Ask to be run again.
@@ -170,16 +222,30 @@ export function start_gl(
   // Start the first frame.
   nextFrame();
 
-  // Return a function that lets the client update the render body.
-  return function (shfl_code?: string) {
+  // A callback to return a function that lets the client update the code.
+  let start = (assets: glrt.Assets) => (shfl_code?: string, dl?: boolean) => {
+    console.log('starting with assets', assets);
+
     if (shfl_code) {
       // Execute the compiled SHFL code in context.
-      let shfl_program = shfl_eval(shfl_code, gl, projection, view);
+      let shfl_program = shfl_eval(shfl_code, gl, projection, view, assets,
+                                   drawtime);
 
       // Invoke the setup stage.
       shfl_render = shfl_program();
     }
 
+    if (dl !== undefined) {
+      download_image = dl;
+    }
+
     fit();
   };
+
+  // Load the assets (or pass empty assets if they're disabled).
+  if (enableAssets) {
+    return load_assets().then(start);
+  } else {
+    return Promise.resolve(start({}));
+  }
 }

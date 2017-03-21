@@ -24,7 +24,7 @@ function gen_desugar_cross_stage(type_table: TypeTable,
   return function (fsuper: ASTTranslate): ASTTranslate {
     return function (tree: ast.SyntaxNode): ast.SyntaxNode {
       if (is_lookup(tree)) {
-        let [type, env] = type_table[tree.id];
+        let [type, env] = type_table[tree.id!];
         if (tree.ident in env.externs) {
           // Extern accesses are not desugared.
           return fsuper(tree);
@@ -38,12 +38,12 @@ function gen_desugar_cross_stage(type_table: TypeTable,
         } else {
           // A variable from any other stage is an auto-persist. Construct a
           // persist escape that looks up `index` stages.
-          let lookup : ast.LookupNode = { tag: "lookup", ident: tree.ident };
-          let escape : ast.EscapeNode = {
+          let lookup: ast.LookupNode = { tag: "lookup", ident: tree.ident };
+          let escape: ast.EscapeNode = {
             tag: "escape",
             kind: "persist",
             expr: lookup,
-            count: index,
+            count: index!,
           };
 
           // Now we elaborate the subtree to preserve the restrictions of the
@@ -80,25 +80,32 @@ function _desugar_macros(type_table: TypeTable,
       // Translate macro invocations into escaped function calls.
       visit_macrocall(tree: ast.MacroCallNode, param: void) {
         // Get the environment at the point of the macro call.
-        let [, env] = type_table[tree.id];
+        let [, env] = type_table[tree.id!];
 
         // Find how many levels "away" the macro is. That's how many times
         // we'll need to escape.
         let [macro_type, index] = stack_lookup(env.stack, tree.macro);
-        let fun_type = unquantified_type(macro_type) as FunType;
+        let fun_type = unquantified_type(macro_type!) as FunType;
 
         // Create the function call that invokes the macro.
-        let macro_args: ast.QuoteNode[] = [];
+        let macro_args: ast.ExpressionNode[] = [];
         let has_snippets = false;
         for (let [param, arg] of zip(fun_type.params, tree.args)) {
-          let as_snippet = param instanceof CodeType && !!param.snippet_var;
-          has_snippets = has_snippets || as_snippet;
-          macro_args.push({
-            tag: "quote",
-            expr: arg,
-            annotation: "",
-            snippet: as_snippet,
-          });
+          if (param instanceof CodeType) {
+            // Code parameter. Wrap the argument in a quote.
+            let as_snippet = !!param.snippet_var;
+            has_snippets = has_snippets || as_snippet;
+            let quote: ast.QuoteNode = {
+              tag: "quote",
+              expr: arg,
+              annotation: "",
+              snippet: as_snippet,
+            };
+            macro_args.push(quote);
+          } else {
+            // Ordinary parameter.
+            macro_args.push(arg);
+          }
         }
         let call: ast.CallNode = {
           tag: "call",

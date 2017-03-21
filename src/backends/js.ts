@@ -79,7 +79,7 @@ function emit_extern(name: string, type: Type) {
 
 // Create a JavaScript function definition. `name` can be null, in which case
 // this is an anonymous function expression.
-export function emit_fun(name: string, argnames: string[],
+export function emit_fun(name: string | null, argnames: string[],
     localnames: string[], body: string): string
 {
   let anon = (name === null);
@@ -154,7 +154,11 @@ export function emit_var(name: string, value: string, verbose=false): string {
 
 // Like `pretty_value`, but for values in the *compiled* JavaScript world.
 export function pretty_value(v: any): string {
-  if (typeof v == 'number') {
+  if (typeof v === 'number') {
+    return v.toString();
+  } else if (typeof v === 'string') {
+    return JSON.stringify(v);
+  } else if (typeof v === 'boolean') {
     return v.toString();
   } else if (v.proc !== undefined) {
     return "(fun)";
@@ -172,7 +176,11 @@ export function pretty_value(v: any): string {
 
 export let compile_rules = {
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
-    return tree.value.toString();
+    if (tree.type === "string") {
+      return JSON.stringify(tree.value);
+    } else {
+      return tree.value.toString();
+    }
   },
 
   visit_seq(tree: ast.SeqNode, emitter: Emitter): string {
@@ -180,7 +188,7 @@ export let compile_rules = {
   },
 
   visit_let(tree: ast.LetNode, emitter: Emitter): string {
-    let jsvar = varsym(tree.id);
+    let jsvar = varsym(tree.id!);
     return jsvar + " = " + paren(emit(emitter, tree.expr));
   },
 
@@ -194,7 +202,11 @@ export let compile_rules = {
 
   visit_unary(tree: ast.UnaryNode, emitter: Emitter): string {
     let p = emit(emitter, tree.expr);
-    return tree.op + paren(p);
+    let op = tree.op;
+    if (op === '~') {
+      op = '!';
+    }
+    return op + paren(p);
   },
 
   visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
@@ -204,17 +216,17 @@ export let compile_rules = {
   },
 
   visit_quote(tree: ast.QuoteNode, emitter: Emitter): string {
-    return emit_quote(emitter, tree.id);
+    return emit_quote(emitter, tree.id!);
   },
 
   visit_escape(tree: ast.EscapeNode, emitter: Emitter): string {
     if (tree.kind === "splice") {
-      return splicesym(tree.id);
+      return splicesym(tree.id!);
     } else if (tree.kind === "persist") {
-      return persistsym(tree.id);
+      return persistsym(tree.id!);
     } else if (tree.kind === "snippet") {
       // We should only see this when pre-splicing is disabled.
-      return splicesym(tree.id);
+      return splicesym(tree.id!);
     } else {
       throw "error: unknown escape kind";
     }
@@ -224,7 +236,7 @@ export let compile_rules = {
     // Compile the expression producing the program we need to invoke.
     let progex = emit(emitter, tree.expr);
 
-    let [t, _] = emitter.ir.type_table[tree.expr.id];
+    let [t, _] = emitter.ir.type_table[tree.expr.id!];
     if (t instanceof CodeType) {
       // Invoke the appropriate runtime function for executing code values.
       // We use a simple call wrapper for "progfuncs" and a more complex
@@ -241,7 +253,7 @@ export let compile_rules = {
 
   // A function expression produces a closure value.
   visit_fun(tree: ast.FunNode, emitter: Emitter): string {
-    return emit_func(emitter, tree.id);
+    return emit_func(emitter, tree.id!);
   },
 
   // An invocation unpacks the closure environment and calls the function
@@ -259,8 +271,8 @@ export let compile_rules = {
   },
 
   visit_extern(tree: ast.ExternNode, emitter: Emitter): string {
-    let name = emitter.ir.externs[tree.id];
-    let [type, _] = emitter.ir.type_table[tree.id];
+    let name = emitter.ir.externs[tree.id!];
+    let [type, _] = emitter.ir.type_table[tree.id!];
     return emit_extern(name, type);
   },
 
@@ -365,13 +377,13 @@ function emit_splice(emitter: Emitter, esc: Escape, code: string): string {
   // quotation and the place where the expression needs to be inserted. This
   // is the number of string-escaping rounds we need.
   let eval_quotes = 0;
-  let cur_quote = nearest_quote(emitter.ir, esc.id);
+  let cur_quote = nearest_quote(emitter.ir, esc.id)!;
   for (let i = 0; i < esc.count - 1; ++i) {
     let prog = emitter.ir.progs[cur_quote];
     if (prog.annotation !== FUNC_ANNOTATION) {
       ++eval_quotes;
     }
-    cur_quote = prog.quote_parent;
+    cur_quote = prog.quote_parent!;
   }
 
   // Emit the call to the `splice` runtime function.
@@ -423,6 +435,35 @@ function emit_quote_expr(emitter: Emitter, prog: Prog, name: string) {
 }
 
 /**
+ * Emit the `switch` construct that chooses a prespliced program variant.
+ */
+export function emit_variant_selector(emitter: Emitter, prog: Prog,
+                               variants: Variant[],
+                               emit_variant: (variant: Variant) => string)
+{
+  // Emit a "switch" construct that chooses the program variant.
+  let body = "";
+  for (let variant of variants) {
+    let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
+    let condition = cond_parts.join(" && ");
+    let progval = emit_variant(variant);
+    body += `if (${condition}) {\n`
+    body += `  return ${progval};\n`;
+    body += `}\n`;
+  }
+  body += `throw "unknown configuration";`;
+  let argnames = variants[0].config.map((id, i) => `a${i}`);
+  let selector = emit_fun(null, argnames, [], body);
+
+  // Invoke the selector switch with expressions for each snippet escape.
+  let id_exprs: string[] = [];
+  for (let esc of prog.owned_snippet) {
+    id_exprs.push(paren(emit(emitter, esc.body)));
+  }
+  return `${selector}(${ id_exprs.join(", ") })`;
+}
+
+/**
  * Emit code for a quote expression.
  *
  * The quote can be a pre-spliced snippet or an ordinary program value.
@@ -442,29 +483,15 @@ function emit_quote(emitter: Emitter, scopeid: number): string
   if (variants === null) {
     // No snippets to pre-splice.
     return emit_quote_expr(emitter, prog, progsym(scopeid));
-
   } else {
-    // Emit a "switch" construct that chooses the program variant.
-    let body = "";
-    for (let variant of variants) {
-      let cond_parts = variant.config.map((id, i) => `a${i} === ${id}`);
-      let condition = cond_parts.join(" && ");
-      let prog_variant = variant.progs[variant.progid] ||
-        specialized_prog(emitter, variant.progid);
-      let progval = emit_quote_expr(emitter, prog_variant,
-                                    variantsym(variant));
-      body += `if (${condition}) return ${progval};\n`;
-    }
-    body += `throw "unknown configuration";`;
-    let argnames = variants[0].config.map((id, i) => `a${i}`);
-    let selector = emit_fun(null, argnames, [], body);
-
-    // Invoke the selector switch with expressions for each snippet escape.
-    let id_exprs: string[] = [];
-    for (let esc of prog.owned_snippet) {
-      id_exprs.push(paren(emit(emitter, esc.body)));
-    }
-    return `${selector}(${ id_exprs.join(", ") })`;
+    return emit_variant_selector(
+      emitter, prog, variants,
+      (variant) => {
+        let prog_variant = variant.progs[variant.progid] ||
+          specialized_prog(emitter, variant.progid);
+        return emit_quote_expr(emitter, prog_variant, variantsym(variant));
+      }
+    );
   }
 }
 
@@ -593,7 +620,7 @@ function emit_prog_decl(emitter: Emitter, prog: Prog, name: string): string {
  * Emit a single-variant program.
  */
 export function emit_prog(emitter: Emitter, prog: Prog): string {
-  return emit_prog_decl(emitter, prog, progsym(prog.id));
+  return emit_prog_decl(emitter, prog, progsym(prog.id!));
 }
 
 /**

@@ -43,8 +43,9 @@ document.addEventListener("DOMContentLoaded", function () {
   let base = document.querySelector('.sscdingus');
   let dingus = sscDingus(base, {
     history: false,
-    fpsCallback: (frames: number, ms: number, latencies: number[]) => {
-      log({ frames, ms, latencies });
+    fpsCallback: (frames: number, ms: number, latencies: number[],
+                  draw_latencies: number[]) => {
+      log({ frames, ms, latencies, draw_latencies });
     },
     perfMode: true,
   });

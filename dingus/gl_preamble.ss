@@ -20,7 +20,11 @@ extern mesh_indices: Mesh -> (Int3 Array);
 extern mesh_positions: Mesh -> (Float3 Array);
 extern mesh_normals: Mesh -> (Float3 Array);
 extern mesh_size: Mesh -> Int;
+extern mesh_count: Mesh -> Int;
+extern mesh_texcoords: Mesh -> (Float2 Array);
+extern mesh_tangents: Mesh -> (Float3 Array);
 extern draw_mesh: (Int3 Array) Int -> Void;
+extern draw_arrays: Int -> Void;
 
 # Matrix manipulation library.
 extern mat4.create: -> Mat4;
@@ -38,9 +42,18 @@ extern mat4.invert: Mat4 Mat4 -> Void;
 extern eye: Mat4 -> Vec3;
 
 # Textures.
-extern a_texture: -> Texture;  # FIXME EXPERIMENTAL
+extern load_obj: String -> Mesh;
+extern load_texture: String -> Texture;
+extern load_raw: String -> Mesh;
+extern load_image: String -> Image;
+extern texture: Image -> Texture;
+extern average: Image -> Float4;
 
 # Standard JavaScript functions.
 extern Date.now: -> Float;
 extern Math.sin: Float -> Float;
 extern Math.cos: Float -> Float;
+
+# Random numbers.
+extern random.seed: -> Void;
+extern random.flip: -> Float;

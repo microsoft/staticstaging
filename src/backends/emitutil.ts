@@ -42,7 +42,19 @@ export function persistsym(escid: number) {
  * `Prog`).
  */
 export function variantsym(variant: Variant) {
-  return progsym(variant.progid) + "_" + variant.config.join("_");
+  return progsym(variant.progid) + variant_suffix(variant);
+}
+
+/**
+ * Emit a suffix indicating the variant, if any. If no variant is provided,
+ * return the empty string.
+ */
+export function variant_suffix(variant: Variant | null) {
+  if (variant) {
+    return "_" + variant.config.join("_");
+  } else {
+    return "";
+  }
 }
 
 // Parenthesize an expression.
@@ -87,7 +99,7 @@ export function emit_seq(emitter: Emitter, seq: ast.SeqNode, sep: string,
 // variables.
 export function emit_assign(emitter: Emitter,
     tree: ast.AssignNode, get_varsym=varsym): string {
-  let defid = emitter.ir.defuse[tree.id];
+  let defid = emitter.ir.defuse[tree.id!];
   let extern = emitter.ir.externs[defid];
   if (extern !== undefined) {
     // Extern assignment.
@@ -105,10 +117,10 @@ export function emit_lookup(emitter: Emitter,
     emit_extern: (name: string, type: Type) => string,
     tree: ast.LookupNode,
     get_varsym=varsym): string {
-  let defid = emitter.ir.defuse[tree.id];
+  let defid = emitter.ir.defuse[tree.id!];
   let name = emitter.ir.externs[defid];
   if (name !== undefined) {
-    let [type, _] = emitter.ir.type_table[tree.id];
+    let [type, _] = emitter.ir.type_table[tree.id!];
     return emit_extern(name, type);
   } else {
     // An ordinary variable lookup.
@@ -131,7 +143,7 @@ export function emit_if(emitter: Emitter, tree: ast.IfNode): string {
  */
 export function emit_while(emitter: Emitter, tree: ast.WhileNode): string {
   let cond = emit(emitter, tree.cond);
-  let body = emit_body(emitter, tree.body, null);
+  let body = emit_body(emitter, tree.body, "");
   return `while ${paren(cond)} {\n${indent(body, true)}\n}`;
 }
 

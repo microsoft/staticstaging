@@ -35,9 +35,9 @@ export interface Emitter {
   emit_prog_variant: (emitter: Emitter, variant: Variant, prog: Prog) => string;
 
   /**
-   * The current variant we're compiling (or `null`).
+   * The current variant we're compiling (if any).
    */
-  variant: Variant;
+  variant: Variant | null;
 }
 
 // Compile the main function.
@@ -78,7 +78,7 @@ function emit_prog(emitter: Emitter, prog: Prog) {
   }
 
   // Check for variants. If there are none, just emit a single program.
-  let variants = emitter.ir.presplice_variants[prog.id];
+  let variants = emitter.ir.presplice_variants[prog.id!];
   if (variants === null) {
     return emitter.emit_prog(emitter, prog);
   }

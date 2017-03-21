@@ -2,7 +2,9 @@
     "compilerOptions": {
         "noImplicitAny": true,
         "allowJs": true,
-        "outDir": "build"
+        "outDir": "build",
+        "strictNullChecks": true,
+        "lib": ["dom", "es5", "es2015.promise"]
     },
     "files": [
         "ssc.ts"

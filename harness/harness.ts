@@ -1,3 +1,9 @@
+/**
+ * The server-side component of the performance test harness. This serves the
+ * static files for the dingus, instructs it to load scenes, and collects
+ * performance data to disk.
+ */
+
 const restify = require('restify');
 const open_url = require('open');
 const querystring = require('querystring');
@@ -78,7 +84,7 @@ function serve(log: (msg: any) => any): Promise<string> {
 }
 
 // The number of messages to receive before terminating.
-let MESSAGE_COUNT = 4;
+let MESSAGE_COUNT = 8;
 
 /**
  * Called when a performance experiment has finished with data about the

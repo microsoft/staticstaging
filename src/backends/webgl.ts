@@ -3,10 +3,11 @@ import * as js from './js';
 import * as glsl from './glsl';
 import { Glue, emit_glue, vtx_expr, render_expr, ProgKind, prog_kind,
   FLOAT4X4, SHADER_ANNOTATION, TEXTURE } from './gl';
-import { progsym, paren } from './emitutil';
+import { progsym, paren, variant_suffix } from './emitutil';
 import { Type, PrimitiveType } from '../type';
 import { Emitter, emit, emit_main } from './emitter';
 import { ASTVisit, ast_visit, compose_visit } from '../visit';
+import { assign } from '../util';
 import * as ast from '../ast';
 
 // Run-time functions invoked by generated code. These could eventually be
@@ -38,25 +39,6 @@ function get_shader(gl, vertex_source, fragment_source) {
   return program;
 }
 
-function bind_attribute(gl, location, buffer) {
-  if (!buffer) {
-    throw "no buffer";
-  }
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.vertexAttribPointer(location, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(location);
-}
-
-// Binds texture zero (i.e., only one texture for now).
-function bind_texture(gl, location, texture) {
-  if (!texture) {
-    throw "no texture";
-  }
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.uniform1i(location, 0);
-}
-
 // WebGL equivalents of GLSL functions.
 function vec3(x, y, z) {
   var out = new Float32Array(3);
@@ -73,6 +55,9 @@ function mat4mult(a, b) {
 }
 `.trim();
 
+/**
+ * The WebGL functions for binding uniforms.
+ */
 const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
   "Int": "uniform1i",
   "Int3": "uniform3iv",
@@ -82,6 +67,15 @@ const GL_UNIFORM_FUNCTIONS: { [_: string]: string } = {
   "Float4": "uniform4fv",
   "Float3x3": "uniformMatrix3fv",
   "Float4x4": "uniformMatrix4fv",
+};
+
+/**
+ * The WebGL `vertexAttribPointer` arguments for binding attributes. This
+ * consists of the dimension and the primitive type.
+ */
+const GL_ATTRIBUTE_TYPES: { [_: string]: [string, string] } = {
+  "Float2": ["2", "gl.FLOAT"],
+  "Float3": ["3", "gl.FLOAT"],
 };
 
 // Get a JavaScript variable name for a compiled shader program. Uses the ID
@@ -114,13 +108,12 @@ function get_prog_pair(ir: CompilerIR, progid: number) {
 // a shader variable. The `scopeid` is the ID of the quote for the shader
 // where the variable is located.
 function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
-    varid: number):
-  string
+    varid: number, variant: Variant | null): string
 {
   let func = attribute ? "getAttribLocation" : "getUniformLocation";
-  let shader = shadersym(scopeid);
+  let shader = shadersym(scopeid) + variant_suffix(variant);
   return js.emit_var(
-    locsym(scopeid, varid),
+    locsym(scopeid, varid) + variant_suffix(variant),
     `gl.${func}(${shader}, ${js.emit_string(varname)})`
   );
 }
@@ -132,8 +125,8 @@ function emit_loc_var(scopeid: number, attribute: boolean, varname: string,
  * This doesn't quite work yet because we always set up shaders at startup
  * time, not in the context of normal execution.
  */
-function emit_shader_code_ref(emitter: Emitter, prog: Prog) {
-  let code_expr = progsym(prog.id);
+function emit_shader_code_ref(emitter: Emitter, prog: Prog, variant: Variant | null) {
+  let code_expr = progsym(prog.id!) + variant_suffix(variant);
   for (let esc of prog.owned_splice) {
     let esc_expr = emit(emitter, esc.body);
     code_expr += `.replace('__SPLICE_${esc.id}__', ${esc_expr})`;
@@ -143,23 +136,26 @@ function emit_shader_code_ref(emitter: Emitter, prog: Prog) {
 
 // Emit the setup declarations for a shader program. Takes the ID of a vertex
 // (top-level) shader program.
-function emit_shader_setup(emitter: Emitter, progid: number): string
+function emit_shader_setup(emitter: Emitter, progid: number,
+                           variant: Variant | null): string
 {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Compile and link the shader program.
-  let vtx_code = emit_shader_code_ref(emitter, vertex_prog);
-  let frag_code = emit_shader_code_ref(emitter, fragment_prog);
+  let vtx_code = emit_shader_code_ref(emitter, vertex_prog, variant);
+  let frag_code = emit_shader_code_ref(emitter, fragment_prog, variant);
+  let name = shadersym(vertex_prog.id!) + variant_suffix(variant);
   let out = js.emit_var(
-    shadersym(vertex_prog.id),
+    name,
     `get_shader(gl, ${vtx_code}, ${frag_code})`
   ) + "\n";
 
   // Get the variable locations, for both explicit persists and for free
   // variables.
-  let glue = emit_glue(emitter, vertex_prog.id);
+  let glue = emit_glue(emitter, vertex_prog.id!);
   for (let g of glue) {
-    out += emit_loc_var(vertex_prog.id, g.attribute, g.name, g.id) + "\n";
+    out += emit_loc_var(vertex_prog.id!, g.attribute, g.name, g.id,
+                        variant) + "\n";
   }
 
   return out;
@@ -169,15 +165,19 @@ function emit_shader_setup(emitter: Emitter, progid: number): string
 // value to bind as a pre-compiled JavaScript string. You also provide the ID
 // of the value being sent and the ID of the variable in the shader.
 function emit_param_binding(scopeid: number, type: Type, varid: number,
-    value: string, attribute: boolean): string
+    value: string, attribute: boolean, texture_index: number | undefined,
+    variant: Variant | null): string
 {
   if (!attribute) {
     if (type === TEXTURE) {
       // Bind a texture sampler.
-      let out = `gl.activeTexture(gl.TEXTURE0),\n`;  // Texture zero for now.
+      if (texture_index === undefined) {
+        throw "missing texture index";
+      }
+      let out = `gl.activeTexture(gl.TEXTURE0 + ${texture_index}),\n`;
       out += `gl.bindTexture(gl.TEXTURE_2D, ${value}),\n`;
-      let locname = locsym(scopeid, varid);
-      out += `gl.uniform1i(${locname}, 0)`;
+      let locname = locsym(scopeid, varid) + variant_suffix(variant);
+      out += `gl.uniform1i(${locname}, ${texture_index})`;
       return out;
 
     } else if (type instanceof PrimitiveType) {
@@ -189,7 +189,7 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
 
       // Construct the call to gl.uniformX.
       let is_matrix = fname.indexOf("Matrix") !== -1;
-      let locname = locsym(scopeid, varid);
+      let locname = locsym(scopeid, varid) + variant_suffix(variant);
       let out = `gl.${fname}(${locname}`;
       if (is_matrix) {
         // Transpose parameter.
@@ -205,40 +205,84 @@ function emit_param_binding(scopeid: number, type: Type, varid: number,
   // Array types are bound as attributes.
   } else {
     if (type instanceof PrimitiveType) {
-      // Call our runtime function to bind the attribute. The parameters are
-      // the WebGL context, the attribute location, and the buffer.
-      return `bind_attribute(gl, ${locsym(scopeid, varid)}, ${paren(value)})`;
-      // TODO Actually use the type.
+      // The value is a WebGL buffer object.
+      let buf_expr = paren(value);
+
+      // Location handle.
+      let loc_expr = locsym(scopeid, varid) + variant_suffix(variant);
+
+      // Choose the `vertexAttribPointer` arguments based on the type.
+      let pair = GL_ATTRIBUTE_TYPES[type.name];
+      if (!pair) {
+        throw `error: unknown attribute type ${type.name}`;
+      }
+      let [dims, eltype] = pair;
+
+      // Bind the attribute.
+      return [
+        `gl.bindBuffer(gl.ARRAY_BUFFER, ${buf_expr}),\n`,
+        `gl.vertexAttribPointer(${loc_expr}, ${dims}, ${eltype}, `,
+          `false, 0, 0),\n`,
+        `gl.enableVertexAttribArray(${loc_expr})`
+      ].join('');
     } else {
       throw "error: attributes must be primitive types";
     }
   }
 }
 
-// Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
-// shader). This includes both the `useProgram` call and the `bindX` calls to
-// set up the uniforms and attributes.
-function emit_shader_binding(emitter: Emitter,
-    progid: number) {
+/**
+ * Emit the JavaScript code to bind a shader (i.e., to tell WebGL to use the
+ * shader). This includes both the `useProgram` call and the `bindX` calls to
+ * set up the uniforms and attributes.
+ */
+function emit_shader_binding_variant(emitter: Emitter,
+    progid: number, variant: Variant | null) {
   let [vertex_prog, fragment_prog] = get_prog_pair(emitter.ir, progid);
 
   // Bind the shader program.
-  let out = `gl.useProgram(${shadersym(vertex_prog.id)})`;
+  let shader_name = shadersym(vertex_prog.id!) + variant_suffix(variant);
+  let out = `gl.useProgram(${shader_name})`;
 
   // Emit and bind the uniforms and attributes.
-  let glue = emit_glue(emitter, progid);
+  let subemitter = assign({}, emitter);
+  if (!subemitter.variant) {
+    subemitter.variant = variant;
+  }
+  let glue = emit_glue(subemitter, progid);
   for (let g of glue) {
     let value: string;
     if (g.value_name) {
       value = g.value_name;
     } else {
-      value = paren(emit(emitter, g.value_expr));
+      value = paren(emit(subemitter, g.value_expr!));
     }
-    out += ",\n" + emit_param_binding(vertex_prog.id, g.type, g.id, value,
-        g.attribute);
+    out += ",\n" + emit_param_binding(vertex_prog.id!, g.type, g.id, value,
+        g.attribute, g.texture_index, variant);
   }
 
   return out;
+}
+
+/**
+ * Like `emit_shader_binding_variant`, but can also emit a `switch` to select
+ * the appropriate variant if the shader is pre-spliced.
+ */
+function emit_shader_binding(emitter: Emitter, progid: number) {
+  // Check whether this shader has variants.
+  let variants = emitter.ir.presplice_variants[progid];
+  if (variants === null) {
+    // No variants.
+    return emit_shader_binding_variant(emitter, progid, null);
+  } else {
+    // Variants exist. Emit the selector.
+    return js.emit_variant_selector(
+      emitter, emitter.ir.progs[progid], variants,
+      (variant) => {
+        return emit_shader_binding_variant(emitter, progid, variant);
+      }
+    );
+  }
 }
 
 // Extend the JavaScript compiler with some WebGL specifics.
@@ -252,7 +296,7 @@ let compile_rules: ASTVisit<Emitter, string> =
         // emit the bindings.
         if (tree.args[0].tag === "quote") {
           let quote = tree.args[0] as ast.QuoteNode;
-          return emit_shader_binding(emitter, quote.id);
+          return emit_shader_binding(emitter, quote.id!);
         } else {
           throw "dynamic `vtx` calls unimplemented";
         }
@@ -270,7 +314,7 @@ let compile_rules: ASTVisit<Emitter, string> =
     visit_binary(tree: ast.BinaryNode, emitter: Emitter): string {
       // If this is a matrix/matrix multiply, emit a function call.
       if (tree.op === "*") {
-        let [typ,] = emitter.ir.type_table[tree.id];
+        let [typ,] = emitter.ir.type_table[tree.id!];
         if (typ === FLOAT4X4) {
           let lhs = paren(emit(emitter, tree.lhs));
           let rhs = paren(emit(emitter, tree.rhs));
@@ -287,7 +331,8 @@ function compile(tree: ast.SyntaxNode, emitter: Emitter): string {
   return ast_visit(compile_rules, tree, emitter);
 };
 
-function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
+function emit_glsl_prog(emitter: Emitter, prog: Prog,
+                        variant: Variant | null): string {
   let out = "";
 
   // Emit subprograms.
@@ -296,17 +341,18 @@ function emit_glsl_prog(emitter: Emitter, prog: Prog): string {
     if (subprog.annotation !== SHADER_ANNOTATION) {
       throw "error: subprograms not allowed in shaders";
     }
-    out += emit_glsl_prog(emitter, subprog);
+    out += emit_glsl_prog(emitter, subprog, variant);
   }
 
   // Emit the shader program.
-  let code = glsl.compile_prog(emitter, prog.id);
-  out += js.emit_var(progsym(prog.id), js.emit_string(code), true) + "\n";
+  let code = glsl.compile_prog(emitter, prog.id!);
+  let name = progsym(prog.id!) + variant_suffix(variant);
+  out += js.emit_var(name, js.emit_string(code), true) + "\n";
 
   // If it's a *vertex shader* quote (i.e., a top-level shader quote),
   // emit its setup code too.
-  if (prog_kind(emitter.ir, prog.id) === ProgKind.vertex) {
-    out += emit_shader_setup(emitter, prog.id);
+  if (prog_kind(emitter.ir, prog.id!) === ProgKind.vertex) {
+    out += emit_shader_setup(emitter, prog.id!, variant);
   }
 
   return out;
@@ -322,15 +368,18 @@ export function codegen(ir: CompilerIR): string {
     emit_prog(emitter: Emitter, prog: Prog) {
       // Choose between emitting JavaScript and GLSL.
       if (prog.annotation === SHADER_ANNOTATION) {
-        return emit_glsl_prog(emitter, prog);
+        return emit_glsl_prog(emitter, prog, null);
       } else {
         return js.emit_prog(emitter, prog);
       }
     },
 
     emit_prog_variant(emitter: Emitter, variant: Variant, prog: Prog) {
-      // No GLSL variants yet.
-      return js.emit_prog_variant(emitter, variant, prog);
+      if (prog.annotation === SHADER_ANNOTATION) {
+        return emit_glsl_prog(emitter, prog, variant);
+      } else {
+        return js.emit_prog_variant(emitter, variant, prog);
+      }
     },
 
     variant: null,

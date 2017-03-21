@@ -31,11 +31,11 @@ Here's a tiny SSC program that draws a [bunny][]:
 
     # Position the model.
     var model = mat4.create();
-    mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
-    mat4.translate(model, model, vec3(0.0, -5.0, 0.0));
+    mat4.scale(model, model, vec3(14.0, 14.0, 14.0));
+    mat4.translate(model, model, vec3(0.0, -0.7, 0.0));
 
     # Load buffers and parameters for the model.
-    var mesh = bunny;
+    var mesh = load_obj("bunny.obj");
     var position = mesh_positions(mesh);
     var normal = mesh_normals(mesh);
     var indices = mesh_indices(mesh);
@@ -92,11 +92,11 @@ The materialization expression `%[ model * rot ]` multiplies the pre-defined mod
 
     # Original model position.
     var model = mat4.create();
-    mat4.scale(model, model, vec3(2.0, 2.0, 2.0));
-    mat4.translate(model, model, vec3(0.0, -5.0, 0.0));
+    mat4.scale(model, model, vec3(3.5, 3.5, 3.5));
+    mat4.translate(model, model, vec3(0.0, -0.7, 0.0));
 
     # Load buffers and parameters for the model.
-    var mesh = bunny;
+    var mesh = load_obj("bunny.obj");
     var position = mesh_positions(mesh);
     var normal = mesh_normals(mesh);
     var indices = mesh_indices(mesh);
@@ -111,7 +111,7 @@ The materialization expression `%[ model * rot ]` multiplies the pre-defined mod
     render js<
       # Rotate the identity matrix.
       var phase = Date.now() / 1000;
-      mat4.rotateY(rot, id, phase);
+      mat4.rotateY(rot, model, phase);
 
       vertex glsl<
         # Multiply the model position by the rotation
@@ -182,13 +182,19 @@ Try playing with the `light_color` variable at the top here to change the color 
     );
 
     # Load buffers and parameters for the main model.
-    var mesh = teapot;
+    var mesh = load_obj("teapot.obj");
     var position = mesh_positions(mesh);
     var normal = mesh_normals(mesh);
     var indices = mesh_indices(mesh);
     var size = mesh_size(mesh);
 
+    # Position the teapot model.
+    var model = mat4.create();
+    mat4.translate(model, model, vec3(0.0, -10.0, 0.0));
+    mat4.scale(model, model, vec3(0.2, 0.2, 0.2));
+
     # Light-source marker model.
+    var bunny = load_obj("bunny.obj");
     var b_position = mesh_positions(bunny);
     var b_normal = mesh_normals(bunny);
     var b_indices = mesh_indices(bunny);
@@ -214,7 +220,7 @@ Try playing with the `light_color` variable at the top here to change the color 
       );
 
       # Draw the teapot using the Phong shader.
-      phong(position, normal, id,
+      phong(position, normal, model,
             light_position, light_color,
             specular);
       draw_mesh(indices, size);
@@ -223,7 +229,7 @@ Try playing with the `light_color` variable at the top here to change the color 
       # for illustrative purposes.
       mat4.translate(b_model, id, light_position);
       mat4.scale(b_model, b_model,
-                 vec3(0.1, 0.1, 0.1));
+                 vec3(0.5, 0.5, 0.5));
       solid(b_position, b_model, light_color);
       draw_mesh(b_indices, b_size);
     >

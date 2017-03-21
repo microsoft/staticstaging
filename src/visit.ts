@@ -63,7 +63,7 @@ export function ast_visit<P, R>(visitor: ASTVisit<P, R>,
     case "macrocall":
       return visitor.visit_macrocall(<ast.MacroCallNode> tree, param);
     case "param":
-      return visitor.visit_param(<ast.ParamNode> tree, param);
+      return visitor.visit_param!(<ast.ParamNode> tree, param);
 
     default:
       throw "error: unknown syntax node " + tree.tag;

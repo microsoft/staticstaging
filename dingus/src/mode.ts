@@ -13,6 +13,7 @@ export default function (config: CodeMirror.EditorConfiguration, pconfig: any):
   const quote_begin = /[A-Za-z0-9]+\</;
   const escape_begin = /(\$|\%)?\d*\[/;
   const macro = /@[A-Za-z][A-Za-z0-9]*[\?\!]*/;
+  const stringlit = /"[^"]*"/;
 
   return {
     startState() {
@@ -56,6 +57,11 @@ export default function (config: CodeMirror.EditorConfiguration, pconfig: any):
       // Escapes in their various forms.
       if (stream.match(escape_begin)) {
         return "bracket";
+      }
+
+      // String literals.
+      if (stream.match(stringlit)) {
+        return "string";
       }
 
       // Single characters.

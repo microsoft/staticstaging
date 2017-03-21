@@ -14,7 +14,11 @@ function nonterm(tree: ast.SyntaxNode) {
 
 let Pretty: ASTVisit<void, string> = {
   visit_literal(tree: ast.LiteralNode, _: void): string {
-    return tree.value.toString();
+    if (tree.type === "string") {
+      return JSON.stringify(tree.value);
+    } else {
+      return tree.value.toString();
+    }
   },
 
   visit_seq(tree: ast.SeqNode, _: void): string {

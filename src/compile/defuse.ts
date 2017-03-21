@@ -20,7 +20,7 @@ function head_overlay <T> (a: T[]): T[] {
 interface State {
   ns: NameStack,  // Variable mapping.
   externs: NameMap,  // Extern mapping.
-  snip: NameStack,  // Snippet environment (or null).
+  snip: NameStack | null,  // Snippet environment.
 }
 
 // The def/use analysis case for uses: both lookup and assignment nodes work
@@ -40,7 +40,7 @@ function handle_use(tree: ast.LookupNode | ast.AssignNode,
   }
 
   let t = table.slice(0);
-  t[tree.id] = def_id;
+  t[tree.id!] = def_id;
   return [state, t];
 }
 
@@ -57,7 +57,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
     {
       let [s1, t1] = fself(tree.expr, [state, table]);
       let ns = head_overlay(state.ns);
-      hd(ns)[tree.ident] = tree.id;
+      hd(ns)[tree.ident] = tree.id!;
       return [merge(s1, {ns}), t1];
     },
 
@@ -69,7 +69,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       // Update the top map with the function parameters.
       let ns = head_overlay(state.ns);
       for (let param of tree.params) {
-        hd(ns)[param.name] = param.id;
+        hd(ns)[param.name] = param.id!;
       }
 
       // Traverse the body with this new map.
@@ -130,7 +130,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       let ns = tl(state.ns);
 
       // If this is a snippet escape, preserve it for snippet quotes.
-      let snip: NameStack = null;
+      let snip: NameStack | null = null;
       if (tree.kind === "snippet") {
         snip = state.ns;
       }
@@ -146,7 +146,7 @@ function gen_find_def_use(fself: FindDefUse): FindDefUse {
       [State, DefUseTable]
     {
       let externs = overlay(state.externs);
-      externs[tree.name] = tree.id;
+      externs[tree.name] = tree.id!;
       return [merge(state, {externs}), table];
     },
   });

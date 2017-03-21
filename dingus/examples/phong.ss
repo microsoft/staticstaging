@@ -12,7 +12,7 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
     fragment glsl<
       # Convert to world space.
       var position_world = vec3(model * vec4(pos, 1.0));
-      var normal_world = normalize(vec3(model * vec4(pos, 0.0)));
+      var normal_world = normalize(vec3(model * vec4(norm, 0.0)));
       var view_dir_world = normalize(camera_pos - position_world);
 
       # Light.
@@ -31,53 +31,34 @@ def phong(pos: Float3 Array, norm: Float3 Array, model: Mat4, lightpos: Vec3, co
   >;
 );
 
-# Simple, solid-color shader.
-def solid(pos: Float3 Array, model: Mat4, color: Vec3) (
-  vertex glsl<
-    gl_Position = projection * view * model * vec4(pos, 1.0);
-    fragment glsl<
-      gl_FragColor = vec4(color, 1.0);
-    >
-  >;
-);
-
 # ---
 
 # Load buffers and parameters for the main model.
-var mesh = teapot;
+var mesh = load_obj("bunny.obj");
 var position = mesh_positions(mesh);
 var normal = mesh_normals(mesh);
 var indices = mesh_indices(mesh);
 var size = mesh_size(mesh);
 
-# Light-source marker model.
-var b_position = mesh_positions(bunny);
-var b_normal = mesh_normals(bunny);
-var b_indices = mesh_indices(bunny);
-var b_size = mesh_size(bunny);
-var b_model = mat4.create();
-
-# An identity matrix, which we'll use for model positioning.
+# Position the model.
 var id = mat4.create();
+var model = mat4.create();
+mat4.translate(model, model, vec3(0.0, -10.0, 0.0));
+mat4.scale(model, model, vec3(15.0, 15.0, 15.0));
 
 # The parameters for the Phong shader.
-var specular = 50.0;
+var specular = 100.0;
 var light_color = vec3(1.0, 0.2, 0.5);
+var light_position = vec3(20.0, 0.0, 20.0);
+
+# Rotation matrix.
+var rot = mat4.create();
 
 render js<
+  # Rotation animation.
   var t = Date.now();
-  var light_position = vec3(
-    Math.cos(t / 200) * 20.0,
-    0.0,
-    Math.sin(t / 200) * 20.0
-  );
+  mat4.rotateY(rot, id, t / 1000);
 
-  phong(position, normal, id, light_position, light_color, specular);
+  phong(position, normal, rot * model, light_position, light_color, specular);
   draw_mesh(indices, size);
-
-  # Place the bunny at the light source, for illustrative purposes.
-  mat4.translate(b_model, id, light_position);
-  mat4.scale(b_model, b_model, vec3(0.1, 0.1, 0.1));
-  solid(b_position, b_model, light_color);
-  draw_mesh(b_indices, b_size);
 >

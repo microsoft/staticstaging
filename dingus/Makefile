@@ -1,4 +1,4 @@
-DINGUS_JS := build/src/dingus/dingus.js
+DINGUS_JS := build/dingus/src/dingus.js
 GENERATED := examples.js preambles.js ssc.bundle.js codemirror.css dingus.css
 
 .PHONY: all clean
@@ -14,7 +14,7 @@ include ../ts.mk
 TS_SRC := $(shell find ../src/ -type f -name '*.ts') \
 	$(shell find ./src/ -type f -name '*.ts')
 JS_SRC := examples.js preambles.js ../parser.js
-$(DINGUS_JS): $(TS_SRC) $(JS_SRC) $(TYPINGS_BROWSER) $(TSC)
+$(DINGUS_JS): $(TS_SRC) $(JS_SRC) $(TSC)
 	$(TSC)
 
 # It's a shame we have to duplicate this rule here.
@@ -47,7 +47,8 @@ $(MUNGE):
 	make -C .. tool/munge.js
 
 EXAMPLES := basics splice persist progfunc extern \
-	presplice macro normcolor objects phong many many-phong texture
+	presplice macro normcolor objects phong texture head \
+	couch
 EXAMPLE_FILES := $(EXAMPLES:%=examples/%.ss)
 examples.js: $(MUNGE) $(EXAMPLE_FILES)
 	printf "module.exports = " > $@

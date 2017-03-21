@@ -65,8 +65,8 @@ export class CodeType extends Type {
   constructor(
     public inner: Type,
     public annotation: string,
-    public snippet: number = null,  // Corresponding escape ID.
-    public snippet_var: TypeVariable = null  // Snippet polymorphism.
+    public snippet: number | null = null,  // Corresponding escape ID.
+    public snippet_var: TypeVariable | null = null  // Snippet polymorphism.
   ) { super() };
   _brand_CodeType: void;
 };
@@ -121,10 +121,14 @@ export interface TypeMap {
 // The built-in primitive types.
 export const INT = new PrimitiveType("Int");
 export const FLOAT = new PrimitiveType("Float");
+export const STRING = new PrimitiveType("String");
+export const BOOLEAN = new PrimitiveType("Boolean");
 export const BUILTIN_TYPES: TypeMap = {
   "Int": INT,
   "Float": FLOAT,
   "Void": VOID,
+  "String": STRING,
+  "Boolean": BOOLEAN,
 };
 
 

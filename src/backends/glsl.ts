@@ -5,7 +5,7 @@ import { stack_lookup } from '../util';
 import { ASTVisit, ast_visit, complete_visit } from '../visit';
 import { _unwrap_array, _is_cpu_scope, _attribute_type, TYPE_NAMES,
   shadervarsym, frag_expr, Glue, ProgKind, prog_kind,
-  SHADER_ANNOTATION, emit_glue } from './gl';
+  SHADER_ANNOTATION, emit_glue, is_intrinsic_call } from './gl';
 import { Emitter, emit, specialized_prog } from './emitter';
 import { varsym, indent, emit_seq, emit_assign, emit_lookup, emit_if,
   emit_while, emit_body, paren, splicesym } from './emitutil';
@@ -54,7 +54,7 @@ export function type_mixin(fsuper: TypeCheck): TypeCheck {
 
 // The core compiler rules for emitting GLSL code.
 
-function emit_extern(name: string, type: Type): string {
+function emit_extern(name: string): string {
   return name;
 }
 
@@ -75,9 +75,22 @@ function emit_type(type: Type): string {
   }
 }
 
+/**
+ * Like `nearest_quote`, finds the closest containing quote expression. This
+ * version, however, "passes through" prespliced quotes to their parents.
+ */
+function nearest_prespliced_quote(ir: CompilerIR, id: number): number {
+  let qid = nearest_quote(ir, id)!;
+  let quote = ir.progs[qid];
+  if (quote && quote.snippet_escape) {
+    return nearest_prespliced_quote(ir, quote.snippet_escape);
+  }
+  return qid;
+}
+
 let compile_rules: ASTVisit<Emitter, string> = {
   visit_literal(tree: ast.LiteralNode, emitter: Emitter): string {
-    let [t,] = emitter.ir.type_table[tree.id];
+    let [t,] = emitter.ir.type_table[tree.id!];
     if (t === INT) {
       return tree.value.toString();
     } else if (t === FLOAT) {
@@ -99,27 +112,27 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_let(tree: ast.LetNode, emitter: Emitter): string {
-    let varname = shadervarsym(nearest_quote(emitter.ir, tree.id), tree.id);
+    let varname = shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), tree.id!);
     return varname + " = " + paren(emit(emitter, tree.expr));
   },
 
   visit_assign(tree: ast.AssignNode, emitter: Emitter): string {
     // TODO Prevent assignment to nonlocal variables.
-    let vs = (id:number) => shadervarsym(nearest_quote(emitter.ir, tree.id), id);
+    let vs = (id:number) => shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), id);
     return emit_assign(emitter, tree, vs);
   },
 
   visit_lookup(tree: ast.LookupNode, emitter: Emitter): string {
     return emit_lookup(emitter, emit_extern, tree, function (id:number) {
       let [type,] = emitter.ir.type_table[id];
-      if (_is_cpu_scope(emitter.ir, nearest_quote(emitter.ir, id)) && !_attribute_type(type)) {
+      if (_is_cpu_scope(emitter.ir, nearest_prespliced_quote(emitter.ir, id)) && !_attribute_type(type)) {
         // References to variables defined on the CPU ("uniforms") get a
         // special naming convention so they can be shared between multiple
         // shaders in the same program.
         return varsym(id);
       } else {
         // Ordinary shader-scoped variable.
-        return shadervarsym(nearest_quote(emitter.ir, tree.id), id);
+        return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), id);
       }
     });
   },
@@ -141,11 +154,11 @@ let compile_rules: ASTVisit<Emitter, string> = {
 
   visit_escape(tree: ast.EscapeNode, emitter: Emitter): string {
     if (tree.kind === "splice") {
-      return splicesym(tree.id);
+      return splicesym(tree.id!);
     } else if (tree.kind === "persist") {
-      return shadervarsym(nearest_quote(emitter.ir, tree.id), tree.id);
+      return shadervarsym(nearest_prespliced_quote(emitter.ir, tree.id!), tree.id!);
     } else if (tree.kind === "snippet") {
-      return splicesym(tree.id);  // SNIPPET TODO
+      return splicesym(tree.id!);  // SNIPPET TODO
     } else {
       throw "error: unknown escape kind";
     }
@@ -165,6 +178,22 @@ let compile_rules: ASTVisit<Emitter, string> = {
       return "";
     }
 
+    // "Swizzle" intrinsic for vectors.
+    if (is_intrinsic_call(tree, "swizzle")) {
+      if (tree.args[1].tag === "literal") {
+        let literal = tree.args[1] as ast.LiteralNode;
+        if (literal.type === "string") {
+          let vec = emit(emitter, tree.args[0]);
+          let spec = literal.value as string;
+          return `${vec}.${spec}`;
+        } else {
+          throw "error: swizzle argument must be a string";
+        }
+      } else {
+        throw "error: swizzle argument must be a literal";
+      }
+    }
+
     // Check that it's a static call.
     if (tree.fun.tag === "lookup") {
       let fun = emit(emitter, tree.fun);
@@ -179,9 +208,9 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_extern(tree: ast.ExternNode, emitter: Emitter): string {
-    let defid = emitter.ir.defuse[tree.id];
+    let defid = emitter.ir.defuse[tree.id!];
     let name = emitter.ir.externs[defid];
-    return emit_extern(name, null);
+    return emit_extern(name);
   },
 
   visit_persist(tree: ast.PersistNode, emitter: Emitter): string {
@@ -189,7 +218,15 @@ let compile_rules: ASTVisit<Emitter, string> = {
   },
 
   visit_if(tree: ast.IfNode, emitter: Emitter): string {
-    return emit_if(emitter, tree);
+    let cond = emit(emitter, tree.cond);
+    let truex = emit(emitter, tree.truex);
+    let falsex = emit(emitter, tree.falsex);
+
+    // Emit a ternary operator that uses a != comparison to convert a
+    // floating-point condition to a boolean. WebGL (i.e., OpenGL ES 2.0)
+    // doesn't support integer uniforms---or perhaps integers at all?---so we
+    // need this to use floating-point numbers as conditions.
+    return `(${paren(cond)} != 0.0) ? ${paren(truex)} : ${paren(falsex)}`;
   },
 
   visit_while(tree: ast.WhileNode, emitter: Emitter): string {
@@ -214,9 +251,10 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
   let emitter: Emitter = {
     ir: ir,
     compile: compile,
-    emit_proc: null,
-    emit_prog: null,
-    emit_prog_variant: null,
+    emit_proc: (e: any, p: any) => { throw "procs unimplemented in GLSL" },
+    emit_prog: (e: any, p: any) => { throw "progs unimplemented in GLSL" },
+    emit_prog_variant:
+      (e: any, p: any) => { throw "progs unimplemented in GLSL" },
     variant: parent_emitter.variant,
   };
 
@@ -257,7 +295,7 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
     throw "error: too many subprograms";
   } else if (prog.quote_children.length === 1) {
     let subprog = ir.progs[prog.quote_children[0]];
-    for (let g of emit_glue(parent_emitter, subprog.id)) {
+    for (let g of emit_glue(parent_emitter, subprog.id!)) {
       if (!g.from_host) {
         decls.push(emit_decl("varying", emit_type(g.type), g.name));
 
@@ -265,7 +303,7 @@ export function compile_prog(parent_emitter: Emitter, progid: number): string
         if (g.value_name) {
           value = g.value_name;
         } else {
-          value = paren(emit(emitter, g.value_expr));
+          value = paren(emit(emitter, g.value_expr!));
         }
         varying_asgts.push(`${g.name} = ${value}`);
       }

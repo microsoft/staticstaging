@@ -1,0 +1,7 @@
+[
+    ["phong-orig", "original"],
+    ["phong-if", "GPU if"],
+    ["phong-stif-diffuse", "static if"],
+    ["phong-spif", "specialized if"],
+    ["phong-vertex", "per vertex"]
+]

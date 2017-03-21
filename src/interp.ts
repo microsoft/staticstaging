@@ -6,7 +6,7 @@ import { overlay, merge } from './util';
 
 // Dynamic syntax.
 
-type Value = number | Code | Fun | Extern;
+type Value = number | string | boolean | Code | Fun | Extern;
 
 interface Env {
   [key: string]: Value;
@@ -72,7 +72,7 @@ interface State {
    * of "levels" for that escape (so we can resume at the appropriate distance
    * when we hit a snippet quote).
    */
-  snipdist: number;
+  snipdist: number | null;
 }
 
 // This first set of rules applies at the "top level", for ordinary execution.
@@ -124,7 +124,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
 
   visit_quote(tree: ast.QuoteNode, state: State): [Value, State] {
     // Jump to any escapes and execute them.
-    let level = tree.snippet ? state.snipdist : 1;
+    let level = tree.snippet ? state.snipdist! : 1;
     let [t, s, p] = quote_interp(tree.expr, level, state, []);
 
     // Wrap the resulting AST as a code value.
@@ -162,6 +162,15 @@ let Interp: ASTVisit<State, [Value, State]> = {
           throw "error: unknown unary operator " + tree.op;
       }
       return [out, s];
+    } else if (typeof v === 'boolean') {
+      let out: Value;
+      switch (tree.op) {
+        case "~":
+          out = !v; break;
+        default:
+          throw "error: unknown unary operator " + tree.op;
+      }
+      return [out, s];
     } else {
       throw "error: non-numeric operand to unary operator";
     }
@@ -183,6 +192,10 @@ let Interp: ASTVisit<State, [Value, State]> = {
           v = v1 * v2; break;
         case "/":
           v = v1 / v2; break;
+        case "==":
+          v = v1 == v2; break;
+        case "!==":
+          v = v1 != v2; break;
         default:
           throw "error: unknown binary operator " + tree.op;
       }
@@ -284,7 +297,7 @@ let Interp: ASTVisit<State, [Value, State]> = {
       }
       [, s] = interp(tree.body, s);
     }
-    return [null, s];
+    return [null as any, s];  // FIXME: A bit of a cheat.
   },
 
   visit_macrocall(tree: ast.MacroCallNode, state: State): [Value, State] {
@@ -528,6 +541,10 @@ export function interpret(program: ast.SyntaxNode, e: Env = {}, p: Pers = []):
 // Format a resulting value as a string.
 export function pretty_value(v: Value): string {
   if (typeof v == 'number') {
+    return v.toString();
+  } else if (typeof v === 'string') {
+    return JSON.stringify(v);
+  } else if (typeof v === 'boolean') {
     return v.toString();
   } else if (v instanceof Code) {
     return v.annotation + "< " + pretty(v.expr) + " >";

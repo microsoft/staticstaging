@@ -10,7 +10,8 @@ import {
   INT,
   FLOAT,
   ANY,
-  VOID
+  VOID,
+  STRING
 } from '../type';
 import * as ast from '../ast';
 import { CompilerIR, Prog, nearest_quote } from '../compile/ir';
@@ -36,6 +37,7 @@ export const INT4 = new PrimitiveType("Int4");
 export const TEXTURE = new PrimitiveType("Texture");
 
 export const GL_TYPES: TypeMap = {
+  "Float2": FLOAT2,
   "Float3": FLOAT3,
   "Float4": FLOAT4,
   "Vec3": FLOAT3,  // Convenient OpenGL-esque names.
@@ -54,6 +56,7 @@ export const GL_TYPES: TypeMap = {
   "Mesh": new PrimitiveType("Mesh"),
 
   "Texture": TEXTURE,
+  "Image": new PrimitiveType("Image"),
 };
 
 export const NUMERIC_TYPES: Type[] = [
@@ -67,6 +70,7 @@ export const TYPE_NAMES: { [_: string]: string } = {
   "Int3": "ivec3",
   "Int4": "ivec4",
   "Float": "float",
+  "Float2": "vec2",
   "Float3": "vec3",
   "Float4": "vec4",
   "Float3x3": "mat3",
@@ -87,10 +91,16 @@ const _GL_UNARY_TYPE = new OverloadedType([
 const _GL_BINARY_TYPE = new OverloadedType([
   new FunType([INT, INT], INT),
   new FunType([FLOAT, FLOAT], FLOAT),
+  new FunType([FLOAT2, FLOAT2], FLOAT2),
   new FunType([FLOAT3, FLOAT3], FLOAT3),
   new FunType([FLOAT4, FLOAT4], FLOAT4),
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
   new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Vector-by-scalar.
+  new FunType([FLOAT2, FLOAT], FLOAT2),
+  new FunType([FLOAT3, FLOAT], FLOAT3),
+  new FunType([FLOAT4, FLOAT], FLOAT4),
 ]);
 const _GL_UNARY_BINARY_TYPE = new OverloadedType(
   _GL_UNARY_TYPE.types.concat(_GL_BINARY_TYPE.types)
@@ -102,6 +112,14 @@ const _GL_MUL_TYPE = new OverloadedType([
   new FunType([FLOAT4, FLOAT4], FLOAT4),
   new FunType([FLOAT3X3, FLOAT3X3], FLOAT3X3),
   new FunType([FLOAT4X4, FLOAT4X4], FLOAT4X4),
+
+  // Vector-by-scalar.
+  new FunType([FLOAT2, FLOAT], FLOAT2),
+  new FunType([FLOAT3, FLOAT], FLOAT3),
+  new FunType([FLOAT4, FLOAT], FLOAT4),
+  new FunType([FLOAT, FLOAT2], FLOAT2),
+  new FunType([FLOAT, FLOAT3], FLOAT3),
+  new FunType([FLOAT, FLOAT4], FLOAT4),
 
   // Multiplication gets special type cases for matrix-vector multiply.
   new FunType([FLOAT3X3, FLOAT3], FLOAT3),
@@ -136,6 +154,20 @@ export const INTRINSICS: TypeMap = {
   ]),
   min: _GL_BINARY_TYPE,
   max: _GL_BINARY_TYPE,
+  clamp: new OverloadedType([
+    new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
+    new FunType([FLOAT2, FLOAT, FLOAT], FLOAT2),
+    new FunType([FLOAT3, FLOAT, FLOAT], FLOAT3),
+  ]),
+  exp2: new FunType([FLOAT], FLOAT),
+  cross: new FunType([FLOAT3, FLOAT3], FLOAT3),
+
+  // `mix` is a GLSL interpolation operator. The last operand is the amount.
+  mix: new OverloadedType([
+    new FunType([FLOAT, FLOAT, FLOAT], FLOAT),
+    new FunType([FLOAT2, FLOAT2, FLOAT], FLOAT2),
+    new FunType([FLOAT3, FLOAT3, FLOAT], FLOAT3),
+  ]),
 
   // Binary operators.
   '+': _GL_UNARY_BINARY_TYPE,
@@ -149,6 +181,15 @@ export const INTRINSICS: TypeMap = {
   // Buffer construction. Eventually, it would be nice to use overloading here
   // instead of distinct names for each type.
   float_array: new VariadicFunType([FLOAT], new InstanceType(ARRAY, FLOAT)),
+
+  // Vector "swizzling" in GLSL code for destructuring vectors. This is the
+  // equivalent of the dot syntax `vec.x` or `vec.xxz` in plain GLSL. This is
+  // an intrinsic where the second argument must be a string *literal*.
+  swizzle: new OverloadedType([
+    new FunType([FLOAT2, STRING], FLOAT),
+    new FunType([FLOAT3, STRING], FLOAT),
+    new FunType([FLOAT4, STRING], FLOAT),
+  ]),
 };
 
 
@@ -165,7 +206,7 @@ function is_intrinsic(tree: ast.CallNode, name: string) {
   return false;
 }
 
-function is_intrinsic_call(tree: ast.ExpressionNode, name: string) {
+export function is_intrinsic_call(tree: ast.ExpressionNode, name: string) {
   if (tree.tag === "call") {
     return is_intrinsic(tree as ast.CallNode, name);
   }
@@ -206,7 +247,7 @@ export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
   if (prog.annotation === FUNC_ANNOTATION) {
     return ProgKind.render;
   } else if (prog.annotation === SHADER_ANNOTATION) {
-    let parprog = ir.progs[prog.quote_parent];
+    let parprog = ir.progs[prog.quote_parent!];
     if (parprog && parprog.annotation === SHADER_ANNOTATION) {
       // This is nested inside another shader program. It's a fragment shader.
       return ProgKind.fragment;
@@ -234,7 +275,7 @@ export function prog_kind(ir: CompilerIR, progid: number): ProgKind {
 
 // Check whether a scope is a render/ordinary quote or the main, top-level
 // program.
-export function _is_cpu_scope(ir: CompilerIR, progid: number) {
+export function _is_cpu_scope(ir: CompilerIR, progid: number | null) {
   if (progid === null) {
     return true;
   }
@@ -309,20 +350,27 @@ export interface Glue {
    * plain old `T`. This occurs only at the first shader stage.
    */
   attribute: boolean,
+
+  /**
+   * If `type` is `TEXTURE`, the unique index of this texture. Textures are
+   * assigned to texture units, which have unique indices.
+   */
+  texture_index?: number,
 }
 
 // Find all the incoming Glue values for a given shader program.
 function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
   let glue: Glue[] = [];
+  let texture_index = 0;
 
   // Get glue for the persists.
   for (let esc of prog.persist) {
-    let [type,] = ir.type_table[esc.body.id];
+    let [type,] = ir.type_table[esc.body.id!];
     let g: Glue = {
       id: esc.id,
-      name: shadervarsym(prog.id, esc.id),
+      name: shadervarsym(prog.id!, esc.id),
       type: _unwrap_array(type),
-      from_host: _is_cpu_scope(ir, nearest_quote(ir, esc.body.id)),
+      from_host: _is_cpu_scope(ir, nearest_quote(ir, esc.body.id!)),
       attribute: false,
     };
 
@@ -337,7 +385,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       } else {
         // We do not own the escape, so it is not computed. Instead, just get
         // the value from the previous shader stage.
-        g.value_name = shadervarsym(prog.parent, esc.id);
+        g.value_name = shadervarsym(prog.parent!, esc.id);
         g.from_host = false;
       }
 
@@ -345,9 +393,15 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       // A uniform or varying whose value is produced here.
       g.value_expr = esc.body;
 
+      // If this is a texture, assign its index.
+      if (g.type === TEXTURE) {
+        g.texture_index = texture_index;
+        ++texture_index;
+      }
+
     } else if (!g.from_host) {
       // A varying produced by a previous shader stage.
-      g.value_name = shadervarsym(prog.parent, esc.id);
+      g.value_name = shadervarsym(prog.parent!, esc.id);
 
     } else {
       // Neither owned nor passed through. This is not glue for this stage.
@@ -362,7 +416,7 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
     let [type,] = ir.type_table[fv];
     let g: Glue = {
       id: fv,
-      name: shadervarsym(prog.id, fv),
+      name: shadervarsym(prog.id!, fv),
       type: _unwrap_array(type),
       from_host: _is_cpu_scope(ir, nearest_quote(ir, fv)),
       attribute: false,
@@ -370,14 +424,14 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
 
     if (_attribute_type(type)) {
       // An attribute, originally.
-      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
+      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent!))) {
         // As above, the variable is defined in the containing program. The
         // array-to-element decay occurs here.
         g.value_name = varsym(fv);
         g.attribute = true;
       } else {
         // The value has already decayed; just get its value from the parent.
-        g.value_name = shadervarsym(prog.parent, fv);
+        g.value_name = shadervarsym(prog.parent!, fv);
         g.from_host = false;
       }
 
@@ -386,15 +440,21 @@ function get_glue(ir: CompilerIR, prog: Prog): Glue[] {
       // then they are available for free when they are declared with the same
       // name in other shaders.
       g.name = varsym(fv);
-      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent))) {
+      if (_is_cpu_scope(ir, nearest_quote(ir, prog.parent!))) {
         // Get the value from the host.
         g.value_name = varsym(fv);
+
+        // If this is a texture, assign its index.
+        if (g.type === TEXTURE) {
+          g.texture_index = texture_index;
+          ++texture_index;
+        }
       }
 
     } else {
       // A varying (produced at an earlier shader stage). Get the variable
       // from the previous stage.
-      g.value_name = shadervarsym(prog.parent, fv);
+      g.value_name = shadervarsym(prog.parent!, fv);
     }
 
     glue.push(g);

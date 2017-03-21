@@ -46,4 +46,15 @@ pre, textarea {
     }
 }
 
+// Loading indicator.
+.visual .loading {
+    display: none;  // Start hidden.
+
+    position: absolute;
+    margin-left: 20px;
+    margin-top: 20px;
+
+    font-weight: bold;
+}
+
 @import 'dingus.tools.scss';

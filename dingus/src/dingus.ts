@@ -148,6 +148,11 @@ interface Config {
    * possible instead of respecting the host browser's render loop.
    */
   perfMode?: boolean;
+
+  /**
+   * Permit the dingus to load assets via AJAX.
+   */
+  assets?: boolean;
 };
 
 let DEFAULT: Config = {
@@ -156,6 +161,7 @@ let DEFAULT: Config = {
   scrollbars: true,
   fpsCallback: null,
   perfMode: false,
+  assets: true,
 };
 
 export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
@@ -171,6 +177,8 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
   let exampleselect = <HTMLSelectElement> base.querySelector('.example');
   let fpsbox = <HTMLElement> base.querySelector('.fps');
   let visualbox = <HTMLElement> base.querySelector('.visual');
+  let loadingmsg = <HTMLElement> base.querySelector('.loading');
+  let imagedlbtn = <HTMLElement> base.querySelector('.imagedl');
 
   // Set up CodeMirror. Replace this with `null` to use an ordinary textarea.
   let codemirror: CodeMirror.Editor;
@@ -223,7 +231,7 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
 
   // Lazily constructed tools.
   let draw_tree: (tree_data: any) => void;
-  let update_gl: (code?: string) => void;
+  let update_gl: (code?: string, dl?: boolean) => void;
 
   let last_mode: string = null;
   let custom_preamble = "";
@@ -291,20 +299,38 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         if (outbox) {
           show(null, outbox);
         }
+        if (imagedlbtn) {
+          imagedlbtn.style.display = 'block';
+          imagedlbtn.addEventListener('click', (e) => {
+            update_gl(undefined, true);
+          });
+        }
 
         console.log(glcode);
-        if (!update_gl) {
-          update_gl = start_gl(visualbox, (frames, ms, latencies) => {
+        if (update_gl) {
+          update_gl(glcode);
+        } else {
+          console.log("Loading GL resources...");
+          if (loadingmsg) {
+            loadingmsg.style.display = 'block';
+          }
+          start_gl(visualbox, (frames, ms, latencies, draw_latencies) => {
             if (config.fpsCallback) {
-              config.fpsCallback(frames, ms, latencies);
+              config.fpsCallback(frames, ms, latencies, draw_latencies);
             }
             if (fpsbox) {
               let fps = frames / ms * 1000;
               fpsbox.textContent = fps.toFixed(2);
             }
-          }, config.perfMode);
+          }, config.perfMode, config.assets).then((update) => {
+            update_gl = update;
+            console.log("...loaded.");
+            if (loadingmsg) {
+              loadingmsg.style.display = 'none';
+            }
+            update(glcode);
+          });
         }
-        update_gl(glcode);
       } else {
         // Just show the output value.
         visualbox.style.display = 'none';
@@ -314,12 +340,16 @@ export = function sscDingus(base: HTMLElement, config: Config = DEFAULT) {
         if (outbox) {
           show(res, outbox);
         }
+        if (imagedlbtn) {
+          imagedlbtn.style.display = 'none';
+        }
       }
 
       if (navigate && config.history) {
         let hash = encode_hash({code: code, mode: mode});
         history.replaceState(null, null, hash);
       }
+
     } else {
       if (errbox) {
         show(null, errbox);

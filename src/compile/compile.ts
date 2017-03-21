@@ -16,7 +16,7 @@ function gen_find_externs(fself: FindExterns): FindExterns {
   let rules = compose_visit(fold_rules, {
     visit_extern(tree: ast.ExternNode, externs: string[]): string[] {
       let e = externs.slice(0);
-      e[tree.id] = tree.expansion || tree.name;
+      e[tree.id!] = tree.expansion || tree.name;
       return e;
     }
   });
@@ -46,7 +46,7 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   let intrinsics_map: NameMap = {};
   for (let name in intrinsics) {
     let id = type_table.length;
-    type_table[id] = [intrinsics[name], null];
+    type_table[id] = [intrinsics[name], null as any];  // TODO
     intrinsics_map[name] = id;
   }
 
@@ -68,7 +68,7 @@ export function semantically_analyze(tree: ast.SyntaxNode,
   let [procs, main, progs] = lift(tree, defuse, containers, type_table);
 
   // The "presplicing" optimization.
-  let variants: Variant[][];
+  let variants: (Variant[] | null)[];
   if (presplice_opt) {
     // Get the prespliced variants.
     variants = presplice(progs, procs);
@@ -77,7 +77,7 @@ export function semantically_analyze(tree: ast.SyntaxNode,
     for (let prog of progs) {
       if (prog !== undefined) {
         // Every program has no variants.
-        variants[prog.id] = null;
+        variants[prog.id!] = null;
 
         // Transform snippets into ordinary quotes.
         prog.snippet_escape = null;

@@ -1,3 +1,5 @@
+import * as ast from './ast';
+
 // Create a copy of an object `obj`, optionally with its fields updated
 // according to `values`.
 // TODO Opportunistically avoid copying identical expressions? This would work
@@ -82,7 +84,7 @@ type MapStack <T> = { [key: string]: T }[];
 export function stack_lookup <T> (
   mapstack: MapStack<T>,
   ident: string):
-  [T, number]
+  [T, number] | [undefined, undefined]
 {
   let i = 0;
   for (let map of mapstack) {
@@ -145,7 +147,8 @@ export function set_diff <T> (a: T[], b: T[]): T[] {
  * Union for set. Also a naive implementation.
  */
 export function set_union <T> (a: T[], b: T[]): T[] {
-  let out: T[] = [].concat(a);
+  let out: T[] = [];
+  out = out.concat(a);
   for (let x of b) {
     if (!set_in(a, x)) {
       out.push(x);
@@ -159,4 +162,19 @@ export function scope_eval(code: string): any {
   return (function () {
     return eval("'use strict'; " + code);
   })();
+}
+
+// toString for an AST SyntaxNode's location
+export function location(node: ast.SyntaxNode): string {
+  if (node.location === undefined) {
+    return "No location found";
+  }
+  let start: ast.LocationData = node.location.start;
+  let end: ast.LocationData = node.location.end;
+  return "(" + start.line + "," + start.column + ") to (" 
+    + end.line + "," + end.column + ")";
+}
+
+export function locationError(node: ast.SyntaxNode): string {
+  return " at " + location(node);
 }

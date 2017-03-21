@@ -1,10 +1,10 @@
 import { Type, TypeMap, FunType, OverloadedType, CodeType, InstanceType,
   ConstructorType, VariableType, PrimitiveType, AnyType, VoidType,
-  QuantifiedType, INT, FLOAT, ANY, VOID, pretty_type, TypeVisit, TypeVariable,
-  type_visit, VariadicFunType } from './type';
+  QuantifiedType, INT, FLOAT, ANY, VOID, STRING, BOOLEAN, pretty_type, TypeVisit,
+  TypeVariable, type_visit, VariadicFunType } from './type';
 import * as ast from './ast';
 import { Gen, overlay, merge, hd, tl, cons, stack_lookup,
-  stack_put, zip } from './util';
+  stack_put, zip, locationError } from './util';
 import { ASTVisit, ast_visit, TypeASTVisit, type_ast_visit } from './visit';
 
 /**
@@ -23,7 +23,7 @@ export interface TypeEnv {
    * A stack of *quote annotations*, which allows type system extensions to be
    * sensitive to the quote context.
    */
-  anns: string[],
+  anns: (string | null)[],
 
   /**
    * A single frame for "extern" values, which are always available without
@@ -42,7 +42,7 @@ export interface TypeEnv {
    * consists of the ID of the escape and the environment at that point that
    * should be "resumed" on quote.
    */
-  snip: [number, TypeEnv],
+  snip: [number, TypeEnv] | null,
 };
 
 /**
@@ -63,7 +63,7 @@ function te_push(env: TypeEnv, map: TypeMap = {}, ann: string): TypeEnv {
  * Pop a number of scopes off of a `TypeEnv`.
  */
 function te_pop(env: TypeEnv, count: number = 1,
-                snip: [number, TypeEnv] = null): TypeEnv {
+                snip: [number, TypeEnv] | null = null): TypeEnv {
   return merge(env, {
     // Pop one map off of each stack.
     stack: env.stack.slice(count),
@@ -104,6 +104,9 @@ export const BUILTIN_OPERATORS: TypeMap = {
   '-': _UNARY_BINARY_TYPE,
   '*': _BINARY_TYPE,
   '/': _BINARY_TYPE,
+  '~': new FunType([BOOLEAN], BOOLEAN),
+  '==': new FunType([INT, INT], BOOLEAN),
+  '!==': new FunType([INT, INT], BOOLEAN),
 };
 
 
@@ -120,6 +123,10 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [INT, env];
       } else if (tree.type === "float") {
         return [FLOAT, env];
+      } else if (tree.type === "string") {
+        return [STRING, env];
+      } else if (tree.type === "boolean") {
+        return [BOOLEAN, env];
       } else {
         throw "error: unknown literal type";
       }
@@ -152,14 +159,14 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (var_t === undefined) {
         var_t = env.externs[tree.ident];
         if (var_t === undefined) {
-          throw "type error: assignment to undeclared variable " + tree.ident;
+          throw "type error: assignment to undeclared variable " + tree.ident + locationError(tree);
         }
       }
 
       if (!compatible(var_t, expr_t)) {
         throw "type error: mismatched type in assigment: " +
           "expected " + pretty_type(var_t) +
-          ", got " + pretty_type(expr_t);
+          ", got " + pretty_type(expr_t) + locationError(tree);
       }
 
       return [var_t, e];
@@ -178,7 +185,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [et, env];
       }
 
-      throw "type error: undefined variable " + tree.ident;
+      throw "type error: undefined variable " + tree.ident + locationError(tree);
     },
 
     visit_unary(tree: ast.UnaryNode, env: TypeEnv): [Type, TypeEnv] {
@@ -194,7 +201,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [ret, e];
       } else {
         throw "type error: invalid unary operation (" +
-            tree.op + " " + pretty_type(t) + ")";
+            tree.op + " " + pretty_type(t) + ")" + locationError(tree);
       }
     },
 
@@ -209,7 +216,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         return [ret, e2];
       } else {
         throw "type error: invalid binary operation (" +
-            pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")";
+            pretty_type(t1) + " " + tree.op + " " + pretty_type(t2) + ")" + 
+            locationError(tree);
       }
     },
 
@@ -217,7 +225,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       // If this is a snippet quote, we need to "resume" type context from the
       // escape point. Also, we'll record the ID from the environment in the
       // type.
-      let snippet: number = null;
+      let snippet: number | null = null;
       let inner_env: TypeEnv;
       if (tree.snippet) {
         if (env.snip === null) {
@@ -255,13 +263,13 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let level = env.stack.length;
       let count = tree.count;
       if (count > level) {
-        throw `type error: can't escape ${count}x at level ${level}`;
+        throw `type error: can't escape ${count}x at level ${level}` + locationError(tree);
       }
 
       // Construct the environment for checking the escape's body. If this is
       // a snippet escape, record it. Otherwise, the nearest snippet is null.
-      let snip_inner: [number, TypeEnv] =
-        tree.kind === "snippet" ? [tree.id, env] : null;
+      let snip_inner: [number, TypeEnv] | null =
+        tree.kind === "snippet" ? [tree.id!, env] : null;
       let inner_env = te_pop(env, count, snip_inner);
 
       // Check the contents of the escape.
@@ -272,14 +280,14 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         // spliced.
         if (t instanceof CodeType) {
           if (t.snippet !== null) {
-            throw "type error: snippet quote in non-snippet splice";
+            throw "type error: snippet quote in non-snippet splice" + locationError(tree);
           } else if (t.annotation !== env.anns[0]) {
-            throw "type error: mismatched annotations in splice";
+            throw "type error: mismatched annotations in splice" + locationError(tree);
           }
           // The result type is the type that was quoted.
           return [t.inner, env];
         } else {
-          throw "type error: splice escape produced non-code value";
+          throw "type error: splice escape produced non-code value" + locationError(tree);
         }
 
       } else if (tree.kind === "persist") {
@@ -289,13 +297,13 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       } else if (tree.kind === "snippet") {
         if (t instanceof CodeType) {
           if (t.snippet === null) {
-            throw "type error: non-snippet code in snippet splice";
+            throw "type error: non-snippet code in snippet splice" + locationError(tree);
           } else if (t.snippet !== tree.id) {
-            throw "type error: mismatched snippet splice";
+            throw "type error: mismatched snippet splice" + locationError(tree);
           }
           return [t.inner, env];
         } else {
-          throw "type error: snippet escape produced non-code value";
+          throw "type error: snippet escape produced non-code value" + locationError(tree);
         }
 
       } else {
@@ -307,11 +315,11 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       let [t, e] = check(tree.expr, env);
       if (t instanceof CodeType) {
         if (t.snippet) {
-          throw "type error: cannot run splice quotes individually";
+          throw "type error: cannot run splice quotes individually" + locationError(tree);
         }
         return [t.inner, e];
       } else {
-        throw "type error: running a non-code type " + pretty_type(t);
+        throw "type error: running a non-code type " + pretty_type(t) + locationError(tree);
       }
     },
 
@@ -362,7 +370,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (ret instanceof Type) {
         return [ret, e];
       } else {
-        throw ret;
+        throw ret + locationError(tree);
       }
     },
 
@@ -384,15 +392,15 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_if(tree: ast.IfNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
-      if (cond_type !== INT) {
-        throw "type error: `if` condition must be an integer";
+      if (cond_type !== BOOLEAN) {
+        throw "type error: `if` condition must be Boolean" + locationError(tree);
       }
 
       let [true_type,] = check(tree.truex, e);
       let [false_type,] = check(tree.falsex, e);
       if (!(compatible(true_type, false_type) &&
             compatible(false_type, true_type))) {
-        throw "type error: condition branches must have same type";
+        throw "type error: condition branches must have same type" + locationError(tree);
       }
 
       return [true_type, e];
@@ -400,8 +408,8 @@ export let gen_check : Gen<TypeCheck> = function(check) {
 
     visit_while(tree: ast.WhileNode, env: TypeEnv): [Type, TypeEnv] {
       let [cond_type, e] = check(tree.cond, env);
-      if (cond_type !== INT) {
-        throw "type error: `while` condition must be an integer";
+      if (cond_type !== BOOLEAN) {
+        throw "type error: `while` condition must be boolean" + locationError(tree);
       }
 
       let [body_type,] = check(tree.body, e);
@@ -412,7 +420,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       // Look for the macro definition.
       let [macro_type, count] = stack_lookup(env.stack, tree.macro);
       if (macro_type === undefined) {
-        throw `type error: macro ${tree.macro} not defined`;
+        throw `type error: macro ${tree.macro} not defined` + locationError(tree);
       }
 
       // Get the function type (we need its arguments).
@@ -421,30 +429,30 @@ export let gen_check : Gen<TypeCheck> = function(check) {
       if (unq_type instanceof FunType) {
         fun_type = unq_type;
       } else {
-        throw "type error: macro must be a function";
+        throw "type error: macro must be a function" + locationError(tree);
       }
 
-      // Check arguments in a fresh, quoted environment based at the stage
-      // where the macro was defined.
+      // Check code arguments in a fresh, quoted environment based at the
+      // stage where the macro was defined.
       let arg_env = te_push(te_pop(env, count), {}, "");
       let arg_types: Type[] = [];
       for (let [param, arg] of zip(fun_type.params, tree.args)) {
-        // Check whether the parameter is a snippet. This decides whether we
-        // check this as a snippet quote (open code) or ordinary quote (closed
-        // code).
+        // Check whether the parameter is a snippet (open code), an ordinary
+        // code type, or an eager non-code value.
         let as_snippet = false;
         if (param instanceof CodeType) {
-          if (param.snippet_var) {
-            as_snippet = true;
-          }
-        } else {
-          throw "type error: macro arguments must have code types";
-        }
+          // Code type, either ordinary or snippet.
+          let as_snippet = !!param.snippet_var;
 
-        // Check the argument and record its code type.
-        let [t,] = check(arg, as_snippet ? env : arg_env);
-        let code_t = new CodeType(t, "", as_snippet ? tree.id : null);
-        arg_types.push(code_t);
+          // Check the argument and record its code type.
+          let [t,] = check(arg, as_snippet ? env : arg_env);
+          let code_t = new CodeType(t, "", as_snippet ? tree.id : null);
+          arg_types.push(code_t);
+        } else {
+          // Non-code type. Check the argument in the macro's scope.
+          let [t,] = check(arg, env);
+          arg_types.push(t);
+        }
       }
 
       // Get the return type of the macro function.
@@ -454,7 +462,7 @@ export let gen_check : Gen<TypeCheck> = function(check) {
         if (ret instanceof CodeType) {
           return [ret.inner, env];
         } else {
-          throw "type error: macro must return code";
+          throw "type error: macro must return code" + locationError(tree);
         }
       } else {
         throw ret;
@@ -527,8 +535,8 @@ function check_call(target: Type, args: Type[]): Type | string {
   } else if (target instanceof QuantifiedType) {
     // Special case for unifying polymorphic snippet function types with
     // snippet arguments.
-    let snippet: number = null;
-    let snippet_var: TypeVariable = null;
+    let snippet: number | null = null;
+    let snippet_var: TypeVariable | null = null;
     for (let arg of args) {
       if (arg instanceof CodeType) {
         if (arg.snippet) {
@@ -627,8 +635,8 @@ function rectify_fun_type(type: FunType): Type {
  * As with `rectify_fun_type`, but just for the parameters. This is
  * necessary when checking functions, where return types are not known yet.
  */
-function rectify_fun_params(params: Type[]): TypeVariable {
-  let tvar: TypeVariable = null;
+function rectify_fun_params(params: Type[]): TypeVariable | null {
+  let tvar: TypeVariable | null = null;
 
   for (let param of params) {
     if (param instanceof CodeType && param.snippet_var) {
@@ -651,12 +659,12 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
     let t = types[tree.name];
     if (t !== undefined) {
       if (t instanceof ConstructorType) {
-        throw "type error: " + tree.name + " needs a parameter";
+        throw "type error: " + tree.name + " needs a parameter" + locationError(tree);
       } else {
         return t;
       }
     } else {
-      throw "type error: unknown primitive type " + tree.name;
+      throw "type error: unknown primitive type " + tree.name + locationError(tree);
     }
   },
 
@@ -688,10 +696,10 @@ let get_type_rules: TypeASTVisit<TypeMap, Type> = {
         let arg = get_type(tree.arg, types);
         return t.instance(arg);
       } else {
-        throw "type error: " + tree.name + " is not parameterized";
+        throw "type error: " + tree.name + " is not parameterized" + locationError(tree);
       }
     } else {
-      throw "type error: unknown type constructor " + tree.name;
+      throw "type error: unknown type constructor " + tree.name + locationError(tree);
     }
   },
 };

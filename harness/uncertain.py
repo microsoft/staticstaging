@@ -6,7 +6,12 @@ class Uncertain(object):
         self.value = value
         self.error = error
 
-    def __str__(self):
+    def format(self, sep=' +/- '):
+        """Format the number as a human-readable string.
+
+        `sep` is the separator between the value and the error. If it is
+        None, the error is not included.
+        """
         if not self.error:
             return '{:g}'.format(self.value)
 
@@ -15,10 +20,20 @@ class Uncertain(object):
         position = (math.ceil if position > 0.0 else math.floor)(position)
         position = abs(int(position)) if position < 0.0 else 1
 
-        return '{value:.{position}f} +/- {error:.{position}f}'.format(
-            value=self.value, error=self.error,
-            position=position
-        )
+        if sep:
+            return '{value:.{position}f}{sep}{error:.{position}f}'.format(
+                value=self.value, error=self.error,
+                position=position,
+                sep=sep,
+            )
+        else:
+            return '{value:.{position}f}'.format(
+                value=self.value,
+                position=position,
+            )
+
+    def __str__(self):
+        return self.format()
 
     def __repr__(self):
         return 'Uncertain({}, {})'.format(self.value, self.error)
